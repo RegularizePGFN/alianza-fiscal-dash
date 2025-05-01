@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -12,12 +13,15 @@ export default {
 	theme: {
 		container: {
 			center: true,
-			padding: '2rem',
+			padding: "2rem",
 			screens: {
-				'2xl': '1400px'
+				"2xl": "1400px"
 			}
 		},
 		extend: {
+			fontFamily: {
+				nunito: ["Nunito", "sans-serif"],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -61,7 +65,32 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Custom colors for Aliança Fiscal
+				'af-blue': {
+					50: '#e6f1ff',
+					100: '#cce3ff',
+					200: '#99c7ff',
+					300: '#66abff',
+					400: '#338fff',
+					500: '#0073ff',
+					600: '#005ccc',
+					700: '#004499',
+					800: '#002d66',
+					900: '#001733',
+				},
+				'af-green': {
+					50: '#e6fff2',
+					100: '#ccffe6',
+					200: '#99ffcc',
+					300: '#66ffb3',
+					400: '#33ff99',
+					500: '#00ff80',
+					600: '#00cc66',
+					700: '#00994d',
+					800: '#006633',
+					900: '#00331a',
+				},
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -84,11 +113,16 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'progress-fill': {
+					from: { width: '0%' },
+					to: { width: 'var(--progress-value)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'progress-fill': 'progress-fill 1s ease-in-out forwards'
 			}
 		}
 	},
