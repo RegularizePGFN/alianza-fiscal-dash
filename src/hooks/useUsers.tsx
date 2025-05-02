@@ -55,15 +55,20 @@ export function useUsers() {
         
         console.log(`User ${authUser.email} profile:`, profile);
         console.log(`Role from profile: ${profile.role}`);
+        console.log(`User metadata:`, authUser.user_metadata);
         
         const email = authUser.email || '';
         
+        // First check user_metadata for role, then profile, then default
+        const roleFromMetadata = authUser.user_metadata?.role;
+        console.log(`Role from metadata: ${roleFromMetadata}`);
+        
         // Use the mapUserRole function to convert string role to UserRole enum
-        const userRole = mapUserRole(profile.role, email);
+        const userRole = mapUserRole(roleFromMetadata || profile.role, email);
         
         return {
           id: authUser.id,
-          name: profile.name || authUser.email?.split('@')[0] || 'Usuário',
+          name: profile.name || authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'Usuário',
           email: email,
           role: userRole,
           created_at: authUser.created_at,

@@ -12,6 +12,7 @@ export interface AuthState {
 export interface AuthContextProps extends AuthState {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  refreshUser: () => Promise<void>; // Add refreshUser function
 }
 
 // Auth provider props

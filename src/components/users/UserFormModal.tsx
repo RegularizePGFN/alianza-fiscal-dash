@@ -8,6 +8,7 @@ import { User, UserRole } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/auth";
 
 interface UserFormModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ interface UserFormModalProps {
 
 export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModalProps) {
   const { toast } = useToast();
+  const { refreshUser } = useAuth(); // Add this to refresh the current user if needed
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -87,6 +89,13 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
           title: "Usuário atualizado",
           description: `${formData.name} foi atualizado com sucesso.`,
         });
+        
+        // If the current user was updated, refresh their data
+        const { data } = await supabase.auth.getSession();
+        if (data.session && data.session.user.id === user.id) {
+          console.log("Refreshing current user data after update");
+          await refreshUser();
+        }
       } else {
         // Create new user
         const { data: signUpData, error: signUpError } = await supabase.auth.admin.createUser({
