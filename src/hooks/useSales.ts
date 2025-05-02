@@ -125,36 +125,40 @@ export const useSales = () => {
   };
   
   const handleSaveSale = async (saleData: Omit<Sale, 'id'>, editingSaleId?: string) => {
-    if (!user) {
-      toast({
-        title: "Erro de autenticação",
-        description: "Você precisa estar logado para registrar uma venda.",
-        variant: "destructive",
-      });
-      return false;
-    }
-    
     try {
       console.log("Salvando venda:", editingSaleId ? "Editando" : "Nova", saleData);
       
-      // Obter o ID do usuário autenticado diretamente do Supabase para garantir UUID válido
-      const { data: authData, error: authError } = await supabase.auth.getUser();
+      // Verificar se há sessão autenticada no Supabase
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
-      if (authError) {
-        console.error("Erro ao obter usuário autenticado:", authError);
-        throw authError;
+      if (sessionError) {
+        console.error("Erro ao obter sessão:", sessionError);
+        throw new Error("Erro de autenticação: " + sessionError.message);
       }
       
-      if (!authData.user) {
-        throw new Error("Usuário não autenticado");
+      if (!sessionData.session) {
+        console.error("Sessão não encontrada");
+        
+        toast({
+          title: "Erro de autenticação",
+          description: "Sua sessão expirou. Por favor, faça login novamente.",
+          variant: "destructive",
+        });
+        
+        return false;
       }
       
-      const supabaseUserId = authData.user.id;
+      // Obter o ID do usuário da sessão
+      const supabaseUserId = sessionData.session.user.id;
       console.log("ID do usuário autenticado (Supabase):", supabaseUserId);
+      
+      if (!supabaseUserId) {
+        throw new Error("ID do usuário não encontrado na sessão");
+      }
       
       // Preparar o objeto para o Supabase (converter PaymentMethod enum para string)
       const supabaseData = {
-        salesperson_id: supabaseUserId, // Usando o UUID válido do Supabase
+        salesperson_id: supabaseUserId,
         salesperson_name: saleData.salesperson_name,
         gross_amount: saleData.gross_amount,
         payment_method: saleData.payment_method.toString(),
