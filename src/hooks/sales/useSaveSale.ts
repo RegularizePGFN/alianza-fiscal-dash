@@ -139,6 +139,7 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
       return true;
     } catch (error: any) {
       console.error('Error saving sale:', error);
+      // Fix: Pass only the toast object to showErrorToast, not both parameters
       showErrorToast(toast, error.message || "Could not save the sale. Please try again later.");
       return false;
     } finally {
