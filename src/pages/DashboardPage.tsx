@@ -50,20 +50,20 @@ export default function DashboardPage() {
       setLoading(true);
       
       try {
-        // Buscar as vendas do Supabase
-        let query = supabase
+        // Simplify the query to avoid RLS complications
+        const { data: salesData, error } = await supabase
           .from('sales')
           .select('*');
         
-        // Filtrar por vendedor se o usuário for vendedor
-        if (user.role === UserRole.SALESPERSON) {
-          query = query.eq('salesperson_id', user.id);
+        if (error) {
+          console.error("Supabase query error:", error);
+          throw error;
         }
         
-        const { data: salesData, error } = await query.order('sale_date', { ascending: false });
-        
-        if (error) {
-          throw error;
+        // Client-side filtering based on user role
+        let filteredData = salesData || [];
+        if (user.role === UserRole.SALESPERSON) {
+          filteredData = filteredData.filter(sale => sale.salesperson_id === user.id);
         }
         
         // Buscar meta do usuário ou do time
@@ -90,9 +90,9 @@ export default function DashboardPage() {
           console.error('Erro ao buscar meta:', goalError);
         }
         
-        if (salesData) {
+        if (filteredData.length > 0) {
           // Mapear os dados do Supabase para o formato da interface Sale
-          const formattedSales: Sale[] = salesData.map(sale => ({
+          const formattedSales: Sale[] = filteredData.map(sale => ({
             id: sale.id,
             salesperson_id: sale.salesperson_id,
             salesperson_name: sale.salesperson_name,

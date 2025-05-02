@@ -35,16 +35,11 @@ export const useSales = () => {
       
       console.log("Fetching sales for user:", user.id, "with role:", user.role);
       
-      // Usar dados do Supabase
-      let query = supabase
+      // Simplified query - avoid complex RLS policies by making the client do the filtering
+      const { data, error } = await supabase
         .from('sales')
-        .select('*');
-      
-      if (user.role === UserRole.SALESPERSON) {
-        query = query.eq('salesperson_id', user.id);
-      }
-      
-      const { data, error } = await query.order('sale_date', { ascending: false });
+        .select('*')
+        .order('sale_date', { ascending: false });
       
       if (error) {
         console.error("Supabase query error:", error);
@@ -53,8 +48,15 @@ export const useSales = () => {
       
       if (data) {
         console.log("Sales data fetched:", data.length, "records");
+        
+        // Client-side filtering based on user role
+        let filteredData = data;
+        if (user.role === UserRole.SALESPERSON) {
+          filteredData = data.filter(sale => sale.salesperson_id === user.id);
+        }
+        
         // Mapear os dados e garantir que todos os campos necessários estejam presentes
-        const formattedSales: Sale[] = data.map((sale) => ({
+        const formattedSales: Sale[] = filteredData.map((sale) => ({
           id: sale.id,
           salesperson_id: sale.salesperson_id,
           salesperson_name: sale.salesperson_name || 'Desconhecido',
@@ -87,7 +89,7 @@ export const useSales = () => {
     try {
       console.log("Deleting sale:", saleId);
       
-      // Excluir do Supabase
+      // Simplify the delete operation
       const { error } = await supabase
         .from('sales')
         .delete()
