@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Sale, SalesSummary, UserRole } from "@/lib/types";
 import { DEFAULT_GOAL_AMOUNT } from "@/lib/constants";
@@ -90,7 +89,7 @@ export const fetchMonthlyGoal = async (
   if (!user) return DEFAULT_GOAL_AMOUNT;
 
   try {
-    // For admin users, we need to sum all users' goals or count salespeople
+    // For admin users, we need to sum all users' goals
     if (user.role === UserRole.ADMIN) {
       // First check if there are explicitly set goals for salespeople
       const { data: goalsData, error: goalsError } = await supabase
@@ -101,34 +100,20 @@ export const fetchMonthlyGoal = async (
         
       if (goalsError) {
         console.error("Erro ao buscar metas:", goalsError);
-        // If we can't get the goals, let's count salespeople as a fallback
-      } else if (goalsData && goalsData.length > 0) {
+        throw goalsError;
+      }
+      
+      if (goalsData && goalsData.length > 0) {
         // Sum all explicitly set goals
         const totalGoal = goalsData.reduce((sum, goal) => sum + (goal.goal_amount || 0), 0);
         console.log(`Meta total para admins (soma de ${goalsData.length} metas explícitas):`, totalGoal);
         return totalGoal > 0 ? totalGoal : DEFAULT_GOAL_AMOUNT;
       }
       
-      // If no explicit goals are found, count salespeople and multiply by default goal
-      const { data: salespeople, error: countError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("role", UserRole.SALESPERSON);
-      
-      if (countError) {
-        console.error("Erro ao contar vendedores:", countError);
-        return DEFAULT_GOAL_AMOUNT;
-      }
-      
-      if (salespeople && salespeople.length > 0) {
-        const totalGoal = salespeople.length * DEFAULT_GOAL_AMOUNT;
-        console.log(`Meta total para admins (baseada em ${salespeople.length} vendedores):`, totalGoal);
-        return totalGoal;
-      }
-      
+      // If no explicit goals are found, use default goal amount
       return DEFAULT_GOAL_AMOUNT;
     } 
-    // For non-admin users, just get their specific goal
+    // For regular users (vendedores), just get their specific goal
     else {
       const { data: goalData, error: goalError } = await supabase
         .from("monthly_goals")
@@ -147,10 +132,9 @@ export const fetchMonthlyGoal = async (
         console.log("Meta mensal encontrada:", goalData.goal_amount);
         return goalData.goal_amount;
       }
+      
+      return DEFAULT_GOAL_AMOUNT;
     }
-
-    console.log("Nenhuma meta encontrada, usando valor padrão:", DEFAULT_GOAL_AMOUNT);
-    return DEFAULT_GOAL_AMOUNT;
   } catch (error) {
     console.error("Erro ao buscar meta:", error);
     return DEFAULT_GOAL_AMOUNT;

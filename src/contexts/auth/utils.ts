@@ -18,16 +18,14 @@ export const mapUserRole = (role?: string, email?: string): UserRole => {
     const lowerRole = role.toLowerCase();
     console.log(`Lowercase role: ${lowerRole}`);
     
-    switch (lowerRole) {
-      case 'admin':
-        console.log("Mapped to ADMIN");
-        return UserRole.ADMIN;
-      default:
-        console.log("Default mapped to SALESPERSON");
-        return UserRole.SALESPERSON;
+    // Only return ADMIN if the role is explicitly 'admin'
+    if (lowerRole === 'admin') {
+      console.log("Mapped to ADMIN");
+      return UserRole.ADMIN;
     }
   }
   
-  console.log("No role provided, returning SALESPERSON as default");
+  // Default to SALESPERSON for any other role or no role
+  console.log("Returning SALESPERSON as default role");
   return UserRole.SALESPERSON;
 };
