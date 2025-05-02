@@ -45,6 +45,9 @@ export function AppSidebar() {
   
   const toggleSidebar = () => setExpanded(!expanded);
   
+  // Check if user has admin or manager privileges
+  const hasAdminPrivileges = user?.role === UserRole.ADMIN || user?.role === UserRole.MANAGER;
+  
   return (
     <div className={cn(
       "bg-sidebar h-screen transition-all duration-300 p-3 flex flex-col",
@@ -80,8 +83,8 @@ export function AppSidebar() {
             expanded={expanded} 
           />
           
-          {/* Admin and Manager only links */}
-          {user && ['admin', 'gestor'].includes(user.role) && (
+          {/* Admin and Manager links - using the hasAdminPrivileges variable */}
+          {hasAdminPrivileges && (
             <>
               <SidebarLink 
                 to="/usuarios" 

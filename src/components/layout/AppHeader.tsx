@@ -1,5 +1,6 @@
 
 import { useAuth } from "@/contexts/auth";
+import { UserRole } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -21,6 +22,19 @@ export function AppHeader() {
       .join('')
       .toUpperCase()
       .substring(0, 2);
+  };
+
+  const getRoleDisplay = (role?: UserRole) => {
+    switch (role) {
+      case UserRole.ADMIN:
+        return 'Administrador';
+      case UserRole.MANAGER:
+        return 'Gestor';
+      case UserRole.SALESPERSON:
+        return 'Vendedor';
+      default:
+        return 'Usuário';
+    }
   };
 
   return (
@@ -49,11 +63,7 @@ export function AppHeader() {
                 <span>{user.name}</span>
                 <span className="text-xs text-muted-foreground">{user.email}</span>
                 <span className="text-xs mt-1 bg-muted text-muted-foreground px-2 py-0.5 rounded">
-                  {user.role === 'admin' 
-                    ? 'Administrador' 
-                    : user.role === 'gestor' 
-                    ? 'Gestor' 
-                    : 'Vendedor'}
+                  {getRoleDisplay(user.role)}
                 </span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
