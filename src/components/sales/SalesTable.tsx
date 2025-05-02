@@ -1,7 +1,6 @@
 
-import { useState } from "react";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { Sale, User } from "@/lib/types";
+import { Sale } from "@/lib/types";
 import {
   Table,
   TableBody,

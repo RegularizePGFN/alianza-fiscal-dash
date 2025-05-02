@@ -68,7 +68,7 @@ export function AppSidebar() {
       <nav className="flex-1">
         <ul className="space-y-1">
           <SidebarLink 
-            to="/" 
+            to="/dashboard" 
             icon={<Home size={20} />} 
             label="Dashboard" 
             expanded={expanded} 
@@ -78,13 +78,6 @@ export function AppSidebar() {
             to="/vendas" 
             icon={<ShoppingCart size={20} />} 
             label="Vendas" 
-            expanded={expanded} 
-          />
-          
-          <SidebarLink 
-            to="/comissoes" 
-            icon={<BarChart3 size={20} />} 
-            label="Comissões" 
             expanded={expanded} 
           />
           

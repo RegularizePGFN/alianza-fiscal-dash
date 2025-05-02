@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Sale, PaymentMethod } from "@/lib/types";
 import { PAYMENT_METHODS, INSTALLMENT_OPTIONS } from "@/lib/constants";
 import { getTodayISO } from "@/lib/utils";
@@ -93,7 +93,7 @@ export function SaleFormModal({ initialData, onSave, onCancel }: SaleFormModalPr
       salesperson_id: user.id,
       salesperson_name: user.name,
       gross_amount: amount,
-      net_amount: amount, // Setting net_amount equal to gross_amount
+      net_amount: amount, // Setting net_amount equal to gross_amount as per your instructions
       payment_method: paymentMethod,
       installments,
       sale_date: saleDate,
