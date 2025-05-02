@@ -35,7 +35,7 @@ export function DeleteUserDialog({
 
     setIsLoading(true);
     try {
-      // Delete user through Supabase auth admin API
+      // Delete user through our custom admin API implementation
       const { error } = await supabase.auth.admin.deleteUser(user.id);
 
       if (error) throw error;

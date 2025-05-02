@@ -20,6 +20,78 @@ export const supabase = createClient<Database>(
   }
 );
 
+// Define types for the admin functions we need to implement
+interface AdminUserUpdateData {
+  email?: string;
+  password?: string;
+  email_confirm?: boolean;
+  user_metadata?: Record<string, any>;
+}
+
+// Implementation for admin API functions
+// These functions use the appropriate Supabase API endpoints
+const adminApiHeaders = {
+  apikey: SUPABASE_PUBLISHABLE_KEY,
+  Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+  "Content-Type": "application/json"
+};
+
+// Extend Supabase auth client with admin methods
+const adminApi = {
+  async deleteUser(userId: string) {
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
+      method: 'DELETE',
+      headers: adminApiHeaders
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to delete user');
+    }
+    
+    return { error: null };
+  },
+
+  async createUser(data: {
+    email: string;
+    password: string;
+    email_confirm?: boolean;
+    user_metadata?: Record<string, any>;
+  }) {
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
+      method: 'POST',
+      headers: adminApiHeaders,
+      body: JSON.stringify(data)
+    });
+    
+    const responseData = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(responseData.message || 'Failed to create user');
+    }
+    
+    return { data: responseData, error: null };
+  },
+
+  async updateUserById(userId: string, data: AdminUserUpdateData) {
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
+      method: 'PUT',
+      headers: adminApiHeaders,
+      body: JSON.stringify(data)
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to update user');
+    }
+    
+    return { error: null };
+  }
+};
+
+// Attach admin methods to the Supabase auth client
+supabase.auth.admin = adminApi;
+
 // Add custom type for auth admin API
 declare module '@supabase/supabase-js' {
   interface SupabaseAuthClient {
