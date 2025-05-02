@@ -4,6 +4,7 @@ import { User, UserRole } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ADMIN_EMAILS } from "@/contexts/auth/utils";
+import { mapUserRole } from "@/contexts/auth/utils";
 
 export function useUsers() {
   const { toast } = useToast();
@@ -49,17 +50,22 @@ export function useUsers() {
         // Find the matching profile or create an empty object with type annotation
         const profile = profilesData?.find(p => p.id === authUser.id) || {} as {
           name?: string;
-          role?: UserRole;
+          role?: string;
         };
         
         console.log(`User ${authUser.email} profile:`, profile);
         console.log(`Role from profile: ${profile.role}`);
         
+        const email = authUser.email || '';
+        
+        // Use the mapUserRole function to convert string role to UserRole enum
+        const userRole = mapUserRole(profile.role, email);
+        
         return {
           id: authUser.id,
           name: profile.name || authUser.email?.split('@')[0] || 'Usuário',
-          email: authUser.email || '',
-          role: profile.role || UserRole.SALESPERSON,
+          email: email,
+          role: userRole,
           created_at: authUser.created_at,
         };
       });
