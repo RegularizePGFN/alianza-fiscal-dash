@@ -1,7 +1,7 @@
 
 import { ShoppingCart, AreaChart } from "lucide-react";
 import { SalesSummaryCard } from "@/components/dashboard/SalesSummaryCard";
-import { DashboardTrends } from "@/hooks/useDashboardData";
+import { DashboardTrends } from "@/hooks/dashboard/types";
 import { SalesSummary } from "@/lib/types";
 
 interface SalesSummarySectionProps {
