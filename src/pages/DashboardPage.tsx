@@ -68,11 +68,13 @@ export default function DashboardPage() {
 
     setSalesData(filteredSales);
 
-    // Calculate summary
+    // Calculate summary - now using net values for commission calculation
     const totalGross = filteredSales.reduce((sum, sale) => sum + sale.gross_amount, 0);
     const totalNet = filteredSales.reduce((sum, sale) => sum + sale.net_amount, 0);
     const goalAmount = DEFAULT_GOAL_AMOUNT;
-    const commissionRate = totalGross >= goalAmount ? 0.25 : 0.2;
+    
+    // Commission is based on NET amount
+    const commissionRate = totalNet >= goalAmount ? 0.25 : 0.2;
     const projectedCommission = totalNet * commissionRate;
 
     setSummary({
@@ -81,7 +83,7 @@ export default function DashboardPage() {
       total_net: totalNet,
       projected_commission: projectedCommission,
       goal_amount: goalAmount,
-      goal_percentage: Math.min(totalGross / goalAmount, 2),
+      goal_percentage: Math.min(totalNet / goalAmount, 2), // Now using totalNet for percentage calculation
     });
   }, [user]);
 
@@ -126,12 +128,12 @@ export default function DashboardPage() {
 
         <div className="grid gap-4 md:grid-cols-2">
           <GoalProgressCard
-            currentValue={summary.total_gross}
+            currentValue={summary.total_net} // Agora usando total líquido para meta
             goalValue={summary.goal_amount}
           />
           <CommissionCard
             netAmount={summary.total_net}
-            totalSales={summary.total_gross}
+            totalSales={summary.total_net} // Agora comparando total líquido com meta
             goalAmount={summary.goal_amount}
           />
         </div>

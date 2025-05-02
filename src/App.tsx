@@ -10,7 +10,6 @@ import Index from "./pages/Index";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import SalesPage from "./pages/SalesPage";
-import CalculatorPage from "./pages/CalculatorPage";
 import UsersPage from "./pages/UsersPage";
 import NotFound from "./pages/NotFound";
 
@@ -28,7 +27,6 @@ const App = () => (
             <Route path="/login" element={<LoginPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/vendas" element={<SalesPage />} />
-            <Route path="/calculadora" element={<CalculatorPage />} />
             <Route path="/usuarios" element={<UsersPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

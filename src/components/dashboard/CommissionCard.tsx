@@ -1,7 +1,6 @@
 
-import { formatCurrency, formatPercentage } from '@/lib/utils';
+import { formatCurrency, formatPercentage, calculateCommission } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { COMMISSION_RATE_ABOVE_GOAL, COMMISSION_RATE_BELOW_GOAL } from '@/lib/constants';
 
 interface CommissionCardProps {
   netAmount: number;
@@ -10,9 +9,8 @@ interface CommissionCardProps {
 }
 
 export function CommissionCard({ netAmount, totalSales, goalAmount }: CommissionCardProps) {
+  const { rate: commissionRate, amount: commissionAmount } = calculateCommission(netAmount, totalSales, goalAmount);
   const isGoalMet = totalSales >= goalAmount;
-  const commissionRate = isGoalMet ? COMMISSION_RATE_ABOVE_GOAL : COMMISSION_RATE_BELOW_GOAL;
-  const commissionAmount = netAmount * commissionRate;
   
   return (
     <Card className="h-full">
@@ -37,7 +35,7 @@ export function CommissionCard({ netAmount, totalSales, goalAmount }: Commission
           ) : (
             <p>
               Taxa atual: {formatPercentage(commissionRate)}. 
-              Atinja R$ {goalAmount.toLocaleString('pt-BR')} em vendas para aumentar para {formatPercentage(COMMISSION_RATE_ABOVE_GOAL)}.
+              Atinja R$ {goalAmount.toLocaleString('pt-BR')} em vendas para aumentar para 25%.
             </p>
           )}
         </div>

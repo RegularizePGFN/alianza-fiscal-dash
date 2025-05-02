@@ -41,7 +41,7 @@ export function getCurrentMonthDates(): { start: Date; end: Date } {
   return { start, end };
 }
 
-// Calculate net amount after payment processor fees - UPDATED
+// Calculate net amount after payment processor fees - UPDATED with corrected rules
 export function calculateNetAmount(grossAmount: number, paymentMethod: PaymentMethod, installments: number = 1): number {
   let netAmount = 0;
   
@@ -63,13 +63,14 @@ export function calculateNetAmount(grossAmount: number, paymentMethod: PaymentMe
   return Math.max(0, netAmount); // Prevent negative values
 }
 
-// Calculate commission amount based on performance against goal
+// Calculate commission amount based on performance against goal - UPDATED
 export function calculateCommission(netAmount: number, totalSales: number, goalAmount: number): {
   rate: number;
   amount: number;
 } {
-  // Commission rate depends on whether the goal was met (based on NET sales)
+  // Commission rate depends on whether the goal was met (based on NET total sales)
   const rate = totalSales >= goalAmount ? 0.25 : 0.2;
+  
   // Commission is always calculated on the net amount (after fees)
   const amount = netAmount * rate;
   
