@@ -7,7 +7,7 @@ import { AdminUserAttributes, AuthError, GenerateLinkParams, GenerateLinkRespons
 const SUPABASE_URL = "https://sbxltdbnqixucjoognfj.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNieGx0ZGJucWl4dWNqb29nbmZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNDQxMDksImV4cCI6MjA2MTcyMDEwOX0.ZsH2LX5JVFk7tCC0gGmjP1ZrVlQJ78nSUlMqxW7L1rw";
 // The service role key has more permissions for admin operations
-const SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNieGx0ZGJucWl4dWNqb29nbmZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NjE0NDEwOSwiZXhwIjoyMDYxNzIwMTA5fQ.mJQoR0QEW36uVxPanpjweGt3sGM3lfBZWqBqmnX-Hv4";
+const SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNieGx0ZGJucWl4dWNqb29nbmZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NjE0NDEwOSwiZXhwIjoyMDYxNzIwMTA5fQ.RfqqbuZSLzn9YG_nRM8acM_GF_az2On38zK3NFGfJFI";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
@@ -164,7 +164,8 @@ const adminApi: Partial<GoTrueAdminApi> = {
     return { data: { properties: emptyProps, user: null }, error: null }; 
   },
   
-  async listUsers(params: PageParams = { page: 1, perPage: 50 }): Promise<{ data: { users: User[] } & Pagination; error: null } | { data: { users: [] }; error: AuthError }> { 
+  // Corrigindo a tipagem para incluir o campo 'aud' conforme necessário
+  async listUsers(params: PageParams = { page: 1, perPage: 50 }): Promise<{ data: { users: User[], aud: string } & Pagination; error: null } | { data: { users: [] }; error: AuthError }> { 
     try {
       const response = await fetch(
         `${SUPABASE_URL}/auth/v1/admin/users?page=${params.page}&per_page=${params.perPage}`,
@@ -184,10 +185,11 @@ const adminApi: Partial<GoTrueAdminApi> = {
 
       const data = await response.json();
       
-      // Return properly formatted pagination result
+      // Return properly formatted pagination result with aud field
       return { 
         data: { 
           users: data.users || [],
+          aud: 'authenticated',
           ...data
         }, 
         error: null 
