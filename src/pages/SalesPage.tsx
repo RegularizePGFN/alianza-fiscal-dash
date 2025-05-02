@@ -4,7 +4,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { SalesTable } from "@/components/sales/SalesTable";
 import { Sale, UserRole } from "@/lib/types";
 import { useAuth } from "@/contexts/AuthContext";
-import { SaleFormModal } from "@/components/sales/SaleFormModal";
+import { SaleFormModal } from "@/components/sales/form/SaleFormModal";
 import { SalesHeader } from "@/components/sales/SalesHeader";
 import { DeleteSaleDialog } from "@/components/sales/DeleteSaleDialog";
 import { useSales } from "@/hooks/useSales";
