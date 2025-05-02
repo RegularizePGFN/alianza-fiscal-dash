@@ -31,9 +31,18 @@ export function DeleteUserDialog({
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleDelete = async () => {
-    if (!user) return;
+  // Safe dialog close function that prevents closing while loading
+  const handleDialogClose = (open: boolean) => {
+    if (!isLoading && !open) {
+      onClose();
+    }
+  };
 
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    if (!user) return;
+    
     setIsLoading(true);
     try {
       // Delete user through our custom admin API implementation
@@ -61,11 +70,7 @@ export function DeleteUserDialog({
   };
 
   return (
-    <AlertDialog open={isOpen} onOpenChange={(open) => {
-      if (!isLoading && !open) {
-        onClose();
-      }
-    }}>
+    <AlertDialog open={isOpen} onOpenChange={handleDialogClose}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
@@ -84,10 +89,7 @@ export function DeleteUserDialog({
           <AlertDialogCancel disabled={isLoading}>Cancelar</AlertDialogCancel>
           <AlertDialogAction
             disabled={isLoading}
-            onClick={(e) => {
-              e.preventDefault();
-              handleDelete();
-            }}
+            onClick={handleDelete}
             className="bg-destructive hover:bg-destructive/90"
           >
             {isLoading ? (

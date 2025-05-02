@@ -1,5 +1,5 @@
 
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { AppSidebar } from './AppSidebar';
 import { AppHeader } from './AppHeader';
 import { useAuth } from '@/contexts/auth';
@@ -13,13 +13,23 @@ interface AppLayoutProps {
 export function AppLayout({ children, requireAuth = true }: AppLayoutProps) {
   const { isAuthenticated, isLoading } = useAuth();
 
-  // Show loading state
+  // Add error boundary detection
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      console.error("Unhandled error detected:", event.error);
+    };
+
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
+
+  // Show optimized loading state
   if (isLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-16 w-16 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-          <p className="text-muted-foreground animate-pulse">Carregando...</p>
+        <div className="flex flex-col items-center gap-4 p-8 bg-white/30 dark:bg-black/20 backdrop-blur-sm rounded-xl shadow-lg">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="text-lg font-medium text-muted-foreground animate-pulse">Carregando sistema...</p>
         </div>
       </div>
     );
@@ -36,7 +46,11 @@ export function AppLayout({ children, requireAuth = true }: AppLayoutProps) {
       <AppSidebar />
       <div className="flex flex-col flex-1 overflow-hidden">
         <AppHeader />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 relative">
+          <div className="relative z-10">
+            {children}
+          </div>
+        </main>
       </div>
     </div>
   );

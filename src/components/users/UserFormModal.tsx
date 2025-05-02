@@ -8,6 +8,7 @@ import { User, UserRole } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 interface UserFormModalProps {
   isOpen: boolean;
@@ -26,13 +27,13 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
     role: UserRole.SALESPERSON,
   });
 
-  // Load user data if editing
+  // Load user data if editing - using useEffect with proper dependencies
   useEffect(() => {
     if (user) {
       setFormData({
         name: user.name,
         email: user.email,
-        password: "", // We don't pre-fill password
+        password: "",
         role: user.role,
       });
     } else {
@@ -52,28 +53,57 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Form validation
+    if (!formData.name.trim()) {
+      toast({
+        title: "Campo obrigatório",
+        description: "O nome do usuário é obrigatório",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!formData.email.trim()) {
+      toast({
+        title: "Campo obrigatório",
+        description: "O email do usuário é obrigatório",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!user && !formData.password) {
+      toast({
+        title: "Campo obrigatório",
+        description: "A senha é obrigatória para novos usuários",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
       if (user) {
         // Update existing user
-        console.log("Updating user role to:", formData.role); // Debug log
+        console.log("Updating user role to:", formData.role);
         
-        // Update email and user metadata (including role) if changed
+        // Update user metadata (including role)
         const { error: authUpdateError } = await supabase.auth.admin.updateUserById(
           user.id,
           { 
             email: formData.email, 
             user_metadata: {
               name: formData.name,
-              role: formData.role // Important: Include role in user_metadata
+              role: formData.role
             }
           }
         );
         
         if (authUpdateError) throw authUpdateError;
 
-        // Update password if provided
+        // Only update password if provided
         if (formData.password) {
           const { error: passwordError } = await supabase.auth.admin.updateUserById(
             user.id,
@@ -95,22 +125,12 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
           email_confirm: true,
           user_metadata: {
             name: formData.name,
-            role: formData.role // Store role in user_metadata
+            role: formData.role
           },
         });
 
         if (signUpError) {
-          console.error("Error creating user:", signUpError);
-          
-          // Show specific error message
-          toast({
-            title: "Erro ao criar usuário",
-            description: signUpError.message || "Ocorreu um erro ao criar o usuário.",
-            variant: "destructive",
-          });
-          
-          setIsLoading(false);
-          return;
+          throw signUpError;
         }
 
         toast({
@@ -119,6 +139,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
         });
       }
 
+      // Only call these after successful operation
       onSuccess();
       onClose();
     } catch (error: any) {
@@ -133,8 +154,15 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
     }
   };
 
+  // Prevent closing the dialog while loading
+  const handleCloseDialog = () => {
+    if (!isLoading) {
+      onClose();
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleCloseDialog}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>{user ? "Editar Usuário" : "Adicionar Usuário"}</DialogTitle>
@@ -148,6 +176,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
                 value={formData.name}
                 onChange={(e) => handleChange("name", e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
             <div className="grid gap-2">
@@ -158,6 +187,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
                 value={formData.email}
                 onChange={(e) => handleChange("email", e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
             <div className="grid gap-2">
@@ -171,6 +201,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
                 onChange={(e) => handleChange("password", e.target.value)}
                 required={!user}
                 minLength={6}
+                disabled={isLoading}
               />
             </div>
             <div className="grid gap-2">
@@ -178,6 +209,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
               <Select
                 value={formData.role}
                 onValueChange={(value) => handleChange("role", value)}
+                disabled={isLoading}
               >
                 <SelectTrigger id="role">
                   <SelectValue placeholder="Selecione uma função" />
@@ -190,11 +222,18 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={handleCloseDialog} disabled={isLoading}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Processando..." : user ? "Atualizar" : "Criar"}
+            <Button type="submit" disabled={isLoading} className="relative">
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  {user ? "Atualizando..." : "Criando..."}
+                </>
+              ) : (
+                user ? "Atualizar" : "Criar"
+              )}
             </Button>
           </DialogFooter>
         </form>

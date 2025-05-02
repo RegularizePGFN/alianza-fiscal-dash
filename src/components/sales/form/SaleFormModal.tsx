@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Sale, PaymentMethod } from "@/lib/types";
 import { getTodayISO } from "@/lib/utils";
@@ -56,21 +57,33 @@ export function SaleFormModal({
     initialData?.client_document || ""
   );
   
+  // Handle dialog close
+  const handleDialogClose = () => {
+    if (!isSubmitting) {
+      onCancel();
+    }
+  };
+  
   const handleSave = async () => {
     if (!user) {
       toast({
-        title: "Authentication error",
-        description: "You need to be logged in to record a sale",
+        title: "Erro de autenticação",
+        description: "Você precisa estar logado para registrar uma venda",
         variant: "destructive",
       });
       return;
     }
     
-    if (!validateSaleForm(clientName, clientPhone, clientDocument, amount)) return;
+    if (!validateSaleForm(clientName, clientPhone, clientDocument, amount)) {
+      toast({
+        title: "Formulário inválido",
+        description: "Verifique os campos obrigatórios",
+        variant: "destructive",
+      });
+      return;
+    }
     
     try {
-      console.log("Preparing sale data with user:", user.id, user.name);
-      
       const saleData = {
         salesperson_id: user.id,
         salesperson_name: user.name,
@@ -88,21 +101,21 @@ export function SaleFormModal({
     } catch (error) {
       console.error("Error in handleSave:", error);
       toast({
-        title: "Error saving",
-        description: "An error occurred while saving the sale. Please try again.",
+        title: "Erro ao salvar",
+        description: "Ocorreu um erro ao salvar a venda. Por favor, tente novamente.",
         variant: "destructive",
       });
     }
   };
   
   return (
-    <Dialog open={true} onOpenChange={() => !isSubmitting && onCancel()}>
+    <Dialog open={true} onOpenChange={handleDialogClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{initialData ? 'Edit Sale' : 'New Sale'}</DialogTitle>
+          <DialogTitle>{initialData ? 'Editar Venda' : 'Nova Venda'}</DialogTitle>
         </DialogHeader>
         
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto">
           <ClientFormFields
             clientName={clientName}
             setClientName={setClientName}
@@ -130,23 +143,24 @@ export function SaleFormModal({
         <DialogFooter>
           <Button 
             variant="outline" 
-            onClick={onCancel} 
+            onClick={handleDialogClose} 
             disabled={isSubmitting}
+            type="button"
           >
-            Cancel
+            Cancelar
           </Button>
           <Button 
-            type="submit" 
             onClick={handleSave} 
             disabled={isSubmitting}
+            type="button"
           >
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {initialData ? 'Saving...' : 'Adding...'}
+                {initialData ? 'Salvando...' : 'Adicionando...'}
               </>
             ) : (
-              initialData ? 'Save Changes' : 'Add Sale'
+              initialData ? 'Salvar Alterações' : 'Adicionar Venda'
             )}
           </Button>
         </DialogFooter>

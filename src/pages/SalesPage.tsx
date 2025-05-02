@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SalesTable } from "@/components/sales/SalesTable";
 import { Sale, UserRole } from "@/lib/types";
@@ -20,10 +20,17 @@ export default function SalesPage() {
   const [saleToDelete, setSaleToDelete] = useState<string | null>(null);
   const [isProcessingAction, setIsProcessingAction] = useState(false);
   
-  const handleAddSale = () => {
+  // Reset processing state if modal is closed externally
+  useEffect(() => {
+    if (!showSaleModal && !saleToDelete) {
+      setIsProcessingAction(false);
+    }
+  }, [showSaleModal, saleToDelete]);
+  
+  const handleAddSale = useCallback(() => {
     setEditingSale(null);
     setShowSaleModal(true);
-  };
+  }, []);
   
   const handleEdit = useCallback((sale: Sale) => {
     setEditingSale(sale);
@@ -34,11 +41,13 @@ export default function SalesPage() {
     setSaleToDelete(saleId);
   }, []);
   
-  const handleDeleteCancel = () => {
-    setSaleToDelete(null);
-  };
+  const handleDeleteCancel = useCallback(() => {
+    if (!isProcessingAction) {
+      setSaleToDelete(null);
+    }
+  }, [isProcessingAction]);
   
-  const handleDeleteSaleConfirm = async () => {
+  const handleDeleteSaleConfirm = useCallback(async () => {
     if (!saleToDelete) return;
     
     setIsProcessingAction(true);
@@ -46,20 +55,24 @@ export default function SalesPage() {
       const success = await handleDeleteSale(saleToDelete);
       if (success) {
         setSaleToDelete(null);
+        toast({
+          title: "Venda excluída",
+          description: "A venda foi excluída com sucesso.",
+        });
       }
     } catch (error) {
       console.error("Error deleting sale:", error);
       toast({
-        title: "Error",
-        description: "There was an error deleting the sale. Please try again.",
+        title: "Erro",
+        description: "Ocorreu um erro ao excluir a venda. Por favor, tente novamente.",
         variant: "destructive",
       });
     } finally {
       setIsProcessingAction(false);
     }
-  };
+  }, [saleToDelete, handleDeleteSale, toast]);
   
-  const handleSaveSaleForm = async (saleData: Omit<Sale, 'id'>) => {
+  const handleSaveSaleForm = useCallback(async (saleData: Omit<Sale, 'id'>) => {
     setIsProcessingAction(true);
     try {
       const success = await handleSaveSale(saleData, editingSale?.id);
@@ -67,18 +80,24 @@ export default function SalesPage() {
       if (success) {
         setShowSaleModal(false);
         setEditingSale(null);
+        toast({
+          title: editingSale ? "Venda atualizada" : "Venda adicionada",
+          description: editingSale 
+            ? "A venda foi atualizada com sucesso." 
+            : "Nova venda registrada com sucesso.",
+        });
       }
     } catch (error) {
       console.error("Error saving sale:", error);
       toast({
-        title: "Error",
-        description: "There was an error saving the sale. Please try again.",
+        title: "Erro",
+        description: "Ocorreu um erro ao salvar a venda. Por favor, tente novamente.",
         variant: "destructive",
       });
     } finally {
       setIsProcessingAction(false);
     }
-  };
+  }, [editingSale, handleSaveSale, toast]);
   
   const handleFormCancel = useCallback(() => {
     if (!isProcessingAction) {
@@ -87,7 +106,7 @@ export default function SalesPage() {
     }
   }, [isProcessingAction]);
 
-  const handleImportSales = async (file: File) => {
+  const handleImportSales = useCallback(async (file: File) => {
     try {
       setIsProcessingAction(true);
       toast({
@@ -109,25 +128,42 @@ export default function SalesPage() {
       let successCount = 0;
       const totalSales = salesData.length;
       
-      toast({
-        title: "Importando vendas",
-        description: `Importando ${totalSales} vendas...`,
-      });
+      // Import sales in batches to prevent UI freezing
+      const processSalesBatch = async (batchIndex: number, batchSize: number) => {
+        const startIndex = batchIndex * batchSize;
+        const endIndex = Math.min(startIndex + batchSize, totalSales);
+        
+        for (let i = startIndex; i < endIndex; i++) {
+          const success = await handleSaveSale(salesData[i]);
+          if (success) successCount++;
+        }
+        
+        // If there are more batches to process
+        if (endIndex < totalSales) {
+          // Update progress toast
+          toast({
+            title: "Importando vendas",
+            description: `Processando ${endIndex} de ${totalSales} vendas...`,
+          });
+          
+          // Process next batch with a small delay to allow UI updates
+          setTimeout(() => processSalesBatch(batchIndex + 1, batchSize), 100);
+        } else {
+          // All batches processed
+          fetchSales();
+          
+          toast({
+            title: "Importação concluída",
+            description: `${successCount} de ${totalSales} vendas importadas com sucesso.`,
+            variant: successCount === totalSales ? "default" : "destructive"
+          });
+          
+          setIsProcessingAction(false);
+        }
+      };
       
-      // Import sales one by one
-      for (const sale of salesData) {
-        const success = await handleSaveSale(sale);
-        if (success) successCount++;
-      }
-      
-      // Refresh sales data
-      fetchSales();
-      
-      toast({
-        title: "Importação concluída",
-        description: `${successCount} de ${totalSales} vendas importadas com sucesso.`,
-        variant: successCount === totalSales ? "default" : "destructive"
-      });
+      // Start processing in batches of 5
+      processSalesBatch(0, 5);
       
     } catch (error) {
       console.error("Error importing sales:", error);
@@ -136,10 +172,9 @@ export default function SalesPage() {
         description: "Houve um erro ao importar as vendas. Verifique o formato do arquivo.",
         variant: "destructive"
       });
-    } finally {
       setIsProcessingAction(false);
     }
-  };
+  }, [handleSaveSale, fetchSales, toast]);
   
   const isAdmin = user?.role === UserRole.ADMIN;
   const isSalesperson = user?.role === UserRole.SALESPERSON;
@@ -174,6 +209,7 @@ export default function SalesPage() {
           )}
         </div>
         
+        {/* Render modals only when needed */}
         {showSaleModal && (
           <SaleFormModal 
             initialData={editingSale}
@@ -183,12 +219,14 @@ export default function SalesPage() {
           />
         )}
         
-        <DeleteSaleDialog
-          isOpen={!!saleToDelete}
-          onClose={handleDeleteCancel}
-          onDelete={handleDeleteSaleConfirm}
-          isDeleting={isProcessingAction}
-        />
+        {saleToDelete && (
+          <DeleteSaleDialog
+            isOpen={!!saleToDelete}
+            onClose={handleDeleteCancel}
+            onDelete={handleDeleteSaleConfirm}
+            isDeleting={isProcessingAction}
+          />
+        )}
       </div>
     </AppLayout>
   );
