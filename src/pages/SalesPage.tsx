@@ -87,7 +87,6 @@ export default function SalesPage() {
   }, [isProcessingAction]);
   
   const isAdmin = user?.role === UserRole.ADMIN;
-  const isManager = user?.role === UserRole.MANAGER;
   const isSalesperson = user?.role === UserRole.SALESPERSON;
   
   return (
@@ -95,7 +94,6 @@ export default function SalesPage() {
       <div className="space-y-6">
         <SalesHeader 
           isAdmin={isAdmin} 
-          isManager={isManager} 
           onAddSale={handleAddSale} 
         />
         

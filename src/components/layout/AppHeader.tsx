@@ -28,8 +28,6 @@ export function AppHeader() {
     switch (role) {
       case UserRole.ADMIN:
         return 'Administrador';
-      case UserRole.MANAGER:
-        return 'Gestor';
       case UserRole.SALESPERSON:
         return 'Vendedor';
       default:

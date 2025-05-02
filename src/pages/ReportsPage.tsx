@@ -15,8 +15,8 @@ export default function ReportsPage() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
   const [dateFilter, setDateFilter] = useState<DateFilter | null>(null);
 
-  // Redirect if not admin or manager
-  if (user?.role !== UserRole.ADMIN && user?.role !== UserRole.MANAGER) {
+  // Redirect if not admin
+  if (user?.role !== UserRole.ADMIN) {
     return <Navigate to="/dashboard" />;
   }
 

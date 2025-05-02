@@ -1,15 +1,13 @@
 
 import { Button } from "@/components/ui/button";
 import { PlusCircle, FileUp, FileDown } from "lucide-react";
-import { UserRole } from "@/lib/types";
 
 interface SalesHeaderProps {
   isAdmin: boolean;
-  isManager: boolean;
   onAddSale: () => void;
 }
 
-export function SalesHeader({ isAdmin, isManager, onAddSale }: SalesHeaderProps) {
+export function SalesHeader({ isAdmin, onAddSale }: SalesHeaderProps) {
   return (
     <div className="flex justify-between items-start">
       <div>
@@ -25,7 +23,7 @@ export function SalesHeader({ isAdmin, isManager, onAddSale }: SalesHeaderProps)
           Nova Venda
         </Button>
         
-        {(isAdmin || isManager) && (
+        {isAdmin && (
           <>
             <Button variant="outline">
               <FileUp className="mr-2 h-4 w-4" />
