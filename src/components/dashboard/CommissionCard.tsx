@@ -1,6 +1,8 @@
 
 import { formatCurrency, formatPercentage, calculateCommission } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/contexts/auth';
+import { UserRole } from '@/lib/types';
 
 interface CommissionCardProps {
   totalSales: number;
@@ -8,6 +10,9 @@ interface CommissionCardProps {
 }
 
 export function CommissionCard({ totalSales, goalAmount }: CommissionCardProps) {
+  const { user } = useAuth();
+  const isAdmin = user?.role === UserRole.ADMIN;
+  
   const { rate: commissionRate, amount: commissionAmount } = calculateCommission(totalSales, goalAmount);
   const isGoalMet = totalSales >= goalAmount;
   
@@ -15,7 +20,7 @@ export function CommissionCard({ totalSales, goalAmount }: CommissionCardProps) 
     <Card className="h-full">
       <CardHeader>
         <CardTitle className="text-sm font-medium text-muted-foreground">
-          Comissão Projetada
+          {isAdmin ? 'Comissão Projetada da Equipe' : 'Comissão Projetada'}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -27,15 +32,28 @@ export function CommissionCard({ totalSales, goalAmount }: CommissionCardProps) 
         </div>
         
         <div className="text-sm text-muted-foreground">
-          {isGoalMet ? (
-            <p>
-              Parabéns! Você atingiu sua meta e está recebendo a taxa de comissão mais alta de {formatPercentage(commissionRate)}.
-            </p>
+          {isAdmin ? (
+            isGoalMet ? (
+              <p>
+                Parabéns! A equipe atingiu a meta e está recebendo a taxa de comissão mais alta de {formatPercentage(commissionRate)}.
+              </p>
+            ) : (
+              <p>
+                Taxa atual: {formatPercentage(commissionRate)}. 
+                A equipe precisa atingir R$ {goalAmount.toLocaleString('pt-BR')} em vendas para aumentar para 25%.
+              </p>
+            )
           ) : (
-            <p>
-              Taxa atual: {formatPercentage(commissionRate)}. 
-              Atinja R$ {goalAmount.toLocaleString('pt-BR')} em vendas para aumentar para 25%.
-            </p>
+            isGoalMet ? (
+              <p>
+                Parabéns! Você atingiu sua meta e está recebendo a taxa de comissão mais alta de {formatPercentage(commissionRate)}.
+              </p>
+            ) : (
+              <p>
+                Taxa atual: {formatPercentage(commissionRate)}. 
+                Atinja R$ {goalAmount.toLocaleString('pt-BR')} em vendas para aumentar para 25%.
+              </p>
+            )
           )}
         </div>
       </CardContent>

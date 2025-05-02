@@ -2,6 +2,8 @@
 import { formatCurrency, formatPercentage } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/auth';
+import { UserRole } from '@/lib/types';
 
 interface GoalProgressCardProps {
   currentValue: number;
@@ -9,6 +11,9 @@ interface GoalProgressCardProps {
 }
 
 export function GoalProgressCard({ currentValue, goalValue }: GoalProgressCardProps) {
+  const { user } = useAuth();
+  const isAdmin = user?.role === UserRole.ADMIN;
+  
   const percentage = Math.min((currentValue / goalValue) * 100, 200);
   const isGoalMet = currentValue >= goalValue;
   
@@ -16,7 +21,7 @@ export function GoalProgressCard({ currentValue, goalValue }: GoalProgressCardPr
     <Card className="h-full">
       <CardHeader>
         <CardTitle className="text-sm font-medium text-muted-foreground">
-          Meta Mensal
+          {isAdmin ? 'Meta Mensal da Equipe' : 'Meta Mensal'}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -47,7 +52,7 @@ export function GoalProgressCard({ currentValue, goalValue }: GoalProgressCardPr
           
           {isGoalMet ? (
             <span className="text-af-green-500 font-medium">
-              Meta atingida! 🎉
+              {isAdmin ? 'Meta da equipe atingida! 🎉' : 'Meta atingida! 🎉'}
             </span>
           ) : (
             <span className="text-muted-foreground">
