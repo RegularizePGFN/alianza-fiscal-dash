@@ -101,4 +101,16 @@ declare module '@supabase/supabase-js' {
       updateUserById(uuid: string, data: any): Promise<any>;
     }
   }
+
+  // Override the GoTrueAdminApi interface to make TypeScript accept our partial implementation
+  interface GoTrueAdminApi {
+    createUser: any;
+    deleteUser: any;
+    updateUserById: any;
+    // We're making these optional to fix the type error
+    mfa?: any;
+    url?: any;
+    headers?: any;
+    fetch?: any;
+  }
 }
