@@ -4,7 +4,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { SalesTable } from "@/components/sales/SalesTable";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, FileUp, FileDown } from "lucide-react";
-import { Sale, UserRole } from "@/lib/types";
+import { Sale, UserRole, PaymentMethod } from "@/lib/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -16,7 +16,7 @@ const mockSales: Sale[] = [
     salesperson_name: "Vendedor Silva",
     gross_amount: 5000,
     net_amount: 4800,
-    payment_method: "Boleto",
+    payment_method: PaymentMethod.BOLETO,
     installments: 1,
     sale_date: "2025-04-20",
   },
@@ -26,7 +26,7 @@ const mockSales: Sale[] = [
     salesperson_name: "Vendedor Silva",
     gross_amount: 3500,
     net_amount: 3300,
-    payment_method: "Pix",
+    payment_method: PaymentMethod.PIX,
     installments: 1,
     sale_date: "2025-04-25",
   },
@@ -36,7 +36,7 @@ const mockSales: Sale[] = [
     salesperson_name: "Vendedor Santos",
     gross_amount: 7000,
     net_amount: 6500,
-    payment_method: "Crédito",
+    payment_method: PaymentMethod.CREDIT,
     installments: 3,
     sale_date: "2025-04-28",
   },
@@ -46,7 +46,7 @@ const mockSales: Sale[] = [
     salesperson_name: "Vendedor Silva",
     gross_amount: 4200,
     net_amount: 4000,
-    payment_method: "Boleto",
+    payment_method: PaymentMethod.BOLETO,
     installments: 1,
     sale_date: "2025-04-30",
   },
@@ -56,7 +56,7 @@ const mockSales: Sale[] = [
     salesperson_name: "Vendedor Santos",
     gross_amount: 8500,
     net_amount: 8000,
-    payment_method: "Pix",
+    payment_method: PaymentMethod.PIX,
     installments: 1,
     sale_date: "2025-05-01",
   },

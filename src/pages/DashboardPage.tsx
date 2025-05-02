@@ -6,7 +6,7 @@ import { GoalProgressCard } from "@/components/dashboard/GoalProgressCard";
 import { CommissionCard } from "@/components/dashboard/CommissionCard";
 import { SalesTable } from "@/components/sales/SalesTable";
 import { useAuth } from "@/contexts/AuthContext";
-import { Sale, SalesSummary, UserRole } from "@/lib/types";
+import { Sale, SalesSummary, UserRole, PaymentMethod } from "@/lib/types";
 import { DEFAULT_GOAL_AMOUNT } from "@/lib/constants";
 import { getCurrentMonthDates } from "@/lib/utils";
 import { AreaChart, ShoppingCart, DollarSign } from "lucide-react";
@@ -19,7 +19,7 @@ const mockSales: Sale[] = [
     salesperson_name: "Vendedor Silva",
     gross_amount: 5000,
     net_amount: 4800,
-    payment_method: "Boleto",
+    payment_method: PaymentMethod.BOLETO,
     installments: 1,
     sale_date: "2025-04-20",
   },
@@ -29,7 +29,7 @@ const mockSales: Sale[] = [
     salesperson_name: "Vendedor Silva",
     gross_amount: 3500,
     net_amount: 3300,
-    payment_method: "Pix",
+    payment_method: PaymentMethod.PIX,
     installments: 1,
     sale_date: "2025-04-25",
   },
@@ -39,7 +39,7 @@ const mockSales: Sale[] = [
     salesperson_name: "Vendedor Santos",
     gross_amount: 7000,
     net_amount: 6500,
-    payment_method: "Crédito",
+    payment_method: PaymentMethod.CREDIT,
     installments: 3,
     sale_date: "2025-04-28",
   },
