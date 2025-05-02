@@ -1,5 +1,5 @@
 
-import { BellRing, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import { NotificationsPopover } from "@/components/notifications/NotificationsPopover";
 
 export function SettingsHeader() {

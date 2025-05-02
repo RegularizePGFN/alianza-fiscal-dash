@@ -44,6 +44,8 @@ export function useUsers() {
         // Use the mapUserRole function to convert string role to UserRole enum
         const userRole = mapUserRole(profile.role, email);
         
+        console.log(`Mapping user ${profile.name} with role ${profile.role} to ${userRole}`);
+        
         return {
           id: profile.id,
           name: profile.name || email.split('@')[0] || 'Usuário',

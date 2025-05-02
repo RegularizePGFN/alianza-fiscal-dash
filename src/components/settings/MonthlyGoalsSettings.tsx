@@ -35,11 +35,11 @@ export function MonthlyGoalsSettings() {
     try {
       setLoading(true);
 
-      // Fetch all users that are salespeople
+      // Fetch all users that are salespeople - using case insensitive comparison
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('role', 'vendedor');
+        .ilike('role', '%vendedor%');
 
       if (profilesError) {
         console.error('Error fetching profiles:', profilesError);
@@ -47,8 +47,23 @@ export function MonthlyGoalsSettings() {
       }
 
       console.log('Fetched profiles:', profiles);
-
+      
+      // Add debug log to check if any profiles match the role criteria
       if (!profiles || profiles.length === 0) {
+        console.log('No profiles found with vendedor role. Fetching all profiles to debug:');
+        
+        // Fetch all profiles to see what roles exist in the database
+        const { data: allProfiles, error: allProfilesError } = await supabase
+          .from('profiles')
+          .select('*');
+          
+        if (allProfilesError) {
+          console.error('Error fetching all profiles:', allProfilesError);
+        } else {
+          console.log('All profiles in database:', allProfiles);
+          console.log('Available roles:', allProfiles?.map(p => p.role));
+        }
+        
         setUsers([]);
         setLoading(false);
         return;
@@ -129,7 +144,7 @@ export function MonthlyGoalsSettings() {
             </div>
           ) : (
             <div className="space-y-2">
-              {users.filter(user => user.role.toLowerCase() === 'vendedor').map((user) => (
+              {users.filter(user => user.role.toLowerCase().includes('vendedor')).map((user) => (
                 <div key={user.id} className="flex justify-between items-center p-3 border rounded-md hover:bg-accent/10 transition-colors">
                   <div>
                     <div className="font-medium">{user.name}</div>
@@ -146,7 +161,7 @@ export function MonthlyGoalsSettings() {
                 </div>
               ))}
 
-              {users.filter(user => user.role.toLowerCase() === 'vendedor').length === 0 && (
+              {users.filter(user => user.role.toLowerCase().includes('vendedor')).length === 0 && (
                 <div className="text-center py-4 text-muted-foreground">
                   Nenhum vendedor encontrado no sistema.
                 </div>
