@@ -49,12 +49,13 @@ export const useSales = () => {
       }
       
       if (data) {
+        // Mapear os dados e garantir que todos os campos necessários estejam presentes
         const formattedSales: Sale[] = data.map((sale) => ({
           id: sale.id,
           salesperson_id: sale.salesperson_id,
           salesperson_name: sale.salesperson_name || 'Desconhecido',
           gross_amount: sale.gross_amount,
-          net_amount: sale.gross_amount,
+          net_amount: sale.gross_amount, // Usar o gross_amount como net_amount
           payment_method: convertToPaymentMethod(sale.payment_method),
           installments: sale.installments,
           sale_date: sale.sale_date,
@@ -174,7 +175,7 @@ export const useSales = () => {
             salesperson_id: data[0].salesperson_id,
             salesperson_name: data[0].salesperson_name,
             gross_amount: data[0].gross_amount,
-            net_amount: data[0].gross_amount,
+            net_amount: data[0].gross_amount,  // Usando o gross_amount como net_amount
             payment_method: saleData.payment_method,  // Mantém o enum
             installments: data[0].installments,
             sale_date: data[0].sale_date,

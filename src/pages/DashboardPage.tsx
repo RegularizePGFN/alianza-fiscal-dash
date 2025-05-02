@@ -13,6 +13,22 @@ import { AreaChart, ShoppingCart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+// Função auxiliar para converter string para o enum PaymentMethod
+const convertToPaymentMethod = (method: string): PaymentMethod => {
+  switch (method) {
+    case "Boleto":
+      return PaymentMethod.BOLETO;
+    case "Pix":
+      return PaymentMethod.PIX;
+    case "Crédito":
+      return PaymentMethod.CREDIT;
+    case "Débito":
+      return PaymentMethod.DEBIT;
+    default:
+      return PaymentMethod.CREDIT; // Valor padrão
+  }
+};
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -66,7 +82,7 @@ export default function DashboardPage() {
           goalQuery = goalQuery.eq('user_id', user.id);
         }
         
-        const { data: goalData, error: goalError } = await goalQuery.limit(1).single();
+        const { data: goalData, error: goalError } = await goalQuery.limit(1).maybeSingle();
         
         if (goalData && !goalError) {
           monthlyGoal = goalData.goal_amount;
@@ -123,22 +139,6 @@ export default function DashboardPage() {
     
     fetchSalesData();
   }, [user, toast]);
-
-  // Função para converter string para o enum PaymentMethod
-  const convertToPaymentMethod = (method: string): PaymentMethod => {
-    switch (method) {
-      case "Boleto":
-        return PaymentMethod.BOLETO;
-      case "Pix":
-        return PaymentMethod.PIX;
-      case "Crédito":
-        return PaymentMethod.CREDIT;
-      case "Débito":
-        return PaymentMethod.DEBIT;
-      default:
-        return PaymentMethod.CREDIT; // Valor padrão
-    }
-  };
 
   const { start: monthStart, end: monthEnd } = getCurrentMonthDates();
   const monthLabel = monthStart.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
