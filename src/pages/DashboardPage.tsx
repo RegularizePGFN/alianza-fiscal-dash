@@ -75,17 +75,33 @@ export default function DashboardPage() {
         }
         
         if (salesData) {
-          setSalesData(salesData);
+          // Mapear os dados do Supabase para o formato da interface Sale
+          const formattedSales: Sale[] = salesData.map(sale => ({
+            id: sale.id,
+            salesperson_id: sale.salesperson_id,
+            salesperson_name: sale.salesperson_name,
+            gross_amount: sale.gross_amount,
+            net_amount: sale.gross_amount, // Usamos o gross_amount como net_amount
+            payment_method: sale.payment_method,
+            installments: sale.installments,
+            sale_date: sale.sale_date,
+            created_at: sale.created_at,
+            client_name: sale.client_name,
+            client_phone: sale.client_phone,
+            client_document: sale.client_document
+          }));
+          
+          setSalesData(formattedSales);
           
           // Calcular resumo
-          const totalAmount = salesData.reduce((sum, sale) => sum + sale.gross_amount, 0);
+          const totalAmount = formattedSales.reduce((sum, sale) => sum + sale.gross_amount, 0);
           
           // Taxa de comissão depende se a meta foi atingida
           const commissionRate = totalAmount >= monthlyGoal ? 0.25 : 0.2;
           const projectedCommission = totalAmount * commissionRate;
           
           setSummary({
-            total_sales: salesData.length,
+            total_sales: formattedSales.length,
             total_gross: totalAmount,
             total_net: totalAmount,  // Mantendo isso para evitar quebrar alterações
             projected_commission: projectedCommission,
