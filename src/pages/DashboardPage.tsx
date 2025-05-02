@@ -11,7 +11,7 @@ import { DEFAULT_GOAL_AMOUNT } from "@/lib/constants";
 import { getCurrentMonthDates } from "@/lib/utils";
 import { AreaChart, ShoppingCart, DollarSign } from "lucide-react";
 
-// Mock sales data
+// Mock sales data - updated with client information
 const mockSales: Sale[] = [
   {
     id: "1",
@@ -22,6 +22,9 @@ const mockSales: Sale[] = [
     payment_method: PaymentMethod.BOLETO,
     installments: 1,
     sale_date: "2025-04-20",
+    client_name: "João Silva",
+    client_phone: "+5521999999999",
+    client_document: "123.456.789-00"
   },
   {
     id: "2",
@@ -32,6 +35,9 @@ const mockSales: Sale[] = [
     payment_method: PaymentMethod.PIX,
     installments: 1,
     sale_date: "2025-04-25",
+    client_name: "Maria Oliveira",
+    client_phone: "+5521888888888",
+    client_document: "987.654.321-00"
   },
   {
     id: "3",
@@ -42,6 +48,9 @@ const mockSales: Sale[] = [
     payment_method: PaymentMethod.CREDIT,
     installments: 3,
     sale_date: "2025-04-28",
+    client_name: "Empresa ABC Ltda",
+    client_phone: "+5521777777777",
+    client_document: "12.345.678/0001-90"
   },
 ];
 
