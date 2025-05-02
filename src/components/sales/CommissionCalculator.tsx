@@ -1,6 +1,4 @@
-
 import { useState, useEffect } from "react";
-import { calculateNetAmount } from "@/lib/utils";
 import { PaymentMethod } from "@/lib/types";
 import { PAYMENT_METHODS, INSTALLMENT_OPTIONS } from "@/lib/constants";
 import { formatCurrency } from "@/lib/utils";
@@ -22,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { DEFAULT_GOAL_AMOUNT } from "@/lib/constants";
 
 export function CommissionCalculator() {
   const [grossAmount, setGrossAmount] = useState<number>(1000);
@@ -31,19 +30,47 @@ export function CommissionCalculator() {
   const [netAmount, setNetAmount] = useState<number>(0);
   const [commissionBelow, setCommissionBelow] = useState<number>(0);
   const [commissionAbove, setCommissionAbove] = useState<number>(0);
+  const [simulatedTotal, setSimulatedTotal] = useState<number>(0);
   
   useEffect(() => {
-    const calculatedNetAmount = calculateNetAmount(grossAmount, paymentMethod, installments);
+    // Calculate net amount based on the correct fee rules
+    let calculatedNetAmount = 0;
+    
+    if (paymentMethod === PaymentMethod.CREDIT) {
+      // Credit card: 1.9% for single payment, 2.39% for installments
+      const feeRate = installments > 1 ? 0.0239 : 0.019;
+      calculatedNetAmount = grossAmount * (1 - feeRate);
+    } 
+    else if (paymentMethod === PaymentMethod.BOLETO || paymentMethod === PaymentMethod.PIX) {
+      // Boleto and PIX: 5.79% fee
+      calculatedNetAmount = grossAmount * (1 - 0.0579);
+    }
+    else if (paymentMethod === PaymentMethod.DEBIT) {
+      // Debit card: 1.89% + R$0.35 fixed fee
+      calculatedNetAmount = grossAmount * (1 - 0.0189) - 0.35;
+      calculatedNetAmount = Math.max(0, calculatedNetAmount); // Prevent negative values
+    }
+    
     setNetAmount(calculatedNetAmount);
     
-    // Calculate commission at different rates
-    setCommissionBelow(calculatedNetAmount * 0.2);
-    setCommissionAbove(calculatedNetAmount * 0.25);
-  }, [grossAmount, paymentMethod, installments]);
+    // Simulate monthly sales with this sale added
+    const monthlyTotal = simulatedTotal + calculatedNetAmount;
+    
+    // Calculate commission at different rates based on goal achievement
+    // Commission is always calculated on net amount (after fees)
+    const belowGoalRate = 0.20;
+    const aboveGoalRate = 0.25;
+    
+    // If simulated total is below goal, apply below goal rate
+    setCommissionBelow(calculatedNetAmount * belowGoalRate);
+    
+    // If simulated total is above goal, apply above goal rate
+    setCommissionAbove(calculatedNetAmount * aboveGoalRate);
+  }, [grossAmount, paymentMethod, installments, simulatedTotal]);
   
-  const handleGrossAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle simulated total change (monthly sales)
+  const handleSimulatedTotalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value;
-    setInputValue(rawValue);
     
     // Convert the input value to a number for calculations
     const numericValue = parseFloat(
@@ -53,16 +80,24 @@ export function CommissionCalculator() {
         .replace(/[^\d.]/g, '') // Remove all non-numeric characters except dot
     );
     
-    setGrossAmount(isNaN(numericValue) ? 0 : numericValue);
+    setSimulatedTotal(isNaN(numericValue) ? 0 : numericValue);
   };
   
-  const formatInputValue = (value: number) => {
-    return value.toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+  const handleGrossAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value;
+    setInputValue(rawValue);
+    
+    // Keep cursor position
+    const cursorPos = e.target.selectionStart;
+    
+    // Convert the input value to a number for calculations
+    const cleanedValue = rawValue
+      .replace(/\./g, '')  // Remove dots (thousands separators)
+      .replace(/,/g, '.')  // Replace comma with dot (for decimal)
+      .replace(/[^\d.]/g, ''); // Remove all non-numeric characters except dot
+    
+    const numericValue = parseFloat(cleanedValue);
+    setGrossAmount(isNaN(numericValue) ? 0 : numericValue);
   };
   
   const handlePaymentMethodChange = (value: string) => {
@@ -90,6 +125,7 @@ export function CommissionCalculator() {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         }));
+        setGrossAmount(numValue);
       } else {
         setInputValue('0,00');
         setGrossAmount(0);
@@ -99,6 +135,9 @@ export function CommissionCalculator() {
       setGrossAmount(0);
     }
   };
+  
+  // Check if goal is reached
+  const isGoalReached = (simulatedTotal + netAmount) >= DEFAULT_GOAL_AMOUNT;
   
   return (
     <Card>
@@ -166,6 +205,28 @@ export function CommissionCalculator() {
           )}
         </div>
         
+        <div className="space-y-2">
+          <Label htmlFor="simulatedTotal">Total de Vendas do Mês (líquido)</Label>
+          <div className="relative">
+            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
+              R$
+            </span>
+            <Input
+              id="simulatedTotal"
+              type="text"
+              value={simulatedTotal.toLocaleString('pt-BR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+              onChange={handleSimulatedTotalChange}
+              className="pl-10 text-right"
+            />
+          </div>
+          <div className="text-sm text-muted-foreground">
+            Meta: {formatCurrency(DEFAULT_GOAL_AMOUNT)}
+          </div>
+        </div>
+        
         <div className="rounded-md border">
           <Table>
             <TableHeader>
@@ -184,12 +245,40 @@ export function CommissionCalculator() {
                 <TableCell className="text-right">{formatCurrency(netAmount)}</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Comissão (abaixo da meta - 20%)</TableCell>
-                <TableCell className="text-right">{formatCurrency(commissionBelow)}</TableCell>
+                <TableCell className="font-medium">Taxa Aplicada</TableCell>
+                <TableCell className="text-right">
+                  {paymentMethod === PaymentMethod.CREDIT 
+                    ? `${installments > 1 ? '2,39%' : '1,90%'}`
+                    : paymentMethod === PaymentMethod.DEBIT 
+                      ? '1,89% + R$0,35'
+                      : '5,79%'
+                  }
+                </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Comissão (meta atingida - 25%)</TableCell>
-                <TableCell className="text-right">{formatCurrency(commissionAbove)}</TableCell>
+                <TableCell className="font-medium">Total Mensal (com esta venda)</TableCell>
+                <TableCell className="text-right">{formatCurrency(simulatedTotal + netAmount)}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium" colSpan={2}>
+                  <div className="font-bold mt-2">Comissão (calculada sobre o valor líquido):</div>
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className={`font-medium ${!isGoalReached ? 'font-bold' : ''}`}>
+                  Meta não atingida (20%)
+                </TableCell>
+                <TableCell className={`text-right ${!isGoalReached ? 'font-bold' : ''}`}>
+                  {formatCurrency(commissionBelow)}
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className={`font-medium ${isGoalReached ? 'font-bold' : ''}`}>
+                  Meta atingida (25%)
+                </TableCell>
+                <TableCell className={`text-right ${isGoalReached ? 'font-bold' : ''}`}>
+                  {formatCurrency(commissionAbove)}
+                </TableCell>
               </TableRow>
             </TableBody>
           </Table>

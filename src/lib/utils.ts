@@ -1,7 +1,6 @@
 
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { PAYMENT_FEES } from "./constants"
 import { PaymentMethod } from "./types"
 
 export function cn(...inputs: ClassValue[]) {
@@ -42,32 +41,26 @@ export function getCurrentMonthDates(): { start: Date; end: Date } {
   return { start, end };
 }
 
-// Calculate net amount after payment processor fees
+// Calculate net amount after payment processor fees - UPDATED
 export function calculateNetAmount(grossAmount: number, paymentMethod: PaymentMethod, installments: number = 1): number {
-  let fee;
+  let netAmount = 0;
   
-  if (paymentMethod === 'Crédito') {
-    if (installments === 1) {
-      fee = PAYMENT_FEES.CREDIT_1X;
-    } else if (installments >= 2 && installments <= 6) {
-      fee = PAYMENT_FEES.CREDIT_2X_6X;
-    } else if (installments >= 7 && installments <= 12) {
-      fee = PAYMENT_FEES.CREDIT_7X_12X;
-    } else {
-      fee = PAYMENT_FEES.CREDIT_13X_21X;
-    }
-  } else if (paymentMethod === 'Débito') {
-    fee = PAYMENT_FEES.DEBIT;
-  } else if (paymentMethod === 'Pix') {
-    fee = PAYMENT_FEES.PIX;
-  } else {
-    fee = PAYMENT_FEES.BOLETO;
+  // Apply the correct fee rules according to payment method
+  if (paymentMethod === PaymentMethod.CREDIT) {
+    // Credit card: 1.9% for single payment, 2.39% for installments
+    const feeRate = installments > 1 ? 0.0239 : 0.019;
+    netAmount = grossAmount * (1 - feeRate);
+  } 
+  else if (paymentMethod === PaymentMethod.BOLETO || paymentMethod === PaymentMethod.PIX) {
+    // Boleto and PIX: 5.79% fee
+    netAmount = grossAmount * (1 - 0.0579);
+  }
+  else if (paymentMethod === PaymentMethod.DEBIT) {
+    // Debit card: 1.89% + R$0.35 fixed fee
+    netAmount = grossAmount * (1 - 0.0189) - 0.35;
   }
   
-  const percentageFee = grossAmount * fee.percentage;
-  const netAmount = grossAmount - percentageFee - fee.fixed;
-  
-  return Math.max(0, netAmount);
+  return Math.max(0, netAmount); // Prevent negative values
 }
 
 // Calculate commission amount based on performance against goal
@@ -75,7 +68,9 @@ export function calculateCommission(netAmount: number, totalSales: number, goalA
   rate: number;
   amount: number;
 } {
+  // Commission rate depends on whether the goal was met (based on NET sales)
   const rate = totalSales >= goalAmount ? 0.25 : 0.2;
+  // Commission is always calculated on the net amount (after fees)
   const amount = netAmount * rate;
   
   return {
