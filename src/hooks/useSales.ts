@@ -3,52 +3,23 @@ import { useState, useEffect } from "react";
 import { Sale, UserRole, PaymentMethod } from "@/lib/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
-// Mock sales data - temporary until database is properly set up
-const mockSales: Sale[] = [
-  {
-    id: "1",
-    salesperson_id: "3",
-    salesperson_name: "Vendedor Silva",
-    gross_amount: 5000,
-    net_amount: 5000,
-    payment_method: PaymentMethod.BOLETO,
-    installments: 1,
-    sale_date: "2025-04-20",
-    created_at: "2025-04-20T14:30:00Z",
-    client_name: "João Silva",
-    client_phone: "+5521999999999",
-    client_document: "123.456.789-00"
-  },
-  {
-    id: "2",
-    salesperson_id: "3",
-    salesperson_name: "Vendedor Silva",
-    gross_amount: 3500,
-    net_amount: 3500,
-    payment_method: PaymentMethod.PIX,
-    installments: 1,
-    sale_date: "2025-04-25",
-    created_at: "2025-04-25T10:15:00Z",
-    client_name: "Maria Oliveira",
-    client_phone: "+5521888888888",
-    client_document: "987.654.321-00"
-  },
-  {
-    id: "3",
-    salesperson_id: "4",
-    salesperson_name: "Vendedor Santos",
-    gross_amount: 7000,
-    net_amount: 7000,
-    payment_method: PaymentMethod.CREDIT,
-    installments: 3,
-    sale_date: "2025-04-28",
-    created_at: "2025-04-28T16:45:00Z",
-    client_name: "Empresa ABC Ltda",
-    client_phone: "+5521777777777",
-    client_document: "12.345.678/0001-90"
-  },
-];
+// Função auxiliar para converter string para o enum PaymentMethod
+const convertToPaymentMethod = (method: string): PaymentMethod => {
+  switch (method) {
+    case "Boleto":
+      return PaymentMethod.BOLETO;
+    case "Pix":
+      return PaymentMethod.PIX;
+    case "Crédito":
+      return PaymentMethod.CREDIT;
+    case "Débito":
+      return PaymentMethod.DEBIT;
+    default:
+      return PaymentMethod.CREDIT; // Valor padrão
+  }
+};
 
 export const useSales = () => {
   const { user } = useAuth();
@@ -62,26 +33,16 @@ export const useSales = () => {
       
       if (!user) return;
       
-      // Use mock data instead of Supabase query until database is set up
-      const filteredSales = user.role === UserRole.SALESPERSON 
-        ? mockSales.filter(sale => sale.salesperson_id === user.id)
-        : mockSales;
-      
-      setSales(filteredSales);
-      console.log("Using mock sales data until database is properly set up");
-      
-      // Commented out Supabase query until database is properly set up
-      /*
+      // Usar dados do Supabase
       let query = supabase
         .from('sales')
-        .select('*, profiles(name)')
-        .order('sale_date', { ascending: false });
+        .select('*');
       
       if (user.role === UserRole.SALESPERSON) {
         query = query.eq('salesperson_id', user.id);
       }
       
-      const { data, error } = await query;
+      const { data, error } = await query.order('sale_date', { ascending: false });
       
       if (error) {
         throw error;
@@ -91,10 +52,10 @@ export const useSales = () => {
         const formattedSales: Sale[] = data.map((sale) => ({
           id: sale.id,
           salesperson_id: sale.salesperson_id,
-          salesperson_name: sale.profiles?.name || 'Desconhecido',
+          salesperson_name: sale.salesperson_name || 'Desconhecido',
           gross_amount: sale.gross_amount,
           net_amount: sale.gross_amount,
-          payment_method: sale.payment_method as PaymentMethod,
+          payment_method: convertToPaymentMethod(sale.payment_method),
           installments: sale.installments,
           sale_date: sale.sale_date,
           created_at: sale.created_at,
@@ -105,8 +66,7 @@ export const useSales = () => {
         
         setSales(formattedSales);
       }
-      */
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching sales:', error);
       toast({
         title: "Erro ao carregar vendas",
@@ -120,16 +80,7 @@ export const useSales = () => {
 
   const handleDeleteSale = async (saleId: string) => {
     try {
-      // Mock delete operation
-      setSales((prevSales) => prevSales.filter((sale) => sale.id !== saleId));
-      
-      toast({
-        title: "Venda excluída",
-        description: "A venda foi excluída com sucesso.",
-      });
-      
-      // Commented out Supabase operation
-      /*
+      // Excluir do Supabase
       const { error } = await supabase
         .from('sales')
         .delete()
@@ -138,91 +89,108 @@ export const useSales = () => {
       if (error) {
         throw error;
       }
-      */
-    } catch (error) {
+      
+      // Atualizar a lista local após a exclusão bem-sucedida
+      setSales((prevSales) => prevSales.filter((sale) => sale.id !== saleId));
+      
+      toast({
+        title: "Venda excluída",
+        description: "A venda foi excluída com sucesso.",
+      });
+      
+      return true;
+    } catch (error: any) {
       console.error('Error deleting sale:', error);
       toast({
         title: "Erro ao excluir venda",
-        description: "Não foi possível excluir a venda. Tente novamente mais tarde.",
+        description: error.message || "Não foi possível excluir a venda. Tente novamente mais tarde.",
         variant: "destructive",
       });
       return false;
     }
-    return true;
   };
   
   const handleSaveSale = async (saleData: Omit<Sale, 'id'>, editingSaleId?: string) => {
     try {
+      // Preparar o objeto para o Supabase (converter PaymentMethod enum para string)
+      const supabaseData = {
+        salesperson_id: saleData.salesperson_id,
+        salesperson_name: saleData.salesperson_name,
+        gross_amount: saleData.gross_amount,
+        payment_method: saleData.payment_method.toString(),
+        installments: saleData.installments,
+        sale_date: saleData.sale_date,
+        client_name: saleData.client_name,
+        client_phone: saleData.client_phone,
+        client_document: saleData.client_document
+      };
+      
       if (editingSaleId) {
-        // Mock update operation
-        setSales(prevSales => 
-          prevSales.map(sale => 
-            sale.id === editingSaleId 
-              ? { ...sale, ...saleData } 
-              : sale
-          )
-        );
-        
-        toast({
-          title: "Venda atualizada",
-          description: "A venda foi atualizada com sucesso.",
-        });
-        
-        // Commented out Supabase operation
-        /*
-        const { error } = await supabase
-          .from('sales')
-          .update({
-            gross_amount: saleData.gross_amount,
-            payment_method: saleData.payment_method,
-            installments: saleData.installments,
-            sale_date: saleData.sale_date,
-            client_name: saleData.client_name,
-            client_phone: saleData.client_phone,
-            client_document: saleData.client_document
-          })
-          .eq('id', editingSaleId);
-        
-        if (error) {
-          throw error;
-        }
-        */
-      } else {
-        // Mock add operation - generate a new ID
-        const newId = `temp-${Date.now()}`;
-        const newSale: Sale = {
-          id: newId,
-          ...saleData,
-          created_at: new Date().toISOString(),
-        };
-        
-        setSales(prevSales => [newSale, ...prevSales]);
-        
-        toast({
-          title: "Venda adicionada",
-          description: "Nova venda registrada com sucesso.",
-        });
-        
-        // Commented out Supabase operation
-        /*
+        // Atualizar venda existente
         const { data, error } = await supabase
           .from('sales')
-          .insert({
-            salesperson_id: saleData.salesperson_id,
-            gross_amount: saleData.gross_amount,
-            payment_method: saleData.payment_method,
-            installments: saleData.installments,
-            sale_date: saleData.sale_date,
-            client_name: saleData.client_name,
-            client_phone: saleData.client_phone,
-            client_document: saleData.client_document
-          })
+          .update(supabaseData)
+          .eq('id', editingSaleId)
           .select();
         
         if (error) {
           throw error;
         }
-        */
+        
+        if (data && data.length > 0) {
+          // Atualizar a lista local
+          setSales(prevSales => 
+            prevSales.map(sale => 
+              sale.id === editingSaleId 
+                ? { 
+                    ...sale, 
+                    ...saleData, 
+                    id: editingSaleId 
+                  } 
+                : sale
+            )
+          );
+          
+          toast({
+            title: "Venda atualizada",
+            description: "A venda foi atualizada com sucesso.",
+          });
+        }
+      } else {
+        // Inserir nova venda
+        const { data, error } = await supabase
+          .from('sales')
+          .insert(supabaseData)
+          .select();
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (data && data.length > 0) {
+          // Adicionar à lista local
+          const newSale: Sale = {
+            id: data[0].id,
+            salesperson_id: data[0].salesperson_id,
+            salesperson_name: data[0].salesperson_name,
+            gross_amount: data[0].gross_amount,
+            net_amount: data[0].gross_amount,
+            payment_method: saleData.payment_method,  // Mantém o enum
+            installments: data[0].installments,
+            sale_date: data[0].sale_date,
+            created_at: data[0].created_at,
+            client_name: data[0].client_name,
+            client_phone: data[0].client_phone,
+            client_document: data[0].client_document
+          };
+          
+          setSales(prevSales => [newSale, ...prevSales]);
+          
+          toast({
+            title: "Venda adicionada",
+            description: "Nova venda registrada com sucesso.",
+          });
+        }
       }
       return true;
     } catch (error: any) {

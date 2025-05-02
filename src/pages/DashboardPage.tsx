@@ -6,7 +6,7 @@ import { GoalProgressCard } from "@/components/dashboard/GoalProgressCard";
 import { CommissionCard } from "@/components/dashboard/CommissionCard";
 import { SalesTable } from "@/components/sales/SalesTable";
 import { useAuth } from "@/contexts/AuthContext";
-import { Sale, SalesSummary, UserRole } from "@/lib/types";
+import { Sale, SalesSummary, UserRole, PaymentMethod } from "@/lib/types";
 import { DEFAULT_GOAL_AMOUNT } from "@/lib/constants";
 import { getCurrentMonthDates } from "@/lib/utils";
 import { AreaChart, ShoppingCart } from "lucide-react";
@@ -82,7 +82,7 @@ export default function DashboardPage() {
             salesperson_name: sale.salesperson_name,
             gross_amount: sale.gross_amount,
             net_amount: sale.gross_amount, // Usamos o gross_amount como net_amount
-            payment_method: sale.payment_method,
+            payment_method: convertToPaymentMethod(sale.payment_method), // Convertendo string para enum
             installments: sale.installments,
             sale_date: sale.sale_date,
             created_at: sale.created_at,
@@ -123,6 +123,22 @@ export default function DashboardPage() {
     
     fetchSalesData();
   }, [user, toast]);
+
+  // Função para converter string para o enum PaymentMethod
+  const convertToPaymentMethod = (method: string): PaymentMethod => {
+    switch (method) {
+      case "Boleto":
+        return PaymentMethod.BOLETO;
+      case "Pix":
+        return PaymentMethod.PIX;
+      case "Crédito":
+        return PaymentMethod.CREDIT;
+      case "Débito":
+        return PaymentMethod.DEBIT;
+      default:
+        return PaymentMethod.CREDIT; // Valor padrão
+    }
+  };
 
   const { start: monthStart, end: monthEnd } = getCurrentMonthDates();
   const monthLabel = monthStart.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
