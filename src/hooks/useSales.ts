@@ -137,10 +137,14 @@ export const useSales = () => {
     try {
       console.log("Salvando venda:", editingSaleId ? "Editando" : "Nova", saleData);
       
+      // Verificar se o user.id é um UUID válido
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id)) {
+        console.log("ID do usuário não está no formato UUID, usando como está:", user.id);
+      }
+      
       // Preparar o objeto para o Supabase (converter PaymentMethod enum para string)
-      // Garantir que o UUID seja uma string válida
       const supabaseData = {
-        salesperson_id: user.id.toString(), // Garantir que é uma string válida
+        salesperson_id: user.id, // Usar o ID como está, sem tentativas de conversão
         salesperson_name: saleData.salesperson_name,
         gross_amount: saleData.gross_amount,
         payment_method: saleData.payment_method.toString(),
