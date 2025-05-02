@@ -9,7 +9,6 @@ import { SalesHeader } from "@/components/sales/SalesHeader";
 import { DeleteSaleDialog } from "@/components/sales/DeleteSaleDialog";
 import { useSales } from "@/hooks/useSales";
 import { useToast } from "@/hooks/use-toast";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export default function SalesPage() {
   const { user } = useAuth();
@@ -99,7 +98,9 @@ export default function SalesPage() {
         />
         
         {loading ? (
-          <LoadingSpinner size="md" />
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+          </div>
         ) : (
           <SalesTable
             sales={sales}

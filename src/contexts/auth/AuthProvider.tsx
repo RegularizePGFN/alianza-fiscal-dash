@@ -11,76 +11,13 @@ import { mapUserRole } from './utils';
 export function AuthProvider({ children }: AuthProviderProps) {
   const [authState, setAuthState] = useState(initialAuthState);
 
-  // Function to fetch and set user profile data
-  const fetchUserProfile = async (userId: string, email: string) => {
-    try {
-      console.log("Fetching profile for user:", userId);
-      
-      // Get user profile data from profiles table if available
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('name, email, role')
-        .eq('id', userId)
-        .single();
-      
-      if (profileError && profileError.code !== 'PGRST116') {
-        console.error("Error fetching user profile:", profileError);
-        return null;
-      }
-      
-      console.log("Profile data retrieved:", profileData);
-      console.log("User role from database:", profileData?.role);
-      
-      return {
-        id: userId,
-        name: profileData?.name || email?.split('@')[0] || 'Usuário',
-        email: profileData?.email || email,
-        role: mapUserRole(profileData?.role, email),
-      };
-    } catch (error) {
-      console.error("Error fetching user profile:", error);
-      return null;
-    }
-  };
-
   // Check for existing session on mount and listen for auth changes
   useEffect(() => {
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log("Auth state changed:", event, session?.user?.id);
-        
-        if (session) {
-          const email = session.user.email || '';
-          const userProfile = await fetchUserProfile(session.user.id, email);
-          
-          if (userProfile) {
-            console.log("Setting authenticated user with role:", userProfile.role);
-            setAuthState({
-              isAuthenticated: true,
-              user: userProfile,
-              isLoading: false,
-            });
-          } else {
-            // Fallback with admin email check
-            setAuthState({
-              isAuthenticated: true,
-              user: {
-                id: session.user.id,
-                name: session.user.email?.split('@')[0] || 'Usuário',
-                email: email,
-                role: mapUserRole(undefined, email),
-              },
-              isLoading: false,
-            });
-          }
-        } else {
-          setAuthState({
-            isAuthenticated: false,
-            user: null,
-            isLoading: false,
-          });
-        }
+        handleSession(session);
       }
     );
     
@@ -99,39 +36,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           return;
         }
         
-        if (session) {
-          console.log("Existing session found:", session.user.id);
-          const email = session.user.email || '';
-          const userProfile = await fetchUserProfile(session.user.id, email);
-          
-          if (userProfile) {
-            console.log("Setting authenticated user with role:", userProfile.role);
-            setAuthState({
-              isAuthenticated: true,
-              user: userProfile,
-              isLoading: false,
-            });
-          } else {
-            // Fallback with admin email check
-            setAuthState({
-              isAuthenticated: true,
-              user: {
-                id: session.user.id,
-                name: session.user.email?.split('@')[0] || 'Usuário',
-                email: email,
-                role: mapUserRole(undefined, email),
-              },
-              isLoading: false,
-            });
-          }
-        } else {
-          console.log("No session found");
-          setAuthState({
-            isAuthenticated: false,
-            user: null,
-            isLoading: false,
-          });
-        }
+        console.log("Existing session:", session?.user?.id);
+        handleSession(session);
       } catch (error) {
         console.error("Session restoration error:", error);
         setAuthState({
@@ -161,18 +67,46 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return;
     }
     
-    const email = session.user.email || '';
-    const userProfile = await fetchUserProfile(session.user.id, email);
-    
-    if (userProfile) {
-      console.log("Setting authenticated user with role:", userProfile.role);
+    try {
+      // Get user profile data from profiles table if available
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('name, email, role')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (profileError && profileError.code !== 'PGRST116') {
+        console.error("Error fetching user profile:", profileError);
+      }
+      
+      const email = profileData?.email || session.user.email || '';
+      
+      // Log the retrieved role for debugging
+      console.log("Profile data retrieved:", profileData);
+      console.log("User role from database:", profileData?.role);
+      
+      // Create user object from session and profile data
+      const authUser: User = {
+        id: session.user.id,
+        name: profileData?.name || session.user.email?.split('@')[0] || 'Usuário',
+        email: email,
+        role: mapUserRole(profileData?.role, email),
+      };
+      
+      console.log("Setting authenticated user:", authUser);
+      console.log("With role:", authUser.role);
+      
       setAuthState({
         isAuthenticated: true,
-        user: userProfile,
+        user: authUser,
         isLoading: false,
       });
-    } else {
+    } catch (error) {
+      console.error("Error handling session:", error);
+      
       // Fallback with admin email check
+      const email = session.user.email || '';
+      
       setAuthState({
         isAuthenticated: true,
         user: {
@@ -233,25 +167,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  // Function to refresh user data - this will help when user roles are updated
-  const refreshUser = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        await handleSession(session);
-      }
-    } catch (error) {
-      console.error("Error refreshing user data:", error);
-    }
-  };
-
   return (
     <AuthContext.Provider
       value={{
         ...authState,
         login,
         logout,
-        refreshUser,
       }}
     >
       {children}

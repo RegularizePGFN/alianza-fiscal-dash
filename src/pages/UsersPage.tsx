@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from '@/contexts/auth';
@@ -12,18 +12,13 @@ import { DeleteUserDialog } from "@/components/users/DeleteUserDialog";
 import { UserFormModal } from "@/components/users/UserFormModal";
 
 export default function UsersPage() {
-  const { user, refreshUser } = useAuth();
+  const { user } = useAuth();
   const { users, isLoading, error, fetchUsers } = useUsers();
   
   // Modal state
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  
-  // Refresh user data when page loads
-  useEffect(() => {
-    refreshUser();
-  }, []);
   
   // Redirect if not admin
   if (user?.role !== UserRole.ADMIN) {
@@ -58,8 +53,6 @@ export default function UsersPage() {
   const handleSuccess = () => {
     // Refetch users to update the list
     fetchUsers();
-    // Also refresh current user data in case their own role was changed
-    refreshUser();
   };
   
   return (
