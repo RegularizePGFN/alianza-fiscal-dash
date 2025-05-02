@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Session } from '@supabase/supabase-js';
-import { User } from '@/lib/types';
+import { User, UserRole } from '@/lib/types';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthContext, initialAuthState } from './AuthContext';
 import { AuthProviderProps } from './types';
@@ -81,6 +81,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       const email = profileData?.email || session.user.email || '';
       
+      // Log the retrieved role for debugging
+      console.log("Profile data retrieved:", profileData);
+      console.log("User role from database:", profileData?.role);
+      
       // Create user object from session and profile data
       const authUser: User = {
         id: session.user.id,
@@ -90,6 +94,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       };
       
       console.log("Setting authenticated user:", authUser);
+      console.log("With role:", authUser.role);
       
       setAuthState({
         isAuthenticated: true,

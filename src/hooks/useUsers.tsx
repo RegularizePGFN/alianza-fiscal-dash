@@ -42,6 +42,8 @@ export function useUsers() {
         throw profilesError;
       }
       
+      console.log("Profiles data:", profilesData);
+      
       // Merge auth users with profiles data
       const mergedUsers = authData.users.map(authUser => {
         // Find the matching profile or create an empty object with type annotation
@@ -50,11 +52,14 @@ export function useUsers() {
           role?: UserRole;
         };
         
+        console.log(`User ${authUser.email} profile:`, profile);
+        console.log(`Role from profile: ${profile.role}`);
+        
         return {
           id: authUser.id,
           name: profile.name || authUser.email?.split('@')[0] || 'Usuário',
           email: authUser.email || '',
-          role: profile.role as UserRole || UserRole.SALESPERSON,
+          role: profile.role || UserRole.SALESPERSON,
           created_at: authUser.created_at,
         };
       });
@@ -62,6 +67,7 @@ export function useUsers() {
       // Filter out admin users (those with emails in ADMIN_EMAILS)
       const filteredUsers = mergedUsers.filter(u => !ADMIN_EMAILS.includes(u.email.toLowerCase()));
       
+      console.log("Final users list:", filteredUsers);
       setUsers(filteredUsers);
     } catch (err: any) {
       console.error("Error fetching users:", err);

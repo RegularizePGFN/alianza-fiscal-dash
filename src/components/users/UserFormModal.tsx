@@ -56,7 +56,9 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
 
     try {
       if (user) {
-        // Update existing user
+        // Update existing user - First update the profile with role
+        console.log("Updating user role to:", formData.role); // Debug log
+        
         const { error: updateError } = await supabase
           .from("profiles")
           .update({
@@ -65,7 +67,10 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
           })
           .eq("id", user.id);
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error("Error updating profile:", updateError);
+          throw updateError;
+        }
 
         // Update email if changed (requires auth API)
         if (formData.email !== user.email) {
@@ -99,6 +104,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
           email_confirm: true,
           user_metadata: {
             name: formData.name,
+            role: formData.role // Store role in user_metadata as well
           },
         });
 
@@ -116,14 +122,22 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
           return;
         }
 
-        // Update role (profile should be created via trigger)
+        // Update role in profiles table
         if (signUpData.user) {
+          console.log("Creating user with role:", formData.role); // Debug log
+          
           const { error: roleError } = await supabase
             .from("profiles")
-            .update({ role: formData.role })
+            .update({ 
+              role: formData.role,
+              name: formData.name
+            })
             .eq("id", signUpData.user.id);
 
-          if (roleError) throw roleError;
+          if (roleError) {
+            console.error("Error setting user role:", roleError);
+            throw roleError;
+          }
         }
 
         toast({
