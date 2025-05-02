@@ -25,7 +25,7 @@ export const validateSaleForm = (
     return false;
   }
   
-  if (!/^\+[0-9]{10,15}$/.test(clientPhone)) {
+  if (!/^\+[0-9]+$/.test(clientPhone)) {
     toast({
       title: "Validation error",
       description: "Invalid phone format. Use the international format +5521999999999",

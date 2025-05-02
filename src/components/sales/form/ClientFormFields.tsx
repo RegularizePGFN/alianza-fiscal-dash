@@ -37,20 +37,7 @@ export function ClientFormFields({
       return;
     }
     
-    // Otherwise, format it as needed
-    if (value.startsWith('+55')) {
-      // Brazilian format
-      if (value.length > 13) {
-        // +55 21 99999-9999 format (mobile)
-        value = value.slice(0, 13);
-      }
-    } else {
-      // Generic international format, limit to reasonable length
-      if (value.length > 16) {
-        value = value.slice(0, 16);
-      }
-    }
-    
+    // No length restrictions - keep all digits after the + sign
     setClientPhone(value);
   };
   
