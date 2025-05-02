@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -56,31 +55,22 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
 
     try {
       if (user) {
-        // Update existing user - First update the profile with role
+        // Update existing user
         console.log("Updating user role to:", formData.role); // Debug log
         
-        const { error: updateError } = await supabase
-          .from("profiles")
-          .update({
-            name: formData.name,
-            role: formData.role,
-          })
-          .eq("id", user.id);
-
-        if (updateError) {
-          console.error("Error updating profile:", updateError);
-          throw updateError;
-        }
-
-        // Update email if changed (requires auth API)
-        if (formData.email !== user.email) {
-          const { error: authUpdateError } = await supabase.auth.admin.updateUserById(
-            user.id,
-            { email: formData.email }
-          );
-          
-          if (authUpdateError) throw authUpdateError;
-        }
+        // Update email and user metadata (including role) if changed
+        const { error: authUpdateError } = await supabase.auth.admin.updateUserById(
+          user.id,
+          { 
+            email: formData.email, 
+            user_metadata: {
+              name: formData.name,
+              role: formData.role // Important: Include role in user_metadata
+            }
+          }
+        );
+        
+        if (authUpdateError) throw authUpdateError;
 
         // Update password if provided
         if (formData.password) {
@@ -104,7 +94,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
           email_confirm: true,
           user_metadata: {
             name: formData.name,
-            role: formData.role // Store role in user_metadata as well
+            role: formData.role // Store role in user_metadata
           },
         });
 
@@ -120,24 +110,6 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
           
           setIsLoading(false);
           return;
-        }
-
-        // Update role in profiles table
-        if (signUpData.user) {
-          console.log("Creating user with role:", formData.role); // Debug log
-          
-          const { error: roleError } = await supabase
-            .from("profiles")
-            .update({ 
-              role: formData.role,
-              name: formData.name
-            })
-            .eq("id", signUpData.user.id);
-
-          if (roleError) {
-            console.error("Error setting user role:", roleError);
-            throw roleError;
-          }
         }
 
         toast({
