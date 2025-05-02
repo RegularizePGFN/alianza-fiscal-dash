@@ -42,6 +42,10 @@ export default function DashboardPage() {
     goal_amount: DEFAULT_GOAL_AMOUNT,
     goal_percentage: 0,
   });
+  const [trends, setTrends] = useState({
+    totalSalesTrend: { value: 0, isPositive: true },
+    averageSaleTrend: { value: 0, isPositive: true },
+  });
 
   useEffect(() => {
     const fetchSalesData = async () => {
@@ -52,10 +56,30 @@ export default function DashboardPage() {
       try {
         console.log("Buscando dados de vendas para", user.name);
         
-        // Consulta direta sem filtros - RLS está desativado agora
+        // Get current month dates
+        const { start: currentMonthStart, end: currentMonthEnd } = getCurrentMonthDates();
+        
+        // Calculate previous month dates
+        const prevMonthStart = new Date(currentMonthStart);
+        prevMonthStart.setMonth(prevMonthStart.getMonth() - 1);
+        const prevMonthEnd = new Date(currentMonthStart);
+        prevMonthEnd.setDate(prevMonthEnd.getDate() - 1);
+        
+        // Format dates for Supabase queries
+        const currentStartStr = currentMonthStart.toISOString().split('T')[0];
+        const currentEndStr = currentMonthEnd.toISOString().split('T')[0];
+        const prevStartStr = prevMonthStart.toISOString().split('T')[0];
+        const prevEndStr = prevMonthEnd.toISOString().split('T')[0];
+        
+        console.log("Current month period:", currentStartStr, "to", currentEndStr);
+        console.log("Previous month period:", prevStartStr, "to", prevEndStr);
+        
+        // Fetch current month sales
         const { data: salesData, error } = await supabase
           .from('sales')
           .select('*')
+          .gte('sale_date', currentStartStr)
+          .lte('sale_date', currentEndStr)
           .order('sale_date', { ascending: false });
         
         if (error) {
@@ -63,13 +87,30 @@ export default function DashboardPage() {
           throw error;
         }
         
-        console.log("Dados recebidos do Supabase:", salesData?.length || 0, "registros");
+        // Fetch previous month sales for trend calculation
+        const { data: prevMonthData, error: prevMonthError } = await supabase
+          .from('sales')
+          .select('*')
+          .gte('sale_date', prevStartStr)
+          .lte('sale_date', prevEndStr);
+        
+        if (prevMonthError) {
+          console.error("Erro ao buscar dados do mês anterior:", prevMonthError);
+          throw prevMonthError;
+        }
+        
+        console.log("Dados recebidos do Supabase (mês atual):", salesData?.length || 0, "registros");
+        console.log("Dados recebidos do Supabase (mês anterior):", prevMonthData?.length || 0, "registros");
         
         // Filtramos no lado do cliente apenas se necessário
-        let filteredData = salesData || [];
+        let filteredCurrentData = salesData || [];
+        let filteredPrevData = prevMonthData || [];
+        
         if (user.role === UserRole.SALESPERSON) {
-          filteredData = filteredData.filter(sale => sale.salesperson_id === user.id);
-          console.log("Dados filtrados para vendedor:", filteredData.length, "registros");
+          filteredCurrentData = filteredCurrentData.filter(sale => sale.salesperson_id === user.id);
+          filteredPrevData = filteredPrevData.filter(sale => sale.salesperson_id === user.id);
+          console.log("Dados filtrados para vendedor (mês atual):", filteredCurrentData.length, "registros");
+          console.log("Dados filtrados para vendedor (mês anterior):", filteredPrevData.length, "registros");
         }
         
         // Buscar meta do usuário ou do time
@@ -94,9 +135,46 @@ export default function DashboardPage() {
           console.log("Nenhuma meta encontrada, usando valor padrão:", DEFAULT_GOAL_AMOUNT);
         }
         
-        if (filteredData.length > 0) {
+        // Calculate trend percentages
+        let totalSalesTrend = { value: 0, isPositive: true };
+        let averageSaleTrend = { value: 0, isPositive: true };
+        
+        const currentTotalAmount = filteredCurrentData.reduce((sum, sale) => sum + sale.gross_amount, 0);
+        const prevTotalAmount = filteredPrevData.reduce((sum, sale) => sum + sale.gross_amount, 0);
+        
+        const currentAvgAmount = filteredCurrentData.length > 0 
+          ? currentTotalAmount / filteredCurrentData.length 
+          : 0;
+          
+        const prevAvgAmount = filteredPrevData.length > 0 
+          ? prevTotalAmount / filteredPrevData.length 
+          : 0;
+        
+        // Calculate percentage changes
+        if (prevTotalAmount > 0) {
+          const totalChange = ((currentTotalAmount - prevTotalAmount) / prevTotalAmount) * 100;
+          totalSalesTrend = {
+            value: Math.abs(Math.round(totalChange)),
+            isPositive: totalChange >= 0
+          };
+        }
+        
+        if (prevAvgAmount > 0) {
+          const avgChange = ((currentAvgAmount - prevAvgAmount) / prevAvgAmount) * 100;
+          averageSaleTrend = {
+            value: Math.abs(Math.round(avgChange)),
+            isPositive: avgChange >= 0
+          };
+        }
+        
+        console.log("Trend calculations:", {
+          totalSalesTrend,
+          averageSaleTrend
+        });
+        
+        if (filteredCurrentData.length > 0) {
           // Mapear os dados do Supabase para o formato da interface Sale
-          const formattedSales: Sale[] = filteredData.map(sale => ({
+          const formattedSales: Sale[] = filteredCurrentData.map(sale => ({
             id: sale.id,
             salesperson_id: sale.salesperson_id,
             salesperson_name: sale.salesperson_name || "Sem nome",
@@ -130,11 +208,17 @@ export default function DashboardPage() {
             goal_percentage: Math.min(totalAmount / monthlyGoal, 2),
           });
           
+          setTrends({
+            totalSalesTrend,
+            averageSaleTrend
+          });
+          
           console.log("Resumo calculado:", {
             total_sales: formattedSales.length,
             total_gross: totalAmount,
             goal_amount: monthlyGoal,
             goal_percentage: Math.min(totalAmount / monthlyGoal, 2),
+            trends: { totalSalesTrend, averageSaleTrend }
           });
         } else {
           console.log("Nenhuma venda encontrada");
@@ -147,6 +231,10 @@ export default function DashboardPage() {
             projected_commission: 0,
             goal_amount: monthlyGoal,
             goal_percentage: 0,
+          });
+          setTrends({
+            totalSalesTrend: { value: 0, isPositive: true },
+            averageSaleTrend: { value: 0, isPositive: true }
           });
         }
       } catch (error: any) {
@@ -189,7 +277,7 @@ export default function DashboardPage() {
                 amount={summary.total_gross}
                 description={`${summary.total_sales} ${summary.total_sales === 1 ? 'venda' : 'vendas'} no período`}
                 icon={<ShoppingCart className="h-4 w-4" />}
-                trend={{ value: 12, isPositive: true }}
+                trend={trends.totalSalesTrend}
               />
 
               <SalesSummaryCard
@@ -197,7 +285,7 @@ export default function DashboardPage() {
                 amount={summary.total_sales ? summary.total_gross / summary.total_sales : 0}
                 description="Valor médio por transação"
                 icon={<AreaChart className="h-4 w-4" />}
-                trend={{ value: 3, isPositive: true }}
+                trend={trends.averageSaleTrend}
               />
             </div>
 

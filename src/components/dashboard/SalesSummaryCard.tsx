@@ -48,10 +48,10 @@ export function SalesSummaryCard({
       </CardHeader>
       <CardContent>
         {description && <p className="text-xs text-muted-foreground">{description}</p>}
-        {trend && (
+        {trend && trend.value > 0 && (
           <div className={cn(
             "mt-2 text-xs font-medium",
-            trend.isPositive ? "text-af-green-500" : "text-destructive"
+            trend.isPositive ? "text-green-500" : "text-destructive"
           )}>
             <span>
               {trend.isPositive ? "↑" : "↓"} {Math.abs(trend.value)}%
