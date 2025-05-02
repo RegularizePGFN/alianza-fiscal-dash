@@ -102,15 +102,24 @@ declare module '@supabase/supabase-js' {
     }
   }
 
-  // Override the GoTrueAdminApi interface to make TypeScript accept our partial implementation
+  // Partial implementation of GoTrueAdminApi
+  // We're only implementing the methods we need and adding ? to the rest
   interface GoTrueAdminApi {
+    // Our implemented methods
     createUser: any;
     deleteUser: any;
     updateUserById: any;
-    // We're making these optional to fix the type error
+    
+    // Required by the type but not implemented by us
+    signOut?: any;
+    inviteUserByEmail?: any;
+    generateLink?: any;
+    listUsers?: any;
+    getUserById?: any;
     mfa?: any;
     url?: any;
     headers?: any;
     fetch?: any;
+    resetPasswordForEmail?: any;
   }
 }
