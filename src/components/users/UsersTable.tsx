@@ -48,6 +48,17 @@ export function UsersTable({
         return null;
     }
   };
+  
+  const getRoleText = (role: UserRole): string => {
+    switch (role) {
+      case UserRole.ADMIN:
+        return "Administrador";
+      case UserRole.SALESPERSON:
+        return "Vendedor";
+      default:
+        return "Desconhecido";
+    }
+  };
 
   if (isLoading) {
     return (
@@ -91,7 +102,7 @@ export function UsersTable({
             <TableRow key={user.id}>
               <TableCell>{user.name}</TableCell>
               <TableCell>{user.email}</TableCell>
-              <TableCell>{getRoleBadge(user.role)}</TableCell>
+              <TableCell>{getRoleText(user.role)}</TableCell>
               <TableCell>{user.created_at && formatDate(user.created_at)}</TableCell>
               <TableCell>
                 <DropdownMenu>
