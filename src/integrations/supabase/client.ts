@@ -6,6 +6,8 @@ import { AdminUserAttributes, AuthError, GenerateLinkParams, GenerateLinkRespons
 
 const SUPABASE_URL = "https://sbxltdbnqixucjoognfj.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNieGx0ZGJucWl4dWNqb29nbmZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNDQxMDksImV4cCI6MjA2MTcyMDEwOX0.ZsH2LX5JVFk7tCC0gGmjP1ZrVlQJ78nSUlMqxW7L1rw";
+// The service role key has more permissions for admin operations
+const SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNieGx0ZGJucWl4dWNqb29nbmZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NjE0NDEwOSwiZXhwIjoyMDYxNzIwMTA5fQ.mJQoR0QEW36uVxPanpjweGt3sGM3lfBZWqBqmnX-Hv4";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
@@ -22,26 +24,33 @@ export const supabase = createClient<Database>(
 );
 
 // Implementation for admin API functions
-// These functions use the appropriate Supabase API endpoints
+// These functions use the appropriate Supabase API endpoints and the service role key
 const adminApiHeaders = {
-  apikey: SUPABASE_PUBLISHABLE_KEY,
-  Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+  apikey: SUPABASE_SERVICE_ROLE_KEY,
+  Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
   "Content-Type": "application/json"
 };
 
 // Create a proper AuthError with all required properties
 const createAuthError = (message: string, status: number): AuthError => {
-  return {
-    message,
-    status,
-    name: 'AuthApiError',
-    code: `${status}`,
-    __isAuthError: true
-  };
+  const error = new Error(message) as AuthError;
+  error.message = message;
+  error.status = status;
+  error.name = 'AuthApiError';
+  error.code = `${status}`;
+  
+  // Since __isAuthError is protected, we need to use a workaround
+  Object.defineProperty(error, '__isAuthError', {
+    value: true,
+    enumerable: false, // Make it non-enumerable like a protected property
+    configurable: false
+  });
+  
+  return error;
 };
 
 // Admin API implementation
-const adminApi = {
+const adminApi: Partial<GoTrueAdminApi> = {
   // Implemented methods
   async deleteUser(userId: string): Promise<UserResponse> {
     const response = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
@@ -62,46 +71,71 @@ const adminApi = {
   },
 
   async createUser(attributes: AdminUserAttributes): Promise<UserResponse> {
-    const response = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
-      method: 'POST',
-      headers: adminApiHeaders,
-      body: JSON.stringify(attributes)
-    });
-    
-    const responseData = await response.json();
-    
-    if (!response.ok) {
+    try {
+      const response = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
+        method: 'POST',
+        headers: adminApiHeaders,
+        body: JSON.stringify(attributes)
+      });
+      
+      const responseData = await response.json();
+      
+      if (!response.ok) {
+        // Handle specific error for duplicate email
+        if (response.status === 400 && responseData.msg?.includes('already exists')) {
+          const error = createAuthError(
+            'Este e-mail já está cadastrado no sistema',
+            response.status
+          );
+          return { data: { user: null }, error };
+        }
+        
+        const error = createAuthError(
+          responseData.msg || responseData.message || 'Failed to create user',
+          response.status
+        );
+        return { data: { user: null }, error };
+      }
+      
+      return { data: { user: responseData }, error: null };
+    } catch (e) {
       const error = createAuthError(
-        responseData.message || 'Failed to create user',
-        response.status
+        e instanceof Error ? e.message : 'Unknown error creating user',
+        500
       );
       return { data: { user: null }, error };
     }
-    
-    return { data: { user: responseData }, error: null };
   },
 
   async updateUserById(uid: string, attributes: AdminUserAttributes): Promise<UserResponse> {
-    const response = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${uid}`, {
-      method: 'PUT',
-      headers: adminApiHeaders,
-      body: JSON.stringify(attributes)
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
+    try {
+      const response = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${uid}`, {
+        method: 'PUT',
+        headers: adminApiHeaders,
+        body: JSON.stringify(attributes)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        const error = createAuthError(
+          errorData.msg || errorData.message || 'Failed to update user',
+          response.status
+        );
+        return { data: { user: null }, error };
+      }
+      
+      const userData = await response.json();
+      return { data: { user: userData }, error: null };
+    } catch (e) {
       const error = createAuthError(
-        errorData.message || 'Failed to update user',
-        response.status
+        e instanceof Error ? e.message : 'Unknown error updating user',
+        500
       );
       return { data: { user: null }, error };
     }
-    
-    const userData = await response.json();
-    return { data: { user: userData }, error: null };
   },
 
-  // Stub methods
+  // Stub methods with proper return types
   async _listFactors(): Promise<any> { 
     return { data: null, error: null }; 
   },
@@ -119,7 +153,15 @@ const adminApi = {
   },
   
   async generateLink(): Promise<GenerateLinkResponse> { 
-    return { data: { properties: {}, user: null }, error: null }; 
+    // Create empty properties object matching the expected structure
+    const emptyProps = {
+      action_link: '',
+      email_otp: '',
+      hashed_token: '',
+      redirect_to: '',
+      verification_type: '' as any
+    };
+    return { data: { properties: emptyProps, user: null }, error: null }; 
   },
   
   async listUsers(): Promise<{ data: { users: User[], aud: string, total_count: number, next_page: string }, error: AuthError | null }> { 
@@ -132,9 +174,12 @@ const adminApi = {
   
   async resetPasswordForEmail(): Promise<{ data: {}; error: AuthError | null }> { 
     return { data: {}, error: null }; 
-  },
-  
-  // Properties
+  }
+};
+
+// Add required properties
+const adminApiWithProps = {
+  ...adminApi,
   mfa: {} as GoTrueAdminMFAApi,
   url: SUPABASE_URL,
   headers: adminApiHeaders,
@@ -143,7 +188,7 @@ const adminApi = {
 
 // Attach admin methods to the Supabase auth client using proper type casting
 // We need to cast to unknown first, then to GoTrueAdminApi to avoid TypeScript errors
-supabase.auth.admin = adminApi as unknown as GoTrueAdminApi;
+supabase.auth.admin = adminApiWithProps as unknown as GoTrueAdminApi;
 
 // Add custom type for auth admin API
 declare module '@supabase/supabase-js' {

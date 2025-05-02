@@ -102,7 +102,19 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
           },
         });
 
-        if (signUpError) throw signUpError;
+        if (signUpError) {
+          console.error("Error creating user:", signUpError);
+          
+          // Show specific error message
+          toast({
+            title: "Erro ao criar usuário",
+            description: signUpError.message || "Ocorreu um erro ao criar o usuário.",
+            variant: "destructive",
+          });
+          
+          setIsLoading(false);
+          return;
+        }
 
         // Update role (profile should be created via trigger)
         if (signUpData.user) {
