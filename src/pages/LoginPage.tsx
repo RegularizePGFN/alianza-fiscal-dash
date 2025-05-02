@@ -5,7 +5,11 @@ import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function LoginPage() {
   const { isAuthenticated, login } = useAuth();
@@ -13,48 +17,88 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
+  const [registerEmail, setRegisterEmail] = useState('');
+  const [registerPassword, setRegisterPassword] = useState('');
+  const [registerName, setRegisterName] = useState('');
+  const [registerError, setRegisterError] = useState('');
+  const [loginError, setLoginError] = useState('');
 
   // Redirect if already logged in
   if (isAuthenticated) {
     return <Navigate to="/" replace />;
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setLoginError('');
 
     try {
       const success = await login(email, password);
       
       if (!success) {
-        toast({
-          title: "Falha no login",
-          description: "Credenciais inválidas. Verifique seu e-mail e senha.",
-          variant: "destructive",
-        });
+        setLoginError('Credenciais inválidas. Verifique seu e-mail e senha.');
       }
     } catch (error) {
       console.error('Login error:', error);
-      toast({
-        title: "Erro",
-        description: "Ocorreu um erro durante o login. Tente novamente.",
-        variant: "destructive",
-      });
+      setLoginError('Ocorreu um erro durante o login. Tente novamente.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const demoLogins = [
-    { email: 'admin@aliancafiscal.com', role: 'Administrador' },
-    { email: 'gestor@aliancafiscal.com', role: 'Gestor' },
-    { email: 'silva@aliancafiscal.com', role: 'Vendedor' },
-  ];
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setRegisterError('');
 
-  const handleDemoLogin = async (email: string) => {
-    setEmail(email);
-    setPassword('senha123');
-    await login(email, 'senha123');
+    try {
+      // Validation
+      if (!registerEmail || !registerPassword || !registerName) {
+        setRegisterError('Todos os campos são obrigatórios');
+        setIsLoading(false);
+        return;
+      }
+
+      if (registerPassword.length < 6) {
+        setRegisterError('A senha deve ter pelo menos 6 caracteres');
+        setIsLoading(false);
+        return;
+      }
+
+      // Register with Supabase
+      const { data, error } = await supabase.auth.signUp({
+        email: registerEmail,
+        password: registerPassword,
+        options: {
+          data: {
+            name: registerName,
+          }
+        }
+      });
+
+      if (error) {
+        console.error('Registration error:', error);
+        setRegisterError(error.message || 'Erro ao registrar usuário');
+        return;
+      }
+
+      toast({
+        title: "Cadastro realizado",
+        description: "Sua conta foi criada com sucesso. Você já pode fazer login.",
+      });
+      
+      // Switch back to login view
+      setShowRegister(false);
+      setEmail(registerEmail);
+      setPassword(registerPassword);
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      setRegisterError(error.message || 'Erro ao registrar usuário');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -66,51 +110,132 @@ export default function LoginPage() {
         </div>
         
         <div className="bg-white shadow-md rounded-lg p-8">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu@email.com"
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="********"
-                required
-              />
-            </div>
-            
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Entrando..." : "Entrar"}
-            </Button>
-          </form>
-          
-          <div className="mt-8">
-            <p className="text-sm text-center text-gray-600 mb-4">Demo - clique para acessar como:</p>
-            <div className="flex flex-col space-y-2">
-              {demoLogins.map((item) => (
-                <Button
-                  key={item.email}
-                  variant="outline"
-                  onClick={() => handleDemoLogin(item.email)}
-                  className="text-sm"
-                >
-                  {item.role}
+          {!showRegister ? (
+            <>
+              <h2 className="text-xl font-semibold mb-4">Login</h2>
+              
+              {loginError && (
+                <Alert variant="destructive" className="mb-4">
+                  <ExclamationTriangleIcon className="h-4 w-4" />
+                  <AlertTitle>Erro</AlertTitle>
+                  <AlertDescription>{loginError}</AlertDescription>
+                </Alert>
+              )}
+              
+              <form onSubmit={handleLoginSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">E-mail</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="seu@email.com"
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="password">Senha</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="********"
+                    required
+                  />
+                </div>
+                
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Entrando..." : "Entrar"}
                 </Button>
-              ))}
-            </div>
-          </div>
+              </form>
+              
+              <div className="mt-6">
+                <Separator className="my-4" />
+                <p className="text-sm text-center">
+                  Não tem uma conta?{" "}
+                  <Button 
+                    variant="link" 
+                    className="p-0 h-auto font-semibold"
+                    onClick={() => setShowRegister(true)}
+                  >
+                    Cadastre-se
+                  </Button>
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <h2 className="text-xl font-semibold mb-4">Cadastro</h2>
+              
+              {registerError && (
+                <Alert variant="destructive" className="mb-4">
+                  <ExclamationTriangleIcon className="h-4 w-4" />
+                  <AlertTitle>Erro</AlertTitle>
+                  <AlertDescription>{registerError}</AlertDescription>
+                </Alert>
+              )}
+              
+              <form onSubmit={handleRegisterSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="register_name">Nome Completo</Label>
+                  <Input
+                    id="register_name"
+                    type="text"
+                    value={registerName}
+                    onChange={(e) => setRegisterName(e.target.value)}
+                    placeholder="Seu Nome Completo"
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="register_email">E-mail</Label>
+                  <Input
+                    id="register_email"
+                    type="email"
+                    value={registerEmail}
+                    onChange={(e) => setRegisterEmail(e.target.value)}
+                    placeholder="seu@email.com"
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="register_password">Senha</Label>
+                  <Input
+                    id="register_password"
+                    type="password"
+                    value={registerPassword}
+                    onChange={(e) => setRegisterPassword(e.target.value)}
+                    placeholder="Mínimo 6 caracteres"
+                    required
+                    minLength={6}
+                  />
+                </div>
+                
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Cadastrando..." : "Cadastrar"}
+                </Button>
+              </form>
+              
+              <div className="mt-6">
+                <Separator className="my-4" />
+                <p className="text-sm text-center">
+                  Já tem uma conta?{" "}
+                  <Button 
+                    variant="link" 
+                    className="p-0 h-auto font-semibold"
+                    onClick={() => setShowRegister(false)}
+                  >
+                    Faça login
+                  </Button>
+                </p>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -1,7 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { AuthState, User, UserRole } from '@/lib/types';
-import { MOCK_USERS } from '@/lib/constants';
+import { supabase } from '@/integrations/supabase/client';
+import { Session } from '@supabase/supabase-js';
 
 // Initial auth state
 const initialAuthState: AuthState = {
@@ -24,31 +25,51 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+// Map Supabase role to app role
+const mapUserRole = (role?: string): UserRole => {
+  switch (role?.toLowerCase()) {
+    case 'admin':
+      return UserRole.ADMIN;
+    case 'gestor':
+      return UserRole.MANAGER;
+    default:
+      return UserRole.SALESPERSON;
+  }
+};
+
 // Auth provider component
 export function AuthProvider({ children }: AuthProviderProps) {
   const [authState, setAuthState] = useState<AuthState>(initialAuthState);
 
-  // Check for existing session on mount
+  // Check for existing session on mount and listen for auth changes
   useEffect(() => {
-    const checkSession = () => {
+    // Set up auth state listener first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.id);
+        handleSession(session);
+      }
+    );
+    
+    // Check for existing session
+    const checkSession = async () => {
       try {
-        const storedUser = localStorage.getItem('afUser');
+        console.log("Checking for existing session...");
+        const { data: { session }, error } = await supabase.auth.getSession();
         
-        if (storedUser) {
-          const user = JSON.parse(storedUser) as User;
-          setAuthState({
-            isAuthenticated: true,
-            user,
-            isLoading: false,
-          });
-        } else {
+        if (error) {
+          console.error("Session check error:", error);
           setAuthState({
             ...initialAuthState,
             isLoading: false,
           });
+          return;
         }
+        
+        console.log("Existing session:", session?.user?.id);
+        handleSession(session);
       } catch (error) {
-        console.error('Session restoration error:', error);
+        console.error("Session restoration error:", error);
         setAuthState({
           ...initialAuthState,
           isLoading: false,
@@ -57,57 +78,114 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
 
     checkSession();
+
+    // Cleanup subscription
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
+
+  // Handle session update
+  const handleSession = async (session: Session | null) => {
+    if (!session) {
+      console.log("No session found");
+      setAuthState({
+        isAuthenticated: false,
+        user: null,
+        isLoading: false,
+      });
+      return;
+    }
+    
+    try {
+      // Get user profile data from profiles table if available
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('name, email, role')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (profileError && profileError.code !== 'PGRST116') {
+        console.error("Error fetching user profile:", profileError);
+      }
+      
+      // Create user object from session and profile data
+      const authUser: User = {
+        id: session.user.id,
+        name: profileData?.name || session.user.email?.split('@')[0] || 'Usuário',
+        email: profileData?.email || session.user.email || '',
+        role: profileData?.role 
+          ? mapUserRole(profileData.role) 
+          : UserRole.SALESPERSON,
+      };
+      
+      console.log("Setting authenticated user:", authUser);
+      
+      setAuthState({
+        isAuthenticated: true,
+        user: authUser,
+        isLoading: false,
+      });
+    } catch (error) {
+      console.error("Error handling session:", error);
+      setAuthState({
+        isAuthenticated: true,
+        user: {
+          id: session.user.id,
+          name: session.user.email?.split('@')[0] || 'Usuário',
+          email: session.user.email || '',
+          role: UserRole.SALESPERSON,
+        },
+        isLoading: false,
+      });
+    }
+  };
 
   // Login function
   const login = async (email: string, password: string): Promise<boolean> => {
-    // In a real app, this would make an API call to validate credentials
-    // For now, we'll simulate with our mock data
     try {
+      console.log("Attempting login for:", email);
+      
       // Simple validation
       if (!email || !password) {
         return false;
       }
 
-      // For demo purposes, password is not checked
-      const user = MOCK_USERS.find(u => u.email.toLowerCase() === email.toLowerCase());
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      if (user) {
-        const authUser: User = {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role as UserRole,
-        };
-
-        // Store the user in localStorage
-        localStorage.setItem('afUser', JSON.stringify(authUser));
-
-        // Update auth state
-        setAuthState({
-          isAuthenticated: true,
-          user: authUser,
-          isLoading: false,
-        });
-
-        return true;
+      if (error) {
+        console.error("Login error:", error);
+        return false;
       }
-      
-      return false;
+
+      console.log("Login successful:", data.user?.id);
+      return true;
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
       return false;
     }
   };
 
   // Logout function
-  const logout = () => {
-    localStorage.removeItem('afUser');
-    setAuthState({
-      isAuthenticated: false,
-      user: null,
-      isLoading: false,
-    });
+  const logout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("Logout error:", error);
+      }
+      
+      setAuthState({
+        isAuthenticated: false,
+        user: null,
+        isLoading: false,
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
   return (
