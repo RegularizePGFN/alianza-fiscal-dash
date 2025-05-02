@@ -1,5 +1,6 @@
 
 import { BellRing, Settings } from "lucide-react";
+import { NotificationsPopover } from "@/components/notifications/NotificationsPopover";
 
 export function SettingsHeader() {
   return (
@@ -11,6 +12,7 @@ export function SettingsHeader() {
         </p>
       </div>
       <div className="flex items-center gap-2">
+        <NotificationsPopover />
         <Settings className="h-5 w-5 text-muted-foreground" />
       </div>
     </div>

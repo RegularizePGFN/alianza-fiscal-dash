@@ -19,21 +19,7 @@ export function useUsers() {
     setError(null);
     
     try {
-      // First, get all users from auth.users via admin API
-      const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
-      
-      if (authError) {
-        console.error("Error listing users:", authError);
-        throw authError;
-      }
-      
-      if (!authData?.users) {
-        setUsers([]);
-        setIsLoading(false);
-        return;
-      }
-      
-      // Then, get profile information
+      // Fetch profiles directly from the profiles table
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
         .select("*");
@@ -45,33 +31,30 @@ export function useUsers() {
       
       console.log("Profiles data:", profilesData);
       
-      // Merge auth users with profiles data
-      const mergedUsers = authData.users.map(authUser => {
-        // Find the matching profile or create an empty object with type annotation
-        const profile = profilesData?.find(p => p.id === authUser.id) || {} as {
-          name?: string;
-          role?: string;
-        };
-        
-        console.log(`User ${authUser.email} profile:`, profile);
-        console.log(`Role from profile: ${profile.role}`);
-        
-        const email = authUser.email || '';
+      if (!profilesData || profilesData.length === 0) {
+        setUsers([]);
+        setIsLoading(false);
+        return;
+      }
+      
+      // Convert profiles to users
+      const mappedUsers = profilesData.map(profile => {
+        const email = profile.email || '';
         
         // Use the mapUserRole function to convert string role to UserRole enum
         const userRole = mapUserRole(profile.role, email);
         
         return {
-          id: authUser.id,
-          name: profile.name || authUser.email?.split('@')[0] || 'Usuário',
+          id: profile.id,
+          name: profile.name || email.split('@')[0] || 'Usuário',
           email: email,
           role: userRole,
-          created_at: authUser.created_at,
+          created_at: profile.created_at,
         };
       });
       
-      // Filter out admin users (those with emails in ADMIN_EMAILS)
-      const filteredUsers = mergedUsers.filter(u => !ADMIN_EMAILS.includes(u.email.toLowerCase()));
+      // Filter out admin users (those with emails in ADMIN_EMAILS) if needed
+      const filteredUsers = mappedUsers.filter(u => !ADMIN_EMAILS.includes(u.email.toLowerCase()));
       
       console.log("Final users list:", filteredUsers);
       setUsers(filteredUsers);

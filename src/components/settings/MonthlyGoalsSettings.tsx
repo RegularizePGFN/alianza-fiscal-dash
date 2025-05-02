@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { MonthlyGoalsForm } from "@/components/settings/MonthlyGoalsForm";
+import { UserRole } from "@/lib/types";
 
 interface UserWithGoal {
   id: string;
@@ -34,12 +35,24 @@ export function MonthlyGoalsSettings() {
     try {
       setLoading(true);
 
-      // Fetch all users (excluding the admin viewing the page)
+      // Fetch all users that are salespeople
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('*');
+        .select('*')
+        .eq('role', 'vendedor');
 
-      if (profilesError) throw profilesError;
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        throw profilesError;
+      }
+
+      console.log('Fetched profiles:', profiles);
+
+      if (!profiles || profiles.length === 0) {
+        setUsers([]);
+        setLoading(false);
+        return;
+      }
 
       // Fetch all monthly goals for the current month/year
       const { data: goals, error: goalsError } = await supabase
@@ -48,7 +61,12 @@ export function MonthlyGoalsSettings() {
         .eq('month', currentMonth)
         .eq('year', currentYear);
 
-      if (goalsError) throw goalsError;
+      if (goalsError) {
+        console.error('Error fetching goals:', goalsError);
+        throw goalsError;
+      }
+
+      console.log('Fetched goals:', goals);
 
       // Merge the data
       const usersWithGoals = profiles.map(user => {
@@ -59,6 +77,7 @@ export function MonthlyGoalsSettings() {
         };
       });
 
+      console.log('Users with goals:', usersWithGoals);
       setUsers(usersWithGoals);
     } catch (error: any) {
       console.error('Error fetching users:', error);
@@ -110,7 +129,7 @@ export function MonthlyGoalsSettings() {
             </div>
           ) : (
             <div className="space-y-2">
-              {users.filter(user => user.role === 'vendedor').map((user) => (
+              {users.filter(user => user.role.toLowerCase() === 'vendedor').map((user) => (
                 <div key={user.id} className="flex justify-between items-center p-3 border rounded-md hover:bg-accent/10 transition-colors">
                   <div>
                     <div className="font-medium">{user.name}</div>
@@ -127,7 +146,7 @@ export function MonthlyGoalsSettings() {
                 </div>
               ))}
 
-              {users.filter(user => user.role === 'vendedor').length === 0 && (
+              {users.filter(user => user.role.toLowerCase() === 'vendedor').length === 0 && (
                 <div className="text-center py-4 text-muted-foreground">
                   Nenhum vendedor encontrado no sistema.
                 </div>

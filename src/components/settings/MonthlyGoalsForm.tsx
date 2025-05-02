@@ -9,6 +9,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/auth";
 
 interface User {
   id: string;
@@ -34,6 +35,7 @@ const formSchema = z.object({
 
 export function MonthlyGoalsForm({ user, month, year, onClose }: MonthlyGoalsFormProps) {
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initialize react-hook-form
@@ -76,10 +78,26 @@ export function MonthlyGoalsForm({ user, month, year, onClose }: MonthlyGoalsFor
             month,
             year,
             goal_amount: values.goal_amount,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           });
       }
 
       if (result.error) throw result.error;
+
+      // Create a notification for the user
+      const notificationResult = await supabase
+        .from('notifications')
+        .insert({
+          user_id: user.id,
+          message: `Sua meta mensal para ${month}/${year} foi ${existingGoal ? 'atualizada' : 'definida'} como R$ ${values.goal_amount?.toLocaleString('pt-BR')}.`,
+          type: 'goal_update',
+          read: false
+        });
+
+      if (notificationResult.error) {
+        console.error('Error creating notification:', notificationResult.error);
+      }
 
       toast({
         title: "Meta atualizada com sucesso",

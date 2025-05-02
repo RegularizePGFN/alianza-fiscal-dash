@@ -4,7 +4,7 @@ import { UserRole } from "@/lib/types";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Bell, BellDot, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
