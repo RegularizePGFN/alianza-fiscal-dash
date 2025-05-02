@@ -139,7 +139,7 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
       return true;
     } catch (error: any) {
       console.error('Error saving sale:', error);
-      showErrorToast(error.message || "Could not save the sale. Please try again later.");
+      showErrorToast(toast, error.message || "Could not save the sale. Please try again later.");
       return false;
     } finally {
       // Always reset the saving state, even if there's an error

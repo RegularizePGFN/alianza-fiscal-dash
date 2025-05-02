@@ -37,48 +37,33 @@ export function SaleFormModal({
   const { user } = useAuth();
   const { toast } = useToast();
   
-  const [inputValue, setInputValue] = useState<string>(
-    initialData ? initialData.gross_amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00'
-  );
-  const [amount, setAmount] = useState<number>(initialData ? initialData.gross_amount : 0);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
-    initialData ? initialData.payment_method : PaymentMethod.CREDIT
-  );
-  const [installments, setInstallments] = useState<number>(
-    initialData ? initialData.installments : 1
-  );
-  const [saleDate, setSaleDate] = useState<string>(
-    initialData ? initialData.sale_date : getTodayISO()
-  );
-  const [clientName, setClientName] = useState<string>(
-    initialData?.client_name || ""
-  );
-  const [clientPhone, setClientPhone] = useState<string>(
-    initialData?.client_phone || ""
-  );
-  const [clientDocument, setClientDocument] = useState<string>(
-    initialData?.client_document || ""
-  );
+  // Initialize form state only when modal is opened
+  const [inputValue, setInputValue] = useState<string>('0,00');
+  const [amount, setAmount] = useState<number>(0);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CREDIT);
+  const [installments, setInstallments] = useState<number>(1);
+  const [saleDate, setSaleDate] = useState<string>(getTodayISO());
+  const [clientName, setClientName] = useState<string>("");
+  const [clientPhone, setClientPhone] = useState<string>("");
+  const [clientDocument, setClientDocument] = useState<string>("");
   
-  // Reset form data when initialData changes
+  // Reset form data when initialData changes or modal opens
   useEffect(() => {
-    if (open) {
-      setInputValue(initialData ? initialData.gross_amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00');
-      setAmount(initialData ? initialData.gross_amount : 0);
-      setPaymentMethod(initialData ? initialData.payment_method : PaymentMethod.CREDIT);
-      setInstallments(initialData ? initialData.installments : 1);
-      setSaleDate(initialData ? initialData.sale_date : getTodayISO());
-      setClientName(initialData?.client_name || "");
-      setClientPhone(initialData?.client_phone || "");
-      setClientDocument(initialData?.client_document || "");
-    }
+    if (!open) return;
+    
+    setInputValue(initialData ? initialData.gross_amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00');
+    setAmount(initialData ? initialData.gross_amount : 0);
+    setPaymentMethod(initialData ? initialData.payment_method : PaymentMethod.CREDIT);
+    setInstallments(initialData ? initialData.installments : 1);
+    setSaleDate(initialData ? initialData.sale_date : getTodayISO());
+    setClientName(initialData?.client_name || "");
+    setClientPhone(initialData?.client_phone || "");
+    setClientDocument(initialData?.client_document || "");
   }, [initialData, open]);
   
   // Handle dialog close with safety checks
   const handleDialogClose = () => {
-    if (isSubmitting) {
-      return;
-    }
+    if (isSubmitting) return;
     onCancel();
   };
   

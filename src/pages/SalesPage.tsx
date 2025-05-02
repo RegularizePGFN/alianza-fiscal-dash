@@ -21,7 +21,7 @@ export default function SalesPage() {
   const [saleToDelete, setSaleToDelete] = useState<string | null>(null);
   const [isProcessingAction, setIsProcessingAction] = useState(false);
 
-  // Limpa todos os estados quando o componente é desmontado
+  // Clear all states when the component is unmounted
   useEffect(() => {
     return () => {
       setShowSaleModal(false);
@@ -112,11 +112,9 @@ export default function SalesPage() {
   const handleFormCancel = useCallback(() => {
     if (isProcessingAction) return;
     
-    // Limpa os estados relacionados ao modal
+    // Immediately close the modal without setTimeout
     setShowSaleModal(false);
-    setTimeout(() => {
-      setEditingSale(null);
-    }, 100);
+    setEditingSale(null);
   }, [isProcessingAction]);
 
   const handleImportSales = useCallback(async (file: File) => {
@@ -211,9 +209,9 @@ export default function SalesPage() {
           )}
         </div>
 
-        {/* Componente do modal com a propriedade key para forçar a recriação */}
+        {/* Using key to force complete remount when modal data changes */}
         <SaleFormModal
-          key={editingSale?.id || "new-sale"}
+          key={editingSale?.id || "new-sale" + (showSaleModal ? "-open" : "-closed")}
           initialData={editingSale}
           onSave={handleSaveSaleForm}
           onCancel={handleFormCancel}
