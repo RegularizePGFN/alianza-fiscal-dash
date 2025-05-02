@@ -9,7 +9,102 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      monthly_goals: {
+        Row: {
+          created_at: string
+          goal_amount: number
+          id: string
+          month: number
+          updated_at: string
+          user_id: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          goal_amount: number
+          id?: string
+          month: number
+          updated_at?: string
+          user_id: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          goal_amount?: number
+          id?: string
+          month?: number
+          updated_at?: string
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id: string
+          name: string
+          role: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          role?: string
+        }
+        Relationships: []
+      }
+      sales: {
+        Row: {
+          client_document: string
+          client_name: string
+          client_phone: string
+          created_at: string
+          gross_amount: number
+          id: string
+          installments: number
+          payment_method: string
+          sale_date: string
+          salesperson_id: string
+          salesperson_name: string
+        }
+        Insert: {
+          client_document: string
+          client_name: string
+          client_phone: string
+          created_at?: string
+          gross_amount: number
+          id?: string
+          installments?: number
+          payment_method: string
+          sale_date: string
+          salesperson_id: string
+          salesperson_name: string
+        }
+        Update: {
+          client_document?: string
+          client_name?: string
+          client_phone?: string
+          created_at?: string
+          gross_amount?: number
+          id?: string
+          installments?: number
+          payment_method?: string
+          sale_date?: string
+          salesperson_id?: string
+          salesperson_name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
