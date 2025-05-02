@@ -13,6 +13,7 @@ import {
 import { User } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 interface DeleteUserDialogProps {
   user: User | null;
@@ -68,10 +69,10 @@ export function DeleteUserDialog({
             Esta ação não pode ser desfeita. Este usuário será permanentemente
             removido do sistema.
             {user && (
-              <p className="mt-2 font-medium">
+              <div className="mt-2 font-medium">
                 Nome: {user.name} <br />
                 Email: {user.email}
-              </p>
+              </div>
             )}
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -85,7 +86,14 @@ export function DeleteUserDialog({
             }}
             className="bg-destructive hover:bg-destructive/90"
           >
-            {isLoading ? "Excluindo..." : "Excluir"}
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Excluindo...
+              </>
+            ) : (
+              "Excluir"
+            )}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

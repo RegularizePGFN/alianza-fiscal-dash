@@ -25,7 +25,11 @@ export function DeleteSaleDialog({
   isDeleting = false 
 }: DeleteSaleDialogProps) {
   return (
-    <AlertDialog open={isOpen} onOpenChange={onClose}>
+    <AlertDialog open={isOpen} onOpenChange={(open) => {
+      if (!isDeleting && !open) {
+        onClose();
+      }
+    }}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Confirm deletion</AlertDialogTitle>
@@ -36,7 +40,10 @@ export function DeleteSaleDialog({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
           <AlertDialogAction 
-            onClick={onDelete} 
+            onClick={(e) => {
+              e.preventDefault();
+              onDelete();
+            }} 
             className="bg-destructive text-destructive-foreground"
             disabled={isDeleting}
           >

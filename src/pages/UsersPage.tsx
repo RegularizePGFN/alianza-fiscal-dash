@@ -63,10 +63,14 @@ export default function UsersPage() {
       // First, get all users from auth.users via admin API
       const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
       
-      if (authError) throw authError;
+      if (authError) {
+        console.error("Error listing users:", authError);
+        throw authError;
+      }
       
       if (!authData?.users) {
         setUsers([]);
+        setIsLoading(false);
         return;
       }
       
@@ -75,7 +79,10 @@ export default function UsersPage() {
         .from("profiles")
         .select("*");
         
-      if (profilesError) throw profilesError;
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+        throw profilesError;
+      }
       
       // Merge auth users with profiles data
       const mergedUsers = authData.users.map(authUser => {
@@ -85,7 +92,7 @@ export default function UsersPage() {
           id: authUser.id,
           name: profile.name || authUser.email?.split('@')[0] || 'Usuário',
           email: authUser.email || '',
-          role: profile.role as UserRole || UserRole.SALESPERSON,
+          role: (profile.role as UserRole) || UserRole.SALESPERSON,
           created_at: authUser.created_at,
         };
       });
@@ -124,6 +131,21 @@ export default function UsersPage() {
   const handleDeleteUser = (user: User) => {
     setSelectedUser(user);
     setIsDeleteDialogOpen(true);
+  };
+  
+  const handleFormClose = () => {
+    setIsFormOpen(false);
+    setSelectedUser(null);
+  };
+  
+  const handleDeleteDialogClose = () => {
+    setIsDeleteDialogOpen(false);
+    setSelectedUser(null);
+  };
+  
+  const handleSuccess = async () => {
+    // Refetch users to update the list
+    await fetchUsers();
   };
   
   const getRoleBadge = (role: UserRole) => {
@@ -167,7 +189,9 @@ export default function UsersPage() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <LoadingSpinner size="lg" />
+              <div className="flex justify-center py-10">
+                <LoadingSpinner size="lg" />
+              </div>
             ) : error ? (
               <div className="text-center py-10 text-destructive">
                 <p>{error}</p>
@@ -238,17 +262,17 @@ export default function UsersPage() {
       {/* User form modal */}
       <UserFormModal
         isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
+        onClose={handleFormClose}
         user={selectedUser || undefined}
-        onSuccess={fetchUsers}
+        onSuccess={handleSuccess}
       />
       
       {/* Delete confirmation dialog */}
       <DeleteUserDialog
         user={selectedUser}
         isOpen={isDeleteDialogOpen}
-        onClose={() => setIsDeleteDialogOpen(false)}
-        onSuccess={fetchUsers}
+        onClose={handleDeleteDialogClose}
+        onSuccess={handleSuccess}
       />
     </AppLayout>
   );

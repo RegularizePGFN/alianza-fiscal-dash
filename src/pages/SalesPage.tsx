@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SalesTable } from "@/components/sales/SalesTable";
@@ -78,10 +79,12 @@ export default function SalesPage() {
     }
   };
   
-  const handleFormCancel = () => {
-    setShowSaleModal(false);
-    setEditingSale(null);
-  };
+  const handleFormCancel = useCallback(() => {
+    if (!isProcessingAction) {
+      setShowSaleModal(false);
+      setEditingSale(null);
+    }
+  }, [isProcessingAction]);
   
   const isAdmin = user?.role === UserRole.ADMIN;
   const isManager = user?.role === UserRole.MANAGER;
