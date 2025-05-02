@@ -21,14 +21,6 @@ export const supabase = createClient<Database>(
   }
 );
 
-// Define types for the admin functions we need to implement
-interface AdminUserUpdateData {
-  email?: string;
-  password?: string;
-  email_confirm?: boolean;
-  user_metadata?: Record<string, any>;
-}
-
 // Implementation for admin API functions
 // These functions use the appropriate Supabase API endpoints
 const adminApiHeaders = {
@@ -37,8 +29,20 @@ const adminApiHeaders = {
   "Content-Type": "application/json"
 };
 
-// Custom admin API implementation
+// Create a proper AuthError with all required properties
+const createAuthError = (message: string, status: number): AuthError => {
+  return {
+    message,
+    status,
+    name: 'AuthApiError',
+    code: `${status}`,
+    __isAuthError: true
+  };
+};
+
+// Admin API implementation
 const adminApi = {
+  // Implemented methods
   async deleteUser(userId: string): Promise<UserResponse> {
     const response = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
       method: 'DELETE',
@@ -47,10 +51,10 @@ const adminApi = {
     
     if (!response.ok) {
       const errorData = await response.json();
-      const error: AuthError = {
-        message: errorData.message || 'Failed to delete user',
-        status: response.status
-      };
+      const error = createAuthError(
+        errorData.message || 'Failed to delete user',
+        response.status
+      );
       return { data: { user: null }, error };
     }
     
@@ -67,10 +71,10 @@ const adminApi = {
     const responseData = await response.json();
     
     if (!response.ok) {
-      const error: AuthError = {
-        message: responseData.message || 'Failed to create user',
-        status: response.status
-      };
+      const error = createAuthError(
+        responseData.message || 'Failed to create user',
+        response.status
+      );
       return { data: { user: null }, error };
     }
     
@@ -86,10 +90,10 @@ const adminApi = {
     
     if (!response.ok) {
       const errorData = await response.json();
-      const error: AuthError = {
-        message: errorData.message || 'Failed to update user',
-        status: response.status
-      };
+      const error = createAuthError(
+        errorData.message || 'Failed to update user',
+        response.status
+      );
       return { data: { user: null }, error };
     }
     
@@ -97,25 +101,49 @@ const adminApi = {
     return { data: { user: userData }, error: null };
   },
 
-  // Stubbed methods to satisfy TypeScript interface
-  _listFactors: async () => ({ data: null, error: null }),
-  _deleteFactor: async () => ({ data: null, error: null }),
-  signOut: async () => ({ data: null, error: null }),
-  inviteUserByEmail: async () => ({ data: { user: null }, error: null }),
-  generateLink: async () => ({ data: { properties: {}, user: null }, error: null }),
-  listUsers: async () => ({ data: { users: [], aud: '', total_count: 0, next_page: '' }, error: null }),
-  getUserById: async () => ({ data: { user: null }, error: null }),
-  resetPasswordForEmail: async () => ({ data: {}, error: null }),
+  // Stub methods
+  async _listFactors(): Promise<any> { 
+    return { data: null, error: null }; 
+  },
   
-  // Properties required by interface
+  async _deleteFactor(): Promise<any> { 
+    return { data: null, error: null }; 
+  },
+  
+  async signOut(): Promise<{ data: null; error: AuthError | null }> { 
+    return { data: null, error: null }; 
+  },
+  
+  async inviteUserByEmail(): Promise<UserResponse> { 
+    return { data: { user: null }, error: null }; 
+  },
+  
+  async generateLink(): Promise<GenerateLinkResponse> { 
+    return { data: { properties: {}, user: null }, error: null }; 
+  },
+  
+  async listUsers(): Promise<{ data: { users: User[], aud: string, total_count: number, next_page: string }, error: AuthError | null }> { 
+    return { data: { users: [], aud: '', total_count: 0, next_page: '' }, error: null }; 
+  },
+  
+  async getUserById(): Promise<UserResponse> { 
+    return { data: { user: null }, error: null }; 
+  },
+  
+  async resetPasswordForEmail(): Promise<{ data: {}; error: AuthError | null }> { 
+    return { data: {}, error: null }; 
+  },
+  
+  // Properties
   mfa: {} as GoTrueAdminMFAApi,
   url: SUPABASE_URL,
   headers: adminApiHeaders,
   fetch: fetch.bind(window)
 };
 
-// Attach admin methods to the Supabase auth client
-supabase.auth.admin = adminApi as GoTrueAdminApi;
+// Attach admin methods to the Supabase auth client using proper type casting
+// We need to cast to unknown first, then to GoTrueAdminApi to avoid TypeScript errors
+supabase.auth.admin = adminApi as unknown as GoTrueAdminApi;
 
 // Add custom type for auth admin API
 declare module '@supabase/supabase-js' {
