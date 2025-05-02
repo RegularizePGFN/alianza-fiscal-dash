@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/auth";
 import { SaleFormModal } from "@/components/sales/form/SaleFormModal";
 import { SalesHeader } from "@/components/sales/SalesHeader";
 import { DeleteSaleDialog } from "@/components/sales/DeleteSaleDialog";
-import { useSales } from "@/hooks/useSales";
+import { useSales } from "@/hooks/sales";
 import { useToast } from "@/hooks/use-toast";
 import { importSalesFromExcel } from "@/lib/excelUtils";
 
