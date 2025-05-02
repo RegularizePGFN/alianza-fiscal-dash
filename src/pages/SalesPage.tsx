@@ -1,15 +1,15 @@
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { SalesTable } from "@/components/sales/SalesTable";
 import { Sale, UserRole } from "@/lib/types";
 import { useAuth } from "@/contexts/auth";
-import { SaleFormModal } from "@/components/sales/form/SaleFormModal";
-import { SalesHeader } from "@/components/sales/SalesHeader";
-import { DeleteSaleDialog } from "@/components/sales/DeleteSaleDialog";
 import { useSales } from "@/hooks/sales";
 import { useToast } from "@/hooks/use-toast";
 import { importSalesFromExcel } from "@/lib/excelUtils";
+import { SalesHeader } from "@/components/sales/SalesHeader";
+import { SalesContent } from "@/components/sales/SalesContent";
+import { SalesModals } from "@/components/sales/SalesModals";
+import { SalesActions } from "@/components/sales/SalesActions";
 
 export default function SalesPage() {
   const { user } = useAuth();
@@ -20,16 +20,6 @@ export default function SalesPage() {
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [saleToDelete, setSaleToDelete] = useState<string | null>(null);
   const [isProcessingAction, setIsProcessingAction] = useState(false);
-
-  // Clear all states when the component is unmounted
-  useEffect(() => {
-    return () => {
-      setShowSaleModal(false);
-      setEditingSale(null);
-      setSaleToDelete(null);
-      setIsProcessingAction(false);
-    };
-  }, []);
 
   const handleAddSale = useCallback(() => {
     if (isProcessingAction) return;
@@ -111,8 +101,6 @@ export default function SalesPage() {
 
   const handleFormCancel = useCallback(() => {
     if (isProcessingAction) return;
-    
-    // Immediately close the modal without setTimeout
     setShowSaleModal(false);
     setEditingSale(null);
   }, [isProcessingAction]);
@@ -183,50 +171,40 @@ export default function SalesPage() {
     <AppLayout>
       <div className="space-y-6">
         <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-          <SalesHeader
-            isAdmin={isAdmin}
-            onAddSale={handleAddSale}
-            sales={sales}
-            onImport={handleImportSales}
-          />
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          {loading ? (
-            <div className="flex justify-center py-12">
-              <div className="flex flex-col items-center gap-4">
-                <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-                <p className="text-sm text-muted-foreground">Carregando dados...</p>
-              </div>
+          <div className="flex justify-between items-start">
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight">Vendas</h2>
+              <p className="text-muted-foreground">
+                Gerencie as vendas e comissões da equipe.
+              </p>
             </div>
-          ) : (
-            <SalesTable
-              sales={sales}
-              showSalesperson={!isSalesperson}
-              onEdit={handleEdit}
-              onDelete={handleDeleteConfirm}
+            
+            <SalesActions 
+              isAdmin={isAdmin}
+              onAddSale={handleAddSale}
+              onImport={handleImportSales}
             />
-          )}
+          </div>
         </div>
 
-        {/* Using key to force complete remount when modal data changes */}
-        <SaleFormModal
-          key={editingSale?.id || "new-sale" + (showSaleModal ? "-open" : "-closed")}
-          initialData={editingSale}
-          onSave={handleSaveSaleForm}
-          onCancel={handleFormCancel}
-          isSubmitting={isProcessingAction}
-          open={showSaleModal}
+        <SalesContent
+          loading={loading}
+          sales={sales}
+          isSalesperson={isSalesperson}
+          onEdit={handleEdit}
+          onDelete={handleDeleteConfirm}
         />
 
-        {saleToDelete && (
-          <DeleteSaleDialog
-            isOpen={!!saleToDelete}
-            onClose={handleDeleteCancel}
-            onDelete={handleDeleteSaleConfirm}
-            isDeleting={isProcessingAction}
-          />
-        )}
+        <SalesModals
+          editingSale={editingSale}
+          saleToDelete={saleToDelete}
+          isProcessingAction={isProcessingAction}
+          showSaleModal={showSaleModal}
+          onSave={handleSaveSaleForm}
+          onFormCancel={handleFormCancel}
+          onDeleteCancel={handleDeleteCancel}
+          onDeleteConfirm={handleDeleteSaleConfirm}
+        />
       </div>
     </AppLayout>
   );

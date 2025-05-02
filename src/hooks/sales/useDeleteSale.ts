@@ -54,7 +54,7 @@ export const useDeleteSale = (updateSalesList: (saleId: string) => void) => {
       return true;
     } catch (error: any) {
       console.error('Error deleting sale:', error);
-      showErrorToast(error.message || "Could not delete the sale. Please try again later.");
+      showErrorToast(toast, error.message || "Could not delete the sale. Please try again later.");
       return false;
     } finally {
       setIsDeleting(false);

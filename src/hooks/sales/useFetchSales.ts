@@ -68,7 +68,7 @@ export const useFetchSales = (user: User | null) => {
       }
     } catch (error: any) {
       console.error('Error fetching sales:', error);
-      showErrorToast("Could not load sales. Please try again later.");
+      showErrorToast(toast, "Could not load sales. Please try again later.");
     } finally {
       setLoading(false);
     }
