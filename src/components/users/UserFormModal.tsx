@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -183,7 +184,6 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={UserRole.ADMIN}>Administrador</SelectItem>
-                  <SelectItem value={UserRole.MANAGER}>Gestor</SelectItem>
                   <SelectItem value={UserRole.SALESPERSON}>Vendedor</SelectItem>
                 </SelectContent>
               </Select>

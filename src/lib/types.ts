@@ -2,7 +2,6 @@
 // User roles
 export enum UserRole {
   ADMIN = 'admin',
-  MANAGER = 'gestor',
   SALESPERSON = 'vendedor',
 }
 

@@ -20,8 +20,8 @@ export default function UsersPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   
-  // Redirect if not admin or manager
-  if (user?.role !== UserRole.ADMIN && user?.role !== UserRole.MANAGER) {
+  // Redirect if not admin
+  if (user?.role !== UserRole.ADMIN) {
     return <Navigate to="/" />;
   }
   

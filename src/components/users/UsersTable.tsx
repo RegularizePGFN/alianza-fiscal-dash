@@ -42,8 +42,6 @@ export function UsersTable({
     switch (role) {
       case UserRole.ADMIN:
         return <Badge className="bg-destructive">Administrador</Badge>;
-      case UserRole.MANAGER:
-        return <Badge className="bg-primary">Gestor</Badge>;
       case UserRole.SALESPERSON:
         return <Badge variant="outline">Vendedor</Badge>;
       default:

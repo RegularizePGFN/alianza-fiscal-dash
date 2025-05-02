@@ -1,4 +1,3 @@
-
 import { UserRole } from '@/lib/types';
 
 // Admin email(s) - email addresses that should always have admin privileges
@@ -15,7 +14,6 @@ export const mapUserRole = (role?: string, email?: string): UserRole => {
   }
   
   // Otherwise check role as before - fixing the case sensitivity issue
-  // and ensuring 'gestor' is properly mapped to MANAGER
   if (role) {
     const lowerRole = role.toLowerCase();
     console.log(`Lowercase role: ${lowerRole}`);
@@ -24,12 +22,6 @@ export const mapUserRole = (role?: string, email?: string): UserRole => {
       case 'admin':
         console.log("Mapped to ADMIN");
         return UserRole.ADMIN;
-      case 'gestor':
-        console.log("Mapped to MANAGER");
-        return UserRole.MANAGER;
-      case 'manager': // Adding this case to handle if someone uses English term
-        console.log("Mapped to MANAGER");
-        return UserRole.MANAGER;
       default:
         console.log("Default mapped to SALESPERSON");
         return UserRole.SALESPERSON;
