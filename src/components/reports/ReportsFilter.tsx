@@ -26,6 +26,8 @@ export function ReportsFilter({
 }: ReportsFilterProps) {
   const { users, isLoading } = useUsers();
   const [date, setDate] = useState<DateRange | undefined>();
+  const [selectedSalesperson, setSelectedSalesperson] = useState<string | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
 
   // Handle date selection
   const handleDateSelect = (range: DateRange | undefined) => {
@@ -41,8 +43,24 @@ export function ReportsFilter({
     }
   };
 
+  // Handle salesperson selection
+  const handleSalespersonChange = (value: string) => {
+    const newValue = value === "all" ? null : value;
+    setSelectedSalesperson(newValue);
+    onSalespersonChange(newValue);
+  };
+
+  // Handle payment method selection
+  const handlePaymentMethodChange = (value: string) => {
+    const newValue = value === "all" ? null : value as PaymentMethod;
+    setSelectedPaymentMethod(newValue);
+    onPaymentMethodChange(newValue);
+  };
+
   // Clear all filters
   const clearFilters = () => {
+    setSelectedSalesperson(null);
+    setSelectedPaymentMethod(null);
     onSalespersonChange(null);
     onPaymentMethodChange(null);
     onDateFilterChange(null);
@@ -56,12 +74,15 @@ export function ReportsFilter({
           {/* Salesperson Filter */}
           <div className="space-y-2">
             <Label htmlFor="salesperson">Vendedor</Label>
-            <Select onValueChange={(value) => onSalespersonChange(value || null)}>
+            <Select 
+              value={selectedSalesperson || "all"} 
+              onValueChange={handleSalespersonChange}
+            >
               <SelectTrigger id="salesperson">
                 <SelectValue placeholder="Todos os vendedores" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os vendedores</SelectItem>
+                <SelectItem value="all">Todos os vendedores</SelectItem>
                 {!isLoading && users.map(user => (
                   <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
                 ))}
@@ -72,12 +93,15 @@ export function ReportsFilter({
           {/* Payment Method Filter */}
           <div className="space-y-2">
             <Label htmlFor="paymentMethod">Método de Pagamento</Label>
-            <Select onValueChange={(value) => onPaymentMethodChange(value as PaymentMethod || null)}>
+            <Select 
+              value={selectedPaymentMethod || "all"} 
+              onValueChange={handlePaymentMethodChange}
+            >
               <SelectTrigger id="paymentMethod">
                 <SelectValue placeholder="Todos os métodos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os métodos</SelectItem>
+                <SelectItem value="all">Todos os métodos</SelectItem>
                 <SelectItem value={PaymentMethod.CREDIT}>Crédito</SelectItem>
                 <SelectItem value={PaymentMethod.DEBIT}>Débito</SelectItem>
                 <SelectItem value={PaymentMethod.PIX}>Pix</SelectItem>
