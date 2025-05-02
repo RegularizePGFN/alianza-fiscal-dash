@@ -19,3 +19,14 @@ export const supabase = createClient<Database>(
     }
   }
 );
+
+// Add custom type for auth admin API
+declare module '@supabase/supabase-js' {
+  interface SupabaseAuthClient {
+    admin: {
+      createUser(data: any): Promise<any>;
+      deleteUser(uuid: string): Promise<any>;
+      updateUserById(uuid: string, data: any): Promise<any>;
+    }
+  }
+}
