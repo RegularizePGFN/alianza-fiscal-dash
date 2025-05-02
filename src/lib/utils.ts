@@ -41,38 +41,16 @@ export function getCurrentMonthDates(): { start: Date; end: Date } {
   return { start, end };
 }
 
-// Calculate net amount after payment processor fees - UPDATED with corrected rules
-export function calculateNetAmount(grossAmount: number, paymentMethod: PaymentMethod, installments: number = 1): number {
-  let netAmount = 0;
-  
-  // Apply the correct fee rules according to payment method
-  if (paymentMethod === PaymentMethod.CREDIT) {
-    // Credit card: 1.9% for single payment, 2.39% for installments
-    const feeRate = installments > 1 ? 0.0239 : 0.019;
-    netAmount = grossAmount * (1 - feeRate);
-  } 
-  else if (paymentMethod === PaymentMethod.BOLETO || paymentMethod === PaymentMethod.PIX) {
-    // Boleto and PIX: 5.79% fee
-    netAmount = grossAmount * (1 - 0.0579);
-  }
-  else if (paymentMethod === PaymentMethod.DEBIT) {
-    // Debit card: 1.89% + R$0.35 fixed fee
-    netAmount = grossAmount * (1 - 0.0189) - 0.35;
-  }
-  
-  return Math.max(0, netAmount); // Prevent negative values
-}
-
-// Calculate commission amount based on performance against goal - UPDATED
-export function calculateCommission(netAmount: number, totalSales: number, goalAmount: number): {
+// Calculate commission amount based on performance against goal - SIMPLIFIED
+export function calculateCommission(totalSales: number, goalAmount: number): {
   rate: number;
   amount: number;
 } {
-  // Commission rate depends on whether the goal was met (based on NET total sales)
+  // Commission rate depends on whether the goal was met
   const rate = totalSales >= goalAmount ? 0.25 : 0.2;
   
-  // Commission is always calculated on the net amount (after fees)
-  const amount = netAmount * rate;
+  // Commission is calculated directly on the sales amount (which is now the final amount)
+  const amount = totalSales * rate;
   
   return {
     rate,

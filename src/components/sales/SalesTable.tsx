@@ -41,8 +41,7 @@ export function SalesTable({
             <TableHead>Data</TableHead>
             <TableHead>Método</TableHead>
             <TableHead>Parcelas</TableHead>
-            <TableHead className="text-right">Valor Bruto</TableHead>
-            <TableHead className="text-right">Valor Líquido</TableHead>
+            <TableHead className="text-right">Valor</TableHead>
             {(onEdit || onDelete) && <TableHead className="w-[70px]">Ações</TableHead>}
           </TableRow>
         </TableHeader>
@@ -50,7 +49,7 @@ export function SalesTable({
           {sales.length === 0 ? (
             <TableRow>
               <TableCell
-                colSpan={showSalesperson ? 7 : 6}
+                colSpan={showSalesperson ? 6 : 5}
                 className="h-24 text-center"
               >
                 Nenhuma venda encontrada.
@@ -71,9 +70,6 @@ export function SalesTable({
                 </TableCell>
                 <TableCell className="text-right">
                   {formatCurrency(sale.gross_amount)}
-                </TableCell>
-                <TableCell className="text-right">
-                  {formatCurrency(sale.net_amount)}
                 </TableCell>
                 {(onEdit || onDelete) && (
                   <TableCell>

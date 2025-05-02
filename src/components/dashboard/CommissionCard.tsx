@@ -3,13 +3,12 @@ import { formatCurrency, formatPercentage, calculateCommission } from '@/lib/uti
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface CommissionCardProps {
-  netAmount: number;
   totalSales: number;
   goalAmount: number;
 }
 
-export function CommissionCard({ netAmount, totalSales, goalAmount }: CommissionCardProps) {
-  const { rate: commissionRate, amount: commissionAmount } = calculateCommission(netAmount, totalSales, goalAmount);
+export function CommissionCard({ totalSales, goalAmount }: CommissionCardProps) {
+  const { rate: commissionRate, amount: commissionAmount } = calculateCommission(totalSales, goalAmount);
   const isGoalMet = totalSales >= goalAmount;
   
   return (

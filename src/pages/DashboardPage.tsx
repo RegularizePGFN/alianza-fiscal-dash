@@ -18,7 +18,7 @@ const mockSales: Sale[] = [
     salesperson_id: "3",
     salesperson_name: "Vendedor Silva",
     gross_amount: 5000,
-    net_amount: 4800,
+    net_amount: 5000, // Using the same value for both since net_amount will be removed later
     payment_method: PaymentMethod.BOLETO,
     installments: 1,
     sale_date: "2025-04-20",
@@ -28,7 +28,7 @@ const mockSales: Sale[] = [
     salesperson_id: "3",
     salesperson_name: "Vendedor Silva",
     gross_amount: 3500,
-    net_amount: 3300,
+    net_amount: 3500,
     payment_method: PaymentMethod.PIX,
     installments: 1,
     sale_date: "2025-04-25",
@@ -38,7 +38,7 @@ const mockSales: Sale[] = [
     salesperson_id: "4",
     salesperson_name: "Vendedor Santos",
     gross_amount: 7000,
-    net_amount: 6500,
+    net_amount: 7000,
     payment_method: PaymentMethod.CREDIT,
     installments: 3,
     sale_date: "2025-04-28",
@@ -68,22 +68,21 @@ export default function DashboardPage() {
 
     setSalesData(filteredSales);
 
-    // Calculate summary - now using net values for commission calculation
-    const totalGross = filteredSales.reduce((sum, sale) => sum + sale.gross_amount, 0);
-    const totalNet = filteredSales.reduce((sum, sale) => sum + sale.net_amount, 0);
+    // Calculate summary - using gross values directly as final values
+    const totalAmount = filteredSales.reduce((sum, sale) => sum + sale.gross_amount, 0);
     const goalAmount = DEFAULT_GOAL_AMOUNT;
     
-    // Commission is based on NET amount
-    const commissionRate = totalNet >= goalAmount ? 0.25 : 0.2;
-    const projectedCommission = totalNet * commissionRate;
+    // Commission rate depends on whether the goal was met
+    const commissionRate = totalAmount >= goalAmount ? 0.25 : 0.2;
+    const projectedCommission = totalAmount * commissionRate;
 
     setSummary({
       total_sales: filteredSales.length,
-      total_gross: totalGross,
-      total_net: totalNet,
+      total_gross: totalAmount,
+      total_net: totalAmount,  // Keeping this for now to avoid breaking changes
       projected_commission: projectedCommission,
       goal_amount: goalAmount,
-      goal_percentage: Math.min(totalNet / goalAmount, 2), // Now using totalNet for percentage calculation
+      goal_percentage: Math.min(totalAmount / goalAmount, 2),
     });
   }, [user]);
 
@@ -110,9 +109,9 @@ export default function DashboardPage() {
           />
 
           <SalesSummaryCard
-            title="Valor Líquido"
-            amount={summary.total_net}
-            description="Após taxas de pagamento"
+            title="Valor Total"
+            amount={summary.total_gross}
+            description="Valor final das vendas"
             icon={<DollarSign className="h-4 w-4" />}
             trend={{ value: 8, isPositive: true }}
           />
@@ -128,12 +127,11 @@ export default function DashboardPage() {
 
         <div className="grid gap-4 md:grid-cols-2">
           <GoalProgressCard
-            currentValue={summary.total_net} // Agora usando total líquido para meta
+            currentValue={summary.total_gross}
             goalValue={summary.goal_amount}
           />
           <CommissionCard
-            netAmount={summary.total_net}
-            totalSales={summary.total_net} // Agora comparando total líquido com meta
+            totalSales={summary.total_gross}
             goalAmount={summary.goal_amount}
           />
         </div>

@@ -10,7 +10,6 @@ import {
   Menu, 
   ShoppingCart, 
   Users, 
-  Calculator, 
   Settings, 
   LogOut 
 } from "lucide-react";
@@ -86,13 +85,6 @@ export function AppSidebar() {
             to="/comissoes" 
             icon={<BarChart3 size={20} />} 
             label="Comissões" 
-            expanded={expanded} 
-          />
-          
-          <SidebarLink 
-            to="/calculadora" 
-            icon={<Calculator size={20} />} 
-            label="Calculadora" 
             expanded={expanded} 
           />
           

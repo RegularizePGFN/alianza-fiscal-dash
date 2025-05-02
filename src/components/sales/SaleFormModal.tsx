@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Sale, PaymentMethod } from "@/lib/types";
 import { PAYMENT_METHODS, INSTALLMENT_OPTIONS } from "@/lib/constants";
-import { calculateNetAmount, getTodayISO } from "@/lib/utils";
+import { getTodayISO } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 
 import {
@@ -33,8 +33,7 @@ export function SaleFormModal({ initialData, onSave, onCancel }: SaleFormModalPr
   const { user } = useAuth();
   
   const [inputValue, setInputValue] = useState<string>(initialData ? initialData.gross_amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00');
-  const [grossAmount, setGrossAmount] = useState<number>(initialData ? initialData.gross_amount : 0);
-  const [netAmount, setNetAmount] = useState<number>(initialData ? initialData.net_amount : 0);
+  const [amount, setAmount] = useState<number>(initialData ? initialData.gross_amount : 0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
     initialData ? initialData.payment_method : PaymentMethod.CREDIT
   );
@@ -45,12 +44,7 @@ export function SaleFormModal({ initialData, onSave, onCancel }: SaleFormModalPr
     initialData ? initialData.sale_date : getTodayISO()
   );
   
-  useEffect(() => {
-    const calculatedNetAmount = calculateNetAmount(grossAmount, paymentMethod, installments);
-    setNetAmount(calculatedNetAmount);
-  }, [grossAmount, paymentMethod, installments]);
-  
-  const handleGrossAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value;
     setInputValue(rawValue);
     
@@ -62,16 +56,7 @@ export function SaleFormModal({ initialData, onSave, onCancel }: SaleFormModalPr
         .replace(/[^\d.]/g, '') // Remove all non-numeric characters except dot
     );
     
-    setGrossAmount(isNaN(numericValue) ? 0 : numericValue);
-  };
-  
-  const handlePaymentMethodChange = (value: string) => {
-    setPaymentMethod(value as PaymentMethod);
-    
-    // Reset installments for non-credit payment methods
-    if (value !== PaymentMethod.CREDIT) {
-      setInstallments(1);
-    }
+    setAmount(isNaN(numericValue) ? 0 : numericValue);
   };
   
   // Format the input value to currency on blur
@@ -90,14 +75,14 @@ export function SaleFormModal({ initialData, onSave, onCancel }: SaleFormModalPr
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         }));
-        setGrossAmount(numValue);
+        setAmount(numValue);
       } else {
         setInputValue('0,00');
-        setGrossAmount(0);
+        setAmount(0);
       }
     } catch (e) {
       setInputValue('0,00');
-      setGrossAmount(0);
+      setAmount(0);
     }
   };
   
@@ -107,8 +92,8 @@ export function SaleFormModal({ initialData, onSave, onCancel }: SaleFormModalPr
     onSave({
       salesperson_id: user.id,
       salesperson_name: user.name,
-      gross_amount: grossAmount,
-      net_amount: netAmount,
+      gross_amount: amount,
+      net_amount: amount, // Setting net_amount equal to gross_amount
       payment_method: paymentMethod,
       installments,
       sale_date: saleDate,
@@ -133,7 +118,7 @@ export function SaleFormModal({ initialData, onSave, onCancel }: SaleFormModalPr
                 id="amount"
                 type="text"
                 value={inputValue}
-                onChange={handleGrossAmountChange}
+                onChange={handleAmountChange}
                 onBlur={handleBlur}
                 className="pl-10"
               />
@@ -144,7 +129,7 @@ export function SaleFormModal({ initialData, onSave, onCancel }: SaleFormModalPr
             <Label htmlFor="payment_method">Forma de Pagamento</Label>
             <Select
               value={paymentMethod}
-              onValueChange={handlePaymentMethodChange}
+              onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione" />
@@ -188,16 +173,6 @@ export function SaleFormModal({ initialData, onSave, onCancel }: SaleFormModalPr
               value={saleDate}
               onChange={(e) => setSaleDate(e.target.value)}
             />
-          </div>
-          
-          <div className="grid gap-2">
-            <Label>Valor Líquido (após taxas)</Label>
-            <div className="p-2 border rounded-md bg-muted/50">
-              {netAmount.toLocaleString('pt-BR', {
-                style: 'currency',
-                currency: 'BRL'
-              })}
-            </div>
           </div>
         </div>
         
