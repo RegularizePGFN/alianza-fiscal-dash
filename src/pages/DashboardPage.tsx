@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Sale, SalesSummary, UserRole, PaymentMethod } from "@/lib/types";
 import { DEFAULT_GOAL_AMOUNT } from "@/lib/constants";
 import { getCurrentMonthDates } from "@/lib/utils";
-import { AreaChart, ShoppingCart, DollarSign } from "lucide-react";
+import { AreaChart, ShoppingCart } from "lucide-react";
 
 // Mock sales data - updated with client information
 const mockSales: Sale[] = [
@@ -108,21 +108,13 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2">
           <SalesSummaryCard
             title="Total de Vendas"
             amount={summary.total_gross}
             description={`${summary.total_sales} ${summary.total_sales === 1 ? 'venda' : 'vendas'} no período`}
             icon={<ShoppingCart className="h-4 w-4" />}
             trend={{ value: 12, isPositive: true }}
-          />
-
-          <SalesSummaryCard
-            title="Valor Total"
-            amount={summary.total_gross}
-            description="Valor final das vendas"
-            icon={<DollarSign className="h-4 w-4" />}
-            trend={{ value: 8, isPositive: true }}
           />
 
           <SalesSummaryCard
