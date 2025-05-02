@@ -16,14 +16,21 @@ import { Button } from "@/components/ui/button";
 import { validateSaleForm } from "./SaleFormUtils";
 import { ClientFormFields } from "./ClientFormFields";
 import { SaleDetailsFields } from "./SaleDetailsFields";
+import { Loader2 } from "lucide-react";
 
 interface SaleFormModalProps {
   initialData: Sale | null;
   onSave: (sale: Omit<Sale, 'id'>) => void;
   onCancel: () => void;
+  isSubmitting?: boolean;
 }
 
-export function SaleFormModal({ initialData, onSave, onCancel }: SaleFormModalProps) {
+export function SaleFormModal({ 
+  initialData, 
+  onSave, 
+  onCancel,
+  isSubmitting = false
+}: SaleFormModalProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   
@@ -49,21 +56,18 @@ export function SaleFormModal({ initialData, onSave, onCancel }: SaleFormModalPr
   const [clientDocument, setClientDocument] = useState<string>(
     initialData?.client_document || ""
   );
-  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const handleSave = async () => {
     if (!user) {
       toast({
-        title: "Erro de autenticação",
-        description: "Você precisa estar logado para registrar uma venda",
+        title: "Authentication error",
+        description: "You need to be logged in to record a sale",
         variant: "destructive",
       });
       return;
     }
     
     if (!validateSaleForm(clientName, clientPhone, clientDocument, amount)) return;
-    
-    setIsSubmitting(true);
     
     try {
       console.log("Preparing sale data with user:", user.id, user.name);
@@ -85,20 +89,18 @@ export function SaleFormModal({ initialData, onSave, onCancel }: SaleFormModalPr
     } catch (error) {
       console.error("Error in handleSave:", error);
       toast({
-        title: "Erro ao salvar",
-        description: "Ocorreu um erro ao salvar a venda. Tente novamente.",
+        title: "Error saving",
+        description: "An error occurred while saving the sale. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
   
   return (
-    <Dialog open={true} onOpenChange={() => onCancel()}>
+    <Dialog open={true} onOpenChange={() => !isSubmitting && onCancel()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{initialData ? 'Editar Venda' : 'Nova Venda'}</DialogTitle>
+          <DialogTitle>{initialData ? 'Edit Sale' : 'New Sale'}</DialogTitle>
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
@@ -109,6 +111,7 @@ export function SaleFormModal({ initialData, onSave, onCancel }: SaleFormModalPr
             setClientPhone={setClientPhone}
             clientDocument={clientDocument}
             setClientDocument={setClientDocument}
+            disabled={isSubmitting}
           />
           
           <SaleDetailsFields
@@ -121,15 +124,31 @@ export function SaleFormModal({ initialData, onSave, onCancel }: SaleFormModalPr
             setInstallments={setInstallments}
             saleDate={saleDate}
             setSaleDate={setSaleDate}
+            disabled={isSubmitting}
           />
         </div>
         
         <DialogFooter>
-          <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>
-            Cancelar
+          <Button 
+            variant="outline" 
+            onClick={onCancel} 
+            disabled={isSubmitting}
+          >
+            Cancel
           </Button>
-          <Button type="submit" onClick={handleSave} disabled={isSubmitting}>
-            {initialData ? 'Salvar Alterações' : 'Adicionar Venda'}
+          <Button 
+            type="submit" 
+            onClick={handleSave} 
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {initialData ? 'Saving...' : 'Adding...'}
+              </>
+            ) : (
+              initialData ? 'Save Changes' : 'Add Sale'
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

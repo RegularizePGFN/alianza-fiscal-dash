@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SalesTable } from "@/components/sales/SalesTable";
 import { Sale, UserRole } from "@/lib/types";
@@ -8,27 +8,30 @@ import { SaleFormModal } from "@/components/sales/form/SaleFormModal";
 import { SalesHeader } from "@/components/sales/SalesHeader";
 import { DeleteSaleDialog } from "@/components/sales/DeleteSaleDialog";
 import { useSales } from "@/hooks/useSales";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SalesPage() {
   const { user } = useAuth();
-  const { sales, loading, handleDeleteSale, handleSaveSale } = useSales();
+  const { toast } = useToast();
+  const { sales, loading, handleDeleteSale, handleSaveSale, fetchSales } = useSales();
   const [showSaleModal, setShowSaleModal] = useState(false);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [saleToDelete, setSaleToDelete] = useState<string | null>(null);
+  const [isProcessingAction, setIsProcessingAction] = useState(false);
   
   const handleAddSale = () => {
     setEditingSale(null);
     setShowSaleModal(true);
   };
   
-  const handleEdit = (sale: Sale) => {
+  const handleEdit = useCallback((sale: Sale) => {
     setEditingSale(sale);
     setShowSaleModal(true);
-  };
+  }, []);
   
-  const handleDeleteConfirm = (saleId: string) => {
+  const handleDeleteConfirm = useCallback((saleId: string) => {
     setSaleToDelete(saleId);
-  };
+  }, []);
   
   const handleDeleteCancel = () => {
     setSaleToDelete(null);
@@ -37,18 +40,48 @@ export default function SalesPage() {
   const handleDeleteSaleConfirm = async () => {
     if (!saleToDelete) return;
     
-    const success = await handleDeleteSale(saleToDelete);
-    if (success) {
-      setSaleToDelete(null);
+    setIsProcessingAction(true);
+    try {
+      const success = await handleDeleteSale(saleToDelete);
+      if (success) {
+        setSaleToDelete(null);
+      }
+    } catch (error) {
+      console.error("Error deleting sale:", error);
+      toast({
+        title: "Error",
+        description: "There was an error deleting the sale. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessingAction(false);
     }
   };
   
   const handleSaveSaleForm = async (saleData: Omit<Sale, 'id'>) => {
-    const success = await handleSaveSale(saleData, editingSale?.id);
-    
-    if (success) {
-      setShowSaleModal(false);
+    setIsProcessingAction(true);
+    try {
+      const success = await handleSaveSale(saleData, editingSale?.id);
+      
+      if (success) {
+        setShowSaleModal(false);
+        setEditingSale(null);
+      }
+    } catch (error) {
+      console.error("Error saving sale:", error);
+      toast({
+        title: "Error",
+        description: "There was an error saving the sale. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessingAction(false);
     }
+  };
+  
+  const handleFormCancel = () => {
+    setShowSaleModal(false);
+    setEditingSale(null);
   };
   
   const isAdmin = user?.role === UserRole.ADMIN;
@@ -81,7 +114,8 @@ export default function SalesPage() {
           <SaleFormModal 
             initialData={editingSale}
             onSave={handleSaveSaleForm}
-            onCancel={() => setShowSaleModal(false)}
+            onCancel={handleFormCancel}
+            isSubmitting={isProcessingAction}
           />
         )}
         
@@ -89,6 +123,7 @@ export default function SalesPage() {
           isOpen={!!saleToDelete}
           onClose={handleDeleteCancel}
           onDelete={handleDeleteSaleConfirm}
+          isDeleting={isProcessingAction}
         />
       </div>
     </AppLayout>

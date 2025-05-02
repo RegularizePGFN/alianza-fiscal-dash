@@ -1,7 +1,8 @@
 
-import React from "react";
-import { Label } from "@/components/ui/label";
+import { PaymentMethod } from "@/lib/types";
+import { PAYMENT_METHODS, INSTALLMENT_OPTIONS } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -9,9 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PaymentMethod } from "@/lib/types";
-import { PAYMENT_METHODS, INSTALLMENT_OPTIONS } from "@/lib/constants";
-import { formatCurrencyInput } from "./SaleFormUtils";
 
 interface SaleDetailsFieldsProps {
   inputValue: string;
@@ -23,6 +21,7 @@ interface SaleDetailsFieldsProps {
   setInstallments: (value: number) => void;
   saleDate: string;
   setSaleDate: (value: string) => void;
+  disabled?: boolean;
 }
 
 export function SaleDetailsFields({
@@ -35,8 +34,9 @@ export function SaleDetailsFields({
   setInstallments,
   saleDate,
   setSaleDate,
+  disabled = false
 }: SaleDetailsFieldsProps) {
-
+  
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value;
     setInputValue(rawValue);
@@ -54,23 +54,35 @@ export function SaleDetailsFields({
   
   // Format the input value to currency on blur
   const handleBlur = () => {
-    const formattedValue = formatCurrencyInput(inputValue);
-    setInputValue(formattedValue);
-    
-    const numericValue = parseFloat(
-      formattedValue
-        .replace(/\./g, '')
-        .replace(/,/g, '.')
-        .replace(/[^\d.]/g, '')
-    );
-    
-    setAmount(isNaN(numericValue) ? 0 : numericValue);
+    try {
+      // Remove currency symbols and non-numeric characters for parsing
+      const numValue = parseFloat(
+        inputValue
+          .replace(/\./g, '')
+          .replace(/,/g, '.')
+          .replace(/[^\d.]/g, '')
+      );
+      
+      if (!isNaN(numValue)) {
+        setInputValue(numValue.toLocaleString('pt-BR', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }));
+        setAmount(numValue);
+      } else {
+        setInputValue('0,00');
+        setAmount(0);
+      }
+    } catch (e) {
+      setInputValue('0,00');
+      setAmount(0);
+    }
   };
-
+  
   return (
     <>
       <div className="grid gap-2">
-        <Label htmlFor="amount">Valor da Venda</Label>
+        <Label htmlFor="amount">Sale Amount</Label>
         <div className="relative">
           <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
             R$
@@ -82,18 +94,20 @@ export function SaleDetailsFields({
             onChange={handleAmountChange}
             onBlur={handleBlur}
             className="pl-10"
+            disabled={disabled}
           />
         </div>
       </div>
       
       <div className="grid gap-2">
-        <Label htmlFor="payment_method">Forma de Pagamento</Label>
+        <Label htmlFor="payment_method">Payment Method</Label>
         <Select
           value={paymentMethod}
           onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
+          disabled={disabled}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Selecione" />
+            <SelectValue placeholder="Select" />
           </SelectTrigger>
           <SelectContent>
             {PAYMENT_METHODS.map((method) => (
@@ -107,13 +121,14 @@ export function SaleDetailsFields({
       
       {paymentMethod === PaymentMethod.CREDIT && (
         <div className="grid gap-2">
-          <Label htmlFor="installments">Parcelas</Label>
+          <Label htmlFor="installments">Installments</Label>
           <Select
             value={installments.toString()}
             onValueChange={(value) => setInstallments(parseInt(value))}
+            disabled={disabled}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Selecione" />
+              <SelectValue placeholder="Select" />
             </SelectTrigger>
             <SelectContent>
               {INSTALLMENT_OPTIONS.map((option) => (
@@ -127,12 +142,13 @@ export function SaleDetailsFields({
       )}
       
       <div className="grid gap-2">
-        <Label htmlFor="sale_date">Data da Venda</Label>
+        <Label htmlFor="sale_date">Sale Date</Label>
         <Input
           id="sale_date"
           type="date"
           value={saleDate}
           onChange={(e) => setSaleDate(e.target.value)}
+          disabled={disabled}
         />
       </div>
     </>
