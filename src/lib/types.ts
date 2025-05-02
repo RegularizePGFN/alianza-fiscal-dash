@@ -22,7 +22,7 @@ export interface AuthState {
   isLoading: boolean;
 }
 
-// Payment methods
+// Payment methods - updated to match the string literals used in the code
 export enum PaymentMethod {
   BOLETO = 'Boleto',
   PIX = 'Pix',

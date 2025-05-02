@@ -44,8 +44,10 @@ export default function UsersPage() {
   
   useEffect(() => {
     // In a real app, this would fetch from Supabase
+    // Convert string roles to UserRole enum values
     const usersWithTimestamp = MOCK_USERS.map(user => ({
       ...user,
+      role: user.role as UserRole, // Explicitly cast to UserRole
       created_at: new Date().toISOString(),
     }));
     setUsers(usersWithTimestamp);
