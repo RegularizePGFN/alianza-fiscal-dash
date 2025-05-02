@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, PlusCircle, Loader2 } from "lucide-react";
+import { MoreHorizontal, PlusCircle } from "lucide-react";
 import { useAuth } from '@/contexts/auth';
 import { User, UserRole } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
@@ -32,6 +33,8 @@ import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { UserFormModal } from "@/components/users/UserFormModal";
 import { DeleteUserDialog } from "@/components/users/DeleteUserDialog";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { ADMIN_EMAILS } from "@/contexts/auth/utils";
 
 export default function UsersPage() {
   const { user } = useAuth();
@@ -57,22 +60,40 @@ export default function UsersPage() {
     setError(null);
     
     try {
-      const { data, error } = await supabase
+      // First, get all users from auth.users via admin API
+      const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
+      
+      if (authError) throw authError;
+      
+      if (!authData?.users) {
+        setUsers([]);
+        return;
+      }
+      
+      // Then, get profile information
+      const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
-        .select("*")
-        .order("name");
+        .select("*");
         
-      if (error) throw error;
+      if (profilesError) throw profilesError;
       
-      const formattedUsers = data.map(profile => ({
-        id: profile.id,
-        name: profile.name,
-        email: profile.email,
-        role: profile.role as UserRole,
-        created_at: profile.created_at,
-      }));
+      // Merge auth users with profiles data
+      const mergedUsers = authData.users.map(authUser => {
+        const profile = profilesData?.find(p => p.id === authUser.id) || {};
+        
+        return {
+          id: authUser.id,
+          name: profile.name || authUser.email?.split('@')[0] || 'Usuário',
+          email: authUser.email || '',
+          role: profile.role as UserRole || UserRole.SALESPERSON,
+          created_at: authUser.created_at,
+        };
+      });
       
-      setUsers(formattedUsers);
+      // Filter out admin users (those with emails in ADMIN_EMAILS)
+      const filteredUsers = mergedUsers.filter(u => !ADMIN_EMAILS.includes(u.email.toLowerCase()));
+      
+      setUsers(filteredUsers);
     } catch (err: any) {
       console.error("Error fetching users:", err);
       setError(err.message || "Falha ao carregar os usuários.");
@@ -146,9 +167,7 @@ export default function UsersPage() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="flex justify-center items-center py-10">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
+              <LoadingSpinner size="lg" />
             ) : error ? (
               <div className="text-center py-10 text-destructive">
                 <p>{error}</p>
@@ -172,35 +191,43 @@ export default function UsersPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>{user.name}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>{getRoleBadge(user.role)}</TableCell>
-                      <TableCell>{user.created_at && formatDate(user.created_at)}</TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Abrir menu</span>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleEditUser(user)}>
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={() => handleDeleteUser(user)}
-                            >
-                              Excluir
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                  {users.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-6">
+                        Nenhum usuário encontrado
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    users.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell>{user.name}</TableCell>
+                        <TableCell>{user.email}</TableCell>
+                        <TableCell>{getRoleBadge(user.role)}</TableCell>
+                        <TableCell>{user.created_at && formatDate(user.created_at)}</TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Abrir menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                                Editar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => handleDeleteUser(user)}
+                              >
+                                Excluir
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             )}

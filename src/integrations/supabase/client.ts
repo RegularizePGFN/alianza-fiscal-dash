@@ -135,36 +135,6 @@ const adminApi: Partial<GoTrueAdminApi> = {
     }
   },
 
-  // Stub methods with proper return types
-  async _listFactors(): Promise<any> { 
-    return { data: null, error: null }; 
-  },
-  
-  async _deleteFactor(): Promise<any> { 
-    return { data: null, error: null }; 
-  },
-  
-  async signOut(): Promise<{ data: null; error: AuthError | null }> { 
-    return { data: null, error: null }; 
-  },
-  
-  async inviteUserByEmail(): Promise<UserResponse> { 
-    return { data: { user: null }, error: null }; 
-  },
-  
-  async generateLink(): Promise<GenerateLinkResponse> { 
-    // Create empty properties object matching the expected structure
-    const emptyProps = {
-      action_link: '',
-      email_otp: '',
-      hashed_token: '',
-      redirect_to: '',
-      verification_type: '' as any
-    };
-    return { data: { properties: emptyProps, user: null }, error: null }; 
-  },
-  
-  // Corrigindo a tipagem para incluir o campo 'aud' conforme necessário
   async listUsers(params: PageParams = { page: 1, perPage: 50 }): Promise<{ data: { users: User[], aud: string } & Pagination; error: null } | { data: { users: [] }; error: AuthError }> { 
     try {
       const response = await fetch(
@@ -208,6 +178,26 @@ const adminApi: Partial<GoTrueAdminApi> = {
   
   async resetPasswordForEmail(): Promise<{ data: {}; error: AuthError | null }> { 
     return { data: {}, error: null }; 
+  },
+  
+  async generateLink(): Promise<GenerateLinkResponse> { 
+    // Create empty properties object matching the expected structure
+    const emptyProps = {
+      action_link: '',
+      email_otp: '',
+      hashed_token: '',
+      redirect_to: '',
+      verification_type: '' as any
+    };
+    return { data: { properties: emptyProps, user: null }, error: null }; 
+  },
+  
+  async inviteUserByEmail(): Promise<UserResponse> { 
+    return { data: { user: null }, error: null }; 
+  },
+  
+  async signOut(): Promise<{ data: null; error: AuthError | null }> { 
+    return { data: null, error: null }; 
   }
 };
 
