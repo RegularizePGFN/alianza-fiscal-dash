@@ -138,8 +138,9 @@ export const useSales = () => {
       console.log("Salvando venda:", editingSaleId ? "Editando" : "Nova", saleData);
       
       // Preparar o objeto para o Supabase (converter PaymentMethod enum para string)
+      // Garantir que o UUID seja uma string válida
       const supabaseData = {
-        salesperson_id: saleData.salesperson_id,
+        salesperson_id: user.id.toString(), // Garantir que é uma string válida
         salesperson_name: saleData.salesperson_name,
         gross_amount: saleData.gross_amount,
         payment_method: saleData.payment_method.toString(),
