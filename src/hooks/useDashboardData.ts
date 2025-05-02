@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -6,11 +5,6 @@ import { Sale, SalesSummary } from "@/lib/types";
 import { getCurrentMonthDates } from "@/lib/utils";
 import { fetchSalesData, fetchPreviousMonthSales, fetchMonthlyGoal, calculateSalesSummary } from "./dashboard/apiService";
 import { DashboardTrends } from "./dashboard/types";
-
-export interface DashboardTrends {
-  totalSalesTrend: { value: number; isPositive: boolean };
-  averageSaleTrend: { value: number; isPositive: boolean };
-}
 
 export const useDashboardData = () => {
   const { user } = useAuth();

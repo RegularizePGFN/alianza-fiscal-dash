@@ -62,3 +62,21 @@ export function calculateCommission(totalSales: number, goalAmount: number): {
 export function calculateGoalPercentage(totalSales: number, goalAmount: number): number {
   return Math.min(totalSales / goalAmount, 2); // Cap at 200%
 }
+
+// Convert payment method string to enum
+export function convertToPaymentMethod(method: string): PaymentMethod {
+  switch (method?.toLowerCase()) {
+    case 'boleto':
+      return PaymentMethod.BOLETO;
+    case 'pix':
+      return PaymentMethod.PIX;
+    case 'crédito':
+    case 'credito':
+      return PaymentMethod.CREDIT;
+    case 'débito':
+    case 'debito':
+      return PaymentMethod.DEBIT;
+    default:
+      return PaymentMethod.PIX; // Default to PIX
+  }
+}
