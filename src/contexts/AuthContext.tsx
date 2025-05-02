@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { AuthState, User, UserRole } from '@/lib/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,8 +24,17 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-// Map Supabase role to app role
-const mapUserRole = (role?: string): UserRole => {
+// Admin email(s) - email addresses that should always have admin privileges
+const ADMIN_EMAILS = ['felipe.souza@socialcriativo.com'];
+
+// Map Supabase role to app role with admin check
+const mapUserRole = (role?: string, email?: string): UserRole => {
+  // Check if email is in admin list
+  if (email && ADMIN_EMAILS.includes(email.toLowerCase())) {
+    return UserRole.ADMIN;
+  }
+  
+  // Otherwise check role as before
   switch (role?.toLowerCase()) {
     case 'admin':
       return UserRole.ADMIN;
@@ -109,14 +117,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.error("Error fetching user profile:", profileError);
       }
       
+      const email = profileData?.email || session.user.email || '';
+      
       // Create user object from session and profile data
       const authUser: User = {
         id: session.user.id,
         name: profileData?.name || session.user.email?.split('@')[0] || 'Usuário',
-        email: profileData?.email || session.user.email || '',
-        role: profileData?.role 
-          ? mapUserRole(profileData.role) 
-          : UserRole.SALESPERSON,
+        email: email,
+        role: mapUserRole(profileData?.role, email),
       };
       
       console.log("Setting authenticated user:", authUser);
@@ -128,13 +136,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
     } catch (error) {
       console.error("Error handling session:", error);
+      
+      // Fallback with admin email check
+      const email = session.user.email || '';
+      
       setAuthState({
         isAuthenticated: true,
         user: {
           id: session.user.id,
           name: session.user.email?.split('@')[0] || 'Usuário',
-          email: session.user.email || '',
-          role: UserRole.SALESPERSON,
+          email: email,
+          role: mapUserRole(undefined, email),
         },
         isLoading: false,
       });
