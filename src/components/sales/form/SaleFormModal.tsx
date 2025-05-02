@@ -24,13 +24,15 @@ interface SaleFormModalProps {
   onSave: (sale: Omit<Sale, 'id'>) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
+  open: boolean;
 }
 
 export function SaleFormModal({ 
   initialData, 
   onSave, 
   onCancel,
-  isSubmitting = false
+  isSubmitting = false,
+  open
 }: SaleFormModalProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -57,29 +59,30 @@ export function SaleFormModal({
   const [clientDocument, setClientDocument] = useState<string>(
     initialData?.client_document || ""
   );
-  const [isOpen, setIsOpen] = useState<boolean>(true);
   
-  // Clean up when the component unmounts
+  // Reset form data when initialData changes
   useEffect(() => {
-    return () => {
-      // This ensures any resources are properly released
-      console.log("SaleFormModal unmounted");
-    };
-  }, []);
+    if (open) {
+      setInputValue(initialData ? initialData.gross_amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00');
+      setAmount(initialData ? initialData.gross_amount : 0);
+      setPaymentMethod(initialData ? initialData.payment_method : PaymentMethod.CREDIT);
+      setInstallments(initialData ? initialData.installments : 1);
+      setSaleDate(initialData ? initialData.sale_date : getTodayISO());
+      setClientName(initialData?.client_name || "");
+      setClientPhone(initialData?.client_phone || "");
+      setClientDocument(initialData?.client_document || "");
+    }
+  }, [initialData, open]);
   
-  // Handle dialog close
+  // Handle dialog close with safety checks
   const handleDialogClose = () => {
     if (isSubmitting) {
       return;
     }
-    setIsOpen(false);
-    // Delay the onCancel to ensure the dialog animation completes
-    setTimeout(() => {
-      onCancel();
-    }, 300);
+    onCancel();
   };
   
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!user) {
       toast({
         title: "Erro de autenticação",
@@ -90,11 +93,6 @@ export function SaleFormModal({
     }
     
     if (!validateSaleForm(clientName, clientPhone, clientDocument, amount)) {
-      toast({
-        title: "Formulário inválido",
-        description: "Verifique os campos obrigatórios",
-        variant: "destructive",
-      });
       return;
     }
     
@@ -123,8 +121,11 @@ export function SaleFormModal({
     }
   };
   
+  // Only render the Dialog when open is true
+  if (!open) return null;
+  
   return (
-    <Dialog open={isOpen} onOpenChange={handleDialogClose}>
+    <Dialog open={open} onOpenChange={handleDialogClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{initialData ? 'Editar Venda' : 'Nova Venda'}</DialogTitle>

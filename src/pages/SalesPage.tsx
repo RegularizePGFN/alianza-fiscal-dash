@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SalesTable } from "@/components/sales/SalesTable";
@@ -19,55 +20,42 @@ export default function SalesPage() {
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [saleToDelete, setSaleToDelete] = useState<string | null>(null);
   const [isProcessingAction, setIsProcessingAction] = useState(false);
-  const [isModalBusy, setIsModalBusy] = useState(false); // substitui o useRef
 
+  // Limpa todos os estados quando o componente é desmontado
   useEffect(() => {
-    // Reset flags ao desmontar
     return () => {
       setShowSaleModal(false);
       setEditingSale(null);
       setSaleToDelete(null);
       setIsProcessingAction(false);
-      setIsModalBusy(false);
     };
   }, []);
 
-  useEffect(() => {
-    // Libera interação após fechamento de todos os modais
-    if (!showSaleModal && !saleToDelete) {
-      setIsProcessingAction(false);
-      setIsModalBusy(false);
-    }
-  }, [showSaleModal, saleToDelete]);
-
   const handleAddSale = useCallback(() => {
-    if (isModalBusy) return;
-    setIsModalBusy(true);
-
+    if (isProcessingAction) return;
+    
     setEditingSale(null);
     setShowSaleModal(true);
-  }, [isModalBusy]);
+  }, [isProcessingAction]);
 
   const handleEdit = useCallback((sale: Sale) => {
-    if (isModalBusy) return;
-    setIsModalBusy(true);
-
+    if (isProcessingAction) return;
+    
     setEditingSale(sale);
     setShowSaleModal(true);
-  }, [isModalBusy]);
+  }, [isProcessingAction]);
 
   const handleDeleteConfirm = useCallback((saleId: string) => {
-    if (isModalBusy) return;
-    setIsModalBusy(true);
-
+    if (isProcessingAction) return;
+    
     setSaleToDelete(saleId);
-  }, [isModalBusy]);
+  }, [isProcessingAction]);
 
   const handleDeleteCancel = useCallback(() => {
-    if (isProcessingAction || isModalBusy) return;
-
+    if (isProcessingAction) return;
+    
     setSaleToDelete(null);
-  }, [isProcessingAction, isModalBusy]);
+  }, [isProcessingAction]);
 
   const handleDeleteSaleConfirm = useCallback(async () => {
     if (!saleToDelete) return;
@@ -123,9 +111,12 @@ export default function SalesPage() {
 
   const handleFormCancel = useCallback(() => {
     if (isProcessingAction) return;
-
+    
+    // Limpa os estados relacionados ao modal
     setShowSaleModal(false);
-    setEditingSale(null);
+    setTimeout(() => {
+      setEditingSale(null);
+    }, 100);
   }, [isProcessingAction]);
 
   const handleImportSales = useCallback(async (file: File) => {
@@ -220,14 +211,15 @@ export default function SalesPage() {
           )}
         </div>
 
-        {showSaleModal && (
-          <SaleFormModal
-            initialData={editingSale}
-            onSave={handleSaveSaleForm}
-            onCancel={handleFormCancel}
-            isSubmitting={isProcessingAction}
-          />
-        )}
+        {/* Componente do modal com a propriedade key para forçar a recriação */}
+        <SaleFormModal
+          key={editingSale?.id || "new-sale"}
+          initialData={editingSale}
+          onSave={handleSaveSaleForm}
+          onCancel={handleFormCancel}
+          isSubmitting={isProcessingAction}
+          open={showSaleModal}
+        />
 
         {saleToDelete && (
           <DeleteSaleDialog
