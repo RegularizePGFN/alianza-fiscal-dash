@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Sale, PaymentMethod } from "@/lib/types";
 import { PAYMENT_METHODS, INSTALLMENT_OPTIONS } from "@/lib/constants";
 import { getTodayISO } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
 
 import {

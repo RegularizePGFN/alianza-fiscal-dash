@@ -1,8 +1,7 @@
-
 import { useState } from "react";
 import { Sale, PaymentMethod } from "@/lib/types";
 import { getTodayISO } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { useToast } from "@/hooks/use-toast";
 
 import {

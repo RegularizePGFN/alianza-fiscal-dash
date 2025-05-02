@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { Sale, UserRole, PaymentMethod } from "@/lib/types";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 

@@ -1,11 +1,10 @@
-
 import { useEffect, useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SalesSummaryCard } from "@/components/dashboard/SalesSummaryCard";
 import { GoalProgressCard } from "@/components/dashboard/GoalProgressCard";
 import { CommissionCard } from "@/components/dashboard/CommissionCard";
 import { SalesTable } from "@/components/sales/SalesTable";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { Sale, SalesSummary, UserRole, PaymentMethod } from "@/lib/types";
 import { DEFAULT_GOAL_AMOUNT } from "@/lib/constants";
 import { getCurrentMonthDates } from "@/lib/utils";

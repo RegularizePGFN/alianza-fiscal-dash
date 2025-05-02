@@ -1,9 +1,8 @@
-
 import { useState, useCallback } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SalesTable } from "@/components/sales/SalesTable";
 import { Sale, UserRole } from "@/lib/types";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { SaleFormModal } from "@/components/sales/form/SaleFormModal";
 import { SalesHeader } from "@/components/sales/SalesHeader";
 import { DeleteSaleDialog } from "@/components/sales/DeleteSaleDialog";

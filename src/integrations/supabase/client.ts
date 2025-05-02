@@ -163,8 +163,42 @@ const adminApi: Partial<GoTrueAdminApi> = {
     return { data: { properties: emptyProps, user: null }, error: null }; 
   },
   
-  async listUsers(): Promise<{ data: { users: User[], aud: string, total_count: number, next_page: string }, error: AuthError | null }> { 
-    return { data: { users: [], aud: '', total_count: 0, next_page: '' }, error: null }; 
+  async listUsers(params = { page: 1, perPage: 50 }): Promise<{ data: { users: User[], aud: string, total_count: number, next_page: string }, error: AuthError | null }> { 
+    try {
+      const { data, error } = await fetch(
+        `${SUPABASE_URL}/auth/v1/admin/users?page=${params.page}&per_page=${params.perPage}`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_SERVICE_ROLE_KEY
+          }
+        }
+      ).then(res => res.json());
+
+      if (error) {
+        return { data: { users: [] }, error: createAuthError(error.message, 400) };
+      }
+
+      // Transform the response to match the expected format
+      return { 
+        data: { 
+          users: data.users || [], 
+          aud: data.aud || 'authenticated',
+          // Include pagination details as required by the return type
+          page: params.page, 
+          nextPage: data.next_page || null,
+          perPage: params.perPage
+        }, 
+        error: null 
+      };
+    } catch (error: any) {
+      return { 
+        data: { users: [] }, 
+        error: createAuthError(error.message || 'Failed to list users', 500) 
+      };
+    }
   },
   
   async getUserById(): Promise<UserResponse> { 
