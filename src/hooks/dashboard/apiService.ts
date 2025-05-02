@@ -1,89 +1,96 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { DEFAULT_GOAL_AMOUNT } from "@/lib/constants";
-import { UserRole } from "@/lib/types";
 import { User } from "@/lib/types";
+import { DEFAULT_GOAL_AMOUNT } from "@/lib/constants";
+import { supabase } from "@/integrations/supabase/client";
 
-// Get the monthly sales data
-export const fetchMonthlySalesData = async (
-  currentStartStr: string,
-  currentEndStr: string,
-  user: User | null
-) => {
-  const { data: salesData, error } = await supabase
-    .from('sales')
-    .select('*')
-    .gte('sale_date', currentStartStr)
-    .lte('sale_date', currentEndStr)
-    .order('sale_date', { ascending: false });
-  
-  if (error) {
-    console.error("Erro ao buscar dados:", error);
-    throw error;
+// Fetch sales data for the current month
+export const fetchMonthlySalesData = async (startDate: string, endDate: string, user: User) => {
+  try {
+    // Query for the current month's sales
+    const { data: currentMonthData, error: currentMonthError } = await supabase
+      .from('sales')
+      .select('*')
+      .gte('sale_date', startDate)
+      .lte('sale_date', endDate);
+    
+    if (currentMonthError) {
+      console.error("Error fetching current month data:", currentMonthError);
+      throw currentMonthError;
+    }
+    
+    // Filter by salesperson if user is a salesperson
+    let filteredCurrentData = currentMonthData || [];
+    if (user.role === 'vendedor') {
+      filteredCurrentData = filteredCurrentData.filter(sale => sale.salesperson_id === user.id);
+    }
+    
+    return filteredCurrentData;
+  } catch (error) {
+    console.error("Error in fetchMonthlySalesData:", error);
+    return [];
   }
-  
-  let filteredData = salesData || [];
-  
-  if (user?.role === UserRole.SALESPERSON) {
-    filteredData = filteredData.filter(sale => sale.salesperson_id === user.id);
-    console.log("Dados filtrados para vendedor (mês atual):", filteredData.length, "registros");
-  }
-  
-  return filteredData;
 };
 
-// Get previous month sales data
-export const fetchPreviousMonthSalesData = async (
-  prevStartStr: string,
-  prevEndStr: string,
-  user: User | null
-) => {
-  const { data: prevMonthData, error: prevMonthError } = await supabase
-    .from('sales')
-    .select('*')
-    .gte('sale_date', prevStartStr)
-    .lte('sale_date', prevEndStr);
-  
-  if (prevMonthError) {
-    console.error("Erro ao buscar dados do mês anterior:", prevMonthError);
-    throw prevMonthError;
+// Fetch sales data for the previous month
+export const fetchPreviousMonthSalesData = async (startDate: string, endDate: string, user: User) => {
+  try {
+    const { data: prevMonthData, error: prevMonthError } = await supabase
+      .from('sales')
+      .select('*')
+      .gte('sale_date', startDate)
+      .lte('sale_date', endDate);
+    
+    if (prevMonthError) {
+      console.error("Error fetching previous month data:", prevMonthError);
+      throw prevMonthError;
+    }
+    
+    let filteredPrevData = prevMonthData || [];
+    if (user.role === 'vendedor') {
+      filteredPrevData = filteredPrevData.filter(sale => sale.salesperson_id === user.id);
+    }
+    
+    return filteredPrevData;
+  } catch (error) {
+    console.error("Error in fetchPreviousMonthSalesData:", error);
+    return [];
   }
-  
-  let filteredData = prevMonthData || [];
-  
-  if (user?.role === UserRole.SALESPERSON) {
-    filteredData = filteredData.filter(sale => sale.salesperson_id === user.id);
-    console.log("Dados filtrados para vendedor (mês anterior):", filteredData.length, "registros");
-  }
-  
-  return filteredData;
 };
 
 // Fetch monthly goal
 export const fetchMonthlyGoal = async (currentMonth: number, currentYear: number) => {
   try {
+    console.log(`Buscando meta para mês ${currentMonth}/${currentYear}`);
+    
     const { data: goalData, error: goalError } = await supabase
       .from('monthly_goals')
       .select('goal_amount')
       .eq('month', currentMonth)
       .eq('year', currentYear);
-    
-    if (goalData && goalData.length > 0 && !goalError) {
-      // If multiple goals are found, we'll use the highest one
-      const highestGoal = goalData.reduce((max, goal) => 
-        goal.goal_amount > max ? goal.goal_amount : max, 
-        goalData[0].goal_amount
-      );
-      console.log("Meta mensal encontrada:", highestGoal, "(de", goalData.length, "registros)");
-      return highestGoal;
-    } else if (goalError && goalError.code !== 'PGRST116') {
-      console.error('Erro ao buscar meta:', goalError);
+      
+    if (goalError) {
+      console.error("Erro ao buscar meta:", goalError);
+      throw goalError;
     }
     
-    console.log("Nenhuma meta encontrada, usando valor padrão:", DEFAULT_GOAL_AMOUNT);
-    return DEFAULT_GOAL_AMOUNT;
+    console.log("Dados de meta recebidos:", goalData);
+    
+    // Check if we have goal data and return the highest goal amount if there are multiple goals
+    if (goalData && goalData.length > 0) {
+      // If there are multiple goals, take the highest one
+      if (goalData.length > 1) {
+        const goals = goalData.map(g => g.goal_amount);
+        const highestGoal = Math.max(...goals);
+        console.log(`Múltiplas metas encontradas, usando a maior: ${highestGoal}`);
+        return highestGoal;
+      }
+      return goalData[0].goal_amount;
+    }
+    
+    console.log("Nenhuma meta encontrada, usando valor padrão");
+    return DEFAULT_GOAL_AMOUNT; // Default goal amount if none is found
   } catch (error) {
     console.error("Erro ao buscar meta:", error);
-    return DEFAULT_GOAL_AMOUNT;
+    return DEFAULT_GOAL_AMOUNT; // Default goal amount in case of error
   }
 };
