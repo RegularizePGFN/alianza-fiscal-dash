@@ -137,14 +137,24 @@ export const useSales = () => {
     try {
       console.log("Salvando venda:", editingSaleId ? "Editando" : "Nova", saleData);
       
-      // Verificar se o user.id é um UUID válido
-      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id)) {
-        console.log("ID do usuário não está no formato UUID, usando como está:", user.id);
+      // Obter o ID do usuário autenticado diretamente do Supabase para garantir UUID válido
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      
+      if (authError) {
+        console.error("Erro ao obter usuário autenticado:", authError);
+        throw authError;
       }
+      
+      if (!authData.user) {
+        throw new Error("Usuário não autenticado");
+      }
+      
+      const supabaseUserId = authData.user.id;
+      console.log("ID do usuário autenticado (Supabase):", supabaseUserId);
       
       // Preparar o objeto para o Supabase (converter PaymentMethod enum para string)
       const supabaseData = {
-        salesperson_id: user.id, // Usar o ID como está, sem tentativas de conversão
+        salesperson_id: supabaseUserId, // Usando o UUID válido do Supabase
         salesperson_name: saleData.salesperson_name,
         gross_amount: saleData.gross_amount,
         payment_method: saleData.payment_method.toString(),
