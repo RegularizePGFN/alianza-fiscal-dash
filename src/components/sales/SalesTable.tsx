@@ -16,13 +16,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, FileText } from "lucide-react";
 
 interface SalesTableProps {
   sales: Sale[];
   showSalesperson?: boolean;
   onEdit?: (sale: Sale) => void;
   onDelete?: (saleId: string) => void;
+  onViewDetails?: (sale: Sale) => void;
 }
 
 export function SalesTable({
@@ -30,6 +31,7 @@ export function SalesTable({
   showSalesperson = false,
   onEdit,
   onDelete,
+  onViewDetails,
 }: SalesTableProps) {
   return (
     <div className="rounded-md border">
@@ -37,18 +39,19 @@ export function SalesTable({
         <TableHeader>
           <TableRow>
             {showSalesperson && <TableHead>Vendedor</TableHead>}
+            <TableHead>Cliente</TableHead>
             <TableHead>Data</TableHead>
             <TableHead>Método</TableHead>
             <TableHead>Parcelas</TableHead>
             <TableHead className="text-right">Valor</TableHead>
-            {(onEdit || onDelete) && <TableHead className="w-[70px]">Ações</TableHead>}
+            {(onEdit || onDelete || onViewDetails) && <TableHead className="w-[70px]">Ações</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
           {sales.length === 0 ? (
             <TableRow>
               <TableCell
-                colSpan={showSalesperson ? 6 : 5}
+                colSpan={showSalesperson ? 7 : 6}
                 className="h-24 text-center"
               >
                 Nenhuma venda encontrada.
@@ -60,6 +63,7 @@ export function SalesTable({
                 {showSalesperson && (
                   <TableCell>{sale.salesperson_name}</TableCell>
                 )}
+                <TableCell>{sale.client_name}</TableCell>
                 <TableCell>{formatDate(sale.sale_date)}</TableCell>
                 <TableCell>{sale.payment_method}</TableCell>
                 <TableCell>
@@ -70,7 +74,7 @@ export function SalesTable({
                 <TableCell className="text-right">
                   {formatCurrency(sale.gross_amount)}
                 </TableCell>
-                {(onEdit || onDelete) && (
+                {(onEdit || onDelete || onViewDetails) && (
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -83,6 +87,14 @@ export function SalesTable({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        {onViewDetails && (
+                          <DropdownMenuItem
+                            onClick={() => onViewDetails(sale)}
+                          >
+                            <FileText className="mr-2 h-4 w-4" />
+                            Detalhes
+                          </DropdownMenuItem>
+                        )}
                         {onEdit && (
                           <DropdownMenuItem
                             onClick={() => onEdit(sale)}

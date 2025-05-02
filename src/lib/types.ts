@@ -30,7 +30,7 @@ export enum PaymentMethod {
   DEBIT = 'Débito',
 }
 
-// Sale interface
+// Sale interface - updated with new client fields
 export interface Sale {
   id: string;
   salesperson_id: string;
@@ -41,6 +41,9 @@ export interface Sale {
   installments: number;
   sale_date: string;
   created_at?: string;
+  client_name: string;
+  client_phone: string;
+  client_document: string;
 }
 
 // Commission calculation interface

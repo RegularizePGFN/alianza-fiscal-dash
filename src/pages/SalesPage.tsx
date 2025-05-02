@@ -8,6 +8,7 @@ import { Sale, UserRole, PaymentMethod } from "@/lib/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { SaleFormModal } from "@/components/sales/SaleFormModal";
+import { supabase } from "@/integrations/supabase/client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,75 +20,71 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// Mock sales data to use until we integrate with Supabase
-const mockSales: Sale[] = [
-  {
-    id: "1",
-    salesperson_id: "3",
-    salesperson_name: "Vendedor Silva",
-    gross_amount: 5000,
-    net_amount: 5000,
-    payment_method: PaymentMethod.BOLETO,
-    installments: 1,
-    sale_date: "2025-04-20",
-  },
-  {
-    id: "2",
-    salesperson_id: "3",
-    salesperson_name: "Vendedor Silva",
-    gross_amount: 3500,
-    net_amount: 3500,
-    payment_method: PaymentMethod.PIX,
-    installments: 1,
-    sale_date: "2025-04-25",
-  },
-  {
-    id: "3",
-    salesperson_id: "4",
-    salesperson_name: "Vendedor Santos",
-    gross_amount: 7000,
-    net_amount: 7000,
-    payment_method: PaymentMethod.CREDIT,
-    installments: 3,
-    sale_date: "2025-04-28",
-  },
-  {
-    id: "4",
-    salesperson_id: "3",
-    salesperson_name: "Vendedor Silva",
-    gross_amount: 4200,
-    net_amount: 4200,
-    payment_method: PaymentMethod.BOLETO,
-    installments: 1,
-    sale_date: "2025-04-30",
-  },
-  {
-    id: "5",
-    salesperson_id: "4",
-    salesperson_name: "Vendedor Santos",
-    gross_amount: 8500,
-    net_amount: 8500,
-    payment_method: PaymentMethod.PIX,
-    installments: 1,
-    sale_date: "2025-05-01",
-  },
-];
-
 export default function SalesPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [sales, setSales] = useState<Sale[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showSaleModal, setShowSaleModal] = useState(false);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [saleToDelete, setSaleToDelete] = useState<string | null>(null);
   
+  // Fetch sales data from Supabase
+  const fetchSales = async () => {
+    try {
+      setLoading(true);
+      
+      if (!user) return;
+      
+      let query = supabase
+        .from('sales')
+        .select('*, profiles(name)')
+        .order('sale_date', { ascending: false });
+      
+      // Filter sales based on user role
+      if (user.role === UserRole.SALESPERSON) {
+        query = query.eq('salesperson_id', user.id);
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (data) {
+        const formattedSales: Sale[] = data.map((sale) => ({
+          id: sale.id,
+          salesperson_id: sale.salesperson_id,
+          salesperson_name: sale.profiles?.name || 'Desconhecido',
+          gross_amount: sale.gross_amount,
+          net_amount: sale.gross_amount, // Using gross as net
+          payment_method: sale.payment_method as PaymentMethod,
+          installments: sale.installments,
+          sale_date: sale.sale_date,
+          created_at: sale.created_at,
+          client_name: sale.client_name,
+          client_phone: sale.client_phone,
+          client_document: sale.client_document
+        }));
+        
+        setSales(formattedSales);
+      }
+    } catch (error) {
+      console.error('Error fetching sales:', error);
+      toast({
+        title: "Erro ao carregar vendas",
+        description: "Não foi possível carregar as vendas. Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   useEffect(() => {
-    // Filter sales based on user role
-    if (user?.role === UserRole.SALESPERSON) {
-      const filteredSales = mockSales.filter(sale => sale.salesperson_id === user.id);
-      setSales(filteredSales);
-    } else {
-      setSales(mockSales);
+    if (user) {
+      fetchSales();
     }
   }, [user]);
   
@@ -109,48 +106,96 @@ export default function SalesPage() {
     setSaleToDelete(null);
   };
   
-  const handleDeleteSale = () => {
+  const handleDeleteSale = async () => {
     if (!saleToDelete) return;
     
-    // In a real app, we would call an API to delete the sale
-    const updatedSales = sales.filter(sale => sale.id !== saleToDelete);
-    setSales(updatedSales);
-    
-    toast({
-      title: "Venda excluída",
-      description: `A venda #${saleToDelete} foi excluída com sucesso.`,
-    });
+    try {
+      const { error } = await supabase
+        .from('sales')
+        .delete()
+        .eq('id', saleToDelete);
+      
+      if (error) {
+        throw error;
+      }
+      
+      setSales((prevSales) => prevSales.filter((sale) => sale.id !== saleToDelete));
+      
+      toast({
+        title: "Venda excluída",
+        description: "A venda foi excluída com sucesso.",
+      });
+    } catch (error) {
+      console.error('Error deleting sale:', error);
+      toast({
+        title: "Erro ao excluir venda",
+        description: "Não foi possível excluir a venda. Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    }
     
     setSaleToDelete(null);
   };
   
-  const handleSaveSale = (sale: Omit<Sale, 'id'>) => {
-    if (editingSale) {
-      // Update existing sale
-      const updatedSales = sales.map(s => 
-        s.id === editingSale.id 
-          ? { ...sale, id: editingSale.id, net_amount: sale.gross_amount } 
-          : s
-      );
-      setSales(updatedSales);
+  const handleSaveSale = async (sale: Omit<Sale, 'id'>) => {
+    try {
+      if (editingSale) {
+        // Update existing sale
+        const { error } = await supabase
+          .from('sales')
+          .update({
+            gross_amount: sale.gross_amount,
+            payment_method: sale.payment_method,
+            installments: sale.installments,
+            sale_date: sale.sale_date,
+            client_name: sale.client_name,
+            client_phone: sale.client_phone,
+            client_document: sale.client_document
+          })
+          .eq('id', editingSale.id);
+        
+        if (error) {
+          throw error;
+        }
+        
+        toast({
+          title: "Venda atualizada",
+          description: "A venda foi atualizada com sucesso.",
+        });
+      } else {
+        // Add new sale
+        const { data, error } = await supabase
+          .from('sales')
+          .insert({
+            salesperson_id: sale.salesperson_id,
+            gross_amount: sale.gross_amount,
+            payment_method: sale.payment_method,
+            installments: sale.installments,
+            sale_date: sale.sale_date,
+            client_name: sale.client_name,
+            client_phone: sale.client_phone,
+            client_document: sale.client_document
+          })
+          .select();
+        
+        if (error) {
+          throw error;
+        }
+        
+        toast({
+          title: "Venda adicionada",
+          description: "Nova venda registrada com sucesso.",
+        });
+      }
       
+      // Refresh the sales list
+      fetchSales();
+    } catch (error: any) {
+      console.error('Error saving sale:', error);
       toast({
-        title: "Venda atualizada",
-        description: `A venda foi atualizada com sucesso.`,
-      });
-    } else {
-      // Add new sale
-      const newSale = {
-        ...sale,
-        net_amount: sale.gross_amount, // Set net_amount equal to gross_amount
-        id: `${sales.length + 1}`, // In a real app, this would be generated by the server
-      };
-      
-      setSales([...sales, newSale]);
-      
-      toast({
-        title: "Venda adicionada",
-        description: `Nova venda registrada com sucesso.`,
+        title: "Erro ao salvar venda",
+        description: error.message || "Não foi possível salvar a venda. Tente novamente mais tarde.",
+        variant: "destructive",
       });
     }
     
@@ -193,12 +238,18 @@ export default function SalesPage() {
           </div>
         </div>
         
-        <SalesTable
-          sales={sales}
-          showSalesperson={!isSalesperson}
-          onEdit={handleEdit}
-          onDelete={handleDeleteConfirm}
-        />
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <SalesTable
+            sales={sales}
+            showSalesperson={!isSalesperson}
+            onEdit={handleEdit}
+            onDelete={handleDeleteConfirm}
+          />
+        )}
         
         {showSaleModal && (
           <SaleFormModal 
