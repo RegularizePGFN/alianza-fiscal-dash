@@ -12,6 +12,12 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
   const [isSaving, setIsSaving] = useState(false);
   
   const handleSaveSale = async (saleData: Omit<Sale, 'id'>, editingSaleId?: string): Promise<boolean> => {
+    // Safety check to prevent duplicate operations
+    if (isSaving) {
+      console.log("Save operation already in progress, ignoring");
+      return false;
+    }
+    
     setIsSaving(true);
     
     try {
@@ -136,6 +142,7 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
       showErrorToast(error.message || "Could not save the sale. Please try again later.");
       return false;
     } finally {
+      // Always reset the saving state, even if there's an error
       setIsSaving(false);
     }
   };

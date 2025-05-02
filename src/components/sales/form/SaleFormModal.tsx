@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sale, PaymentMethod } from "@/lib/types";
 import { getTodayISO } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth";
@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { validateSaleForm } from "./SaleFormUtils";
@@ -56,12 +57,26 @@ export function SaleFormModal({
   const [clientDocument, setClientDocument] = useState<string>(
     initialData?.client_document || ""
   );
+  const [isOpen, setIsOpen] = useState<boolean>(true);
+  
+  // Clean up when the component unmounts
+  useEffect(() => {
+    return () => {
+      // This ensures any resources are properly released
+      console.log("SaleFormModal unmounted");
+    };
+  }, []);
   
   // Handle dialog close
   const handleDialogClose = () => {
-    if (!isSubmitting) {
-      onCancel();
+    if (isSubmitting) {
+      return;
     }
+    setIsOpen(false);
+    // Delay the onCancel to ensure the dialog animation completes
+    setTimeout(() => {
+      onCancel();
+    }, 300);
   };
   
   const handleSave = async () => {
@@ -109,10 +124,13 @@ export function SaleFormModal({
   };
   
   return (
-    <Dialog open={true} onOpenChange={handleDialogClose}>
+    <Dialog open={isOpen} onOpenChange={handleDialogClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{initialData ? 'Editar Venda' : 'Nova Venda'}</DialogTitle>
+          <DialogDescription>
+            {initialData ? 'Modifique os dados da venda' : 'Preencha os dados para registrar uma nova venda'}
+          </DialogDescription>
         </DialogHeader>
         
         <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto">

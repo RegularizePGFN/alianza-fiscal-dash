@@ -1,5 +1,5 @@
 
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { AppSidebar } from './AppSidebar';
 import { AppHeader } from './AppHeader';
 import { useAuth } from '@/contexts/auth';
@@ -12,11 +12,13 @@ interface AppLayoutProps {
 
 export function AppLayout({ children, requireAuth = true }: AppLayoutProps) {
   const { isAuthenticated, isLoading } = useAuth();
+  const [errorDetected, setErrorDetected] = useState<string | null>(null);
 
   // Add error boundary detection
   useEffect(() => {
     const handleError = (event: ErrorEvent) => {
       console.error("Unhandled error detected:", event.error);
+      setErrorDetected(event.message || "An unknown error occurred");
     };
 
     window.addEventListener('error', handleError);
@@ -38,6 +40,27 @@ export function AppLayout({ children, requireAuth = true }: AppLayoutProps) {
   // Redirect to login if not authenticated
   if (requireAuth && !isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Show error state if an error was detected
+  if (errorDetected) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-gradient-to-br from-red-50 to-gray-100">
+        <div className="flex flex-col items-center gap-4 max-w-md p-8 bg-white rounded-xl shadow-lg text-center">
+          <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
+            <span className="text-red-500 text-xl font-bold">!</span>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-800">Oops! Algo deu errado</h2>
+          <p className="text-sm text-gray-600">{errorDetected}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+          >
+            Recarregar a página
+          </button>
+        </div>
+      </div>
+    );
   }
 
   // Main layout for authenticated users

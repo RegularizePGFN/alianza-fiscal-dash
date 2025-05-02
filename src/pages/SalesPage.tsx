@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SalesTable } from "@/components/sales/SalesTable";
 import { Sale, UserRole } from "@/lib/types";
@@ -15,10 +15,24 @@ export default function SalesPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { sales, loading, handleDeleteSale, handleSaveSale, fetchSales } = useSales();
-  const [showSaleModal, setShowSaleModal] = useState(false);
+  const [showSaleModal, setShowSaleModal] = useState<boolean>(false);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [saleToDelete, setSaleToDelete] = useState<string | null>(null);
-  const [isProcessingAction, setIsProcessingAction] = useState(false);
+  const [isProcessingAction, setIsProcessingAction] = useState<boolean>(false);
+  
+  // Use a ref to track if a modal operation is in progress
+  const modalOperationInProgress = useRef<boolean>(false);
+  
+  // Clean up modal states when component unmounts
+  useEffect(() => {
+    return () => {
+      setShowSaleModal(false);
+      setEditingSale(null);
+      setSaleToDelete(null);
+      setIsProcessingAction(false);
+      modalOperationInProgress.current = false;
+    };
+  }, []);
   
   // Reset processing state if modal is closed externally
   useEffect(() => {
@@ -28,28 +42,59 @@ export default function SalesPage() {
   }, [showSaleModal, saleToDelete]);
   
   const handleAddSale = useCallback(() => {
+    // Prevent multiple modal operations
+    if (modalOperationInProgress.current) return;
+    modalOperationInProgress.current = true;
+    
     setEditingSale(null);
     setShowSaleModal(true);
+    
+    // Reset the operation flag after a short delay
+    setTimeout(() => {
+      modalOperationInProgress.current = false;
+    }, 500);
   }, []);
   
   const handleEdit = useCallback((sale: Sale) => {
+    // Prevent multiple modal operations
+    if (modalOperationInProgress.current) return;
+    modalOperationInProgress.current = true;
+    
+    console.log("Edit sale:", sale.id);
     setEditingSale(sale);
     setShowSaleModal(true);
+    
+    // Reset the operation flag after a short delay
+    setTimeout(() => {
+      modalOperationInProgress.current = false;
+    }, 500);
   }, []);
   
   const handleDeleteConfirm = useCallback((saleId: string) => {
+    // Prevent multiple modal operations
+    if (modalOperationInProgress.current) return;
+    modalOperationInProgress.current = true;
+    
+    console.log("Confirm delete for sale:", saleId);
     setSaleToDelete(saleId);
+    
+    // Reset the operation flag after a short delay
+    setTimeout(() => {
+      modalOperationInProgress.current = false;
+    }, 500);
   }, []);
   
   const handleDeleteCancel = useCallback(() => {
-    if (!isProcessingAction) {
-      setSaleToDelete(null);
-    }
+    if (isProcessingAction || modalOperationInProgress.current) return;
+    
+    console.log("Cancel delete");
+    setSaleToDelete(null);
   }, [isProcessingAction]);
   
   const handleDeleteSaleConfirm = useCallback(async () => {
     if (!saleToDelete) return;
     
+    console.log("Deleting sale:", saleToDelete);
     setIsProcessingAction(true);
     try {
       const success = await handleDeleteSale(saleToDelete);
@@ -74,10 +119,13 @@ export default function SalesPage() {
   
   const handleSaveSaleForm = useCallback(async (saleData: Omit<Sale, 'id'>) => {
     setIsProcessingAction(true);
+    console.log("Saving sale form data", editingSale?.id || "new");
+    
     try {
       const success = await handleSaveSale(saleData, editingSale?.id);
       
       if (success) {
+        console.log("Sale saved successfully");
         setShowSaleModal(false);
         setEditingSale(null);
         toast({
@@ -100,10 +148,11 @@ export default function SalesPage() {
   }, [editingSale, handleSaveSale, toast]);
   
   const handleFormCancel = useCallback(() => {
-    if (!isProcessingAction) {
-      setShowSaleModal(false);
-      setEditingSale(null);
-    }
+    if (isProcessingAction) return;
+    
+    console.log("Form cancelled");
+    setShowSaleModal(false);
+    setEditingSale(null);
   }, [isProcessingAction]);
 
   const handleImportSales = useCallback(async (file: File) => {
@@ -209,7 +258,7 @@ export default function SalesPage() {
           )}
         </div>
         
-        {/* Render modals only when needed */}
+        {/* Render modals conditionally */}
         {showSaleModal && (
           <SaleFormModal 
             initialData={editingSale}
