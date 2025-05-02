@@ -18,9 +18,9 @@ export const convertToPaymentMethod = (method: string): PaymentMethod => {
   }
 };
 
-// Show toast error message
-export const showErrorToast = (message: string): void => {
-  toast({
+// Show toast error message - updated to accept toast object parameter
+export const showErrorToast = (toastObj: any, message: string): void => {
+  toastObj({
     title: "Error",
     description: message,
     variant: "destructive",
