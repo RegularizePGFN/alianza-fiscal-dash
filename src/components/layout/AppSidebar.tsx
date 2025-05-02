@@ -10,7 +10,6 @@ import {
   Menu, 
   ShoppingCart, 
   Users, 
-  Settings, 
   LogOut 
 } from "lucide-react";
 
@@ -83,22 +82,20 @@ export function AppSidebar() {
           
           {/* Admin and Manager only links */}
           {user && ['admin', 'gestor'].includes(user.role) && (
-            <SidebarLink 
-              to="/usuarios" 
-              icon={<Users size={20} />} 
-              label="Usuários" 
-              expanded={expanded} 
-            />
-          )}
-          
-          {/* Admin only links */}
-          {user && user.role === UserRole.ADMIN && (
-            <SidebarLink 
-              to="/configuracoes" 
-              icon={<Settings size={20} />} 
-              label="Configurações" 
-              expanded={expanded} 
-            />
+            <>
+              <SidebarLink 
+                to="/usuarios" 
+                icon={<Users size={20} />} 
+                label="Usuários" 
+                expanded={expanded} 
+              />
+              <SidebarLink 
+                to="/relatorios" 
+                icon={<BarChart3 size={20} />} 
+                label="Relatórios" 
+                expanded={expanded} 
+              />
+            </>
           )}
         </ul>
       </nav>
