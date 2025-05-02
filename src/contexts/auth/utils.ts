@@ -10,11 +10,14 @@ export const mapUserRole = (role?: string, email?: string): UserRole => {
     return UserRole.ADMIN;
   }
   
-  // Otherwise check role as before
+  // Otherwise check role as before - fixing the case sensitivity issue
+  // and ensuring 'gestor' is properly mapped to MANAGER
   switch (role?.toLowerCase()) {
     case 'admin':
       return UserRole.ADMIN;
     case 'gestor':
+      return UserRole.MANAGER;
+    case 'manager': // Adding this case to handle if someone uses English term
       return UserRole.MANAGER;
     default:
       return UserRole.SALESPERSON;
