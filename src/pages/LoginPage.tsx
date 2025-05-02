@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
+import { AlertTriangle } from 'lucide-react'; // Changed from @radix-ui/react-icons to lucide-react
 import { supabase } from '@/integrations/supabase/client';
 
 export default function LoginPage() {
@@ -116,7 +116,7 @@ export default function LoginPage() {
               
               {loginError && (
                 <Alert variant="destructive" className="mb-4">
-                  <ExclamationTriangleIcon className="h-4 w-4" />
+                  <AlertTriangle className="h-4 w-4" />
                   <AlertTitle>Erro</AlertTitle>
                   <AlertDescription>{loginError}</AlertDescription>
                 </Alert>
@@ -172,7 +172,7 @@ export default function LoginPage() {
               
               {registerError && (
                 <Alert variant="destructive" className="mb-4">
-                  <ExclamationTriangleIcon className="h-4 w-4" />
+                  <AlertTriangle className="h-4 w-4" />
                   <AlertTitle>Erro</AlertTitle>
                   <AlertDescription>{registerError}</AlertDescription>
                 </Alert>
