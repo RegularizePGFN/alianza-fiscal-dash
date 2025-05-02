@@ -33,26 +33,27 @@ export const useSales = () => {
       
       if (!user) return;
       
-      console.log("Fetching sales for user:", user.id, "with role:", user.role);
+      console.log("Buscando vendas para usuário:", user.id, "com função:", user.role);
       
-      // Simplified query - avoid complex RLS policies by making the client do the filtering
+      // Consulta simples sem filtros - RLS está desativado
       const { data, error } = await supabase
         .from('sales')
         .select('*')
         .order('sale_date', { ascending: false });
       
       if (error) {
-        console.error("Supabase query error:", error);
+        console.error("Erro na consulta ao Supabase:", error);
         throw error;
       }
       
       if (data) {
-        console.log("Sales data fetched:", data.length, "records");
+        console.log("Dados de vendas obtidos:", data.length, "registros");
         
-        // Client-side filtering based on user role
+        // Filtragem do lado do cliente com base na função do usuário
         let filteredData = data;
         if (user.role === UserRole.SALESPERSON) {
           filteredData = data.filter(sale => sale.salesperson_id === user.id);
+          console.log("Dados filtrados para vendedor:", filteredData.length, "registros");
         }
         
         // Mapear os dados e garantir que todos os campos necessários estejam presentes
@@ -63,18 +64,19 @@ export const useSales = () => {
           gross_amount: sale.gross_amount,
           net_amount: sale.gross_amount, // Usar o gross_amount como net_amount
           payment_method: convertToPaymentMethod(sale.payment_method),
-          installments: sale.installments,
+          installments: sale.installments || 1,
           sale_date: sale.sale_date,
           created_at: sale.created_at,
-          client_name: sale.client_name,
-          client_phone: sale.client_phone,
-          client_document: sale.client_document
+          client_name: sale.client_name || 'Cliente',
+          client_phone: sale.client_phone || '',
+          client_document: sale.client_document || ''
         }));
         
         setSales(formattedSales);
+        console.log("Dados formatados e definidos no estado:", formattedSales.length, "vendas");
       }
     } catch (error: any) {
-      console.error('Error fetching sales:', error);
+      console.error('Erro ao buscar vendas:', error);
       toast({
         title: "Erro ao carregar vendas",
         description: "Não foi possível carregar as vendas. Tente novamente mais tarde.",
@@ -87,20 +89,20 @@ export const useSales = () => {
 
   const handleDeleteSale = async (saleId: string) => {
     try {
-      console.log("Deleting sale:", saleId);
+      console.log("Excluindo venda:", saleId);
       
-      // Simplify the delete operation
+      // Operação de exclusão simples
       const { error } = await supabase
         .from('sales')
         .delete()
         .eq('id', saleId);
       
       if (error) {
-        console.error("Delete error:", error);
+        console.error("Erro ao excluir:", error);
         throw error;
       }
       
-      console.log("Sale deleted successfully");
+      console.log("Venda excluída com sucesso");
       
       // Atualizar a lista local após a exclusão bem-sucedida
       setSales((prevSales) => prevSales.filter((sale) => sale.id !== saleId));
@@ -112,7 +114,7 @@ export const useSales = () => {
       
       return true;
     } catch (error: any) {
-      console.error('Error deleting sale:', error);
+      console.error('Erro ao excluir venda:', error);
       toast({
         title: "Erro ao excluir venda",
         description: error.message || "Não foi possível excluir a venda. Tente novamente mais tarde.",
@@ -133,7 +135,7 @@ export const useSales = () => {
     }
     
     try {
-      console.log("Saving sale:", editingSaleId ? "Editing" : "New", saleData);
+      console.log("Salvando venda:", editingSaleId ? "Editando" : "Nova", saleData);
       
       // Preparar o objeto para o Supabase (converter PaymentMethod enum para string)
       const supabaseData = {
@@ -157,11 +159,11 @@ export const useSales = () => {
           .select();
         
         if (error) {
-          console.error("Update error:", error);
+          console.error("Erro ao atualizar:", error);
           throw error;
         }
         
-        console.log("Sale updated successfully:", data);
+        console.log("Venda atualizada com sucesso:", data);
         
         if (data && data.length > 0) {
           // Atualizar a lista local
@@ -190,11 +192,11 @@ export const useSales = () => {
           .select();
         
         if (error) {
-          console.error("Insert error:", error);
+          console.error("Erro ao inserir:", error);
           throw error;
         }
         
-        console.log("Sale inserted successfully:", data);
+        console.log("Venda inserida com sucesso:", data);
         
         if (data && data.length > 0) {
           // Adicionar à lista local
@@ -223,7 +225,7 @@ export const useSales = () => {
       }
       return true;
     } catch (error: any) {
-      console.error('Error saving sale:', error);
+      console.error('Erro ao salvar venda:', error);
       toast({
         title: "Erro ao salvar venda",
         description: error.message || "Não foi possível salvar a venda. Tente novamente mais tarde.",
@@ -235,10 +237,10 @@ export const useSales = () => {
   
   useEffect(() => {
     if (user) {
-      console.log("User authenticated, fetching sales");
+      console.log("Usuário autenticado, buscando vendas");
       fetchSales();
     } else {
-      console.log("No user authenticated, skipping sales fetch");
+      console.log("Nenhum usuário autenticado, ignorando busca de vendas");
     }
   }, [user]);
   

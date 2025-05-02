@@ -50,20 +50,26 @@ export default function DashboardPage() {
       setLoading(true);
       
       try {
-        // Simplify the query to avoid RLS complications
+        console.log("Buscando dados de vendas para", user.name);
+        
+        // Consulta direta sem filtros - RLS está desativado agora
         const { data: salesData, error } = await supabase
           .from('sales')
-          .select('*');
+          .select('*')
+          .order('sale_date', { ascending: false });
         
         if (error) {
-          console.error("Supabase query error:", error);
+          console.error("Erro ao buscar dados:", error);
           throw error;
         }
         
-        // Client-side filtering based on user role
+        console.log("Dados recebidos do Supabase:", salesData?.length || 0, "registros");
+        
+        // Filtramos no lado do cliente apenas se necessário
         let filteredData = salesData || [];
         if (user.role === UserRole.SALESPERSON) {
           filteredData = filteredData.filter(sale => sale.salesperson_id === user.id);
+          console.log("Dados filtrados para vendedor:", filteredData.length, "registros");
         }
         
         // Buscar meta do usuário ou do time
@@ -72,22 +78,20 @@ export default function DashboardPage() {
         const currentMonth = currentDate.getMonth() + 1; // Meses são 0-indexados em JS
         const currentYear = currentDate.getFullYear();
         
-        let goalQuery = supabase
+        const { data: goalData, error: goalError } = await supabase
           .from('monthly_goals')
           .select('goal_amount')
           .eq('month', currentMonth)
-          .eq('year', currentYear);
-          
-        if (user.role === UserRole.SALESPERSON) {
-          goalQuery = goalQuery.eq('user_id', user.id);
-        }
-        
-        const { data: goalData, error: goalError } = await goalQuery.limit(1).maybeSingle();
+          .eq('year', currentYear)
+          .maybeSingle();
         
         if (goalData && !goalError) {
           monthlyGoal = goalData.goal_amount;
-        } else if (goalError && goalError.code !== 'PGRST116') { // PGRST116 é o erro quando nenhum registro é encontrado
+          console.log("Meta mensal encontrada:", monthlyGoal);
+        } else if (goalError) {
           console.error('Erro ao buscar meta:', goalError);
+        } else {
+          console.log("Nenhuma meta encontrada, usando valor padrão:", DEFAULT_GOAL_AMOUNT);
         }
         
         if (filteredData.length > 0) {
@@ -95,19 +99,20 @@ export default function DashboardPage() {
           const formattedSales: Sale[] = filteredData.map(sale => ({
             id: sale.id,
             salesperson_id: sale.salesperson_id,
-            salesperson_name: sale.salesperson_name,
+            salesperson_name: sale.salesperson_name || "Sem nome",
             gross_amount: sale.gross_amount,
             net_amount: sale.gross_amount, // Usamos o gross_amount como net_amount
             payment_method: convertToPaymentMethod(sale.payment_method), // Convertendo string para enum
-            installments: sale.installments,
+            installments: sale.installments || 1,
             sale_date: sale.sale_date,
             created_at: sale.created_at,
-            client_name: sale.client_name,
-            client_phone: sale.client_phone,
-            client_document: sale.client_document
+            client_name: sale.client_name || "Cliente não identificado",
+            client_phone: sale.client_phone || "",
+            client_document: sale.client_document || ""
           }));
           
           setSalesData(formattedSales);
+          console.log("Dados formatados e definidos no estado:", formattedSales.length, "vendas");
           
           // Calcular resumo
           const totalAmount = formattedSales.reduce((sum, sale) => sum + sale.gross_amount, 0);
@@ -123,6 +128,25 @@ export default function DashboardPage() {
             projected_commission: projectedCommission,
             goal_amount: monthlyGoal,
             goal_percentage: Math.min(totalAmount / monthlyGoal, 2),
+          });
+          
+          console.log("Resumo calculado:", {
+            total_sales: formattedSales.length,
+            total_gross: totalAmount,
+            goal_amount: monthlyGoal,
+            goal_percentage: Math.min(totalAmount / monthlyGoal, 2),
+          });
+        } else {
+          console.log("Nenhuma venda encontrada");
+          // Definir dados vazios
+          setSalesData([]);
+          setSummary({
+            total_sales: 0,
+            total_gross: 0,
+            total_net: 0,
+            projected_commission: 0,
+            goal_amount: monthlyGoal,
+            goal_percentage: 0,
           });
         }
       } catch (error: any) {
