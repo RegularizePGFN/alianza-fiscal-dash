@@ -198,7 +198,9 @@ const adminApi: Partial<GoTrueAdminApi> = {
     }
   },
   
-  async signOut(params?: { scope?: 'global' | 'local'; }): Promise<{ data: null; error: AuthError | null }> { 
+  // Fix for signOut function to match the expected type signature
+  async signOut(jwt: string, scope?: "global" | "local" | "others"): Promise<{ data: null; error: AuthError | null }> { 
+    // Just return a success response as this is a stub implementation
     return { data: null, error: null }; 
   },
 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -86,13 +85,17 @@ export default function UsersPage() {
       
       // Merge auth users with profiles data
       const mergedUsers = authData.users.map(authUser => {
-        const profile = profilesData?.find(p => p.id === authUser.id) || {};
+        // Find the matching profile or create an empty object with type annotation
+        const profile = profilesData?.find(p => p.id === authUser.id) || {} as {
+          name?: string;
+          role?: UserRole;
+        };
         
         return {
           id: authUser.id,
           name: profile.name || authUser.email?.split('@')[0] || 'Usuário',
           email: authUser.email || '',
-          role: (profile.role as UserRole) || UserRole.SALESPERSON,
+          role: profile.role as UserRole || UserRole.SALESPERSON,
           created_at: authUser.created_at,
         };
       });
