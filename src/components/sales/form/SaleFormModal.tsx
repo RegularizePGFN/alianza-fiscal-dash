@@ -66,6 +66,8 @@ export function SaleFormModal({ initialData, onSave, onCancel }: SaleFormModalPr
     setIsSubmitting(true);
     
     try {
+      console.log("Preparing sale data with user:", user.id, user.name);
+      
       const saleData = {
         salesperson_id: user.id,
         salesperson_name: user.name,
@@ -81,7 +83,7 @@ export function SaleFormModal({ initialData, onSave, onCancel }: SaleFormModalPr
       
       onSave(saleData);
     } catch (error) {
-      console.error("Error saving sale:", error);
+      console.error("Error in handleSave:", error);
       toast({
         title: "Erro ao salvar",
         description: "Ocorreu um erro ao salvar a venda. Tente novamente.",

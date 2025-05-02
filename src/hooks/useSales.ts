@@ -33,6 +33,8 @@ export const useSales = () => {
       
       if (!user) return;
       
+      console.log("Fetching sales for user:", user.id, "with role:", user.role);
+      
       // Usar dados do Supabase
       let query = supabase
         .from('sales')
@@ -45,10 +47,12 @@ export const useSales = () => {
       const { data, error } = await query.order('sale_date', { ascending: false });
       
       if (error) {
+        console.error("Supabase query error:", error);
         throw error;
       }
       
       if (data) {
+        console.log("Sales data fetched:", data.length, "records");
         // Mapear os dados e garantir que todos os campos necessários estejam presentes
         const formattedSales: Sale[] = data.map((sale) => ({
           id: sale.id,
@@ -81,6 +85,8 @@ export const useSales = () => {
 
   const handleDeleteSale = async (saleId: string) => {
     try {
+      console.log("Deleting sale:", saleId);
+      
       // Excluir do Supabase
       const { error } = await supabase
         .from('sales')
@@ -88,8 +94,11 @@ export const useSales = () => {
         .eq('id', saleId);
       
       if (error) {
+        console.error("Delete error:", error);
         throw error;
       }
+      
+      console.log("Sale deleted successfully");
       
       // Atualizar a lista local após a exclusão bem-sucedida
       setSales((prevSales) => prevSales.filter((sale) => sale.id !== saleId));
@@ -112,7 +121,18 @@ export const useSales = () => {
   };
   
   const handleSaveSale = async (saleData: Omit<Sale, 'id'>, editingSaleId?: string) => {
+    if (!user) {
+      toast({
+        title: "Erro de autenticação",
+        description: "Você precisa estar logado para registrar uma venda.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
     try {
+      console.log("Saving sale:", editingSaleId ? "Editing" : "New", saleData);
+      
       // Preparar o objeto para o Supabase (converter PaymentMethod enum para string)
       const supabaseData = {
         salesperson_id: saleData.salesperson_id,
@@ -135,8 +155,11 @@ export const useSales = () => {
           .select();
         
         if (error) {
+          console.error("Update error:", error);
           throw error;
         }
+        
+        console.log("Sale updated successfully:", data);
         
         if (data && data.length > 0) {
           // Atualizar a lista local
@@ -165,8 +188,11 @@ export const useSales = () => {
           .select();
         
         if (error) {
+          console.error("Insert error:", error);
           throw error;
         }
+        
+        console.log("Sale inserted successfully:", data);
         
         if (data && data.length > 0) {
           // Adicionar à lista local
@@ -207,7 +233,10 @@ export const useSales = () => {
   
   useEffect(() => {
     if (user) {
+      console.log("User authenticated, fetching sales");
       fetchSales();
+    } else {
+      console.log("No user authenticated, skipping sales fetch");
     }
   }, [user]);
   
