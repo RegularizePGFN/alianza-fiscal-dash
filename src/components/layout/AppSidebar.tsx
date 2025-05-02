@@ -1,5 +1,5 @@
 
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { cn } from "@/lib/utils";
 import { UserRole } from "@/lib/types";
 import { useState } from "react";

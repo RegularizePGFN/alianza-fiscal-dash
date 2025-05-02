@@ -1,53 +1,15 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { AuthState, User, UserRole } from '@/lib/types';
-import { supabase } from '@/integrations/supabase/client';
+
+import { useState, useEffect } from 'react';
 import { Session } from '@supabase/supabase-js';
-
-// Initial auth state
-const initialAuthState: AuthState = {
-  isAuthenticated: false,
-  user: null,
-  isLoading: true,
-};
-
-// Context interface
-interface AuthContextProps extends AuthState {
-  login: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
-}
-
-// Create the auth context
-const AuthContext = createContext<AuthContextProps | undefined>(undefined);
-
-// Auth provider props
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-// Admin email(s) - email addresses that should always have admin privileges
-const ADMIN_EMAILS = ['felipe.souza@socialcriativo.com'];
-
-// Map Supabase role to app role with admin check
-const mapUserRole = (role?: string, email?: string): UserRole => {
-  // Check if email is in admin list
-  if (email && ADMIN_EMAILS.includes(email.toLowerCase())) {
-    return UserRole.ADMIN;
-  }
-  
-  // Otherwise check role as before
-  switch (role?.toLowerCase()) {
-    case 'admin':
-      return UserRole.ADMIN;
-    case 'gestor':
-      return UserRole.MANAGER;
-    default:
-      return UserRole.SALESPERSON;
-  }
-};
+import { User } from '@/lib/types';
+import { supabase } from '@/integrations/supabase/client';
+import { AuthContext, initialAuthState } from './AuthContext';
+import { AuthProviderProps } from './types';
+import { mapUserRole } from './utils';
 
 // Auth provider component
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [authState, setAuthState] = useState<AuthState>(initialAuthState);
+  const [authState, setAuthState] = useState(initialAuthState);
 
   // Check for existing session on mount and listen for auth changes
   useEffect(() => {
@@ -211,13 +173,4 @@ export function AuthProvider({ children }: AuthProviderProps) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-// Custom hook to use the auth context
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
 }

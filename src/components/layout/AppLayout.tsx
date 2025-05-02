@@ -2,7 +2,7 @@
 import { ReactNode } from 'react';
 import { AppSidebar } from './AppSidebar';
 import { AppHeader } from './AppHeader';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth';
 import { Navigate } from 'react-router-dom';
 
 interface AppLayoutProps {
