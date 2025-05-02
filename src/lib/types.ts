@@ -76,3 +76,13 @@ export interface DateFilter {
   startDate: Date;
   endDate: Date;
 }
+
+// Notification interface
+export interface Notification {
+  id: string;
+  user_id: string;
+  message: string;
+  type: string;
+  read: boolean;
+  created_at: string;
+}

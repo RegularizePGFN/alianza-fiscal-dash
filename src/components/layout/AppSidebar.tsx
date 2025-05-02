@@ -11,7 +11,8 @@ import {
   ShoppingCart, 
   Users, 
   LogOut,
-  ChevronLeft
+  ChevronLeft,
+  Settings
 } from "lucide-react";
 
 interface SidebarLinkProps {
@@ -109,6 +110,13 @@ export function AppSidebar() {
                 label="Relatórios" 
                 expanded={expanded}
                 active={location.pathname === "/relatorios"}
+              />
+              <SidebarLink 
+                to="/configuracoes" 
+                icon={<Settings size={20} />} 
+                label="Configurações" 
+                expanded={expanded}
+                active={location.pathname === "/configuracoes"}
               />
             </>
           )}
