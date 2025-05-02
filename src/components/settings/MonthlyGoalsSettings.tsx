@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,35 +34,32 @@ export function MonthlyGoalsSettings() {
     try {
       setLoading(true);
 
-      // Fetch all users that are salespeople - using case insensitive comparison
+      // Fetch all users that aren't admins - this is more inclusive than filtering by role name
+      // since roles might be stored with different capitalizations or variants like "vendedor", "Vendedor", etc.
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('*')
-        .ilike('role', '%vendedor%');
+        .select('*');
 
       if (profilesError) {
         console.error('Error fetching profiles:', profilesError);
         throw profilesError;
       }
 
-      console.log('Fetched profiles:', profiles);
+      // Log all profiles for debugging
+      console.log('All fetched profiles:', profiles);
       
-      // Add debug log to check if any profiles match the role criteria
-      if (!profiles || profiles.length === 0) {
-        console.log('No profiles found with vendedor role. Fetching all profiles to debug:');
-        
-        // Fetch all profiles to see what roles exist in the database
-        const { data: allProfiles, error: allProfilesError } = await supabase
-          .from('profiles')
-          .select('*');
-          
-        if (allProfilesError) {
-          console.error('Error fetching all profiles:', allProfilesError);
-        } else {
-          console.log('All profiles in database:', allProfiles);
-          console.log('Available roles:', allProfiles?.map(p => p.role));
-        }
-        
+      // Filter out admins - all other users should be considered salespeople
+      // This is more reliable than looking for specific role strings
+      const salespeople = profiles?.filter(profile => {
+        const lowerRole = profile.role?.toLowerCase() || '';
+        // Keep users whose role is not 'admin' or is specifically a salesperson
+        return lowerRole !== 'admin';
+      });
+      
+      console.log('Filtered salespeople:', salespeople);
+      
+      if (!salespeople || salespeople.length === 0) {
+        console.log('No salesperson profiles found');
         setUsers([]);
         setLoading(false);
         return;
@@ -84,7 +80,7 @@ export function MonthlyGoalsSettings() {
       console.log('Fetched goals:', goals);
 
       // Merge the data
-      const usersWithGoals = profiles.map(user => {
+      const usersWithGoals = salespeople.map(user => {
         const userGoal = goals?.find(g => g.user_id === user.id);
         return {
           ...user,
@@ -144,24 +140,24 @@ export function MonthlyGoalsSettings() {
             </div>
           ) : (
             <div className="space-y-2">
-              {users.filter(user => user.role.toLowerCase().includes('vendedor')).map((user) => (
-                <div key={user.id} className="flex justify-between items-center p-3 border rounded-md hover:bg-accent/10 transition-colors">
-                  <div>
-                    <div className="font-medium">{user.name}</div>
-                    <div className="text-sm text-muted-foreground">{user.email}</div>
+              {users.length > 0 ? (
+                users.map((user) => (
+                  <div key={user.id} className="flex justify-between items-center p-3 border rounded-md hover:bg-accent/10 transition-colors">
+                    <div>
+                      <div className="font-medium">{user.name}</div>
+                      <div className="text-sm text-muted-foreground">{user.email}</div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-medium">
+                        {user.goal_amount ? `R$ ${user.goal_amount.toLocaleString('pt-BR')}` : 'Sem meta definida'}
+                      </span>
+                      <Button size="sm" onClick={() => handleEditClick(user)}>
+                        Editar
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium">
-                      {user.goal_amount ? `R$ ${user.goal_amount.toLocaleString('pt-BR')}` : 'Sem meta definida'}
-                    </span>
-                    <Button size="sm" onClick={() => handleEditClick(user)}>
-                      Editar
-                    </Button>
-                  </div>
-                </div>
-              ))}
-
-              {users.filter(user => user.role.toLowerCase().includes('vendedor')).length === 0 && (
+                ))
+              ) : (
                 <div className="text-center py-4 text-muted-foreground">
                   Nenhum vendedor encontrado no sistema.
                 </div>

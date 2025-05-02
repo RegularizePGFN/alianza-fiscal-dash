@@ -91,7 +91,9 @@ export const fetchMonthlyGoal = async (
   try {
     // For admin users, we need to sum all users' goals
     if (user.role === UserRole.ADMIN) {
-      // First check if there are explicitly set goals for salespeople
+      console.log("Fetching total goals for admin user");
+      
+      // Get all goals for the current month/year
       const { data: goalsData, error: goalsError } = await supabase
         .from("monthly_goals")
         .select("goal_amount")
@@ -111,10 +113,13 @@ export const fetchMonthlyGoal = async (
       }
       
       // If no explicit goals are found, use default goal amount
+      console.log("Nenhuma meta encontrada para vendedores, usando valor padrão");
       return DEFAULT_GOAL_AMOUNT;
     } 
     // For regular users (vendedores), just get their specific goal
     else {
+      console.log(`Buscando meta para vendedor (user_id: ${user.id})`);
+      
       const { data: goalData, error: goalError } = await supabase
         .from("monthly_goals")
         .select("goal_amount")
@@ -133,6 +138,7 @@ export const fetchMonthlyGoal = async (
         return goalData.goal_amount;
       }
       
+      console.log("Nenhuma meta configurada para este vendedor, usando valor padrão");
       return DEFAULT_GOAL_AMOUNT;
     }
   } catch (error) {

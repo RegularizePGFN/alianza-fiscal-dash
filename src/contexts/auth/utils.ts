@@ -1,3 +1,4 @@
+
 import { UserRole } from '@/lib/types';
 
 // Admin email(s) - email addresses that should always have admin privileges
@@ -13,19 +14,24 @@ export const mapUserRole = (role?: string, email?: string): UserRole => {
     return UserRole.ADMIN;
   }
   
-  // Otherwise check role as before - fixing the case sensitivity issue
+  // If explicitly set to admin role, return admin
   if (role) {
     const lowerRole = role.toLowerCase();
-    console.log(`Lowercase role: ${lowerRole}`);
     
-    // Only return ADMIN if the role is explicitly 'admin'
+    // Check for admin role (case insensitive)
     if (lowerRole === 'admin') {
-      console.log("Mapped to ADMIN");
+      console.log("Role is explicitly admin, returning ADMIN");
       return UserRole.ADMIN;
+    }
+    
+    // Check for vendedor (salesperson) role variants
+    if (lowerRole === 'vendedor' || lowerRole.includes('vend') || lowerRole === 'salesperson') {
+      console.log("Role is salesperson variant, returning SALESPERSON");
+      return UserRole.SALESPERSON;
     }
   }
   
   // Default to SALESPERSON for any other role or no role
-  console.log("Returning SALESPERSON as default role");
+  console.log("No matching role found, returning SALESPERSON as default");
   return UserRole.SALESPERSON;
 };
