@@ -28,20 +28,28 @@ export default function ReportsPage() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <ReportsHeader />
-        
-        <ReportsFilter 
-          onSalespersonChange={setSelectedSalesperson}
-          onPaymentMethodChange={setSelectedPaymentMethod}
-          onDateFilterChange={setDateFilter}
-        />
-        
-        <ReportsCharts 
-          salesData={salesData} 
-          loading={loading}
-          error={error}
-        />
+      <div className="max-w-7xl mx-auto print:m-4">
+        <div className="space-y-6 p-1 sm:p-0">
+          <div className="print:hidden">
+            <ReportsHeader />
+          </div>
+          
+          <div className="print:hidden">
+            <ReportsFilter 
+              onSalespersonChange={setSelectedSalesperson}
+              onPaymentMethodChange={setSelectedPaymentMethod}
+              onDateFilterChange={setDateFilter}
+            />
+          </div>
+          
+          <div className="print:break-inside-avoid mb-10">
+            <ReportsCharts 
+              salesData={salesData} 
+              loading={loading}
+              error={error}
+            />
+          </div>
+        </div>
       </div>
     </AppLayout>
   );
