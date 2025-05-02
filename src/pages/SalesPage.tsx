@@ -9,6 +9,7 @@ import { SalesHeader } from "@/components/sales/SalesHeader";
 import { DeleteSaleDialog } from "@/components/sales/DeleteSaleDialog";
 import { useSales } from "@/hooks/useSales";
 import { useToast } from "@/hooks/use-toast";
+import { importSalesFromExcel } from "@/lib/excelUtils";
 
 export default function SalesPage() {
   const { user } = useAuth();
@@ -85,6 +86,60 @@ export default function SalesPage() {
       setEditingSale(null);
     }
   }, [isProcessingAction]);
+
+  const handleImportSales = async (file: File) => {
+    try {
+      setIsProcessingAction(true);
+      toast({
+        title: "Processando importação",
+        description: "Aguarde enquanto processamos o arquivo.",
+      });
+      
+      const salesData = await importSalesFromExcel(file);
+      
+      if (!salesData || salesData.length === 0) {
+        toast({
+          title: "Importação vazia",
+          description: "Não foram encontrados dados válidos no arquivo.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      let successCount = 0;
+      const totalSales = salesData.length;
+      
+      toast({
+        title: "Importando vendas",
+        description: `Importando ${totalSales} vendas...`,
+      });
+      
+      // Import sales one by one
+      for (const sale of salesData) {
+        const success = await handleSaveSale(sale);
+        if (success) successCount++;
+      }
+      
+      // Refresh sales data
+      fetchSales();
+      
+      toast({
+        title: "Importação concluída",
+        description: `${successCount} de ${totalSales} vendas importadas com sucesso.`,
+        variant: successCount === totalSales ? "default" : "destructive"
+      });
+      
+    } catch (error) {
+      console.error("Error importing sales:", error);
+      toast({
+        title: "Erro na importação",
+        description: "Houve um erro ao importar as vendas. Verifique o formato do arquivo.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessingAction(false);
+    }
+  };
   
   const isAdmin = user?.role === UserRole.ADMIN;
   const isSalesperson = user?.role === UserRole.SALESPERSON;
@@ -94,7 +149,9 @@ export default function SalesPage() {
       <div className="space-y-6">
         <SalesHeader 
           isAdmin={isAdmin} 
-          onAddSale={handleAddSale} 
+          onAddSale={handleAddSale}
+          sales={sales}
+          onImport={handleImportSales}
         />
         
         {loading ? (
