@@ -1,44 +1,53 @@
 
 import { useState, useEffect } from "react";
-import { calculateNetAmount } from "@/lib/utils";
-import { PaymentMethod } from "@/lib/types";
+import { Sale, PaymentMethod } from "@/lib/types";
 import { PAYMENT_METHODS, INSTALLMENT_OPTIONS } from "@/lib/constants";
-import { formatCurrency } from "@/lib/utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { calculateNetAmount, getTodayISO } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
-export function CommissionCalculator() {
-  const [grossAmount, setGrossAmount] = useState<number>(1000);
-  const [inputValue, setInputValue] = useState<string>('1.000,00');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CREDIT);
-  const [installments, setInstallments] = useState<number>(1);
-  const [netAmount, setNetAmount] = useState<number>(0);
-  const [commissionBelow, setCommissionBelow] = useState<number>(0);
-  const [commissionAbove, setCommissionAbove] = useState<number>(0);
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface SaleFormModalProps {
+  initialData: Sale | null;
+  onSave: (sale: Omit<Sale, 'id'>) => void;
+  onCancel: () => void;
+}
+
+export function SaleFormModal({ initialData, onSave, onCancel }: SaleFormModalProps) {
+  const { user } = useAuth();
+  
+  const [inputValue, setInputValue] = useState<string>(initialData ? initialData.gross_amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00');
+  const [grossAmount, setGrossAmount] = useState<number>(initialData ? initialData.gross_amount : 0);
+  const [netAmount, setNetAmount] = useState<number>(initialData ? initialData.net_amount : 0);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
+    initialData ? initialData.payment_method : PaymentMethod.CREDIT
+  );
+  const [installments, setInstallments] = useState<number>(
+    initialData ? initialData.installments : 1
+  );
+  const [saleDate, setSaleDate] = useState<string>(
+    initialData ? initialData.sale_date : getTodayISO()
+  );
   
   useEffect(() => {
     const calculatedNetAmount = calculateNetAmount(grossAmount, paymentMethod, installments);
     setNetAmount(calculatedNetAmount);
-    
-    // Calculate commission at different rates
-    setCommissionBelow(calculatedNetAmount * 0.2);
-    setCommissionAbove(calculatedNetAmount * 0.25);
   }, [grossAmount, paymentMethod, installments]);
   
   const handleGrossAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,15 +63,6 @@ export function CommissionCalculator() {
     );
     
     setGrossAmount(isNaN(numericValue) ? 0 : numericValue);
-  };
-  
-  const formatInputValue = (value: number) => {
-    return value.toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
   };
   
   const handlePaymentMethodChange = (value: string) => {
@@ -90,6 +90,7 @@ export function CommissionCalculator() {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         }));
+        setGrossAmount(numValue);
       } else {
         setInputValue('0,00');
         setGrossAmount(0);
@@ -100,37 +101,52 @@ export function CommissionCalculator() {
     }
   };
   
+  const handleSave = () => {
+    if (!user) return;
+    
+    onSave({
+      salesperson_id: user.id,
+      salesperson_name: user.name,
+      gross_amount: grossAmount,
+      net_amount: netAmount,
+      payment_method: paymentMethod,
+      installments,
+      sale_date: saleDate,
+    });
+  };
+  
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Calculadora de Comissão</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <div className="space-y-2">
-            <Label htmlFor="grossAmount">Valor Bruto da Venda</Label>
+    <Dialog open={true} onOpenChange={() => onCancel()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{initialData ? 'Editar Venda' : 'Nova Venda'}</DialogTitle>
+        </DialogHeader>
+        
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="amount">Valor da Venda</Label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
                 R$
               </span>
               <Input
-                id="grossAmount"
+                id="amount"
                 type="text"
                 value={inputValue}
                 onChange={handleGrossAmountChange}
                 onBlur={handleBlur}
-                className="pl-10 text-right"
+                className="pl-10"
               />
             </div>
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="paymentMethod">Forma de Pagamento</Label>
+          <div className="grid gap-2">
+            <Label htmlFor="payment_method">Forma de Pagamento</Label>
             <Select
               value={paymentMethod}
               onValueChange={handlePaymentMethodChange}
             >
-              <SelectTrigger id="paymentMethod">
+              <SelectTrigger>
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
               <SelectContent>
@@ -144,14 +160,13 @@ export function CommissionCalculator() {
           </div>
           
           {paymentMethod === PaymentMethod.CREDIT && (
-            <div className="space-y-2">
+            <div className="grid gap-2">
               <Label htmlFor="installments">Parcelas</Label>
               <Select
                 value={installments.toString()}
                 onValueChange={(value) => setInstallments(parseInt(value))}
-                disabled={paymentMethod !== PaymentMethod.CREDIT}
               >
-                <SelectTrigger id="installments">
+                <SelectTrigger>
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
@@ -164,37 +179,37 @@ export function CommissionCalculator() {
               </Select>
             </div>
           )}
+          
+          <div className="grid gap-2">
+            <Label htmlFor="sale_date">Data da Venda</Label>
+            <Input
+              id="sale_date"
+              type="date"
+              value={saleDate}
+              onChange={(e) => setSaleDate(e.target.value)}
+            />
+          </div>
+          
+          <div className="grid gap-2">
+            <Label>Valor Líquido (após taxas)</Label>
+            <div className="p-2 border rounded-md bg-muted/50">
+              {netAmount.toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+              })}
+            </div>
+          </div>
         </div>
         
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-1/2">Item</TableHead>
-                <TableHead className="text-right">Valor</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                <TableCell className="font-medium">Valor Bruto</TableCell>
-                <TableCell className="text-right">{formatCurrency(grossAmount)}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-medium">Valor Líquido (após taxas)</TableCell>
-                <TableCell className="text-right">{formatCurrency(netAmount)}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-medium">Comissão (abaixo da meta - 20%)</TableCell>
-                <TableCell className="text-right">{formatCurrency(commissionBelow)}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-medium">Comissão (meta atingida - 25%)</TableCell>
-                <TableCell className="text-right">{formatCurrency(commissionAbove)}</TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+        <DialogFooter>
+          <Button variant="outline" onClick={onCancel}>
+            Cancelar
+          </Button>
+          <Button type="submit" onClick={handleSave}>
+            {initialData ? 'Salvar Alterações' : 'Adicionar Venda'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
