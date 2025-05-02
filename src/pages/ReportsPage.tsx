@@ -29,20 +29,22 @@ export default function ReportsPage() {
   return (
     <AppLayout>
       <div className="max-w-7xl mx-auto print:m-4">
-        <div className="space-y-6 p-1 sm:p-0">
-          <div className="print:hidden">
-            <ReportsHeader />
+        <div className="space-y-6 p-0">
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden print:hidden">
+            <div className="p-4 sm:p-6">
+              <ReportsHeader />
+            </div>
+            
+            <div className="border-t border-gray-100 p-4 sm:p-6">
+              <ReportsFilter 
+                onSalespersonChange={setSelectedSalesperson}
+                onPaymentMethodChange={setSelectedPaymentMethod}
+                onDateFilterChange={setDateFilter}
+              />
+            </div>
           </div>
           
-          <div className="print:hidden">
-            <ReportsFilter 
-              onSalespersonChange={setSelectedSalesperson}
-              onPaymentMethodChange={setSelectedPaymentMethod}
-              onDateFilterChange={setDateFilter}
-            />
-          </div>
-          
-          <div className="print:break-inside-avoid mb-10">
+          <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 print:break-inside-avoid print:mb-10">
             <ReportsCharts 
               salesData={salesData} 
               loading={loading}

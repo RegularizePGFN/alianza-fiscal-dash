@@ -147,25 +147,32 @@ export default function SalesPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <SalesHeader 
-          isAdmin={isAdmin} 
-          onAddSale={handleAddSale}
-          sales={sales}
-          onImport={handleImportSales}
-        />
-        
-        {loading ? (
-          <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-          </div>
-        ) : (
-          <SalesTable
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+          <SalesHeader 
+            isAdmin={isAdmin} 
+            onAddSale={handleAddSale}
             sales={sales}
-            showSalesperson={!isSalesperson}
-            onEdit={handleEdit}
-            onDelete={handleDeleteConfirm}
+            onImport={handleImportSales}
           />
-        )}
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <div className="flex flex-col items-center gap-4">
+                <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                <p className="text-sm text-muted-foreground">Carregando dados...</p>
+              </div>
+            </div>
+          ) : (
+            <SalesTable
+              sales={sales}
+              showSalesperson={!isSalesperson}
+              onEdit={handleEdit}
+              onDelete={handleDeleteConfirm}
+            />
+          )}
+        </div>
         
         {showSaleModal && (
           <SaleFormModal 

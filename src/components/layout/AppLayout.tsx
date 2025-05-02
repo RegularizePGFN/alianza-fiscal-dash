@@ -16,8 +16,11 @@ export function AppLayout({ children, requireAuth = true }: AppLayoutProps) {
   // Show loading state
   if (isLoading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <div className="h-16 w-16 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      <div className="flex h-screen w-full items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-16 w-16 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="text-muted-foreground animate-pulse">Carregando...</p>
+        </div>
       </div>
     );
   }
@@ -29,11 +32,11 @@ export function AppLayout({ children, requireAuth = true }: AppLayoutProps) {
 
   // Main layout for authenticated users
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       <AppSidebar />
       <div className="flex flex-col flex-1 overflow-hidden">
         <AppHeader />
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
       </div>
     </div>
   );

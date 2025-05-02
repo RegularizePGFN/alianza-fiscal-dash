@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Sale, DateFilter, PaymentMethod } from "@/lib/types";
-import { useSales } from "@/hooks/sales"; // Corrigido import path
+import { useSales } from "@/hooks/sales"; // Correct import path
 
 interface UseReportsDataProps {
   salespersonId: string | null;

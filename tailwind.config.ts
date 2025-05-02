@@ -21,6 +21,7 @@ export default {
 		extend: {
 			fontFamily: {
 				nunito: ["Nunito", "sans-serif"],
+				inter: ["Inter", "sans-serif"],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
@@ -117,12 +118,20 @@ export default {
 				'progress-fill': {
 					from: { width: '0%' },
 					to: { width: 'var(--progress-value)' }
+				},
+				'fade-in': {
+					from: { opacity: '0' },
+					to: { opacity: '1' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'progress-fill': 'progress-fill 1s ease-in-out forwards'
+				'progress-fill': 'progress-fill 1s ease-in-out forwards',
+				'fade-in': 'fade-in 0.5s ease-out forwards'
+			},
+			boxShadow: {
+				'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)'
 			}
 		}
 	},
