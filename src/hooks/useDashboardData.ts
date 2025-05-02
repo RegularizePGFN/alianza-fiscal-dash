@@ -117,17 +117,22 @@ export const useDashboardData = () => {
       const currentMonth = currentDate.getMonth() + 1; // Meses são 0-indexados em JS
       const currentYear = currentDate.getFullYear();
       
+      // Modified query to handle multiple goals - we'll just use the first one or highest value
       const { data: goalData, error: goalError } = await supabase
         .from('monthly_goals')
         .select('goal_amount')
         .eq('month', currentMonth)
-        .eq('year', currentYear)
-        .maybeSingle();
+        .eq('year', currentYear);
       
-      if (goalData && !goalError) {
-        monthlyGoal = goalData.goal_amount;
-        console.log("Meta mensal encontrada:", monthlyGoal);
-      } else if (goalError) {
+      if (goalData && goalData.length > 0 && !goalError) {
+        // If multiple goals are found, we'll use the highest one
+        const highestGoal = goalData.reduce((max, goal) => 
+          goal.goal_amount > max ? goal.goal_amount : max, 
+          goalData[0].goal_amount
+        );
+        monthlyGoal = highestGoal;
+        console.log("Meta mensal encontrada:", monthlyGoal, "(de", goalData.length, "registros)");
+      } else if (goalError && goalError.code !== 'PGRST116') {
         console.error('Erro ao buscar meta:', goalError);
       } else {
         console.log("Nenhuma meta encontrada, usando valor padrão:", DEFAULT_GOAL_AMOUNT);
