@@ -60,11 +60,12 @@ export function SaleDetailsFields({
       <div className="grid gap-2">
         <Label htmlFor="gross_amount">Valor Bruto</Label>
         <Input
-          id="gross_amount"
-          type="text"
-          placeholder="0,00"
-          {...form.register("gross_amount")}
-          disabled={disabled}
+            id="gross_amount"
+            type="text"
+            placeholder="0,00"
+            {...form.register("gross_amount")}
+            disabled={disabled}
+            ref={autoFocusRef}
         />
         {form.formState.errors.gross_amount && (
           <p className="text-sm text-red-500">
