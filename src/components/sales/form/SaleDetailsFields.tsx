@@ -10,146 +10,143 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+import { ptBR } from 'date-fns/locale';
+import { SaleFormSchema } from "./SaleFormSchema";
+import { UseFormReturn } from "react-hook-form";
+import * as z from "zod";
 
 interface SaleDetailsFieldsProps {
-  inputValue: string;
-  setInputValue: (value: string) => void;
-  setAmount: (value: number) => void;
-  paymentMethod: PaymentMethod;
-  setPaymentMethod: (value: PaymentMethod) => void;
-  installments: number;
-  setInstallments: (value: number) => void;
-  saleDate: string;
-  setSaleDate: (value: string) => void;
+  form: UseFormReturn<z.infer<typeof SaleFormSchema>>;
+  date: Date | undefined;
+  setDate: (date: Date | undefined) => void;
   disabled?: boolean;
 }
 
 export function SaleDetailsFields({
-  inputValue,
-  setInputValue,
-  setAmount,
-  paymentMethod,
-  setPaymentMethod,
-  installments,
-  setInstallments,
-  saleDate,
-  setSaleDate,
+  form,
+  date,
+  setDate,
   disabled = false
 }: SaleDetailsFieldsProps) {
-  
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value;
-    setInputValue(rawValue);
-    
-    // Convert the input value to a number for calculations
-    const numericValue = parseFloat(
-      rawValue
-        .replace(/\./g, '')  // Remove dots (thousands separators)
-        .replace(/,/g, '.')  // Replace comma with dot (for decimal)
-        .replace(/[^\d.]/g, '') // Remove all non-numeric characters except dot
-    );
-    
-    setAmount(isNaN(numericValue) ? 0 : numericValue);
-  };
-  
-  // Format the input value to currency on blur
-  const handleBlur = () => {
-    try {
-      // Remove currency symbols and non-numeric characters for parsing
-      const numValue = parseFloat(
-        inputValue
-          .replace(/\./g, '')
-          .replace(/,/g, '.')
-          .replace(/[^\d.]/g, '')
-      );
-      
-      if (!isNaN(numValue)) {
-        setInputValue(numValue.toLocaleString('pt-BR', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }));
-        setAmount(numValue);
-      } else {
-        setInputValue('0,00');
-        setAmount(0);
-      }
-    } catch (e) {
-      setInputValue('0,00');
-      setAmount(0);
-    }
-  };
-  
   return (
     <>
       <div className="grid gap-2">
-        <Label htmlFor="amount">Valor da Venda</Label>
-        <div className="relative">
-          <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
-            R$
-          </span>
-          <Input
-            id="amount"
-            type="text"
-            value={inputValue}
-            onChange={handleAmountChange}
-            onBlur={handleBlur}
-            className="pl-10"
-            disabled={disabled}
-          />
-        </div>
-      </div>
-      
-      <div className="grid gap-2">
-        <Label htmlFor="payment_method">Forma de Pagamento</Label>
-        <Select
-          value={paymentMethod}
-          onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
-          disabled={disabled}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione" />
-          </SelectTrigger>
-          <SelectContent>
-            {PAYMENT_METHODS.map((method) => (
-              <SelectItem key={method.value} value={method.value}>
-                {method.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      
-      {paymentMethod === PaymentMethod.CREDIT && (
-        <div className="grid gap-2">
-          <Label htmlFor="installments">Parcelas</Label>
-          <Select
-            value={installments.toString()}
-            onValueChange={(value) => setInstallments(parseInt(value))}
-            disabled={disabled}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione" />
-            </SelectTrigger>
-            <SelectContent>
-              {INSTALLMENT_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value.toString()}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-      
-      <div className="grid gap-2">
-        <Label htmlFor="sale_date">Data da Venda</Label>
+        <Label htmlFor="salesperson_name">Nome do Vendedor</Label>
         <Input
-          id="sale_date"
-          type="date"
-          value={saleDate}
-          onChange={(e) => setSaleDate(e.target.value)}
+          id="salesperson_name"
+          type="text"
+          placeholder="Nome do vendedor"
+          {...form.register("salesperson_name")}
           disabled={disabled}
         />
+        {form.formState.errors.salesperson_name && (
+          <p className="text-sm text-red-500">
+            {form.formState.errors.salesperson_name.message}
+          </p>
+        )}
+      </div>
+      
+      <div className="grid gap-2">
+        <Label htmlFor="gross_amount">Valor Bruto</Label>
+        <Input
+          id="gross_amount"
+          type="text"
+          placeholder="0,00"
+          {...form.register("gross_amount")}
+          disabled={disabled}
+        />
+        {form.formState.errors.gross_amount && (
+          <p className="text-sm text-red-500">
+            {form.formState.errors.gross_amount.message}
+          </p>
+        )}
+      </div>
+      
+      <div className="grid gap-2">
+        <Label htmlFor="payment_method">Método de Pagamento</Label>
+        <Select 
+          onValueChange={(value) => form.setValue("payment_method", value as PaymentMethod)} 
+          defaultValue={form.getValues("payment_method")}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Selecione o método de pagamento" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={PaymentMethod.BOLETO}>{PaymentMethod.BOLETO}</SelectItem>
+            <SelectItem value={PaymentMethod.PIX}>{PaymentMethod.PIX}</SelectItem>
+            <SelectItem value={PaymentMethod.CREDIT}>{PaymentMethod.CREDIT}</SelectItem>
+            <SelectItem value={PaymentMethod.DEBIT}>{PaymentMethod.DEBIT}</SelectItem>
+          </SelectContent>
+        </Select>
+        {form.formState.errors.payment_method && (
+          <p className="text-sm text-red-500">
+            {form.formState.errors.payment_method.message}
+          </p>
+        )}
+      </div>
+      
+      <div className="grid gap-2">
+        <Label htmlFor="installments">Parcelas</Label>
+        <Input
+          id="installments"
+          type="number"
+          placeholder="1"
+          {...form.register("installments", { valueAsNumber: true })}
+          disabled={disabled}
+          defaultValue={1}
+        />
+        {form.formState.errors.installments && (
+          <p className="text-sm text-red-500">
+            {form.formState.errors.installments.message}
+          </p>
+        )}
+      </div>
+
+      <div className="grid gap-2">
+        <Label>Data da Venda</Label>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant={"outline"}
+              className={cn(
+                "w-full justify-start text-left font-normal",
+                !date && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {date ? format(date, "dd/MM/yyyy", { locale: ptBR }) : <span>Selecione a data</span>}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              locale={ptBR}
+              selected={date}
+              onSelect={(date) => {
+                setDate(date);
+                form.setValue('sale_date', date || new Date());
+              }}
+              disabled={disabled}
+              initialFocus
+              className={cn("p-3 pointer-events-auto")}
+            />
+          </PopoverContent>
+        </Popover>
+        {form.formState.errors.sale_date && (
+          <p className="text-sm text-red-500">
+            {form.formState.errors.sale_date.message}
+          </p>
+        )}
       </div>
     </>
   );

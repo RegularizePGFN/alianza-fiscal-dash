@@ -1,25 +1,17 @@
-
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Phone } from "lucide-react";
+import { SaleFormSchema } from "./SaleFormSchema";
+import { UseFormReturn } from "react-hook-form";
+import * as z from "zod";
 
 interface ClientFormFieldsProps {
-  clientName: string;
-  setClientName: (value: string) => void;
-  clientPhone: string;
-  setClientPhone: (value: string) => void;
-  clientDocument: string;
-  setClientDocument: (value: string) => void;
+  form: UseFormReturn<z.infer<typeof SaleFormSchema>>;
   disabled?: boolean;
 }
 
 export function ClientFormFields({
-  clientName,
-  setClientName,
-  clientPhone,
-  setClientPhone,
-  clientDocument,
-  setClientDocument,
+  form,
   disabled = false
 }: ClientFormFieldsProps) {
   
@@ -34,12 +26,12 @@ export function ClientFormFields({
     
     // If it's just the + sign, keep it as is
     if (value === '+') {
-      setClientPhone(value);
+      form.setValue("client_phone", value);
       return;
     }
     
     // No length restrictions - keep all digits after the + sign
-    setClientPhone(value);
+    form.setValue("client_phone", value);
   };
   
   // Format CPF/CNPJ
@@ -62,7 +54,7 @@ export function ClientFormFields({
         .replace(/(\d{4})(?=\d)/, '$1-');
     }
     
-    setClientDocument(value);
+    form.setValue("client_document", value);
   };
   
   return (
@@ -71,11 +63,16 @@ export function ClientFormFields({
         <Label htmlFor="client_name">Nome do Cliente/Empresa</Label>
         <Input
           id="client_name"
-          value={clientName}
-          onChange={(e) => setClientName(e.target.value)}
+          value={form.watch("client_name") || ""}
+          onChange={(e) => form.setValue("client_name", e.target.value)}
           placeholder="Nome completo do cliente ou empresa"
           disabled={disabled}
         />
+        {form.formState.errors.client_name && (
+          <p className="text-sm text-red-500">
+            {form.formState.errors.client_name.message}
+          </p>
+        )}
       </div>
       
       <div className="grid gap-2">
@@ -86,7 +83,7 @@ export function ClientFormFields({
           </span>
           <Input
             id="client_phone"
-            value={clientPhone}
+            value={form.watch("client_phone") || ""}
             onChange={handlePhoneChange}
             placeholder="+5521999999999"
             className="pl-10"
@@ -96,17 +93,27 @@ export function ClientFormFields({
         <p className="text-xs text-muted-foreground">
           Formato internacional: +55 seguido do DDD e número
         </p>
+        {form.formState.errors.client_phone && (
+          <p className="text-sm text-red-500">
+            {form.formState.errors.client_phone.message}
+          </p>
+        )}
       </div>
       
       <div className="grid gap-2">
         <Label htmlFor="client_document">CPF/CNPJ</Label>
         <Input
           id="client_document"
-          value={clientDocument}
+          value={form.watch("client_document") || ""}
           onChange={handleDocumentChange}
           placeholder="000.000.000-00 ou 00.000.000/0000-00"
           disabled={disabled}
         />
+        {form.formState.errors.client_document && (
+          <p className="text-sm text-red-500">
+            {form.formState.errors.client_document.message}
+          </p>
+        )}
       </div>
     </>
   );
