@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -35,7 +34,8 @@ export function SaleFormModal({
   const { user } = useAuth();
   const [date, setDate] = useState<Date | undefined>(initialData ? new Date(initialData.sale_date) : new Date());
   const [isClosing, setIsClosing] = useState(false);
-  
+  const autoFocusRef = useRef<HTMLInputElement>(null); // <- FOCO
+
   const form = useForm<z.infer<typeof SaleFormSchema>>({
     resolver: zodResolver(SaleFormSchema),
     defaultValues: {
@@ -50,8 +50,7 @@ export function SaleFormModal({
     },
     mode: "onChange",
   });
-  
-  // Reset form when initialData changes
+
   useEffect(() => {
     if (initialData) {
       setDate(new Date(initialData.sale_date));
@@ -78,28 +77,34 @@ export function SaleFormModal({
       });
     }
   }, [initialData, user, form]);
-  
-  // Improved dialog close handler with proper state management and debounce
+
+  // Força o foco no campo "Valor Bruto"
+  useEffect(() => {
+    if (open && autoFocusRef.current) {
+      setTimeout(() => {
+        autoFocusRef.current?.focus();
+      }, 10);
+    }
+  }, [open]);
+
   const handleDialogClose = useCallback((isOpen: boolean) => {
-    // Only allow closing if not submitting and not already closing
     if (!isOpen && !isSubmitting && !isClosing) {
       setIsClosing(true);
-      // Small delay to prevent UI freezes during state transitions
       setTimeout(() => {
         onCancel();
         setIsClosing(false);
       }, 100);
     }
   }, [isSubmitting, onCancel, isClosing]);
-  
+
   const onSubmit = useCallback((values: z.infer<typeof SaleFormSchema>) => {
     const parsedAmount = parseFloat(values.gross_amount.replace(",", "."));
-    
+
     const saleData: Omit<Sale, 'id'> = {
       salesperson_id: user?.id || 'system',
       salesperson_name: values.salesperson_name,
       gross_amount: parsedAmount,
-      net_amount: parsedAmount, // We need to add this based on the Sale interface
+      net_amount: parsedAmount,
       payment_method: values.payment_method,
       installments: values.installments,
       sale_date: values.sale_date.toISOString(),
@@ -107,10 +112,10 @@ export function SaleFormModal({
       client_phone: values.client_phone || '',
       client_document: values.client_document || ''
     };
-    
+
     onSave(saleData);
   }, [user, onSave]);
-  
+
   const handleCancel = useCallback(() => {
     if (!isSubmitting && !isClosing) {
       setIsClosing(true);
@@ -120,9 +125,9 @@ export function SaleFormModal({
       }, 100);
     }
   }, [onCancel, isSubmitting, isClosing]);
-  
+
   const handleSubmit = form.handleSubmit(onSubmit);
-  
+
   return (
     <Dialog open={open} onOpenChange={handleDialogClose}>
       <DialogContent 
@@ -137,14 +142,14 @@ export function SaleFormModal({
               : 'Preencha os dados para registrar uma nova venda.'}
           </DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <SaleDetailsFields 
             form={form}
             date={date}
             setDate={setDate}
             disabled={isSubmitting}
-            autoFocusRef={autoFocusRef}
+            autoFocusRef={autoFocusRef} // <- AQUI
           />
           
           <ClientFormFields 
