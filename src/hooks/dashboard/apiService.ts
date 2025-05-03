@@ -137,7 +137,16 @@ export const fetchMonthlyGoal = async (
       
       if (salesGoals && salesGoals.length > 0) {
         // Sum goals for salespeople only
-        const totalGoal = salesGoals.reduce((sum, goal) => sum + (parseFloat(goal.goal_amount) || 0), 0);
+        // Fix: Ensure goal_amount is treated as a number before adding it to the sum
+        const totalGoal = salesGoals.reduce((sum, goal) => {
+          // Parse goal_amount as number to ensure correct addition
+          const goalAmount = typeof goal.goal_amount === 'string' 
+            ? parseFloat(goal.goal_amount) 
+            : Number(goal.goal_amount);
+          
+          return sum + (isNaN(goalAmount) ? 0 : goalAmount);
+        }, 0);
+        
         console.log(`Meta total para admins (soma de ${salesGoals.length} metas de vendedores):`, totalGoal);
         return totalGoal > 0 ? totalGoal : DEFAULT_GOAL_AMOUNT;
       }
@@ -165,7 +174,9 @@ export const fetchMonthlyGoal = async (
 
       if (goalData && goalData.goal_amount) {
         console.log("Meta mensal encontrada:", goalData.goal_amount);
-        return goalData.goal_amount;
+        return typeof goalData.goal_amount === 'string' 
+          ? parseFloat(goalData.goal_amount) 
+          : Number(goalData.goal_amount);
       }
       
       console.log("Nenhuma meta configurada para este vendedor, usando valor padrão");
