@@ -1,5 +1,4 @@
-
-import { ReactNode, useEffect, useState, useRef } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { AppSidebar } from "./AppSidebar";
 import { AppHeader } from "./AppHeader";
 import { useAuth } from "@/contexts/auth";
@@ -13,49 +12,30 @@ interface AppLayoutProps {
 export function AppLayout({ children, requireAuth = true }: AppLayoutProps) {
   const { isAuthenticated, isLoading } = useAuth();
   const [errorDetected, setErrorDetected] = useState<string | null>(null);
-  const errorHandlerAttachedRef = useRef(false);
 
   /* ╭──────────────────────────────────────────────────────────╮
-     │ Desfaz "pointer‑events:none" que o listener de atalhos    │
+     │ Desfaz “pointer‑events:none” que o listener de atalhos    │
      │ coloca no #root e congela toda a interface                │
      ╰──────────────────────────────────────────────────────────╯ */
   useEffect(() => {
     const root = document.getElementById("root");
     if (!root) return;
-    
-    const fix = () => {
-      if (root.style.pointerEvents === 'none') {
-        root.style.pointerEvents = "auto";
-      }
-    };
-    
-    // Fix immediately on render
+    const fix = () => (root.style.pointerEvents = "auto");
+    // garante já na primeira carga
     fix();
-    
-    // Create observer to monitor style changes
     const obs = new MutationObserver(fix);
     obs.observe(root, { attributes: true, attributeFilter: ["style"] });
-    
     return () => obs.disconnect();
   }, []);
 
-  // Add error‑boundary detection - improved with cleanup
+  // Add error‑boundary detection
   useEffect(() => {
-    // Only attach once to avoid duplicate handlers
-    if (errorHandlerAttachedRef.current) return;
-    errorHandlerAttachedRef.current = true;
-    
     const handleError = (event: ErrorEvent) => {
       console.error("Unhandled error detected:", event.error);
       setErrorDetected(event.message || "An unknown error occurred");
     };
-    
     window.addEventListener("error", handleError);
-    
-    return () => {
-      window.removeEventListener("error", handleError);
-      errorHandlerAttachedRef.current = false;
-    };
+    return () => window.removeEventListener("error", handleError);
   }, []);
 
   // Loading state
