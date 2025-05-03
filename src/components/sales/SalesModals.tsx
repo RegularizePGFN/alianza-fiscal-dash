@@ -26,17 +26,15 @@ export function SalesModals({
 }: SalesModalsProps) {
   return (
     <>
-      {/* Only render the form modal when it's needed */}
-      {showSaleModal && (
-        <SaleFormModal
-          key={editingSale?.id || "new-sale"}
-          initialData={editingSale}
-          onSave={onSave}
-          onCancel={onFormCancel}
-          isSubmitting={isProcessingAction}
-          open={showSaleModal}
-        />
-      )}
+      {/* Using key to force complete remount when modal data changes */}
+      <SaleFormModal
+        key={editingSale?.id || "new-sale" + (showSaleModal ? "-open" : "-closed")}
+        initialData={editingSale}
+        onSave={onSave}
+        onCancel={onFormCancel}
+        isSubmitting={isProcessingAction}
+        open={showSaleModal}
+      />
 
       {saleToDelete && (
         <DeleteSaleDialog

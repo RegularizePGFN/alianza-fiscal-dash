@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from '@/contexts/auth';
@@ -98,7 +98,7 @@ export default function UsersPage() {
         </Card>
       </div>
       
-      {/* Only render modals when they're needed */}
+      {/* User form modal */}
       {isFormOpen && (
         <UserFormModal
           isOpen={isFormOpen}
@@ -108,6 +108,7 @@ export default function UsersPage() {
         />
       )}
       
+      {/* Delete confirmation dialog */}
       {isDeleteDialogOpen && selectedUser && (
         <DeleteUserDialog
           user={selectedUser}

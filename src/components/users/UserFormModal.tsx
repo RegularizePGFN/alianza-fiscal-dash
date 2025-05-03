@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -154,20 +154,18 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
     }
   };
 
+  // Prevent closing the dialog while loading
+  const handleCloseDialog = () => {
+    if (!isLoading) {
+      onClose();
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open) {
-        if (!isLoading) {
-          onClose();
-        }
-      }
-    }}>
+    <Dialog open={isOpen} onOpenChange={handleCloseDialog}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>{user ? "Editar Usuário" : "Adicionar Usuário"}</DialogTitle>
-          <DialogDescription>
-            {user ? "Edite as informações do usuário abaixo." : "Preencha os dados para criar um novo usuário."}
-          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
@@ -224,7 +222,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+            <Button type="button" variant="outline" onClick={handleCloseDialog} disabled={isLoading}>
               Cancelar
             </Button>
             <Button type="submit" disabled={isLoading} className="relative">
