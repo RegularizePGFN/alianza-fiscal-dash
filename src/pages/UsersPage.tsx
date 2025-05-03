@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from '@/contexts/auth';
@@ -45,6 +45,7 @@ export default function UsersPage() {
   }, []);
   
   const handleFormClose = useCallback(() => {
+    console.log("Form close handler called");
     if (!isProcessing) {
       setIsFormOpen(false);
       setSelectedUser(null);
