@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from '@/contexts/auth';
@@ -23,6 +23,15 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   
+  // Prevent updates on unmounted component
+  const isMountedRef = useRef(true);
+  
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+  
   // Redirect if not admin
   if (user?.role !== UserRole.ADMIN) {
     return <Navigate to="/" />;
@@ -30,19 +39,25 @@ export default function UsersPage() {
   
   // User management handlers
   const handleAddUser = useCallback(() => {
-    setSelectedUser(null);
-    setIsFormOpen(true);
-  }, []);
+    if (!isProcessing) {
+      setSelectedUser(null);
+      setIsFormOpen(true);
+    }
+  }, [isProcessing]);
   
   const handleEditUser = useCallback((user: User) => {
-    setSelectedUser(user);
-    setIsFormOpen(true);
-  }, []);
+    if (!isProcessing) {
+      setSelectedUser(user);
+      setIsFormOpen(true);
+    }
+  }, [isProcessing]);
   
   const handleDeleteUser = useCallback((user: User) => {
-    setSelectedUser(user);
-    setIsDeleteDialogOpen(true);
-  }, []);
+    if (!isProcessing) {
+      setSelectedUser(user);
+      setIsDeleteDialogOpen(true);
+    }
+  }, [isProcessing]);
   
   const handleFormClose = useCallback(() => {
     if (!isProcessing) {
@@ -53,24 +68,30 @@ export default function UsersPage() {
   const handleDeleteDialogClose = useCallback(() => {
     if (!isProcessing) {
       setIsDeleteDialogOpen(false);
+      setSelectedUser(null);
     }
   }, [isProcessing]);
   
   const handleSuccess = useCallback(() => {
     // Add delay to ensure database has time to update
     setIsProcessing(true);
-    setTimeout(() => {
-      fetchUsers();
-      setIsProcessing(false);
-      setIsFormOpen(false);
-      setIsDeleteDialogOpen(false);
-      setSelectedUser(null);
-      
-      toast({
-        title: "Sucesso",
-        description: "Operação realizada com sucesso",
-      });
+    
+    const timer = setTimeout(() => {
+      if (isMountedRef.current) {
+        fetchUsers();
+        setIsProcessing(false);
+        setIsFormOpen(false);
+        setIsDeleteDialogOpen(false);
+        setSelectedUser(null);
+        
+        toast({
+          title: "Sucesso",
+          description: "Operação realizada com sucesso",
+        });
+      }
     }, 500);
+    
+    return () => clearTimeout(timer);
   }, [fetchUsers, toast]);
   
   return (
@@ -100,21 +121,26 @@ export default function UsersPage() {
         </Card>
       </div>
       
-      {/* User form modal */}
-      <UserFormModal
-        isOpen={isFormOpen}
-        onClose={handleFormClose}
-        user={selectedUser || undefined}
-        onSuccess={handleSuccess}
-      />
-      
-      {/* Delete confirmation dialog */}
-      <DeleteUserDialog
-        user={selectedUser}
-        isOpen={isDeleteDialogOpen}
-        onClose={handleDeleteDialogClose}
-        onSuccess={handleSuccess}
-      />
+      {/* User management modals - rendered conditionally */}
+      {(isFormOpen || isDeleteDialogOpen) && (
+        <>
+          {/* User form modal */}
+          <UserFormModal
+            isOpen={isFormOpen}
+            onClose={handleFormClose}
+            user={selectedUser || undefined}
+            onSuccess={handleSuccess}
+          />
+          
+          {/* Delete confirmation dialog */}
+          <DeleteUserDialog
+            user={selectedUser}
+            isOpen={isDeleteDialogOpen}
+            onClose={handleDeleteDialogClose}
+            onSuccess={handleSuccess}
+          />
+        </>
+      )}
     </AppLayout>
   );
 }

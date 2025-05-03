@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,12 +31,15 @@ export function DeleteUserDialog({
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Melhorado para evitar fechamento durante o carregamento
-  const handleDialogClose = (open: boolean) => {
-    if (!isLoading && !open) {
+  // Generate stable ID for aria attributes
+  const dialogDescriptionId = "delete-user-confirmation";
+
+  // Improved dialog close handler with safety checks
+  const handleDialogOpenChange = useCallback((open: boolean) => {
+    if (!open && !isLoading) {
       onClose();
     }
-  };
+  }, [isLoading, onClose]);
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -63,19 +66,20 @@ export function DeleteUserDialog({
         description: error.message || "Ocorreu um erro ao excluir o usuário.",
         variant: "destructive",
       });
-      // Importante: fechar o modal mesmo em caso de erro
-      onClose();
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <AlertDialog open={isOpen} onOpenChange={handleDialogClose}>
-      <AlertDialogContent>
+    <AlertDialog 
+      open={isOpen} 
+      onOpenChange={handleDialogOpenChange}
+    >
+      <AlertDialogContent aria-describedby={dialogDescriptionId}>
         <AlertDialogHeader>
           <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-          <AlertDialogDescription>
+          <AlertDialogDescription id={dialogDescriptionId}>
             Esta ação não pode ser desfeita. Este usuário será permanentemente
             removido do sistema.
             {user && (

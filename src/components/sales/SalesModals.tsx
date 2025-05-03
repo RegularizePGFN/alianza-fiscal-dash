@@ -2,6 +2,7 @@
 import { Sale } from "@/lib/types";
 import { SaleFormModal } from "@/components/sales/form/SaleFormModal";
 import { DeleteSaleDialog } from "@/components/sales/DeleteSaleDialog";
+import { useId } from "react";
 
 interface SalesModalsProps {
   editingSale: Sale | null;
@@ -24,6 +25,10 @@ export function SalesModals({
   onDeleteCancel,
   onDeleteConfirm
 }: SalesModalsProps) {
+  // Generate stable keys for modals to prevent state issues
+  const formKey = useId();
+  const deleteKey = useId();
+  
   // We need to make sure modals are properly managed even if their state changes
   // Each modal should be rendered constantly and controlled via the open prop
   // This prevents the issues with internal state being lost on conditional rendering
@@ -32,7 +37,7 @@ export function SalesModals({
     <>
       {/* Always render the SaleFormModal and control visibility via open prop */}
       <SaleFormModal
-        key={editingSale?.id || "new-sale"} 
+        key={`${formKey}-${editingSale?.id || "new-sale"}`}
         initialData={editingSale}
         onSave={onSave}
         onCancel={onFormCancel}
@@ -42,6 +47,7 @@ export function SalesModals({
       
       {/* Always render DeleteSaleDialog and control visibility via isOpen prop */}
       <DeleteSaleDialog
+        key={`${deleteKey}-${saleToDelete || "no-sale"}`}
         isOpen={!!saleToDelete}
         onClose={onDeleteCancel}
         onDelete={onDeleteConfirm}
