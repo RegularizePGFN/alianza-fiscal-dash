@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Bell, BellDot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,10 +27,13 @@ export function NotificationsPopover({ onNotificationsChange }: NotificationsPop
     markAllAsRead 
   } = useNotifications(user?.id);
   
-  // Propagate notification status to parent component when it changes
-  if (onNotificationsChange && hasUnread !== undefined) {
-    onNotificationsChange(hasUnread);
-  }
+  // Move the notification status change effect to a proper useEffect to avoid
+  // calling the function during render which can cause render loops
+  useEffect(() => {
+    if (onNotificationsChange && hasUnread !== undefined) {
+      onNotificationsChange(hasUnread);
+    }
+  }, [onNotificationsChange, hasUnread]);
   
   return (
     <Popover open={open} onOpenChange={setOpen}>

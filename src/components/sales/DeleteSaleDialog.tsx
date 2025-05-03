@@ -1,4 +1,5 @@
 
+import React, { useState, useCallback } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,11 +25,23 @@ export function DeleteSaleDialog({
   onDelete, 
   isDeleting = false 
 }: DeleteSaleDialogProps) {
-  const handleOpenChange = (open: boolean) => {
-    if (!open && !isDeleting) {
-      onClose();
+  const [isClosing, setIsClosing] = useState(false);
+  
+  const handleOpenChange = useCallback((open: boolean) => {
+    if (!open && !isDeleting && !isClosing) {
+      setIsClosing(true);
+      // Small delay to prevent UI freezes during state transitions
+      setTimeout(() => {
+        onClose();
+        setIsClosing(false);
+      }, 100);
     }
-  };
+  }, [onClose, isDeleting, isClosing]);
+  
+  const handleDelete = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    onDelete();
+  }, [onDelete]);
   
   return (
     <AlertDialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -40,14 +53,11 @@ export function DeleteSaleDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting || isClosing}>Cancel</AlertDialogCancel>
           <AlertDialogAction 
-            onClick={(e) => {
-              e.preventDefault();
-              onDelete();
-            }} 
+            onClick={handleDelete} 
             className="bg-destructive text-destructive-foreground"
-            disabled={isDeleting}
+            disabled={isDeleting || isClosing}
           >
             {isDeleting ? (
               <>

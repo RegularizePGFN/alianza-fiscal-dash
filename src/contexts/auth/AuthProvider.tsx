@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { User, UserRole } from '@/lib/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,53 +10,15 @@ import { mapUserRole } from './utils';
 // Auth provider component
 export function AuthProvider({ children }: AuthProviderProps) {
   const [authState, setAuthState] = useState(initialAuthState);
+  
+  // Add reference to track processing state to prevent duplicate updates
+  const isProcessingAuthChange = useRef(false);
 
-  // Check for existing session on mount and listen for auth changes
-  useEffect(() => {
-    // Set up auth state listener first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log("Auth state changed:", event, session?.user?.id);
-        handleSession(session);
-      }
-    );
+  // Handle session update - memoized to prevent recreating on each render
+  const handleSession = useCallback(async (session: Session | null) => {
+    if (isProcessingAuthChange.current) return;
+    isProcessingAuthChange.current = true;
     
-    // Check for existing session
-    const checkSession = async () => {
-      try {
-        console.log("Checking for existing session...");
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error("Session check error:", error);
-          setAuthState({
-            ...initialAuthState,
-            isLoading: false,
-          });
-          return;
-        }
-        
-        console.log("Existing session:", session?.user?.id);
-        handleSession(session);
-      } catch (error) {
-        console.error("Session restoration error:", error);
-        setAuthState({
-          ...initialAuthState,
-          isLoading: false,
-        });
-      }
-    };
-
-    checkSession();
-
-    // Cleanup subscription
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  // Handle session update
-  const handleSession = async (session: Session | null) => {
     if (!session) {
       console.log("No session found");
       setAuthState({
@@ -64,6 +26,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         user: null,
         isLoading: false,
       });
+      isProcessingAuthChange.current = false;
       return;
     }
     
@@ -117,8 +80,58 @@ export function AuthProvider({ children }: AuthProviderProps) {
         },
         isLoading: false,
       });
+    } finally {
+      isProcessingAuthChange.current = false;
     }
-  };
+  }, []);
+
+  // Check for existing session on mount and listen for auth changes
+  useEffect(() => {
+    // Set up auth state listener first with debouncing to prevent excessive calls
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.id);
+        
+        // Use timeout to debounce auth state changes
+        setTimeout(() => {
+          handleSession(session);
+        }, 100);
+      }
+    );
+    
+    // Check for existing session
+    const checkSession = async () => {
+      try {
+        console.log("Checking for existing session...");
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Session check error:", error);
+          setAuthState({
+            ...initialAuthState,
+            isLoading: false,
+          });
+          return;
+        }
+        
+        console.log("Existing session:", session?.user?.id);
+        handleSession(session);
+      } catch (error) {
+        console.error("Session restoration error:", error);
+        setAuthState({
+          ...initialAuthState,
+          isLoading: false,
+        });
+      }
+    };
+
+    checkSession();
+
+    // Cleanup subscription
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [handleSession]);
 
   // Login function
   const login = async (email: string, password: string): Promise<boolean> => {

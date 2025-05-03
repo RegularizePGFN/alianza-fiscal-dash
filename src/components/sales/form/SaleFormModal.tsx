@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dialog";
 import { Sale, PaymentMethod } from "@/lib/types";
 import { useAuth } from "@/contexts/auth";
-import { format } from "date-fns";
 import { SaleFormSchema } from "./SaleFormSchema";
 import { SaleDetailsFields } from "./SaleDetailsFields";
 import { ClientFormFields } from "./ClientFormFields";
@@ -35,6 +34,7 @@ export function SaleFormModal({
 }: SaleFormModalProps) {
   const { user } = useAuth();
   const [date, setDate] = useState<Date | undefined>(initialData ? new Date(initialData.sale_date) : new Date());
+  const [isClosing, setIsClosing] = useState(false);
   
   const form = useForm<z.infer<typeof SaleFormSchema>>({
     resolver: zodResolver(SaleFormSchema),
@@ -51,6 +51,7 @@ export function SaleFormModal({
     mode: "onChange",
   });
   
+  // Reset form when initialData changes
   useEffect(() => {
     if (initialData) {
       setDate(new Date(initialData.sale_date));
@@ -64,16 +65,34 @@ export function SaleFormModal({
         client_phone: initialData.client_phone || '',
         client_document: initialData.client_document || ''
       });
+    } else {
+      form.reset({
+        salesperson_name: user?.name || "",
+        gross_amount: "",
+        payment_method: PaymentMethod.CREDIT,
+        installments: 1,
+        sale_date: new Date(),
+        client_name: '',
+        client_phone: '',
+        client_document: ''
+      });
     }
-  }, [initialData, form]);
+  }, [initialData, user, form]);
   
-  const handleDialogClose = (isOpen: boolean) => {
-    if (!isOpen && !isSubmitting) {
-      onCancel();
+  // Improved dialog close handler with proper state management
+  const handleDialogClose = useCallback((isOpen: boolean) => {
+    // Only allow closing if not submitting and not already closing
+    if (!isOpen && !isSubmitting && !isClosing) {
+      setIsClosing(true);
+      // Small delay to prevent UI freezes during state transitions
+      setTimeout(() => {
+        onCancel();
+        setIsClosing(false);
+      }, 100);
     }
-  };
+  }, [isSubmitting, onCancel, isClosing]);
   
-  const onSubmit = (values: z.infer<typeof SaleFormSchema>) => {
+  const onSubmit = useCallback((values: z.infer<typeof SaleFormSchema>) => {
     const parsedAmount = parseFloat(values.gross_amount.replace(",", "."));
     
     const saleData: Omit<Sale, 'id'> = {
@@ -90,13 +109,17 @@ export function SaleFormModal({
     };
     
     onSave(saleData);
-  };
+  }, [user, onSave]);
   
   const handleCancel = useCallback(() => {
-    if (!isSubmitting) {
-      onCancel();
+    if (!isSubmitting && !isClosing) {
+      setIsClosing(true);
+      setTimeout(() => {
+        onCancel();
+        setIsClosing(false);
+      }, 100);
     }
-  }, [onCancel, isSubmitting]);
+  }, [onCancel, isSubmitting, isClosing]);
   
   const handleSubmit = form.handleSubmit(onSubmit);
   

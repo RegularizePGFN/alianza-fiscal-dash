@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Sale, UserRole } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -15,8 +15,27 @@ export const useFetchSales = (user: User | null) => {
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   
+  // Add reference to track if fetch is in progress
+  const isFetchingRef = useRef(false);
+  
+  // Add reference to track component mount state
+  const isMountedRef = useRef(true);
+  
+  // Add sales fetch timestamp to prevent redundant fetches
+  const lastFetchTimestampRef = useRef(0);
+  
   const fetchSales = async () => {
     try {
+      // Prevent concurrent fetches and redundant fetches within 2 seconds
+      const now = Date.now();
+      if (
+        isFetchingRef.current || 
+        (now - lastFetchTimestampRef.current < 2000 && sales.length > 0)
+      ) {
+        return;
+      }
+      
+      isFetchingRef.current = true;
       setLoading(true);
       
       if (!user) {
@@ -25,6 +44,7 @@ export const useFetchSales = (user: User | null) => {
       }
       
       console.log("Fetching sales for user:", user.id, "with role:", user.role);
+      lastFetchTimestampRef.current = now;
       
       // Simple query without filters - RLS is disabled
       const { data, error } = await supabase
@@ -37,7 +57,7 @@ export const useFetchSales = (user: User | null) => {
         throw error;
       }
       
-      if (data) {
+      if (data && isMountedRef.current) {
         console.log("Sales data retrieved:", data.length, "records");
         
         // Client-side filtering based on user role
@@ -68,9 +88,14 @@ export const useFetchSales = (user: User | null) => {
       }
     } catch (error: any) {
       console.error('Error fetching sales:', error);
-      showErrorToast(toast, "Could not load sales. Please try again later.");
+      if (isMountedRef.current) {
+        showErrorToast(toast, "Could not load sales. Please try again later.");
+      }
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
+      isFetchingRef.current = false;
     }
   };
 
@@ -91,6 +116,7 @@ export const useFetchSales = (user: User | null) => {
     }
   };
 
+  // Fetch sales when user changes
   useEffect(() => {
     if (user) {
       console.log("Authenticated user, fetching sales");
@@ -98,7 +124,20 @@ export const useFetchSales = (user: User | null) => {
     } else {
       console.log("No authenticated user, skipping sales fetch");
     }
+    
+    // Reset mount status on unmount
+    return () => {
+      isMountedRef.current = false;
+    };
   }, [user]);
+  
+  // Reset mount status when component mounts
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
   
   return {
     sales,
