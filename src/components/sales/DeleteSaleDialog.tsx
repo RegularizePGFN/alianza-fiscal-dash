@@ -24,7 +24,6 @@ export function DeleteSaleDialog({
   onDelete, 
   isDeleting = false 
 }: DeleteSaleDialogProps) {
-  // Critical fix: Safe dialog closure that prevents closing during deletion
   const handleOpenChange = (open: boolean) => {
     if (!open && !isDeleting) {
       onClose();
@@ -33,7 +32,11 @@ export function DeleteSaleDialog({
   
   return (
     <AlertDialog open={isOpen} onOpenChange={handleOpenChange}>
-      <AlertDialogContent>
+      <AlertDialogContent onPointerDownOutside={(e) => {
+        if (isDeleting) {
+          e.preventDefault();
+        }
+      }}>
         <AlertDialogHeader>
           <AlertDialogTitle>Confirm deletion</AlertDialogTitle>
           <AlertDialogDescription>

@@ -154,7 +154,6 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
     }
   };
 
-  // Critical fix: Safe dialog closure that prevents closing during loading
   const handleCloseDialog = (open: boolean) => {
     if (!open && !isLoading) {
       onClose();
@@ -163,7 +162,11 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
 
   return (
     <Dialog open={isOpen} onOpenChange={handleCloseDialog}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px]" onPointerDownOutside={(e) => {
+        if (isLoading) {
+          e.preventDefault();
+        }
+      }}>
         <DialogHeader>
           <DialogTitle>{user ? "Editar Usuário" : "Adicionar Usuário"}</DialogTitle>
         </DialogHeader>

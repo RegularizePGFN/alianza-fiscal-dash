@@ -31,7 +31,6 @@ export function DeleteUserDialog({
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Critical fix: Safe dialog closure that prevents closing during deletion
   const handleDialogClose = (open: boolean) => {
     if (!isLoading && !open) {
       onClose();
@@ -71,7 +70,11 @@ export function DeleteUserDialog({
 
   return (
     <AlertDialog open={isOpen} onOpenChange={handleDialogClose}>
-      <AlertDialogContent>
+      <AlertDialogContent onPointerDownOutside={(e) => {
+        if (isLoading) {
+          e.preventDefault();
+        }
+      }}>
         <AlertDialogHeader>
           <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
           <AlertDialogDescription>

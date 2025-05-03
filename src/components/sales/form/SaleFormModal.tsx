@@ -61,7 +61,6 @@ export function SaleFormModal({
     }
   }, [initialData, open]);
   
-  // Critical fix: Safe dialog closure that prevents closing during submission
   const handleDialogClose = (isOpen: boolean) => {
     if (!isOpen && !isSubmitting) {
       onCancel();
@@ -109,7 +108,11 @@ export function SaleFormModal({
   
   return (
     <Dialog open={open} onOpenChange={handleDialogClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => {
+        if (isSubmitting) {
+          e.preventDefault();
+        }
+      }}>
         <DialogHeader>
           <DialogTitle>{initialData ? 'Editar Venda' : 'Nova Venda'}</DialogTitle>
           <DialogDescription>
