@@ -1,3 +1,4 @@
+// SaleDetailsFields.tsx
 import { PaymentMethod } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,7 +37,7 @@ export function SaleDetailsFields({
   date,
   setDate,
   disabled = false,
-  autoFocusRef,
+  autoFocusRef
 }: SaleDetailsFieldsProps) {
   return (
     <>
@@ -49,11 +50,6 @@ export function SaleDetailsFields({
           {...form.register("salesperson_name")}
           disabled={disabled}
         />
-        {form.formState.errors.salesperson_name && (
-          <p className="text-sm text-red-500">
-            {form.formState.errors.salesperson_name.message}
-          </p>
-        )}
       </div>
 
       <div className="grid gap-2">
@@ -66,15 +62,10 @@ export function SaleDetailsFields({
           disabled={disabled}
           ref={autoFocusRef}
         />
-        {form.formState.errors.gross_amount && (
-          <p className="text-sm text-red-500">
-            {form.formState.errors.gross_amount.message}
-          </p>
-        )}
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor="payment_method">Método de Pagamento</Label>
+        <Label htmlFor="payment_method">Forma de Pagamento</Label>
         <Select
           onValueChange={(value) =>
             form.setValue("payment_method", value as PaymentMethod)
@@ -82,20 +73,15 @@ export function SaleDetailsFields({
           defaultValue={form.getValues("payment_method")}
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Selecione o método de pagamento" />
+            <SelectValue placeholder="Selecione" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={PaymentMethod.BOLETO}>Boleto</SelectItem>
             <SelectItem value={PaymentMethod.PIX}>Pix</SelectItem>
-            <SelectItem value={PaymentMethod.CREDIT}>Cartão de Crédito</SelectItem>
-            <SelectItem value={PaymentMethod.DEBIT}>Cartão de Débito</SelectItem>
+            <SelectItem value={PaymentMethod.CREDIT}>Crédito</SelectItem>
+            <SelectItem value={PaymentMethod.DEBIT}>Débito</SelectItem>
           </SelectContent>
         </Select>
-        {form.formState.errors.payment_method && (
-          <p className="text-sm text-red-500">
-            {form.formState.errors.payment_method.message}
-          </p>
-        )}
       </div>
 
       <div className="grid gap-2">
@@ -107,11 +93,6 @@ export function SaleDetailsFields({
           {...form.register("installments", { valueAsNumber: true })}
           disabled={disabled}
         />
-        {form.formState.errors.installments && (
-          <p className="text-sm text-red-500">
-            {form.formState.errors.installments.message}
-          </p>
-        )}
       </div>
 
       <div className="grid gap-2">
@@ -119,7 +100,7 @@ export function SaleDetailsFields({
         <Popover>
           <PopoverTrigger asChild>
             <Button
-              variant="outline"
+              variant={"outline"}
               className={cn(
                 "w-full justify-start text-left font-normal",
                 !date && "text-muted-foreground"
@@ -142,15 +123,9 @@ export function SaleDetailsFields({
               }}
               disabled={disabled}
               initialFocus
-              className="p-3"
             />
           </PopoverContent>
         </Popover>
-        {form.formState.errors.sale_date && (
-          <p className="text-sm text-red-500">
-            {form.formState.errors.sale_date.message}
-          </p>
-        )}
       </div>
     </>
   );
