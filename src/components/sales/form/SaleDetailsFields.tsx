@@ -30,6 +30,7 @@ interface SaleDetailsFieldsProps {
   date: Date | undefined;
   setDate: (date: Date | undefined) => void;
   disabled?: boolean;
+  autoFocusRef?: React.RefObject<HTMLInputElement>;
 }
 
 export function SaleDetailsFields({
