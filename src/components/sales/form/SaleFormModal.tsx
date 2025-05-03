@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -44,11 +45,10 @@ const saleFormSchema = z.object({
     message: "O valor bruto deve ser um número válido maior que zero.",
   }),
   payment_method: z.enum([
-    PaymentMethod.CASH,
-    PaymentMethod.CREDIT_CARD,
-    PaymentMethod.DEBIT_CARD,
+    PaymentMethod.BOLETO,
     PaymentMethod.PIX,
-    PaymentMethod.BANK_TRANSFER,
+    PaymentMethod.CREDIT,
+    PaymentMethod.DEBIT,
   ]),
   installments: z.number().min(1).max(12).default(1),
   sale_date: z.date(),
@@ -80,7 +80,7 @@ export function SaleFormModal({
     defaultValues: {
       salesperson_name: initialData?.salesperson_name || user?.name || "",
       gross_amount: initialData?.gross_amount?.toString() || "",
-      payment_method: initialData?.payment_method || PaymentMethod.CREDIT_CARD,
+      payment_method: initialData?.payment_method || PaymentMethod.CREDIT,
       installments: initialData?.installments || 1,
       sale_date: initialData ? new Date(initialData.sale_date) : new Date(),
       client_name: initialData?.client_name || '',
@@ -119,6 +119,7 @@ export function SaleFormModal({
       salesperson_id: user?.id || 'system',
       salesperson_name: values.salesperson_name,
       gross_amount: parsedAmount,
+      net_amount: parsedAmount, // We need to add this based on the Sale interface
       payment_method: values.payment_method,
       installments: values.installments,
       sale_date: values.sale_date.toISOString(),
@@ -185,16 +186,18 @@ export function SaleFormModal({
           
           <div className="grid gap-2">
             <Label htmlFor="payment_method">Método de Pagamento</Label>
-            <Select onValueChange={form.setValue.bind(null, "payment_method")} defaultValue={initialData?.payment_method || PaymentMethod.CREDIT_CARD}>
+            <Select 
+              onValueChange={(value) => form.setValue("payment_method", value as PaymentMethod)} 
+              defaultValue={initialData?.payment_method || PaymentMethod.CREDIT}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Selecione o método de pagamento" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={PaymentMethod.CASH}>{PaymentMethod.CASH}</SelectItem>
-                <SelectItem value={PaymentMethod.CREDIT_CARD}>{PaymentMethod.CREDIT_CARD}</SelectItem>
-                <SelectItem value={PaymentMethod.DEBIT_CARD}>{PaymentMethod.DEBIT_CARD}</SelectItem>
+                <SelectItem value={PaymentMethod.BOLETO}>{PaymentMethod.BOLETO}</SelectItem>
                 <SelectItem value={PaymentMethod.PIX}>{PaymentMethod.PIX}</SelectItem>
-                <SelectItem value={PaymentMethod.BANK_TRANSFER}>{PaymentMethod.BANK_TRANSFER}</SelectItem>
+                <SelectItem value={PaymentMethod.CREDIT}>{PaymentMethod.CREDIT}</SelectItem>
+                <SelectItem value={PaymentMethod.DEBIT}>{PaymentMethod.DEBIT}</SelectItem>
               </SelectContent>
             </Select>
             {form.formState.errors.payment_method && (
