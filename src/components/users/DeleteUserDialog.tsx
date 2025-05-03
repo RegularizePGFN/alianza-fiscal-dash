@@ -31,13 +31,6 @@ export function DeleteUserDialog({
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Safe dialog close function that prevents closing while loading
-  const handleDialogClose = (open: boolean) => {
-    if (!isLoading && !open) {
-      onClose();
-    }
-  };
-
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault();
     
@@ -70,7 +63,11 @@ export function DeleteUserDialog({
   };
 
   return (
-    <AlertDialog open={isOpen} onOpenChange={handleDialogClose}>
+    <AlertDialog open={isOpen} onOpenChange={(open) => {
+      if (!open && !isLoading) {
+        onClose();
+      }
+    }}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>

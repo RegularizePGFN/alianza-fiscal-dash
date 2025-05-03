@@ -32,13 +32,13 @@ export function DeleteSaleDialog({
     }}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Confirm deletion</AlertDialogTitle>
+          <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete this sale? This action cannot be undone.
+            Tem certeza que deseja excluir esta venda? Esta ação não pode ser desfeita.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
           <AlertDialogAction 
             onClick={(e) => {
               e.preventDefault();
@@ -50,10 +50,10 @@ export function DeleteSaleDialog({
             {isDeleting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Deleting...
+                Excluindo...
               </>
             ) : (
-              'Delete'
+              'Excluir'
             )}
           </AlertDialogAction>
         </AlertDialogFooter>

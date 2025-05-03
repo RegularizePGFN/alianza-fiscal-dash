@@ -154,17 +154,14 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
     }
   };
 
-  // Guaranteed safe close handler - will be called for any dialog close action
-  const handleCloseDialog = (open: boolean) => {
-    // Only close if not loading and dialog is being closed (open === false)
-    if (!open && !isLoading) {
-      console.log("Dialog closing safely");
-      onClose();
-    }
-  };
-
   return (
-    <Dialog open={isOpen} onOpenChange={handleCloseDialog}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) {
+        if (!isLoading) {
+          onClose();
+        }
+      }
+    }}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>{user ? "Editar Usuário" : "Adicionar Usuário"}</DialogTitle>

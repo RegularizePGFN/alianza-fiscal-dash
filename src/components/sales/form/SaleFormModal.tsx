@@ -61,12 +61,6 @@ export function SaleFormModal({
     setClientDocument(initialData?.client_document || "");
   }, [initialData, open]);
   
-  // Handle dialog close with safety checks
-  const handleDialogClose = () => {
-    if (isSubmitting) return;
-    onCancel();
-  };
-  
   const handleSave = () => {
     if (!user) {
       toast({
@@ -106,11 +100,14 @@ export function SaleFormModal({
     }
   };
   
-  // Only render the Dialog when open is true
-  if (!open) return null;
-  
   return (
-    <Dialog open={open} onOpenChange={handleDialogClose}>
+    <Dialog open={open} onOpenChange={(open) => {
+      if (!open) {
+        if (!isSubmitting) {
+          onCancel();
+        }
+      }
+    }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{initialData ? 'Editar Venda' : 'Nova Venda'}</DialogTitle>
@@ -147,7 +144,7 @@ export function SaleFormModal({
         <DialogFooter>
           <Button 
             variant="outline" 
-            onClick={handleDialogClose} 
+            onClick={onCancel} 
             disabled={isSubmitting}
             type="button"
           >

@@ -45,7 +45,6 @@ export default function UsersPage() {
   }, []);
   
   const handleFormClose = useCallback(() => {
-    console.log("Form close handler called");
     if (!isProcessing) {
       setIsFormOpen(false);
       setSelectedUser(null);
@@ -99,7 +98,7 @@ export default function UsersPage() {
         </Card>
       </div>
       
-      {/* User form modal */}
+      {/* Only render modals when they're needed */}
       {isFormOpen && (
         <UserFormModal
           isOpen={isFormOpen}
@@ -109,7 +108,6 @@ export default function UsersPage() {
         />
       )}
       
-      {/* Delete confirmation dialog */}
       {isDeleteDialogOpen && selectedUser && (
         <DeleteUserDialog
           user={selectedUser}
