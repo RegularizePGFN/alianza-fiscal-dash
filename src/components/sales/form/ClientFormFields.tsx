@@ -12,60 +12,49 @@ interface ClientFormFieldsProps {
 
 export function ClientFormFields({
   form,
-  disabled = false
+  disabled = false,
 }: ClientFormFieldsProps) {
-  
-  // Format phone number to international format
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/[^\d+]/g, '');
-    
-    // Ensure it starts with +
-    if (!value.startsWith('+')) {
-      value = '+' + value;
-    }
-    
-    // If it's just the + sign, keep it as is
-    if (value === '+') {
+    let value = e.target.value.replace(/[^\d+]/g, "");
+    if (!value.startsWith("+")) value = "+" + value;
+    if (value === "+") {
       form.setValue("client_phone", value);
-      return;
-    }
-    
-    // No length restrictions - keep all digits after the + sign
-    form.setValue("client_phone", value);
-  };
-  
-  // Format CPF/CNPJ
-  const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/[^\d]/g, '');
-    
-    if (value.length <= 11) {
-      // Format as CPF: 000.000.000-00
-      value = value
-        .replace(/(\d{3})(?=\d)/, '$1.')
-        .replace(/(\d{3})(?=\d)/, '$1.')
-        .replace(/(\d{3})(?=\d)/, '$1-');
     } else {
-      // Format as CNPJ: 00.000.000/0000-00
-      value = value.slice(0, 14); // Limit to 14 digits
-      value = value
-        .replace(/(\d{2})(?=\d)/, '$1.')
-        .replace(/(\d{3})(?=\d)/, '$1.')
-        .replace(/(\d{3})(?=\d)/, '$1/')
-        .replace(/(\d{4})(?=\d)/, '$1-');
+      form.setValue("client_phone", value);
     }
-    
+  };
+
+  const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/[^\d]/g, "");
+
+    if (value.length <= 11) {
+      // CPF: 000.000.000-00
+      value = value
+        .replace(/^(\d{3})(\d)/, "$1.$2")
+        .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+        .replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d)/, "$1.$2.$3-$4");
+    } else {
+      // CNPJ: 00.000.000/0000-00
+      value = value.slice(0, 14);
+      value = value
+        .replace(/^(\d{2})(\d)/, "$1.$2")
+        .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+        .replace(/^(\d{2})\.(\d{3})\.(\d{3})(\d)/, "$1.$2.$3/$4")
+        .replace(/^(\d{2})\.(\d{3})\.(\d{3})\/(\d{4})(\d)/, "$1.$2.$3/$4-$5");
+    }
+
     form.setValue("client_document", value);
   };
-  
+
   return (
     <>
       <div className="grid gap-2">
         <Label htmlFor="client_name">Nome do Cliente/Empresa</Label>
         <Input
           id="client_name"
+          placeholder="Nome completo do cliente ou empresa"
           value={form.watch("client_name") || ""}
           onChange={(e) => form.setValue("client_name", e.target.value)}
-          placeholder="Nome completo do cliente ou empresa"
           disabled={disabled}
         />
         {form.formState.errors.client_name && (
@@ -74,7 +63,7 @@ export function ClientFormFields({
           </p>
         )}
       </div>
-      
+
       <div className="grid gap-2">
         <Label htmlFor="client_phone">Telefone</Label>
         <div className="relative">
@@ -83,10 +72,10 @@ export function ClientFormFields({
           </span>
           <Input
             id="client_phone"
-            value={form.watch("client_phone") || ""}
-            onChange={handlePhoneChange}
             placeholder="+5521999999999"
             className="pl-10"
+            value={form.watch("client_phone") || ""}
+            onChange={handlePhoneChange}
             disabled={disabled}
           />
         </div>
@@ -99,14 +88,14 @@ export function ClientFormFields({
           </p>
         )}
       </div>
-      
+
       <div className="grid gap-2">
         <Label htmlFor="client_document">CPF/CNPJ</Label>
         <Input
           id="client_document"
+          placeholder="000.000.000-00 ou 00.000.000/0000-00"
           value={form.watch("client_document") || ""}
           onChange={handleDocumentChange}
-          placeholder="000.000.000-00 ou 00.000.000/0000-00"
           disabled={disabled}
         />
         {form.formState.errors.client_document && (
