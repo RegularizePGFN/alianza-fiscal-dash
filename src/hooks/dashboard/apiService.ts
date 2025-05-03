@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Sale, SalesSummary, UserRole } from "@/lib/types";
 import { DEFAULT_GOAL_AMOUNT } from "@/lib/constants";

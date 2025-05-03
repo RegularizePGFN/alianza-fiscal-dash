@@ -1,3 +1,4 @@
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Phone } from "lucide-react";
@@ -67,18 +68,18 @@ export function ClientFormFields({
   return (
     <>
       <div className="grid gap-2">
-        <Label htmlFor="client_name">Client/Company Name</Label>
+        <Label htmlFor="client_name">Nome do Cliente/Empresa</Label>
         <Input
           id="client_name"
           value={clientName}
           onChange={(e) => setClientName(e.target.value)}
-          placeholder="Full client or company name"
+          placeholder="Nome completo do cliente ou empresa"
           disabled={disabled}
         />
       </div>
       
       <div className="grid gap-2">
-        <Label htmlFor="client_phone">Phone</Label>
+        <Label htmlFor="client_phone">Telefone</Label>
         <div className="relative">
           <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
             <Phone className="h-4 w-4" />
@@ -93,7 +94,7 @@ export function ClientFormFields({
           />
         </div>
         <p className="text-xs text-muted-foreground">
-          International format: +55 followed by area code and number
+          Formato internacional: +55 seguido do DDD e número
         </p>
       </div>
       
@@ -103,7 +104,7 @@ export function ClientFormFields({
           id="client_document"
           value={clientDocument}
           onChange={handleDocumentChange}
-          placeholder="000.000.000-00 or 00.000.000/0000-00"
+          placeholder="000.000.000-00 ou 00.000.000/0000-00"
           disabled={disabled}
         />
       </div>

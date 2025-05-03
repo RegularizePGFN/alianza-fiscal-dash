@@ -82,7 +82,7 @@ export function SaleDetailsFields({
   return (
     <>
       <div className="grid gap-2">
-        <Label htmlFor="amount">Sale Amount</Label>
+        <Label htmlFor="amount">Valor da Venda</Label>
         <div className="relative">
           <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
             R$
@@ -100,14 +100,14 @@ export function SaleDetailsFields({
       </div>
       
       <div className="grid gap-2">
-        <Label htmlFor="payment_method">Payment Method</Label>
+        <Label htmlFor="payment_method">Forma de Pagamento</Label>
         <Select
           value={paymentMethod}
           onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
           disabled={disabled}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Select" />
+            <SelectValue placeholder="Selecione" />
           </SelectTrigger>
           <SelectContent>
             {PAYMENT_METHODS.map((method) => (
@@ -121,14 +121,14 @@ export function SaleDetailsFields({
       
       {paymentMethod === PaymentMethod.CREDIT && (
         <div className="grid gap-2">
-          <Label htmlFor="installments">Installments</Label>
+          <Label htmlFor="installments">Parcelas</Label>
           <Select
             value={installments.toString()}
             onValueChange={(value) => setInstallments(parseInt(value))}
             disabled={disabled}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select" />
+              <SelectValue placeholder="Selecione" />
             </SelectTrigger>
             <SelectContent>
               {INSTALLMENT_OPTIONS.map((option) => (
@@ -142,7 +142,7 @@ export function SaleDetailsFields({
       )}
       
       <div className="grid gap-2">
-        <Label htmlFor="sale_date">Sale Date</Label>
+        <Label htmlFor="sale_date">Data da Venda</Label>
         <Input
           id="sale_date"
           type="date"

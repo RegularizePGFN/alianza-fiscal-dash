@@ -9,8 +9,8 @@ export const validateSaleForm = (
 ): boolean => {
   if (!clientName.trim()) {
     toast({
-      title: "Validation error",
-      description: "Client name is required",
+      title: "Erro de validação",
+      description: "Nome do cliente é obrigatório",
       variant: "destructive",
     });
     return false;
@@ -18,8 +18,8 @@ export const validateSaleForm = (
   
   if (!clientPhone.trim() || clientPhone === '+') {
     toast({
-      title: "Validation error",
-      description: "Client phone is required",
+      title: "Erro de validação",
+      description: "Telefone do cliente é obrigatório",
       variant: "destructive",
     });
     return false;
@@ -27,8 +27,8 @@ export const validateSaleForm = (
   
   if (!/^\+[0-9]+$/.test(clientPhone)) {
     toast({
-      title: "Validation error",
-      description: "Invalid phone format. Use the international format +5521999999999",
+      title: "Erro de validação",
+      description: "Formato de telefone inválido. Use o formato internacional +5521999999999",
       variant: "destructive",
     });
     return false;
@@ -36,8 +36,8 @@ export const validateSaleForm = (
   
   if (!clientDocument.trim()) {
     toast({
-      title: "Validation error",
-      description: "CPF/CNPJ is required",
+      title: "Erro de validação",
+      description: "CPF/CNPJ é obrigatório",
       variant: "destructive",
     });
     return false;
@@ -45,8 +45,8 @@ export const validateSaleForm = (
   
   if (amount <= 0) {
     toast({
-      title: "Validation error",
-      description: "Sale amount must be greater than zero",
+      title: "Erro de validação",
+      description: "Valor da venda deve ser maior que zero",
       variant: "destructive",
     });
     return false;
