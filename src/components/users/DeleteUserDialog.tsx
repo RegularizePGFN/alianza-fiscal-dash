@@ -31,7 +31,7 @@ export function DeleteUserDialog({
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Função segura para fechamento do diálogo que impede o fechamento durante o carregamento
+  // Critical fix: Safe dialog closure that prevents closing during deletion
   const handleDialogClose = (open: boolean) => {
     if (!isLoading && !open) {
       onClose();
@@ -45,7 +45,7 @@ export function DeleteUserDialog({
     
     setIsLoading(true);
     try {
-      // Excluir usuário através de nossa implementação de API admin personalizada
+      // Delete user through our custom admin API implementation
       const { error } = await supabase.auth.admin.deleteUser(user.id);
 
       if (error) throw error;

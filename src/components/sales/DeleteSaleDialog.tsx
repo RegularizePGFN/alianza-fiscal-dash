@@ -24,14 +24,15 @@ export function DeleteSaleDialog({
   onDelete, 
   isDeleting = false 
 }: DeleteSaleDialogProps) {
-  // Corrigido: tratamento correto de eventos do modal
+  // Critical fix: Safe dialog closure that prevents closing during deletion
+  const handleOpenChange = (open: boolean) => {
+    if (!open && !isDeleting) {
+      onClose();
+    }
+  };
+  
   return (
-    <AlertDialog open={isOpen} onOpenChange={(open) => {
-      // Apenas fechar quando não estiver processando
-      if (!isDeleting && !open) {
-        onClose();
-      }
-    }}>
+    <AlertDialog open={isOpen} onOpenChange={handleOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Confirm deletion</AlertDialogTitle>

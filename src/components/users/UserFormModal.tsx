@@ -27,7 +27,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
     role: UserRole.SALESPERSON,
   });
 
-  // Carregar dados do usuário se estiver editando
+  // Load user data if editing
   useEffect(() => {
     if (user && isOpen) {
       setFormData({
@@ -37,7 +37,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
         role: user.role,
       });
     } else if (isOpen) {
-      // Resetar formulário para novo usuário
+      // Reset form for new user
       setFormData({
         name: "",
         email: "",
@@ -54,7 +54,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validação de formulário
+    // Form validation
     if (!formData.name.trim()) {
       toast({
         title: "Campo obrigatório",
@@ -86,10 +86,10 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
 
     try {
       if (user) {
-        // Atualizar usuário existente
+        // Update existing user
         console.log("Updating user role to:", formData.role);
         
-        // Atualizar metadados do usuário (incluindo role)
+        // Update user metadata (including role)
         const { error: authUpdateError } = await supabase.auth.admin.updateUserById(
           user.id,
           { 
@@ -103,7 +103,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
         
         if (authUpdateError) throw authUpdateError;
 
-        // Atualizar senha apenas se fornecida
+        // Update password only if provided
         if (formData.password) {
           const { error: passwordError } = await supabase.auth.admin.updateUserById(
             user.id,
@@ -118,7 +118,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
           description: `${formData.name} foi atualizado com sucesso.`,
         });
       } else {
-        // Criar novo usuário
+        // Create new user
         const { data: signUpData, error: signUpError } = await supabase.auth.admin.createUser({
           email: formData.email,
           password: formData.password,
@@ -139,7 +139,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
         });
       }
 
-      // Chamar estas funções apenas após operação bem-sucedida
+      // Call these functions only after successful operation
       onSuccess();
       onClose();
     } catch (error: any) {
@@ -154,7 +154,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
     }
   };
 
-  // Tratamento correto para fechamento do diálogo, principal correção
+  // Critical fix: Safe dialog closure that prevents closing during loading
   const handleCloseDialog = (open: boolean) => {
     if (!open && !isLoading) {
       onClose();
@@ -222,7 +222,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onClose()} disabled={isLoading}>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
               Cancelar
             </Button>
             <Button type="submit" disabled={isLoading} className="relative">

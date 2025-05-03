@@ -37,7 +37,7 @@ export function SaleFormModal({
   const { user } = useAuth();
   const { toast } = useToast();
   
-  // Inicializa estado do formulário
+  // Form state
   const [inputValue, setInputValue] = useState<string>('0,00');
   const [amount, setAmount] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CREDIT);
@@ -47,7 +47,7 @@ export function SaleFormModal({
   const [clientPhone, setClientPhone] = useState<string>("");
   const [clientDocument, setClientDocument] = useState<string>("");
   
-  // Reseta dados do formulário quando initialData muda ou o modal é aberto
+  // Reset form data when initialData changes or modal opens
   useEffect(() => {
     if (open) {
       setInputValue(initialData ? initialData.gross_amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00');
@@ -61,9 +61,9 @@ export function SaleFormModal({
     }
   }, [initialData, open]);
   
-  // Gerencia fechamento do diálogo de forma segura
-  const handleDialogClose = (open: boolean) => {
-    if (!open && !isSubmitting) {
+  // Critical fix: Safe dialog closure that prevents closing during submission
+  const handleDialogClose = (isOpen: boolean) => {
+    if (!isOpen && !isSubmitting) {
       onCancel();
     }
   };
