@@ -2,7 +2,12 @@
 import { UserRole } from '@/lib/types';
 
 // Admin email(s) - email addresses that should always have admin privileges
-export const ADMIN_EMAILS = ['felipe.souza@socialcriativo.com'];
+export const ADMIN_EMAILS = [
+  'felipe.souza@socialcriativo.com',
+  'gustavo@example.com',   // Adding the specified administrators
+  'vanessa@example.com',
+  'brenda@example.com'
+];
 
 // Map Supabase role to app role with admin check
 export const mapUserRole = (role?: string, email?: string): UserRole => {
@@ -22,12 +27,6 @@ export const mapUserRole = (role?: string, email?: string): UserRole => {
     if (lowerRole === 'admin') {
       console.log("Role is explicitly admin, returning ADMIN");
       return UserRole.ADMIN;
-    }
-    
-    // Check for vendedor (salesperson) role variants
-    if (lowerRole === 'vendedor' || lowerRole.includes('vend') || lowerRole === 'salesperson') {
-      console.log("Role is salesperson variant, returning SALESPERSON");
-      return UserRole.SALESPERSON;
     }
   }
   

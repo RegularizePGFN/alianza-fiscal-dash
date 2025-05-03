@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Sale, SalesSummary, UserRole } from "@/lib/types";
 import { DEFAULT_GOAL_AMOUNT } from "@/lib/constants";
@@ -89,7 +90,7 @@ export const fetchMonthlyGoal = async (
   if (!user) return DEFAULT_GOAL_AMOUNT;
 
   try {
-    // For admin users, we need to sum all users' goals
+    // For admin users, sum all users' goals
     if (user.role === UserRole.ADMIN) {
       console.log("Fetching total goals for admin user");
       
@@ -141,7 +142,7 @@ export const fetchMonthlyGoal = async (
       console.log("Nenhuma meta configurada para este vendedor, usando valor padrão");
       return DEFAULT_GOAL_AMOUNT;
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Erro ao buscar meta:", error);
     return DEFAULT_GOAL_AMOUNT;
   }

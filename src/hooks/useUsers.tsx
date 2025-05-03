@@ -55,11 +55,8 @@ export function useUsers() {
         };
       });
       
-      // Filter out admin users (those with emails in ADMIN_EMAILS) if needed
-      const filteredUsers = mappedUsers.filter(u => !ADMIN_EMAILS.includes(u.email.toLowerCase()));
-      
-      console.log("Final users list:", filteredUsers);
-      setUsers(filteredUsers);
+      console.log("Final users list:", mappedUsers);
+      setUsers(mappedUsers);
     } catch (err: any) {
       console.error("Error fetching users:", err);
       setError(err.message || "Falha ao carregar os usuários.");

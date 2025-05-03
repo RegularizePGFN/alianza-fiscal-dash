@@ -1,12 +1,12 @@
 
-import { Settings, Users } from "lucide-react";
+import { BarChart4, Settings } from "lucide-react";
 import { NotificationsPopover } from "@/components/notifications/NotificationsPopover";
 
 export function SettingsHeader() {
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
-        <Settings className="h-5 w-5 text-primary" />
+        <BarChart4 className="h-5 w-5 text-primary" />
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Configurações</h1>
           <p className="text-muted-foreground">

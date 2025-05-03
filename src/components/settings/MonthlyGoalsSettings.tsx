@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { MonthlyGoalsForm } from "@/components/settings/MonthlyGoalsForm";
 import { UserRole } from "@/lib/types";
+import { ADMIN_EMAILS } from "@/contexts/auth/utils";
 
 interface UserWithGoal {
   id: string;
@@ -34,8 +36,7 @@ export function MonthlyGoalsSettings() {
     try {
       setLoading(true);
 
-      // Fetch all users that aren't admins - this is more inclusive than filtering by role name
-      // since roles might be stored with different capitalizations or variants like "vendedor", "Vendedor", etc.
+      // Fetch all profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*');
@@ -48,12 +49,13 @@ export function MonthlyGoalsSettings() {
       // Log all profiles for debugging
       console.log('All fetched profiles:', profiles);
       
-      // Filter out admins - all other users should be considered salespeople
-      // This is more reliable than looking for specific role strings
+      // Filter out admin users using ADMIN_EMAILS array
       const salespeople = profiles?.filter(profile => {
-        const lowerRole = profile.role?.toLowerCase() || '';
-        // Keep users whose role is not 'admin' or is specifically a salesperson
-        return lowerRole !== 'admin';
+        const email = profile.email?.toLowerCase() || '';
+        const role = profile.role?.toLowerCase() || '';
+        
+        // Not an admin if not in ADMIN_EMAILS and not explicitly 'admin' role
+        return !ADMIN_EMAILS.includes(email) && role !== 'admin';
       });
       
       console.log('Filtered salespeople:', salespeople);
