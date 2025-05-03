@@ -1,5 +1,4 @@
 import { PaymentMethod } from "@/lib/types";
-import { PAYMENT_METHODS, INSTALLMENT_OPTIONS } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -86,18 +85,10 @@ export function SaleDetailsFields({
             <SelectValue placeholder="Selecione o método de pagamento" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={PaymentMethod.BOLETO}>
-              {PaymentMethod.BOLETO}
-            </SelectItem>
-            <SelectItem value={PaymentMethod.PIX}>
-              {PaymentMethod.PIX}
-            </SelectItem>
-            <SelectItem value={PaymentMethod.CREDIT}>
-              {PaymentMethod.CREDIT}
-            </SelectItem>
-            <SelectItem value={PaymentMethod.DEBIT}>
-              {PaymentMethod.DEBIT}
-            </SelectItem>
+            <SelectItem value={PaymentMethod.BOLETO}>Boleto</SelectItem>
+            <SelectItem value={PaymentMethod.PIX}>Pix</SelectItem>
+            <SelectItem value={PaymentMethod.CREDIT}>Cartão de Crédito</SelectItem>
+            <SelectItem value={PaymentMethod.DEBIT}>Cartão de Débito</SelectItem>
           </SelectContent>
         </Select>
         {form.formState.errors.payment_method && (
@@ -115,7 +106,6 @@ export function SaleDetailsFields({
           placeholder="1"
           {...form.register("installments", { valueAsNumber: true })}
           disabled={disabled}
-          defaultValue={1}
         />
         {form.formState.errors.installments && (
           <p className="text-sm text-red-500">
@@ -129,7 +119,7 @@ export function SaleDetailsFields({
         <Popover>
           <PopoverTrigger asChild>
             <Button
-              variant={"outline"}
+              variant="outline"
               className={cn(
                 "w-full justify-start text-left font-normal",
                 !date && "text-muted-foreground"
@@ -146,13 +136,13 @@ export function SaleDetailsFields({
               mode="single"
               locale={ptBR}
               selected={date}
-              onSelect={(date) => {
-                setDate(date);
-                form.setValue("sale_date", date || new Date());
+              onSelect={(selectedDate) => {
+                setDate(selectedDate);
+                form.setValue("sale_date", selectedDate || new Date());
               }}
               disabled={disabled}
               initialFocus
-              className={cn("p-3 pointer-events-auto")}
+              className="p-3"
             />
           </PopoverContent>
         </Popover>
