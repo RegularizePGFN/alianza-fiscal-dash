@@ -1,4 +1,4 @@
-
+// SalesPage.tsx
 import { useState, useCallback } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Sale, UserRole } from "@/lib/types";
@@ -23,50 +23,37 @@ export default function SalesPage() {
 
   const handleAddSale = useCallback(() => {
     if (isProcessingAction) return;
-    
     setEditingSale(null);
     setShowSaleModal(true);
   }, [isProcessingAction]);
 
   const handleEdit = useCallback((sale: Sale) => {
     if (isProcessingAction) return;
-    
     setEditingSale(sale);
     setShowSaleModal(true);
   }, [isProcessingAction]);
 
   const handleDeleteConfirm = useCallback((saleId: string) => {
     if (isProcessingAction) return;
-    
     setSaleToDelete(saleId);
   }, [isProcessingAction]);
 
   const handleDeleteCancel = useCallback(() => {
     if (isProcessingAction) return;
-    
     setSaleToDelete(null);
   }, [isProcessingAction]);
 
   const handleDeleteSaleConfirm = useCallback(async () => {
     if (!saleToDelete) return;
-
     setIsProcessingAction(true);
     try {
       const success = await handleDeleteSale(saleToDelete);
       if (success) {
         setSaleToDelete(null);
-        toast({
-          title: "Venda excluída",
-          description: "A venda foi excluída com sucesso.",
-        });
+        toast({ title: "Venda excluída", description: "A venda foi excluída com sucesso." });
       }
     } catch (error) {
-      console.error("Erro ao excluir venda:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível excluir a venda.",
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: "Não foi possível excluir a venda.", variant: "destructive" });
     } finally {
       setIsProcessingAction(false);
     }
@@ -74,7 +61,6 @@ export default function SalesPage() {
 
   const handleSaveSaleForm = useCallback(async (saleData: Omit<Sale, 'id'>) => {
     setIsProcessingAction(true);
-
     try {
       const success = await handleSaveSale(saleData, editingSale?.id);
       if (success) {
@@ -88,12 +74,7 @@ export default function SalesPage() {
         });
       }
     } catch (error) {
-      console.error("Erro ao salvar venda:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível salvar a venda.",
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: "Não foi possível salvar a venda.", variant: "destructive" });
     } finally {
       setIsProcessingAction(false);
     }
@@ -108,38 +89,23 @@ export default function SalesPage() {
   const handleImportSales = useCallback(async (file: File) => {
     try {
       setIsProcessingAction(true);
-      toast({
-        title: "Processando importação",
-        description: "Aguarde enquanto processamos o arquivo.",
-      });
-
+      toast({ title: "Processando importação", description: "Aguarde enquanto processamos o arquivo." });
       const salesData = await importSalesFromExcel(file);
       if (!salesData || salesData.length === 0) {
-        toast({
-          title: "Importação vazia",
-          description: "Nenhum dado válido encontrado.",
-          variant: "destructive",
-        });
+        toast({ title: "Importação vazia", description: "Nenhum dado válido encontrado.", variant: "destructive" });
         return;
       }
-
       let successCount = 0;
       const totalSales = salesData.length;
-
       const processSalesBatch = async (batchIndex: number, batchSize: number) => {
         const start = batchIndex * batchSize;
         const end = Math.min(start + batchSize, totalSales);
-
         for (let i = start; i < end; i++) {
           const success = await handleSaveSale(salesData[i]);
           if (success) successCount++;
         }
-
         if (end < totalSales) {
-          toast({
-            title: "Importando vendas",
-            description: `Processando ${end} de ${totalSales}...`,
-          });
+          toast({ title: "Importando vendas", description: `Processando ${end} de ${totalSales}...` });
           setTimeout(() => processSalesBatch(batchIndex + 1, batchSize), 100);
         } else {
           fetchSales();
@@ -151,15 +117,9 @@ export default function SalesPage() {
           setIsProcessingAction(false);
         }
       };
-
       processSalesBatch(0, 5);
     } catch (error) {
-      console.error("Erro na importação:", error);
-      toast({
-        title: "Erro",
-        description: "Falha ao importar vendas.",
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: "Falha ao importar vendas.", variant: "destructive" });
       setIsProcessingAction(false);
     }
   }, [handleSaveSale, fetchSales, toast]);
@@ -174,19 +134,11 @@ export default function SalesPage() {
           <div className="flex justify-between items-start">
             <div>
               <h2 className="text-3xl font-bold tracking-tight">Vendas</h2>
-              <p className="text-muted-foreground">
-                Gerencie as vendas e comissões da equipe.
-              </p>
+              <p className="text-muted-foreground">Gerencie as vendas e comissões da equipe.</p>
             </div>
-            
-            <SalesActions 
-              isAdmin={isAdmin}
-              onAddSale={handleAddSale}
-              onImport={handleImportSales}
-            />
+            <SalesActions isAdmin={isAdmin} onAddSale={handleAddSale} onImport={handleImportSales} />
           </div>
         </div>
-
         <SalesContent
           loading={loading}
           sales={sales}
@@ -194,7 +146,6 @@ export default function SalesPage() {
           onEdit={handleEdit}
           onDelete={handleDeleteConfirm}
         />
-
         <SalesModals
           editingSale={editingSale}
           saleToDelete={saleToDelete}
