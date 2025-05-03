@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,12 @@ interface UserFormModalProps {
   onSuccess: () => void;
 }
 
-export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModalProps) {
+export function UserFormModal({
+  user,
+  isOpen,
+  onClose,
+  onSuccess,
+}: UserFormModalProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -162,15 +166,12 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
 
   return (
     <Dialog open={isOpen} onOpenChange={handleCloseDialog}>
-      <DialogContent className="sm:max-w-[425px]" onPointerDownOutside={(e) => {
-        if (isLoading) {
-          e.preventDefault();
-        }
-      }}>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>{user ? "Editar Usuário" : "Adicionar Usuário"}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="name">Nome</Label>
@@ -224,14 +225,19 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
               </Select>
             </div>
           </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+          <DialogFooter className="mt-6">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onClose()}
+              disabled={isLoading}
+            >
               Cancelar
             </Button>
-            <Button type="submit" disabled={isLoading} className="relative">
+            <Button type="submit" disabled={isLoading}>
               {isLoading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   {user ? "Atualizando..." : "Criando..."}
                 </>
               ) : (

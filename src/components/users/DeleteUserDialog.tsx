@@ -70,11 +70,7 @@ export function DeleteUserDialog({
 
   return (
     <AlertDialog open={isOpen} onOpenChange={handleDialogClose}>
-      <AlertDialogContent onPointerDownOutside={(e) => {
-        if (isLoading) {
-          e.preventDefault();
-        }
-      }}>
+      <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
           <AlertDialogDescription>

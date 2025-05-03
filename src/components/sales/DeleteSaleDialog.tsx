@@ -32,11 +32,7 @@ export function DeleteSaleDialog({
   
   return (
     <AlertDialog open={isOpen} onOpenChange={handleOpenChange}>
-      <AlertDialogContent onPointerDownOutside={(e) => {
-        if (isDeleting) {
-          e.preventDefault();
-        }
-      }}>
+      <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Confirm deletion</AlertDialogTitle>
           <AlertDialogDescription>
