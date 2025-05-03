@@ -144,6 +144,7 @@ export function SaleFormModal({
             date={date}
             setDate={setDate}
             disabled={isSubmitting}
+            autoFocusRef={autoFocusRef}
           />
           
           <ClientFormFields 
