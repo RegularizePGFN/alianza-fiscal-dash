@@ -38,7 +38,7 @@ export function SaleFormModal({
   );
   const autoFocusRef = useRef<HTMLInputElement>(null);
 
-  /* ➜ ID único para aria‑describedby */
+  // id único para aria-describedby
   const descriptionId = useId();
 
   const form = useForm<z.infer<typeof SaleFormSchema>>({
@@ -56,7 +56,7 @@ export function SaleFormModal({
     mode: "onChange",
   });
 
-  /* ressincroniza quando muda a venda em edição */
+  // ressincroniza quando muda a venda em edição
   useEffect(() => {
     if (initialData) {
       setDate(new Date(initialData.sale_date));
@@ -85,7 +85,7 @@ export function SaleFormModal({
     }
   }, [initialData, user, form]);
 
-  /* foco automático confiável */
+  // foco automático confiável
   useEffect(() => {
     if (open && autoFocusRef.current) {
       requestAnimationFrame(() => autoFocusRef.current?.focus());
@@ -125,14 +125,14 @@ export function SaleFormModal({
     <Dialog open={open} onOpenChange={handleDialogClose}>
       <DialogContent
         className="sm:max-w-md"
-        aria-describedby={descriptionId}   {/* ← aqui */}
+        aria-describedby={descriptionId}
       >
         <DialogHeader>
           <DialogTitle>
             {initialData ? "Editar Venda" : "Nova Venda"}
           </DialogTitle>
 
-          {/* id único aplicado */}
+          {/* descrição referenciada pelo aria-describedby */}
           <DialogDescription id={descriptionId}>
             {initialData
               ? "Atualize os dados da venda."
