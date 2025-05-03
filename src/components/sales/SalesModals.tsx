@@ -32,7 +32,7 @@ export function SalesModals({
     <>
       {/* Always render the SaleFormModal and control visibility via open prop */}
       <SaleFormModal
-        key={editingSale?.id || "new-sale"}
+        key={editingSale?.id || "new-sale"} 
         initialData={editingSale}
         onSave={onSave}
         onCancel={onFormCancel}

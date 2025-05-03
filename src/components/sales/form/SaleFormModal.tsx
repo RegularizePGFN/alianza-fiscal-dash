@@ -79,7 +79,7 @@ export function SaleFormModal({
     }
   }, [initialData, user, form]);
   
-  // Improved dialog close handler with proper state management
+  // Improved dialog close handler with proper state management and debounce
   const handleDialogClose = useCallback((isOpen: boolean) => {
     // Only allow closing if not submitting and not already closing
     if (!isOpen && !isSubmitting && !isClosing) {
@@ -125,10 +125,13 @@ export function SaleFormModal({
   
   return (
     <Dialog open={open} onOpenChange={handleDialogClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent 
+        className="sm:max-w-md" 
+        aria-describedby="sale-form-description"
+      >
         <DialogHeader>
           <DialogTitle>{initialData ? 'Editar Venda' : 'Nova Venda'}</DialogTitle>
-          <DialogDescription>
+          <DialogDescription id="sale-form-description">
             {initialData 
               ? 'Atualize os dados da venda conforme necessário.' 
               : 'Preencha os dados para registrar uma nova venda.'}
