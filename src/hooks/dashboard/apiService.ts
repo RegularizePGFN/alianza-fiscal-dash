@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Sale, SalesSummary, UserRole } from "@/lib/types";
 import { DEFAULT_GOAL_AMOUNT } from "@/lib/constants";
@@ -105,6 +106,8 @@ export const fetchMonthlyGoal = async (
         throw goalsError;
       }
       
+      console.log("Metas obtidas:", goalsData);
+      
       // Get profiles to identify salespeople
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
@@ -121,15 +124,20 @@ export const fetchMonthlyGoal = async (
         userRoles.set(profile.id, profile.role?.toLowerCase());
       });
       
-      // Filter goals to include only goals for salespeople
+      console.log("Mapa de perfis:", Array.from(userRoles.entries()));
+      
+      // Filter goals to include ONLY goals for salespeople, NOT admins
       const salesGoals = goalsData?.filter(goal => {
         const userRole = userRoles.get(goal.user_id);
-        return userRole !== 'admin'; // Only include non-admin users
+        // Só incluir vendedores, excluir explicitamente admins
+        return userRole && userRole !== 'admin';
       });
+      
+      console.log("Metas filtradas de vendedores:", salesGoals);
       
       if (salesGoals && salesGoals.length > 0) {
         // Sum goals for salespeople only
-        const totalGoal = salesGoals.reduce((sum, goal) => sum + (goal.goal_amount || 0), 0);
+        const totalGoal = salesGoals.reduce((sum, goal) => sum + (parseFloat(goal.goal_amount) || 0), 0);
         console.log(`Meta total para admins (soma de ${salesGoals.length} metas de vendedores):`, totalGoal);
         return totalGoal > 0 ? totalGoal : DEFAULT_GOAL_AMOUNT;
       }
