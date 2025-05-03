@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { User, UserRole } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ADMIN_EMAILS } from "@/contexts/auth/utils";
 import { mapUserRole } from "@/contexts/auth/utils";
 
 export function useUsers() {

@@ -49,7 +49,7 @@ export function MonthlyGoalsSettings() {
       // Log all profiles for debugging
       console.log('All fetched profiles:', profiles);
       
-      // Filter out admin users using ADMIN_EMAILS array
+      // Filter out admin users using role and ADMIN_EMAILS list
       const salespeople = profiles?.filter(profile => {
         const email = profile.email?.toLowerCase() || '';
         const role = profile.role?.toLowerCase() || '';

@@ -4,9 +4,9 @@ import { UserRole } from '@/lib/types';
 // Admin email(s) - email addresses that should always have admin privileges
 export const ADMIN_EMAILS = [
   'felipe.souza@socialcriativo.com',
-  'gustavo@example.com',   // Adding the specified administrators
-  'vanessa@example.com',
-  'brenda@example.com'
+  'gustavo.felipe@aliancafiscal.com',
+  'vanessa@aliancafiscal.com',   
+  'brenda@aliancafiscal.com'
 ];
 
 // Map Supabase role to app role with admin check
