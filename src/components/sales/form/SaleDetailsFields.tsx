@@ -1,4 +1,3 @@
-
 import { PaymentMethod } from "@/lib/types";
 import { PAYMENT_METHODS, INSTALLMENT_OPTIONS } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
@@ -20,7 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
-import { ptBR } from 'date-fns/locale';
+import { ptBR } from "date-fns/locale";
 import { SaleFormSchema } from "./SaleFormSchema";
 import { UseFormReturn } from "react-hook-form";
 import * as z from "zod";
@@ -37,7 +36,8 @@ export function SaleDetailsFields({
   form,
   date,
   setDate,
-  disabled = false
+  disabled = false,
+  autoFocusRef,
 }: SaleDetailsFieldsProps) {
   return (
     <>
@@ -56,16 +56,16 @@ export function SaleDetailsFields({
           </p>
         )}
       </div>
-      
+
       <div className="grid gap-2">
         <Label htmlFor="gross_amount">Valor Bruto</Label>
         <Input
-            id="gross_amount"
-            type="text"
-            placeholder="0,00"
-            {...form.register("gross_amount")}
-            disabled={disabled}
-            ref={autoFocusRef}
+          id="gross_amount"
+          type="text"
+          placeholder="0,00"
+          {...form.register("gross_amount")}
+          disabled={disabled}
+          ref={autoFocusRef}
         />
         {form.formState.errors.gross_amount && (
           <p className="text-sm text-red-500">
@@ -73,21 +73,31 @@ export function SaleDetailsFields({
           </p>
         )}
       </div>
-      
+
       <div className="grid gap-2">
         <Label htmlFor="payment_method">Método de Pagamento</Label>
-        <Select 
-          onValueChange={(value) => form.setValue("payment_method", value as PaymentMethod)} 
+        <Select
+          onValueChange={(value) =>
+            form.setValue("payment_method", value as PaymentMethod)
+          }
           defaultValue={form.getValues("payment_method")}
         >
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Selecione o método de pagamento" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={PaymentMethod.BOLETO}>{PaymentMethod.BOLETO}</SelectItem>
-            <SelectItem value={PaymentMethod.PIX}>{PaymentMethod.PIX}</SelectItem>
-            <SelectItem value={PaymentMethod.CREDIT}>{PaymentMethod.CREDIT}</SelectItem>
-            <SelectItem value={PaymentMethod.DEBIT}>{PaymentMethod.DEBIT}</SelectItem>
+            <SelectItem value={PaymentMethod.BOLETO}>
+              {PaymentMethod.BOLETO}
+            </SelectItem>
+            <SelectItem value={PaymentMethod.PIX}>
+              {PaymentMethod.PIX}
+            </SelectItem>
+            <SelectItem value={PaymentMethod.CREDIT}>
+              {PaymentMethod.CREDIT}
+            </SelectItem>
+            <SelectItem value={PaymentMethod.DEBIT}>
+              {PaymentMethod.DEBIT}
+            </SelectItem>
           </SelectContent>
         </Select>
         {form.formState.errors.payment_method && (
@@ -96,7 +106,7 @@ export function SaleDetailsFields({
           </p>
         )}
       </div>
-      
+
       <div className="grid gap-2">
         <Label htmlFor="installments">Parcelas</Label>
         <Input
@@ -126,7 +136,9 @@ export function SaleDetailsFields({
               )}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
-              {date ? format(date, "dd/MM/yyyy", { locale: ptBR }) : <span>Selecione a data</span>}
+              {date
+                ? format(date, "dd/MM/yyyy", { locale: ptBR })
+                : "Selecione a data"}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
@@ -136,7 +148,7 @@ export function SaleDetailsFields({
               selected={date}
               onSelect={(date) => {
                 setDate(date);
-                form.setValue('sale_date', date || new Date());
+                form.setValue("sale_date", date || new Date());
               }}
               disabled={disabled}
               initialFocus
