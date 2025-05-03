@@ -37,7 +37,7 @@ export function SaleFormModal({
   const { user } = useAuth();
   const { toast } = useToast();
   
-  // Initialize form state only when modal is opened
+  // Inicializa estado do formulário
   const [inputValue, setInputValue] = useState<string>('0,00');
   const [amount, setAmount] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CREDIT);
@@ -47,24 +47,25 @@ export function SaleFormModal({
   const [clientPhone, setClientPhone] = useState<string>("");
   const [clientDocument, setClientDocument] = useState<string>("");
   
-  // Reset form data when initialData changes or modal opens
+  // Reseta dados do formulário quando initialData muda ou o modal é aberto
   useEffect(() => {
-    if (!open) return;
-    
-    setInputValue(initialData ? initialData.gross_amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00');
-    setAmount(initialData ? initialData.gross_amount : 0);
-    setPaymentMethod(initialData ? initialData.payment_method : PaymentMethod.CREDIT);
-    setInstallments(initialData ? initialData.installments : 1);
-    setSaleDate(initialData ? initialData.sale_date : getTodayISO());
-    setClientName(initialData?.client_name || "");
-    setClientPhone(initialData?.client_phone || "");
-    setClientDocument(initialData?.client_document || "");
+    if (open) {
+      setInputValue(initialData ? initialData.gross_amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00');
+      setAmount(initialData ? initialData.gross_amount : 0);
+      setPaymentMethod(initialData ? initialData.payment_method : PaymentMethod.CREDIT);
+      setInstallments(initialData ? initialData.installments : 1);
+      setSaleDate(initialData ? initialData.sale_date : getTodayISO());
+      setClientName(initialData?.client_name || "");
+      setClientPhone(initialData?.client_phone || "");
+      setClientDocument(initialData?.client_document || "");
+    }
   }, [initialData, open]);
   
-  // Handle dialog close with safety checks
-  const handleDialogClose = () => {
-    if (isSubmitting) return;
-    onCancel();
+  // Gerencia fechamento do diálogo de forma segura
+  const handleDialogClose = (open: boolean) => {
+    if (!open && !isSubmitting) {
+      onCancel();
+    }
   };
   
   const handleSave = () => {
@@ -106,9 +107,6 @@ export function SaleFormModal({
     }
   };
   
-  // Only render the Dialog when open is true
-  if (!open) return null;
-  
   return (
     <Dialog open={open} onOpenChange={handleDialogClose}>
       <DialogContent className="sm:max-w-md">
@@ -147,7 +145,7 @@ export function SaleFormModal({
         <DialogFooter>
           <Button 
             variant="outline" 
-            onClick={handleDialogClose} 
+            onClick={onCancel} 
             disabled={isSubmitting}
             type="button"
           >

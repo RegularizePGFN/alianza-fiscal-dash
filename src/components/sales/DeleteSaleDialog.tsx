@@ -24,8 +24,10 @@ export function DeleteSaleDialog({
   onDelete, 
   isDeleting = false 
 }: DeleteSaleDialogProps) {
+  // Corrigido: tratamento correto de eventos do modal
   return (
     <AlertDialog open={isOpen} onOpenChange={(open) => {
+      // Apenas fechar quando não estiver processando
       if (!isDeleting && !open) {
         onClose();
       }

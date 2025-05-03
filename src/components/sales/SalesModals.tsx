@@ -24,9 +24,13 @@ export function SalesModals({
   onDeleteCancel,
   onDeleteConfirm
 }: SalesModalsProps) {
+  // O problema está no gerenciamento do state dos modais.
+  // Não devemos renderizar modais condicionalmente quando eles têm estado interno.
+  // Isso causa problemas quando o modal é fechado e depois reaberto.
+  
   return (
     <>
-      {/* Using key to force complete remount when modal data changes */}
+      {/* Sempre renderizamos o SaleFormModal, mas controlamos sua visibilidade com a prop open */}
       <SaleFormModal
         key={editingSale?.id || "new-sale" + (showSaleModal ? "-open" : "-closed")}
         initialData={editingSale}
@@ -35,15 +39,14 @@ export function SalesModals({
         isSubmitting={isProcessingAction}
         open={showSaleModal}
       />
-
-      {saleToDelete && (
-        <DeleteSaleDialog
-          isOpen={!!saleToDelete}
-          onClose={onDeleteCancel}
-          onDelete={onDeleteConfirm}
-          isDeleting={isProcessingAction}
-        />
-      )}
+      
+      {/* O mesmo para DeleteSaleDialog */}
+      <DeleteSaleDialog
+        isOpen={!!saleToDelete}
+        onClose={onDeleteCancel}
+        onDelete={onDeleteConfirm}
+        isDeleting={isProcessingAction}
+      />
     </>
   );
 }
