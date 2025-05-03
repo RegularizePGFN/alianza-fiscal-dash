@@ -126,13 +126,13 @@ export function SaleFormModal({
       <DialogContent
         className="sm:max-w-md"
         aria-describedby={descriptionId}
+        disableOutsidePointerEvents={false}  // <— impede overlay bloqueador
       >
         <DialogHeader>
           <DialogTitle>
             {initialData ? "Editar Venda" : "Nova Venda"}
           </DialogTitle>
 
-          {/* descrição referenciada pelo aria-describedby */}
           <DialogDescription id={descriptionId}>
             {initialData
               ? "Atualize os dados da venda."
