@@ -47,22 +47,24 @@ export default function UsersPage() {
   const handleFormClose = useCallback(() => {
     if (!isProcessing) {
       setIsFormOpen(false);
-      setSelectedUser(null);
     }
   }, [isProcessing]);
   
   const handleDeleteDialogClose = useCallback(() => {
     if (!isProcessing) {
       setIsDeleteDialogOpen(false);
-      setSelectedUser(null);
     }
   }, [isProcessing]);
   
   const handleSuccess = useCallback(() => {
     // Add delay to ensure database has time to update
+    setIsProcessing(true);
     setTimeout(() => {
       fetchUsers();
       setIsProcessing(false);
+      setIsFormOpen(false);
+      setIsDeleteDialogOpen(false);
+      setSelectedUser(null);
       
       toast({
         title: "Sucesso",
@@ -99,24 +101,20 @@ export default function UsersPage() {
       </div>
       
       {/* User form modal */}
-      {isFormOpen && (
-        <UserFormModal
-          isOpen={isFormOpen}
-          onClose={handleFormClose}
-          user={selectedUser || undefined}
-          onSuccess={handleSuccess}
-        />
-      )}
+      <UserFormModal
+        isOpen={isFormOpen}
+        onClose={handleFormClose}
+        user={selectedUser || undefined}
+        onSuccess={handleSuccess}
+      />
       
       {/* Delete confirmation dialog */}
-      {isDeleteDialogOpen && selectedUser && (
-        <DeleteUserDialog
-          user={selectedUser}
-          isOpen={isDeleteDialogOpen}
-          onClose={handleDeleteDialogClose}
-          onSuccess={handleSuccess}
-        />
-      )}
+      <DeleteUserDialog
+        user={selectedUser}
+        isOpen={isDeleteDialogOpen}
+        onClose={handleDeleteDialogClose}
+        onSuccess={handleSuccess}
+      />
     </AppLayout>
   );
 }

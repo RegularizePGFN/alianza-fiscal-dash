@@ -31,6 +31,7 @@ export function DeleteUserDialog({
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
+  // Melhorado para evitar fechamento durante o carregamento
   const handleDialogClose = (open: boolean) => {
     if (!isLoading && !open) {
       onClose();
@@ -55,7 +56,6 @@ export function DeleteUserDialog({
       });
 
       onSuccess();
-      onClose();
     } catch (error: any) {
       console.error("Error deleting user:", error);
       toast({
@@ -63,6 +63,8 @@ export function DeleteUserDialog({
         description: error.message || "Ocorreu um erro ao excluir o usuário.",
         variant: "destructive",
       });
+      // Importante: fechar o modal mesmo em caso de erro
+      onClose();
     } finally {
       setIsLoading(false);
     }

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { User, UserRole } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -12,8 +12,15 @@ export function useUsers() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
+  // Adicionar uma ref para controlar requisições em andamento
+  const isFetchingRef = useRef(false);
+  
   // Fetch users from Supabase
   const fetchUsers = async () => {
+    // Evitar chamadas duplicadas
+    if (isFetchingRef.current) return;
+    
+    isFetchingRef.current = true;
     setIsLoading(true);
     setError(null);
     
@@ -66,6 +73,8 @@ export function useUsers() {
       });
     } finally {
       setIsLoading(false);
+      // Importante: resetar a flag após a conclusão
+      isFetchingRef.current = false;
     }
   };
 

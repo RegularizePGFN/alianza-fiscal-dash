@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -158,14 +159,13 @@ export function UserFormModal({
     }
   };
 
-  const handleCloseDialog = (open: boolean) => {
-    if (!open && !isLoading) {
-      onClose();
-    }
-  };
-
+  // Modificado para não fechar o dialog quando está carregando
   return (
-    <Dialog open={isOpen} onOpenChange={handleCloseDialog}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open && !isLoading) {
+        onClose();
+      }
+    }}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>{user ? "Editar Usuário" : "Adicionar Usuário"}</DialogTitle>
@@ -229,7 +229,11 @@ export function UserFormModal({
             <Button
               type="button"
               variant="outline"
-              onClick={() => onClose()}
+              onClick={() => {
+                if (!isLoading) {
+                  onClose();
+                }
+              }}
               disabled={isLoading}
             >
               Cancelar
