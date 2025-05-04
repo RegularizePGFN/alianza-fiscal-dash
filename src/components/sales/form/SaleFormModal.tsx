@@ -54,7 +54,7 @@ export function SaleFormModal({
     mode: "onChange",
   });
 
-  /* ressincroniza se mudar a venda */
+  /* ressincroniza se mudar a venda em edição */
   useEffect(() => {
     if (initialData) {
       setDate(new Date(initialData.sale_date));
@@ -118,6 +118,7 @@ export function SaleFormModal({
   );
 
   return (
+    {/* modal={false} evita o overlay que congela a página */}
     <Dialog open={open} onOpenChange={handleDialogClose} modal={false}>
       <DialogContent className="sm:max-w-md" aria-describedby={descriptionId}>
         <DialogHeader>
@@ -140,6 +141,7 @@ export function SaleFormModal({
             autoFocusRef={autoFocusRef}
           />
           <ClientFormFields form={form} disabled={isSubmitting} />
+
           <SaleFormActions
             isSubmitting={isSubmitting}
             initialData={initialData}

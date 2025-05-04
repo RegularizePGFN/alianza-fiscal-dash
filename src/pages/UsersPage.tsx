@@ -11,7 +11,6 @@ import { useUsers } from "@/hooks/useUsers";
 import { DeleteUserDialog } from "@/components/users/DeleteUserDialog";
 import { UserFormModal } from "@/components/users/UserFormModal";
 import { useToast } from "@/hooks/use-toast";
-import React, { useRef, useState /* …outros hooks que já existam … */ } from "react";
 
 export default function UsersPage() {
   const { user } = useAuth();
