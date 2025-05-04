@@ -140,53 +140,9 @@
   .glass-effect {
     @apply bg-white/80 backdrop-blur-sm;
   }
-
-  /* Mobile optimizations */
-  @media (max-width: 640px) {
-    .popover-content {
-      @apply max-w-[calc(100vw-2rem)] !important;
-    }
-    
-    .dialog-content {
-      @apply w-[calc(100%-2rem)] max-w-lg p-4 !important;
-    }
-    
-    /* Make text more readable on small screens */
-    .text-xs {
-      @apply leading-relaxed;
-    }
-    
-    /* Improve mobile form elements */
-    input, select, textarea, button {
-      @apply min-h-[42px];
-      font-size: 16px !important; /* Prevents iOS zoom on focus */
-    }
-    
-    /* Better touch targets for mobile */
-    button, a, [role="button"] {
-      @apply touch-manipulation;
-    }
-  }
 }
 
 @keyframes progress-fill {
   from { width: 0; }
   to { width: var(--progress-value); }
-}
-
-/* Melhora a experiência de rolagem em dispositivos móveis */
-@supports (-webkit-touch-callout: none) {
-  .overflow-y-auto, .overflow-x-auto, .overflow-auto {
-    -webkit-overflow-scrolling: touch;
-  }
-}
-
-/* Corrige problemas de overflow em tabelas em dispositivos móveis */
-.table-container {
-  @apply overflow-x-auto w-full;
-}
-
-/* Melhora a visualização de dropdowns em dispositivos móveis */
-[data-radix-popper-content-wrapper] {
-  @apply z-50 max-w-[95vw] sm:max-w-none;
 }

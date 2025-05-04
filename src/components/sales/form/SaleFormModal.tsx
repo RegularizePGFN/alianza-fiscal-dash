@@ -1,4 +1,3 @@
-
 // SaleFormModal.tsx
 import React, { useState, useEffect, useCallback, useRef, useId } from "react";
 import { useForm } from "react-hook-form";
@@ -127,6 +126,7 @@ export function SaleFormModal({
       <DialogContent
         className="sm:max-w-md"
         aria-describedby={descriptionId}
+        disableOutsidePointerEvents={false}  // <— impede overlay bloqueador
       >
         <DialogHeader>
           <DialogTitle>
