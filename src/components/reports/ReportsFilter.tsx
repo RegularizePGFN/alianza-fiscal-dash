@@ -33,14 +33,17 @@ export function ReportsFilter({
 
   // Handle date selection
   const handleDateSelect = (range: DateRange | undefined) => {
+    console.log("Date range selected:", range);
     setDate(range);
     
     if (range?.from && range?.to) {
+      console.log("Setting date filter with range:", range.from, range.to);
       onDateFilterChange({
         startDate: range.from,
         endDate: range.to
       });
     } else {
+      console.log("Clearing date filter");
       onDateFilterChange(null);
     }
   };
@@ -61,6 +64,7 @@ export function ReportsFilter({
 
   // Clear all filters
   const clearFilters = () => {
+    console.log("Clearing all filters");
     setSelectedSalesperson(null);
     setSelectedPaymentMethod(null);
     onSalespersonChange(null);

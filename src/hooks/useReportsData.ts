@@ -20,17 +20,22 @@ export const useReportsData = ({
 
   useEffect(() => {
     try {
+      console.log("Filtering sales with filters:", { salespersonId, paymentMethod, dateFilter });
+      console.log("Total sales before filtering:", sales.length);
+      
       // Filter the sales data based on the provided filters
       let filtered = [...sales];
       
       // Filter by salesperson
       if (salespersonId) {
         filtered = filtered.filter(sale => sale.salesperson_id === salespersonId);
+        console.log(`After salesperson filter (${salespersonId}):`, filtered.length);
       }
       
       // Filter by payment method
       if (paymentMethod) {
         filtered = filtered.filter(sale => sale.payment_method === paymentMethod);
+        console.log(`After payment method filter (${paymentMethod}):`, filtered.length);
       }
       
       // Filter by date range
@@ -40,10 +45,18 @@ export const useReportsData = ({
         const end = new Date(dateFilter.endDate);
         end.setHours(23, 59, 59, 999);
         
+        console.log("Filtering by date range:", start, "to", end);
+        
         filtered = filtered.filter(sale => {
           const saleDate = new Date(sale.sale_date);
-          return saleDate >= start && saleDate <= end;
+          const isInRange = saleDate >= start && saleDate <= end;
+          if (!isInRange) {
+            console.log("Sale outside date range:", sale.sale_date, saleDate);
+          }
+          return isInRange;
         });
+        
+        console.log("After date filter:", filtered.length);
       }
       
       setFilteredSales(filtered);
