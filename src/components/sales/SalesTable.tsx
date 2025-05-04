@@ -17,8 +17,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, FileText } from "lucide-react";
-import { Pagination } from "@/components/ui/pagination";
-import { useState } from "react";
 
 interface SalesTableProps {
   sales: Sale[];
@@ -26,7 +24,6 @@ interface SalesTableProps {
   onEdit?: (sale: Sale) => void;
   onDelete?: (saleId: string) => void;
   onViewDetails?: (sale: Sale) => void;
-  pageSize?: number;
 }
 
 export function SalesTable({
@@ -35,28 +32,9 @@ export function SalesTable({
   onEdit,
   onDelete,
   onViewDetails,
-  pageSize = 10
 }: SalesTableProps) {
-  const [currentPage, setCurrentPage] = useState(1);
-  
-  // Paginação dos dados
-  const totalPages = Math.max(1, Math.ceil(sales.length / pageSize));
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = Math.min(startIndex + pageSize, sales.length);
-  const currentPageData = sales.slice(startIndex, endIndex);
-  
-  // Mudar de página
-  const handlePageChange = (page: number) => {
-    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
-    // Scroll para o topo da tabela
-    const tableElement = document.querySelector(".sales-table");
-    if (tableElement) {
-      tableElement.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
-  
   return (
-    <div className="rounded-md border sales-table">
+    <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
@@ -70,7 +48,7 @@ export function SalesTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {currentPageData.length === 0 ? (
+          {sales.length === 0 ? (
             <TableRow>
               <TableCell
                 colSpan={showSalesperson ? 7 : 6}
@@ -80,7 +58,7 @@ export function SalesTable({
               </TableCell>
             </TableRow>
           ) : (
-            currentPageData.map((sale) => (
+            sales.map((sale) => (
               <TableRow key={sale.id}>
                 {showSalesperson && (
                   <TableCell>{sale.salesperson_name}</TableCell>
@@ -141,59 +119,6 @@ export function SalesTable({
           )}
         </TableBody>
       </Table>
-      
-      {/* Componente de paginação */}
-      {totalPages > 1 && (
-        <div className="py-4 flex justify-center">
-          <Pagination>
-            <Pagination.Content>
-              <Pagination.Item>
-                <Pagination.Previous 
-                  onClick={() => handlePageChange(currentPage - 1)} 
-                  disabled={currentPage === 1}
-                />
-              </Pagination.Item>
-              
-              {/* Mostrar páginas */}
-              {Array.from({ length: totalPages }).map((_, i) => {
-                const pageNum = i + 1;
-                
-                // Lógica para exibir páginas: sempre mostra primeira, última e até 3 páginas ao redor da atual
-                if (
-                  pageNum === 1 ||
-                  pageNum === totalPages ||
-                  (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
-                ) {
-                  return (
-                    <Pagination.Item key={pageNum}>
-                      <Pagination.Link
-                        isActive={pageNum === currentPage}
-                        onClick={() => handlePageChange(pageNum)}
-                      >
-                        {pageNum}
-                      </Pagination.Link>
-                    </Pagination.Item>
-                  );
-                }
-                
-                // Adicionar elipses para indicar páginas omitidas
-                if (pageNum === currentPage - 2 || pageNum === currentPage + 2) {
-                  return <Pagination.Ellipsis key={`ellipsis-${pageNum}`} />;
-                }
-                
-                return null;
-              })}
-              
-              <Pagination.Item>
-                <Pagination.Next
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                />
-              </Pagination.Item>
-            </Pagination.Content>
-          </Pagination>
-        </div>
-      )}
     </div>
   );
 }

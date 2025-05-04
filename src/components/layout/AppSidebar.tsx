@@ -1,124 +1,139 @@
 
-import { NavLink, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth";
+import { cn } from "@/lib/utils";
 import { UserRole } from "@/lib/types";
-import { BarChart3, Calculator, Home, Settings, ShoppingBag, Users, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { 
+  BarChart3, 
+  Home, 
+  Menu, 
+  ShoppingCart, 
+  Users, 
+  LogOut,
+  ChevronLeft,
+  Settings
+} from "lucide-react";
 
-interface AppSidebarProps {
-  isMobileOpen?: boolean;
-  onMobileClose?: () => void;
+interface SidebarLinkProps {
+  to: string;
+  icon: React.ReactNode;
+  label: string;
+  expanded: boolean;
+  active?: boolean;
+  onClick?: () => void;
 }
 
-export function AppSidebar({ isMobileOpen = false, onMobileClose }: AppSidebarProps) {
+const SidebarLink = ({ to, icon, label, expanded, active, onClick }: SidebarLinkProps) => {
+  return (
+    <li>
+      <Link 
+        to={to}
+        className={cn(
+          "flex items-center gap-3 rounded-lg px-3 py-2 transition-all duration-200",
+          expanded ? "justify-start" : "justify-center px-2",
+          active 
+            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium shadow-sm" 
+            : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+        )}
+        onClick={onClick}
+      >
+        <div className={cn("transition-all duration-200", active ? "text-sidebar-accent-foreground" : "text-sidebar-foreground/70")}>
+          {icon}
+        </div>
+        {expanded && <span className="truncate">{label}</span>}
+      </Link>
+    </li>
+  );
+};
+
+export function AppSidebar() {
+  const { user, logout } = useAuth();
+  const [expanded, setExpanded] = useState(true);
   const location = useLocation();
-  const { user } = useAuth();
   
+  const toggleSidebar = () => setExpanded(!expanded);
+  
+  // Check if user has admin privileges
   const isAdmin = user?.role === UserRole.ADMIN;
   
-  const sidebarClasses = cn(
-    "bg-sidebar h-screen w-64 border-r border-sidebar-border flex-shrink-0 flex flex-col z-40 transition-transform duration-300",
-    "fixed inset-y-0 left-0 md:relative",
-    isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-  );
-  
-  const overlayClasses = cn(
-    "fixed inset-0 bg-black/50 z-30 md:hidden transition-opacity",
-    isMobileOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-  );
-
-  const links = [
-    {
-      to: "/dashboard",
-      label: "Dashboard",
-      icon: <Home size={20} />,
-      show: true,
-    },
-    {
-      to: "/sales",
-      label: "Vendas",
-      icon: <ShoppingBag size={20} />,
-      show: true,
-    },
-    {
-      to: "/calculator",
-      label: "Calculadora",
-      icon: <Calculator size={20} />,
-      show: true,
-    },
-    {
-      to: "/reports",
-      label: "Relatórios",
-      icon: <BarChart3 size={20} />,
-      show: isAdmin,
-    },
-    {
-      to: "/users",
-      label: "Usuários",
-      icon: <Users size={20} />,
-      show: isAdmin,
-    },
-    {
-      to: "/settings",
-      label: "Configurações",
-      icon: <Settings size={20} />,
-      show: true,
-    },
-  ];
-
   return (
-    <>
-      {/* Overlay para fechar em dispositivos móveis */}
-      <div className={overlayClasses} onClick={onMobileClose} />
+    <div className={cn(
+      "bg-sidebar relative h-screen transition-all duration-300 flex flex-col",
+      expanded ? "w-60" : "w-16"
+    )}>
+      <div className="flex items-center justify-between p-4 border-b border-sidebar-border/30">
+        {expanded && (
+          <h1 className="text-sidebar-foreground font-bold text-xl overflow-hidden truncate">
+            Aliança<span className="text-af-green-400">Fiscal</span>
+          </h1>
+        )}
+        <button 
+          onClick={toggleSidebar}
+          className="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground transition-colors duration-200"
+        >
+          {expanded ? <ChevronLeft size={20} /> : <Menu size={20} />}
+        </button>
+      </div>
       
-      <aside className={sidebarClasses}>
-        <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
-          <h1 className="text-xl font-bold text-sidebar-foreground">Aliança Fiscal</h1>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={onMobileClose} 
-            className="md:hidden text-sidebar-foreground hover:bg-sidebar-accent"
-          >
-            <X size={20} />
-            <span className="sr-only">Fechar menu</span>
-          </Button>
-        </div>
-        
-        <nav className="p-2 flex-1 overflow-y-auto">
-          <ul className="space-y-1">
-            {links
-              .filter(link => link.show)
-              .map(link => (
-                <li key={link.to}>
-                  <NavLink
-                    to={link.to}
-                    onClick={() => isMobileOpen && onMobileClose?.()}
-                    className={({ isActive }) => cn(
-                      "flex items-center px-3 py-2 rounded-md text-sidebar-foreground gap-3 transition-colors",
-                      isActive 
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground" 
-                        : "hover:bg-sidebar-accent/70"
-                    )}
-                  >
-                    {link.icon}
-                    <span>{link.label}</span>
-                  </NavLink>
-                </li>
-              ))}
-          </ul>
-        </nav>
-        
-        <div className="p-4 border-t border-sidebar-border">
-          <div className="text-sm text-sidebar-foreground/80">
-            {user?.role === UserRole.ADMIN ? "Administrador" : "Vendedor"}
-            <div className="text-xs opacity-70 mt-1">
-              {user?.email}
-            </div>
-          </div>
-        </div>
-      </aside>
-    </>
+      <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-2">
+        <ul className="space-y-1">
+          <SidebarLink 
+            to="/dashboard" 
+            icon={<Home size={20} />} 
+            label="Dashboard" 
+            expanded={expanded}
+            active={location.pathname === "/dashboard"}
+          />
+          
+          <SidebarLink 
+            to="/vendas" 
+            icon={<ShoppingCart size={20} />} 
+            label="Vendas" 
+            expanded={expanded}
+            active={location.pathname === "/vendas"}
+          />
+          
+          {/* Admin links */}
+          {isAdmin && (
+            <>
+              <SidebarLink 
+                to="/usuarios" 
+                icon={<Users size={20} />} 
+                label="Usuários" 
+                expanded={expanded}
+                active={location.pathname === "/usuarios"}
+              />
+              <SidebarLink 
+                to="/relatorios" 
+                icon={<BarChart3 size={20} />} 
+                label="Relatórios" 
+                expanded={expanded}
+                active={location.pathname === "/relatorios"}
+              />
+              <SidebarLink 
+                to="/configuracoes" 
+                icon={<Settings size={20} />} 
+                label="Configurações" 
+                expanded={expanded}
+                active={location.pathname === "/configuracoes"}
+              />
+            </>
+          )}
+        </ul>
+      </nav>
+      
+      <div className="mt-auto border-t border-sidebar-border/30 p-2">
+        <ul className="space-y-1">
+          <SidebarLink 
+            to="#" 
+            icon={<LogOut size={20} />} 
+            label="Sair" 
+            expanded={expanded} 
+            onClick={logout}
+          />
+        </ul>
+      </div>
+    </div>
   );
 }
