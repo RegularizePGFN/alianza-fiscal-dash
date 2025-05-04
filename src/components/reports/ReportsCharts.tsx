@@ -59,55 +59,55 @@ export function ReportsCharts({ salesData, loading, error }: ReportsChartsProps)
     );
   }
 
-  const chartHeight = isMobile ? "300px" : "400px";
+  const chartHeight = isMobile ? 350 : 400;
   
   return (
     <div className="grid grid-cols-1 gap-6">
       <Tabs defaultValue="monthly" onValueChange={setChartView} className="w-full">
-        <ScrollArea className="w-full pb-2">
-          <TabsList className="inline-flex w-auto mb-2 px-1">
-            <TabsTrigger value="monthly" className="px-4">Mensal</TabsTrigger>
-            <TabsTrigger value="payment" className="px-4">Por Pagamento</TabsTrigger>
-            <TabsTrigger value="salesperson" className="px-4">Por Vendedor</TabsTrigger>
+        <div className="overflow-x-auto pb-2">
+          <TabsList className="w-full md:w-auto mb-2 grid grid-cols-3 md:inline-flex">
+            <TabsTrigger value="monthly">Mensal</TabsTrigger>
+            <TabsTrigger value="payment">Por Pagamento</TabsTrigger>
+            <TabsTrigger value="salesperson">Por Vendedor</TabsTrigger>
           </TabsList>
-        </ScrollArea>
+        </div>
         
         <div className="mt-4">
           <TabsContent value="monthly" className="space-y-6 m-0">
             <Card className="shadow-md border-primary/10 hover:border-primary/20 transition-all">
-              <CardHeader className="bg-gradient-to-r from-sky-50 to-indigo-50 dark:from-slate-900 dark:to-indigo-950 rounded-t-lg">
-                <CardTitle>Vendas por Mês</CardTitle>
-                <CardDescription>
+              <CardHeader className={`bg-gradient-to-r from-sky-50 to-indigo-50 dark:from-slate-900 dark:to-indigo-950 rounded-t-lg ${isMobile ? 'p-4' : ''}`}>
+                <CardTitle className={isMobile ? 'text-lg' : ''}>Vendas por Mês</CardTitle>
+                <CardDescription className={isMobile ? 'text-xs' : ''}>
                   Volume de vendas distribuído pelos meses do período selecionado
                 </CardDescription>
               </CardHeader>
-              <CardContent className={`h-[${chartHeight}]`}>
+              <CardContent className={`p-2 md:p-4 h-[${chartHeight}px]`}>
                 <LineChart data={salesData} />
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="payment" className="grid grid-cols-1 lg:grid-cols-2 gap-6 m-0">
+          <TabsContent value="payment" className="grid grid-cols-1 gap-6 m-0">
             <Card className="shadow-md border-primary/10 hover:border-primary/20 transition-all">
-              <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-slate-900 dark:to-purple-950 rounded-t-lg">
-                <CardTitle>Vendas por Método de Pagamento</CardTitle>
-                <CardDescription>
+              <CardHeader className={`bg-gradient-to-r from-purple-50 to-pink-50 dark:from-slate-900 dark:to-purple-950 rounded-t-lg ${isMobile ? 'p-4' : ''}`}>
+                <CardTitle className={isMobile ? 'text-lg' : ''}>Vendas por Método de Pagamento</CardTitle>
+                <CardDescription className={isMobile ? 'text-xs' : ''}>
                   Distribuição do volume de vendas por método de pagamento
                 </CardDescription>
               </CardHeader>
-              <CardContent className={`h-[${chartHeight}]`}>
+              <CardContent className={`p-2 md:p-4 h-[${chartHeight}px]`}>
                 <Pie data={salesData} />
               </CardContent>
             </Card>
 
             <Card className="shadow-md border-primary/10 hover:border-primary/20 transition-all">
-              <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-slate-900 dark:to-emerald-950 rounded-t-lg">
-                <CardTitle>Valor por Método de Pagamento</CardTitle>
-                <CardDescription>
+              <CardHeader className={`bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-slate-900 dark:to-emerald-950 rounded-t-lg ${isMobile ? 'p-4' : ''}`}>
+                <CardTitle className={isMobile ? 'text-lg' : ''}>Valor por Método de Pagamento</CardTitle>
+                <CardDescription className={isMobile ? 'text-xs' : ''}>
                   Total de vendas por método de pagamento
                 </CardDescription>
               </CardHeader>
-              <CardContent className={`h-[${chartHeight}]`}>
+              <CardContent className={`p-2 md:p-4 h-[${chartHeight}px]`}>
                 <BarChartHorizontal data={salesData} />
               </CardContent>
             </Card>
@@ -115,13 +115,13 @@ export function ReportsCharts({ salesData, loading, error }: ReportsChartsProps)
 
           <TabsContent value="salesperson" className="space-y-6 m-0">
             <Card className="shadow-md border-primary/10 hover:border-primary/20 transition-all">
-              <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-slate-900 dark:to-amber-950 rounded-t-lg">
-                <CardTitle>Vendas por Vendedor</CardTitle>
-                <CardDescription>
+              <CardHeader className={`bg-gradient-to-r from-amber-50 to-orange-50 dark:from-slate-900 dark:to-amber-950 rounded-t-lg ${isMobile ? 'p-4' : ''}`}>
+                <CardTitle className={isMobile ? 'text-lg' : ''}>Vendas por Vendedor</CardTitle>
+                <CardDescription className={isMobile ? 'text-xs' : ''}>
                   Comparação de performance entre vendedores
                 </CardDescription>
               </CardHeader>
-              <CardContent className={`h-[${chartHeight}]`}>
+              <CardContent className={`p-2 md:p-4 h-[${chartHeight}px]`}>
                 <BarChart data={salesData} />
               </CardContent>
             </Card>

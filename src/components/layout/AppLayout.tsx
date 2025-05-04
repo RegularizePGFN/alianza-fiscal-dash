@@ -1,3 +1,4 @@
+
 import { ReactNode, useEffect, useState } from "react";
 import { AppSidebar } from "./AppSidebar";
 import { AppHeader } from "./AppHeader";
@@ -12,9 +13,10 @@ interface AppLayoutProps {
 export function AppLayout({ children, requireAuth = true }: AppLayoutProps) {
   const { isAuthenticated, isLoading } = useAuth();
   const [errorDetected, setErrorDetected] = useState<string | null>(null);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   /* ╭──────────────────────────────────────────────────────────╮
-     │ Desfaz “pointer‑events:none” que o listener de atalhos    │
+     │ Desfaz "pointer‑events:none" que o listener de atalhos    │
      │ coloca no #root e congela toda a interface                │
      ╰──────────────────────────────────────────────────────────╯ */
   useEffect(() => {
@@ -80,14 +82,19 @@ export function AppLayout({ children, requireAuth = true }: AppLayoutProps) {
     );
   }
 
+  // Toggle mobile sidebar
+  const toggleMobileSidebar = () => {
+    setIsMobileSidebarOpen(!isMobileSidebarOpen);
+  };
+
   // Main layout
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      <AppSidebar />
+      <AppSidebar isMobileOpen={isMobileSidebarOpen} onCloseMobile={() => setIsMobileSidebarOpen(false)} />
       <div className="flex flex-col flex-1 overflow-hidden">
-        <AppHeader />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 relative">
-          <div className="relative">{children}</div>
+        <AppHeader onMobileMenuClick={toggleMobileSidebar} />
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 relative">
+          <div className="relative max-w-full mx-auto">{children}</div>
         </main>
       </div>
     </div>
