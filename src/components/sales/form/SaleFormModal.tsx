@@ -1,3 +1,4 @@
+// SaleFormModal.tsx
 import React, { useState, useEffect, useCallback, useRef, useId } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -117,14 +118,12 @@ export function SaleFormModal({
   );
 
   return (
-    // modal={false} impede o overlay que congelava a página
     <Dialog open={open} onOpenChange={handleDialogClose} modal={false}>
       <DialogContent className="sm:max-w-md" aria-describedby={descriptionId}>
         <DialogHeader>
           <DialogTitle>
             {initialData ? "Editar Venda" : "Nova Venda"}
           </DialogTitle>
-
           <DialogDescription id={descriptionId}>
             {initialData
               ? "Atualize os dados da venda."
