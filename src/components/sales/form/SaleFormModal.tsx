@@ -1,4 +1,3 @@
-// SaleFormModal.tsx
 import React, { useState, useEffect, useCallback, useRef, useId } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -54,7 +53,7 @@ export function SaleFormModal({
     mode: "onChange",
   });
 
-  /* ressincroniza se mudar a venda em edição */
+  /* ressincroniza se mudar a venda */
   useEffect(() => {
     if (initialData) {
       setDate(new Date(initialData.sale_date));
@@ -118,13 +117,14 @@ export function SaleFormModal({
   );
 
   return (
-    {/* modal={false} evita o overlay que congela a página */}
+    // modal={false} impede o overlay que congelava a página
     <Dialog open={open} onOpenChange={handleDialogClose} modal={false}>
       <DialogContent className="sm:max-w-md" aria-describedby={descriptionId}>
         <DialogHeader>
           <DialogTitle>
             {initialData ? "Editar Venda" : "Nova Venda"}
           </DialogTitle>
+
           <DialogDescription id={descriptionId}>
             {initialData
               ? "Atualize os dados da venda."
@@ -141,7 +141,6 @@ export function SaleFormModal({
             autoFocusRef={autoFocusRef}
           />
           <ClientFormFields form={form} disabled={isSubmitting} />
-
           <SaleFormActions
             isSubmitting={isSubmitting}
             initialData={initialData}
