@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,20 +32,17 @@ export function UserFormModal({
     role: UserRole.SALESPERSON,
   });
 
-  // Generate stable IDs for aria attributes
-  const modalId = "user-form-dialog";
-  const modalDescriptionId = "user-form-description";
-
-  // Reset form when user changes or modal opens/closes
-  const resetForm = useCallback(() => {
-    if (user) {
+  // Load user data if editing
+  useEffect(() => {
+    if (user && isOpen) {
       setFormData({
         name: user.name,
         email: user.email,
         password: "",
         role: user.role,
       });
-    } else {
+    } else if (isOpen) {
+      // Reset form for new user
       setFormData({
         name: "",
         email: "",
@@ -53,24 +50,11 @@ export function UserFormModal({
         role: UserRole.SALESPERSON,
       });
     }
-  }, [user]);
+  }, [user, isOpen]);
 
-  // Load user data if editing
-  useEffect(() => {
-    if (isOpen) {
-      resetForm();
-    }
-  }, [user, isOpen, resetForm]);
-
-  const handleChange = useCallback((field: string, value: string) => {
+  const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-  }, []);
-
-  const handleDialogOpenChange = useCallback((open: boolean) => {
-    if (!open && !isLoading) {
-      onClose();
-    }
-  }, [isLoading, onClose]);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -162,6 +146,7 @@ export function UserFormModal({
 
       // Call these functions only after successful operation
       onSuccess();
+      onClose();
     } catch (error: any) {
       console.error("User operation error:", error);
       toast({
@@ -174,22 +159,16 @@ export function UserFormModal({
     }
   };
 
+  // Modificado para não fechar o dialog quando está carregando
   return (
-    <Dialog 
-      open={isOpen} 
-      onOpenChange={handleDialogOpenChange}
-      modal={true}
-    >
-      <DialogContent 
-        id={modalId}
-        aria-describedby={modalDescriptionId}
-        className="sm:max-w-[425px]"
-      >
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open && !isLoading) {
+        onClose();
+      }
+    }}>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>{user ? "Editar Usuário" : "Adicionar Usuário"}</DialogTitle>
-          <p id={modalDescriptionId} className="text-sm text-muted-foreground">
-            {user ? "Atualize os dados do usuário abaixo." : "Preencha os dados para adicionar um novo usuário."}
-          </p>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">

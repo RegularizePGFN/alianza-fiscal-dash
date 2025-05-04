@@ -1,105 +1,80 @@
 
 import { useAuth } from "@/contexts/auth";
-import { UserRole } from "@/lib/types";
-import { useState } from "react";
-import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Settings } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { NotificationsPopover } from "@/components/notifications/NotificationsPopover";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { Menu, Search } from "lucide-react";
+import { useState } from "react";
+import { SearchDialog } from "@/components/search/SearchDialog";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger 
+} from "@/components/ui/tooltip";
 
-export function AppHeader() {
-  const { user, logout } = useAuth();
-  const [hasNotifications, setHasNotifications] = useState(false);
+interface AppHeaderProps {
+  onMobileMenuToggle?: () => void;
+}
+
+export function AppHeader({ onMobileMenuToggle }: AppHeaderProps) {
+  const { user, signOut } = useAuth();
+  const [searchOpen, setSearchOpen] = useState(false);
   
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(part => part.charAt(0))
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
-  };
-
-  const getRoleDisplay = (role?: UserRole) => {
-    switch (role) {
-      case UserRole.ADMIN:
-        return 'Administrador';
-      case UserRole.SALESPERSON:
-        return 'Vendedor';
-      default:
-        return 'Usuário';
-    }
-  };
-
   return (
-    <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 py-3 px-6 flex justify-between items-center shadow-sm">
-      <h1 className="text-xl font-semibold text-gray-800 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-        Intranet Aliança Fiscal
-      </h1>
-      
-      <div className="flex items-center gap-3">
-        {user && (
-          <>
-            <NotificationsPopover onNotificationsChange={setHasNotifications} />
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full hover:bg-gray-100 transition-colors duration-200">
-                  <Avatar className="h-9 w-9 ring-2 ring-primary/10 transition-all duration-300 hover:ring-primary/30">
-                    <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-primary-foreground">
-                      {getInitials(user.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 overflow-hidden p-0">
-                <div className="p-3 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
-                  <DropdownMenuLabel className="px-0 py-0">
-                    <p className="font-medium">{user.name}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{user.email}</p>
-                  </DropdownMenuLabel>
-                </div>
-                <div className="p-2">
-                  <div className="px-2 py-1.5">
-                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">
-                      {getRoleDisplay(user.role)}
-                    </span>
-                  </div>
-                  
-                  {user.role === UserRole.ADMIN && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <Link to="/configuracoes" className="flex items-center cursor-pointer">
-                          <Settings className="mr-2 h-4 w-4" />
-                          <span>Configurações</span>
-                        </Link>
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    className="cursor-pointer text-destructive focus:text-destructive hover:bg-destructive/10 transition-colors duration-200" 
-                    onClick={logout}
+    <>
+      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/95 backdrop-blur px-4 md:px-6 gap-4">
+        <div className="md:hidden">
+          <Button variant="ghost" size="icon" onClick={onMobileMenuToggle} className="mr-2">
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Menu</span>
+          </Button>
+        </div>
+        
+        <div className="hidden md:block">
+          {/* Placeholder para título ou breadcrumbs */}
+        </div>
+        
+        <div className="flex flex-1 items-center justify-end space-x-2 sm:space-x-4">
+          <div className="flex items-center gap-1 sm:gap-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    className="h-9 w-9 border-dashed"
+                    onClick={() => setSearchOpen(true)}
                   >
-                    Sair
-                  </DropdownMenuItem>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </>
-        )}
-      </div>
-    </header>
+                    <Search className="h-4 w-4" />
+                    <span className="sr-only">Buscar</span>
+                    <kbd className="pointer-events-none absolute right-1.5 top-1.5 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+                      <span className="text-xs">⌘</span>K
+                    </kbd>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Busca rápida <kbd className="ml-1">⌘K</kbd></p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <ThemeToggle />
+            <NotificationsPopover />
+            
+            <div className="ml-1 sm:ml-2 flex items-center">
+              <span className="hidden md:inline text-sm mr-2 truncate max-w-[150px]">
+                {user?.name || user?.email}
+              </span>
+              <Button variant="ghost" size="sm" onClick={signOut} className="text-xs sm:text-sm whitespace-nowrap">
+                Sair
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+      
+      <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
+    </>
   );
 }
