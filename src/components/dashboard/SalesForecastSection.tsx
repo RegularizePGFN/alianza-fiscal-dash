@@ -127,7 +127,7 @@ export function SalesForecastSection({ salesData }: SalesForecastSectionProps) {
                 axisLine={false}
               />
               <YAxis 
-                tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })}
+                tickFormatter={(value) => formatCurrency(value)}
                 tickLine={false}
                 axisLine={false}
               />
