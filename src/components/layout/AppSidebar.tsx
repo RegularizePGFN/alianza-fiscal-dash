@@ -66,26 +66,30 @@ export function AppSidebar({ isMobileOpen = false, onCloseMobile }: AppSidebarPr
     }
   };
   
-  // Fecha a sidebar em transições de rota em dispositivos móveis
+  // Close the sidebar on route transitions on mobile devices
   useEffect(() => {
-    if (isMobile && onCloseMobile) {
+    if (isMobile && onCloseMobile && isMobileOpen) {
       onCloseMobile();
     }
-  }, [location.pathname, isMobile, onCloseMobile]);
+  }, [location.pathname, isMobile, onCloseMobile, isMobileOpen]);
   
   // Check if user has admin privileges
   const isAdmin = user?.role === UserRole.ADMIN;
 
-  // Overlay para dispositivos móveis
+  // Mobile overlay class
   const mobileOverlayClass = isMobile && isMobileOpen
     ? "fixed inset-0 bg-black/50 z-40" 
     : "hidden";
   
   return (
     <>
-      {/* Overlay para dispositivos móveis */}
+      {/* Overlay for mobile devices */}
       {isMobile && (
-        <div className={mobileOverlayClass} onClick={onCloseMobile} />
+        <div 
+          className={mobileOverlayClass} 
+          onClick={onCloseMobile}
+          role="presentation"
+        />
       )}
       
       <div className={cn(

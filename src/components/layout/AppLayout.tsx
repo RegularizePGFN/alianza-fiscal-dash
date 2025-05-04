@@ -85,7 +85,7 @@ export function AppLayout({ children, requireAuth = true }: AppLayoutProps) {
   // Toggle mobile sidebar
   const toggleMobileSidebar = () => {
     console.log("Toggling mobile sidebar", !isMobileSidebarOpen);
-    setIsMobileSidebarOpen(!isMobileSidebarOpen);
+    setIsMobileSidebarOpen((prev) => !prev);
   };
 
   // Main layout

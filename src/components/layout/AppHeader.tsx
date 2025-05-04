@@ -18,7 +18,10 @@ export function AppHeader({ onMobileMenuClick }: AppHeaderProps) {
         <Button
           variant="ghost"
           size="icon"
-          onClick={onMobileMenuClick}
+          onClick={() => {
+            console.log("Mobile menu button clicked");
+            if (onMobileMenuClick) onMobileMenuClick();
+          }}
           className="md:hidden mr-2"
           aria-label="Open menu"
         >
