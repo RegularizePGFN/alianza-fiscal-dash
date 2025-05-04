@@ -33,13 +33,7 @@ export function AppHeader({ onMobileMenuClick }: AppHeaderProps) {
       </div>
       
       <div className="flex items-center">
-        <NotificationsPopover>
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5" />
-            <span className="sr-only">Notificações</span>
-            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />
-          </Button>
-        </NotificationsPopover>
+        <NotificationsPopover />
       </div>
     </header>
   );
