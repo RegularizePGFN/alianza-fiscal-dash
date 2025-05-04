@@ -1,4 +1,3 @@
-
 // SaleFormModal.tsx
 import React, { useState, useEffect, useCallback, useRef, useId } from "react";
 import { useForm } from "react-hook-form";
@@ -38,8 +37,6 @@ export function SaleFormModal({
     initialData ? new Date(initialData.sale_date) : new Date()
   );
   const autoFocusRef = useRef<HTMLInputElement>(null);
-
-  // id único para aria-describedby
   const descriptionId = useId();
 
   const form = useForm<z.infer<typeof SaleFormSchema>>({
@@ -57,7 +54,7 @@ export function SaleFormModal({
     mode: "onChange",
   });
 
-  // ressincroniza quando muda a venda em edição
+  /* ressincroniza se mudar a venda */
   useEffect(() => {
     if (initialData) {
       setDate(new Date(initialData.sale_date));
@@ -86,7 +83,7 @@ export function SaleFormModal({
     }
   }, [initialData, user, form]);
 
-  // foco automático confiável
+  /* foco automático */
   useEffect(() => {
     if (open && autoFocusRef.current) {
       requestAnimationFrame(() => autoFocusRef.current?.focus());
@@ -103,7 +100,6 @@ export function SaleFormModal({
   const onSubmit = useCallback(
     (values: z.infer<typeof SaleFormSchema>) => {
       const parsedAmount = parseFloat(values.gross_amount.replace(",", "."));
-
       const saleData: Omit<Sale, "id"> = {
         salesperson_id: user?.id || "system",
         salesperson_name: values.salesperson_name,
@@ -116,23 +112,18 @@ export function SaleFormModal({
         client_phone: values.client_phone || "",
         client_document: values.client_document || "",
       };
-
       onSave(saleData);
     },
     [user, onSave]
   );
 
   return (
-    <Dialog open={open} onOpenChange={handleDialogClose}>
-      <DialogContent
-        className="sm:max-w-md"
-        aria-describedby={descriptionId}
-      >
+    <Dialog open={open} onOpenChange={handleDialogClose} modal={false}>
+      <DialogContent className="sm:max-w-md" aria-describedby={descriptionId}>
         <DialogHeader>
           <DialogTitle>
             {initialData ? "Editar Venda" : "Nova Venda"}
           </DialogTitle>
-
           <DialogDescription id={descriptionId}>
             {initialData
               ? "Atualize os dados da venda."
@@ -148,9 +139,7 @@ export function SaleFormModal({
             disabled={isSubmitting}
             autoFocusRef={autoFocusRef}
           />
-
           <ClientFormFields form={form} disabled={isSubmitting} />
-
           <SaleFormActions
             isSubmitting={isSubmitting}
             initialData={initialData}

@@ -52,7 +52,7 @@
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 6.9%;
+    --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
 
     --popover: 222.2 84% 4.9%;
@@ -70,13 +70,12 @@
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 62.8% 40.6%;
+    --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
-
     --sidebar-background: 215 90% 10%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 100%;
@@ -101,22 +100,10 @@
     @apply font-nunito font-semibold;
   }
 
-  .glass-effect {
-    @apply bg-white/80 dark:bg-black/50 backdrop-blur-sm;
-  }
-
-  .card-hover {
-    @apply transition-all duration-300;
-  }
-  
-  .card-hover:hover {
-    @apply shadow-md transform-gpu -translate-y-1;
-  }
-
   .goal-meter {
     position: relative;
     height: 10px;
-    background-color: hsl(var(--muted));
+    background-color: #e9ecef;
     border-radius: 0.5rem;
     overflow: hidden;
   }
@@ -139,26 +126,23 @@
   .goal-meter-fill.goal {
     background-color: theme('colors.af-green.500');
   }
+  
+  /* Card hover effect */
+  .card-hover {
+    @apply transition-all duration-300;
+  }
+  
+  .card-hover:hover {
+    @apply shadow-md transform-gpu -translate-y-1;
+  }
+  
+  /* Glass effect */
+  .glass-effect {
+    @apply bg-white/80 backdrop-blur-sm;
+  }
 }
 
 @keyframes progress-fill {
   from { width: 0; }
   to { width: var(--progress-value); }
 }
-
-/* Melhorias para acessibilidade em dispositivos móveis */
-@media (max-width: 640px) {
-  .touch-target {
-    @apply min-h-[44px] min-w-[44px];
-  }
-  
-  input, button, select, textarea {
-    @apply text-base;
-  }
-}
-
-/* Animações de transição para tema */
-.theme-transition {
-  @apply transition-colors duration-300;
-}
-
