@@ -17,7 +17,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, FileText } from "lucide-react";
-import { Pagination } from "@/components/ui/pagination";
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis
+} from "@/components/ui/pagination";
 import { useState } from "react";
 
 interface SalesTableProps {
@@ -146,13 +154,13 @@ export function SalesTable({
       {totalPages > 1 && (
         <div className="py-4 flex justify-center">
           <Pagination>
-            <Pagination.Content>
-              <Pagination.Item>
-                <Pagination.Previous 
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
                   onClick={() => handlePageChange(currentPage - 1)} 
                   disabled={currentPage === 1}
                 />
-              </Pagination.Item>
+              </PaginationItem>
               
               {/* Mostrar páginas */}
               {Array.from({ length: totalPages }).map((_, i) => {
@@ -165,32 +173,32 @@ export function SalesTable({
                   (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
                 ) {
                   return (
-                    <Pagination.Item key={pageNum}>
-                      <Pagination.Link
+                    <PaginationItem key={pageNum}>
+                      <PaginationLink
                         isActive={pageNum === currentPage}
                         onClick={() => handlePageChange(pageNum)}
                       >
                         {pageNum}
-                      </Pagination.Link>
-                    </Pagination.Item>
+                      </PaginationLink>
+                    </PaginationItem>
                   );
                 }
                 
                 // Adicionar elipses para indicar páginas omitidas
                 if (pageNum === currentPage - 2 || pageNum === currentPage + 2) {
-                  return <Pagination.Ellipsis key={`ellipsis-${pageNum}`} />;
+                  return <PaginationEllipsis key={`ellipsis-${pageNum}`} />;
                 }
                 
                 return null;
               })}
               
-              <Pagination.Item>
-                <Pagination.Next
+              <PaginationItem>
+                <PaginationNext
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
                 />
-              </Pagination.Item>
-            </Pagination.Content>
+              </PaginationItem>
+            </PaginationContent>
           </Pagination>
         </div>
       )}

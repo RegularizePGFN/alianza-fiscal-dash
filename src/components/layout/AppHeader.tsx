@@ -18,7 +18,7 @@ interface AppHeaderProps {
 }
 
 export function AppHeader({ onMobileMenuToggle }: AppHeaderProps) {
-  const { user, signOut } = useAuth();
+  const { user, logout } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
   
   return (
@@ -66,7 +66,7 @@ export function AppHeader({ onMobileMenuToggle }: AppHeaderProps) {
               <span className="hidden md:inline text-sm mr-2 truncate max-w-[150px]">
                 {user?.name || user?.email}
               </span>
-              <Button variant="ghost" size="sm" onClick={signOut} className="text-xs sm:text-sm whitespace-nowrap">
+              <Button variant="ghost" size="sm" onClick={logout} className="text-xs sm:text-sm whitespace-nowrap">
                 Sair
               </Button>
             </div>
