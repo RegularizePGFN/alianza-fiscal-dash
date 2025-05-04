@@ -84,13 +84,17 @@ export function AppLayout({ children, requireAuth = true }: AppLayoutProps) {
 
   // Toggle mobile sidebar
   const toggleMobileSidebar = () => {
+    console.log("Toggling mobile sidebar", !isMobileSidebarOpen);
     setIsMobileSidebarOpen(!isMobileSidebarOpen);
   };
 
   // Main layout
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      <AppSidebar isMobileOpen={isMobileSidebarOpen} onCloseMobile={() => setIsMobileSidebarOpen(false)} />
+      <AppSidebar 
+        isMobileOpen={isMobileSidebarOpen} 
+        onCloseMobile={() => setIsMobileSidebarOpen(false)} 
+      />
       <div className="flex flex-col flex-1 overflow-hidden">
         <AppHeader onMobileMenuClick={toggleMobileSidebar} />
         <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 relative">

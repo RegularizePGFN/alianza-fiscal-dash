@@ -13,13 +13,14 @@ export function AppHeader({ onMobileMenuClick }: AppHeaderProps) {
 
   return (
     <header className="border-b border-gray-200 bg-white px-4 h-14 flex items-center justify-between shadow-sm">
-      {/* Botão de menu para dispositivos móveis */}
+      {/* Mobile menu button */}
       {isMobile && (
         <Button
           variant="ghost"
           size="icon"
           onClick={onMobileMenuClick}
           className="md:hidden mr-2"
+          aria-label="Open menu"
         >
           <Menu className="h-5 w-5" />
           <span className="sr-only">Abrir menu</span>
