@@ -1,3 +1,4 @@
+
 // SaleFormModal.tsx
 import React, { useState, useEffect, useCallback, useRef, useId } from "react";
 import { useForm } from "react-hook-form";
@@ -44,6 +45,7 @@ export function SaleFormModal({
   const form = useForm<z.infer<typeof SaleFormSchema>>({
     resolver: zodResolver(SaleFormSchema),
     defaultValues: {
+      salesperson_id: initialData?.salesperson_id || user?.id || "",
       salesperson_name: initialData?.salesperson_name || user?.name || "",
       gross_amount: initialData?.gross_amount?.toString() || "",
       payment_method: initialData?.payment_method || PaymentMethod.CREDIT,
@@ -61,6 +63,7 @@ export function SaleFormModal({
     if (initialData) {
       setDate(new Date(initialData.sale_date));
       form.reset({
+        salesperson_id: initialData.salesperson_id,
         salesperson_name: initialData.salesperson_name,
         gross_amount: initialData.gross_amount.toString(),
         payment_method: initialData.payment_method,
@@ -73,6 +76,7 @@ export function SaleFormModal({
     } else {
       setDate(new Date());
       form.reset({
+        salesperson_id: user?.id || "",
         salesperson_name: user?.name || "",
         gross_amount: "",
         payment_method: PaymentMethod.CREDIT,
@@ -104,7 +108,7 @@ export function SaleFormModal({
       const parsedAmount = parseFloat(values.gross_amount.replace(",", "."));
 
       const saleData: Omit<Sale, "id"> = {
-        salesperson_id: user?.id || "system",
+        salesperson_id: values.salesperson_id,
         salesperson_name: values.salesperson_name,
         gross_amount: parsedAmount,
         net_amount: parsedAmount,
@@ -118,7 +122,7 @@ export function SaleFormModal({
 
       onSave(saleData);
     },
-    [user, onSave]
+    [onSave]
   );
 
   return (
@@ -126,7 +130,6 @@ export function SaleFormModal({
       <DialogContent
         className="sm:max-w-md"
         aria-describedby={descriptionId}
-        disableOutsidePointerEvents={false}  // <— impede overlay bloqueador
       >
         <DialogHeader>
           <DialogTitle>

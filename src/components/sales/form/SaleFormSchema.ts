@@ -3,6 +3,9 @@ import * as z from "zod";
 import { PaymentMethod } from "@/lib/types";
 
 export const SaleFormSchema = z.object({
+  salesperson_id: z.string().uuid({
+    message: "ID do vendedor é obrigatório",
+  }),
   salesperson_name: z.string().min(2, {
     message: "O nome do vendedor deve ter pelo menos 2 caracteres.",
   }),

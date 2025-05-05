@@ -1,5 +1,6 @@
+
 // SaleDetailsFields.tsx
-import { PaymentMethod } from "@/lib/types";
+import { PaymentMethod, User, UserRole } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -23,6 +24,8 @@ import { ptBR } from "date-fns/locale";
 import { SaleFormSchema } from "./SaleFormSchema";
 import { UseFormReturn } from "react-hook-form";
 import * as z from "zod";
+import { useUsers } from "@/hooks/useUsers";
+import { useState, useEffect } from "react";
 
 interface SaleDetailsFieldsProps {
   form: UseFormReturn<z.infer<typeof SaleFormSchema>>;
@@ -39,17 +42,56 @@ export function SaleDetailsFields({
   disabled = false,
   autoFocusRef
 }: SaleDetailsFieldsProps) {
+  const { users, isLoading } = useUsers();
+  const [salespeople, setSalespeople] = useState<User[]>([]);
+
+  // Filter users to get only salespersons
+  useEffect(() => {
+    if (users && users.length > 0) {
+      const salesPersons = users.filter(user => 
+        user.role === UserRole.SALESPERSON || user.role === UserRole.ADMIN
+      );
+      setSalespeople(salesPersons);
+      
+      // Set default salesperson if none is selected yet
+      const currentSalesperson = form.getValues("salesperson_id");
+      if (!currentSalesperson && salesPersons.length > 0) {
+        form.setValue("salesperson_id", salesPersons[0].id);
+        form.setValue("salesperson_name", salesPersons[0].name);
+      }
+    }
+  }, [users, form]);
+
+  // Handle salesperson selection change
+  const handleSalespersonChange = (salespersonId: string) => {
+    const selectedSalesperson = salespeople.find(person => person.id === salespersonId);
+    if (selectedSalesperson) {
+      form.setValue("salesperson_id", selectedSalesperson.id);
+      form.setValue("salesperson_name", selectedSalesperson.name);
+    }
+  };
+
   return (
     <>
       <div className="grid gap-2">
-        <Label htmlFor="salesperson_name">Nome do Vendedor</Label>
-        <Input
-          id="salesperson_name"
-          type="text"
-          placeholder="Nome do vendedor"
-          {...form.register("salesperson_name")}
-          disabled={disabled}
-        />
+        <Label htmlFor="salesperson_id">Nome do Vendedor</Label>
+        <Select
+          disabled={disabled || isLoading}
+          onValueChange={handleSalespersonChange}
+          defaultValue={form.getValues("salesperson_id")}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder={isLoading ? "Carregando..." : "Selecione o vendedor"} />
+          </SelectTrigger>
+          <SelectContent>
+            {salespeople.map((salesperson) => (
+              <SelectItem key={salesperson.id} value={salesperson.id}>
+                {salesperson.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {isLoading && <p className="text-xs text-muted-foreground">Carregando vendedores...</p>}
       </div>
 
       <div className="grid gap-2">

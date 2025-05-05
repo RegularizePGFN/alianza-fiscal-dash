@@ -43,17 +43,9 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
         return false;
       }
       
-      // Get user ID from session
-      const supabaseUserId = sessionData.session.user.id;
-      console.log("Authenticated user ID (Supabase):", supabaseUserId);
-      
-      if (!supabaseUserId) {
-        throw new Error("User ID not found in session");
-      }
-      
       // Prepare object for Supabase (convert PaymentMethod enum to string)
       const supabaseData = {
-        salesperson_id: saleData.salesperson_id || supabaseUserId,
+        salesperson_id: saleData.salesperson_id,
         salesperson_name: saleData.salesperson_name,
         gross_amount: saleData.gross_amount,
         payment_method: saleData.payment_method.toString(),
