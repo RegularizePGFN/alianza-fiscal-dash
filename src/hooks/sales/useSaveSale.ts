@@ -22,6 +22,15 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
     console.log("Starting save operation with data:", saleData);
     
     try {
+      // Validate required fields
+      if (!saleData.salesperson_id) {
+        throw new Error("Vendedor é obrigatório");
+      }
+      
+      if (!saleData.gross_amount || isNaN(saleData.gross_amount) || saleData.gross_amount <= 0) {
+        throw new Error("Valor bruto deve ser maior que zero");
+      }
+      
       console.log("Saving sale:", editingSaleId ? "Editing" : "New", saleData);
       
       // Check for authenticated session in Supabase
@@ -136,7 +145,6 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
       return true;
     } catch (error: any) {
       console.error('Error saving sale:', error);
-      // Now correctly calling the function with two parameters
       showErrorToast(toast, error.message || "Could not save the sale. Please try again later.");
       return false;
     } finally {

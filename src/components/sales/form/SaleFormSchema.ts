@@ -9,7 +9,7 @@ export const SaleFormSchema = z.object({
   salesperson_name: z.string().min(2, {
     message: "O nome do vendedor deve ter pelo menos 2 caracteres.",
   }),
-  gross_amount: z.string().refine((value) => {
+  gross_amount: z.string().min(1, "Valor bruto é obrigatório").refine((value) => {
     try {
       // Substitui vírgulas por pontos e tenta converter para número
       const parsedValue = parseFloat(value.replace(",", "."));

@@ -107,25 +107,37 @@ export function SaleFormModal({
     (values: z.infer<typeof SaleFormSchema>) => {
       console.log("Form submitted with values:", values);
       
-      // Convert gross_amount from string to number
-      const parsedAmount = parseFloat(values.gross_amount.replace(",", "."));
-      console.log("Parsed amount:", parsedAmount);
+      try {
+        // Convert gross_amount from string to number
+        const grossAmountStr = values.gross_amount.replace(",", ".");
+        const parsedAmount = parseFloat(grossAmountStr);
+        
+        if (isNaN(parsedAmount) || parsedAmount <= 0) {
+          console.error("Invalid amount:", grossAmountStr);
+          throw new Error("Valor bruto inválido. Insira um número maior que zero.");
+        }
+        
+        console.log("Parsed amount:", parsedAmount);
 
-      const saleData: Omit<Sale, "id"> = {
-        salesperson_id: values.salesperson_id,
-        salesperson_name: values.salesperson_name,
-        gross_amount: parsedAmount,
-        net_amount: parsedAmount,
-        payment_method: values.payment_method,
-        installments: values.installments,
-        sale_date: values.sale_date.toISOString(),
-        client_name: values.client_name || "",
-        client_phone: values.client_phone || "",
-        client_document: values.client_document || "",
-      };
+        const saleData: Omit<Sale, "id"> = {
+          salesperson_id: values.salesperson_id,
+          salesperson_name: values.salesperson_name,
+          gross_amount: parsedAmount,
+          net_amount: parsedAmount,
+          payment_method: values.payment_method,
+          installments: values.installments,
+          sale_date: values.sale_date.toISOString(),
+          client_name: values.client_name || "",
+          client_phone: values.client_phone || "",
+          client_document: values.client_document || "",
+        };
 
-      console.log("Calling onSave with data:", saleData);
-      onSave(saleData);
+        console.log("Calling onSave with data:", saleData);
+        onSave(saleData);
+      } catch (error) {
+        console.error("Error preparing sale data:", error);
+        // Form validation should prevent this, but just in case
+      }
     },
     [onSave]
   );
