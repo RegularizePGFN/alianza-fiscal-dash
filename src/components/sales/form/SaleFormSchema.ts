@@ -1,36 +1,15 @@
-/**
- * SaleFormSchema.ts  –  esquema Zod usado no SaleFormModal
- */
+/* SaleFormSchema.ts  –  versão simplificada */
+
 import * as z from "zod";
 import { PaymentMethod } from "@/lib/types";
 
-/* util: converte "1.234,56" → 1234.56  |  "" → undefined */
-const parseAmount = (val: unknown) => {
-  if (typeof val === "number") return val;
-  if (typeof val === "string") {
-    const cleaned = val.replace(/\./g, "").replace(",", ".");
-    if (cleaned.trim() === "") return undefined;
-    const n = Number(cleaned);
-    return isNaN(n) ? undefined : n;
-  }
-  return undefined;
-};
-
 export const SaleFormSchema = z.object({
+  /* apenas obrigatório – a conversão para número fica no onSubmit */
+  gross_amount: z.string().nonempty("Informe o valor bruto"),
+
   salesperson_name: z
     .string()
     .nonempty("Nome do vendedor é obrigatório"),
-
-  /* aceita string ou number, converte p/ número e exige > 0 */
-  gross_amount: z.preprocess(
-    parseAmount,
-    z
-      .number({
-        required_error: "Informe o valor bruto",
-        invalid_type_error: "Valor inválido",
-      })
-      .positive("Valor deve ser maior que zero")
-  ),
 
   payment_method: z.nativeEnum(PaymentMethod, {
     errorMap: () => ({ message: "Selecione o método de pagamento" }),
