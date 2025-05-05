@@ -40,6 +40,8 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
         payment_method: saleData.payment_method.toString(),
         // Garantir que salesperson_name não seja undefined
         salesperson_name: saleData.salesperson_name,
+        // Fix date format for proper storage - convert to YYYY-MM-DD format
+        sale_date: new Date(saleData.sale_date).toISOString().split('T')[0]
       };
 
       // Remove net_amount as it's not in the database schema

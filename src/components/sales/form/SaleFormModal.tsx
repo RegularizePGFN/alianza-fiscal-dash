@@ -36,21 +36,48 @@ export function SaleFormModal({
   const autoFocusRef = useRef<HTMLInputElement>(null);
   const descriptionId = useId();
 
+  // Parse the initialData correctly to ensure dates are properly set
+  const getInitialFormValues = () => {
+    if (!initialData) {
+      return {
+        salesperson_id: user?.id || "",
+        salesperson_name: user?.name || "",
+        gross_amount: "",
+        payment_method: PaymentMethod.CREDIT,
+        installments: 1,
+        sale_date: new Date(),
+        client_name: "",
+        client_phone: "",
+        client_document: "",
+      };
+    }
+    
+    // For editing existing sales, ensure we properly convert the date string to a Date object
+    return {
+      salesperson_id: initialData.salesperson_id,
+      salesperson_name: initialData.salesperson_name || '',
+      gross_amount: initialData.gross_amount.toString(),
+      payment_method: initialData.payment_method,
+      installments: initialData.installments,
+      sale_date: new Date(initialData.sale_date),
+      client_name: initialData.client_name || "",
+      client_phone: initialData.client_phone || "",
+      client_document: initialData.client_document || "",
+    };
+  };
+
   // Corrected to use the proper type
   const form = useForm<FormSchema>({
     resolver: zodResolver(SaleFormSchema),
-    defaultValues: {
-      salesperson_id: initialData?.salesperson_id || user?.id || "",
-      salesperson_name: initialData?.salesperson_name || user?.name || "",
-      gross_amount: initialData?.gross_amount ? initialData.gross_amount.toString() : "",
-      payment_method: initialData?.payment_method || PaymentMethod.CREDIT,
-      installments: initialData?.installments || 1,
-      sale_date: initialData ? new Date(initialData.sale_date) : new Date(),
-      client_name: initialData?.client_name || "",
-      client_phone: initialData?.client_phone || "",
-      client_document: initialData?.client_document || "",
-    },
+    defaultValues: getInitialFormValues(),
   });
+  
+  // Reset form when initialData changes (for editing)
+  useEffect(() => {
+    if (open) {
+      form.reset(getInitialFormValues());
+    }
+  }, [initialData, open]);
 
   /* foco ao abrir */
   useEffect(() => {

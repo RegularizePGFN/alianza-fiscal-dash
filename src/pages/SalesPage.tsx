@@ -31,7 +31,8 @@ export default function SalesPage() {
   const handleEdit = useCallback(
     (sale: Sale) => {
       if (isProcessingAction) return;
-      setEditingSale(sale);
+      console.log("Editing sale:", sale);
+      setEditingSale({...sale}); // Make a copy to prevent reference issues
       setShowSaleModal(true);
     },
     [isProcessingAction]
