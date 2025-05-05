@@ -15,6 +15,9 @@ import { ClientFormFields } from "./ClientFormFields";
 import { SaleFormActions } from "./SaleFormActions";
 import { useToast } from "@/hooks/use-toast";
 
+// Define the form schema type for TypeScript
+type FormSchema = z.infer<typeof SaleFormSchema>;
+
 interface Props {
   initialData?: Sale | null;
   onSave: (data: Omit<Sale, "id">) => void;
@@ -32,12 +35,13 @@ export function SaleFormModal({
   const autoFocusRef = useRef<HTMLInputElement>(null);
   const descriptionId = useId();
 
-  const form = useForm({
+  // Corrected to use the proper type
+  const form = useForm<FormSchema>({
     resolver: zodResolver(SaleFormSchema),
     defaultValues: {
       salesperson_id: initialData?.salesperson_id || user?.id || "",
       salesperson_name: initialData?.salesperson_name || user?.name || "",
-      gross_amount: initialData?.gross_amount?.toString() || "",
+      gross_amount: initialData?.gross_amount ? initialData.gross_amount.toString() : "",
       payment_method: initialData?.payment_method || PaymentMethod.CREDIT,
       installments: initialData?.installments || 1,
       sale_date: initialData ? new Date(initialData.sale_date) : new Date(),
@@ -55,7 +59,7 @@ export function SaleFormModal({
   }, [open]);
 
   /* submit */
-  const onSubmit = useCallback((values: any) => {
+  const onSubmit = useCallback((values: FormSchema) => {
     try {
       console.log("Form values on submit:", values);
       
@@ -70,8 +74,10 @@ export function SaleFormModal({
         return;
       }
 
-      // Converter o valor bruto de string para número
-      const amount = Number(values.gross_amount.replace(/\./g, "").replace(",", "."));
+      // Número já é transformado pelo schema
+      const amount = Number(values.gross_amount);
+      console.log("Converted amount:", amount);
+
       if (isNaN(amount) || amount <= 0) {
         console.error("Invalid gross_amount:", values.gross_amount);
         toast({ 
@@ -120,9 +126,16 @@ export function SaleFormModal({
         <form
           onSubmit={form.handleSubmit(onSubmit, (err) => {
             console.log("FORM‑ERRORS:", err);
+            let errorMessage = "Verifique os campos do formulário";
+            
+            // Check specifically for gross_amount errors
+            if (err.gross_amount) {
+              errorMessage = err.gross_amount.message || "Valor bruto inválido";
+            }
+            
             toast({ 
               title: "Erro de validação", 
-              description: "Verifique os campos do formulário", 
+              description: errorMessage, 
               variant: "destructive"
             });
           })}

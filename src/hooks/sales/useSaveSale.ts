@@ -38,6 +38,8 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
       const supabaseData = {
         ...saleData,
         payment_method: saleData.payment_method.toString(),
+        // Garantir que salesperson_name não seja undefined
+        salesperson_name: saleData.salesperson_name,
       };
 
       console.log("Data being sent to Supabase:", supabaseData);

@@ -8,8 +8,12 @@ export const SaleFormSchema = z.object({
   /* campo obrigatório para valor bruto com validação para ser um valor válido */
   gross_amount: z.string()
     .nonempty("Informe o valor bruto")
-    .refine(val => {
-      const numVal = Number(val.replace(/\./g, "").replace(",", "."));
+    .transform((val) => {
+      // Remove os pontos de milhar e substitui vírgula por ponto
+      return val.replace(/\./g, "").replace(",", ".");
+    })
+    .refine((val) => {
+      const numVal = Number(val);
       return !isNaN(numVal) && numVal > 0;
     }, "Valor bruto deve ser um número válido maior que zero"),
 

@@ -24,10 +24,6 @@ export function SalesModals({
   onDeleteCancel,
   onDeleteConfirm
 }: SalesModalsProps) {
-  // We need to make sure modals are properly managed even if their state changes
-  // Each modal should be rendered constantly and controlled via the open prop
-  // This prevents the issues with internal state being lost on conditional rendering
-  
   return (
     <>
       {/* Always render the SaleFormModal and control visibility via open prop */}

@@ -27,8 +27,11 @@ import * as z from "zod";
 import { useUsers } from "@/hooks/useUsers";
 import { useState, useEffect } from "react";
 
+// Define the form schema type
+type FormSchema = z.infer<typeof SaleFormSchema>;
+
 interface SaleDetailsFieldsProps {
-  form: UseFormReturn<z.infer<typeof SaleFormSchema>>;
+  form: UseFormReturn<FormSchema>;
   date: Date | undefined;
   setDate: (date: Date | undefined) => void;
   disabled?: boolean;
@@ -75,6 +78,23 @@ export function SaleDetailsFields({
     }
   };
 
+  // Function to handle gross amount input formatting
+  const handleGrossAmountInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+    
+    // Remove qualquer caractere que não seja número ou vírgula
+    value = value.replace(/[^\d,]/g, '');
+    
+    // Certifique-se de ter no máximo uma vírgula
+    const commaCount = (value.match(/,/g) || []).length;
+    if (commaCount > 1) {
+      value = value.replace(/,/g, (match, index, original) => 
+        index === original.indexOf(',') ? ',' : '');
+    }
+    
+    form.setValue("gross_amount", value);
+  };
+
   return (
     <>
       <div className="grid gap-2">
@@ -108,7 +128,8 @@ export function SaleDetailsFields({
           id="gross_amount"
           type="text"
           placeholder="0,00"
-          {...form.register("gross_amount")}
+          value={form.watch("gross_amount")}
+          onChange={handleGrossAmountInput}
           disabled={disabled}
           ref={autoFocusRef}
         />
