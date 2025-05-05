@@ -1,5 +1,3 @@
-
-// SaleFormModal.tsx
 import React, { useState, useEffect, useCallback, useRef, useId } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,14 +36,12 @@ export function SaleFormModal({
     initialData ? new Date(initialData.sale_date) : new Date()
   );
   const autoFocusRef = useRef<HTMLInputElement>(null);
-
-  // id único para aria-describedby
   const descriptionId = useId();
 
+  /* ────────────────────── form (react‑hook‑form + zod) ───────────────────── */
   const form = useForm<z.infer<typeof SaleFormSchema>>({
     resolver: zodResolver(SaleFormSchema),
     defaultValues: {
-      salesperson_id: initialData?.salesperson_id || user?.id || "",
       salesperson_name: initialData?.salesperson_name || user?.name || "",
       gross_amount: initialData?.gross_amount?.toString() || "",
       payment_method: initialData?.payment_method || PaymentMethod.CREDIT,
@@ -55,15 +51,14 @@ export function SaleFormModal({
       client_phone: initialData?.client_phone || "",
       client_document: initialData?.client_document || "",
     },
-    mode: "onChange",
+    mode: "onBlur",
   });
 
-  // ressincroniza quando muda a venda em edição
+  /* republica valores quando mudamos de “nova” para “editar” */
   useEffect(() => {
     if (initialData) {
       setDate(new Date(initialData.sale_date));
       form.reset({
-        salesperson_id: initialData.salesperson_id,
         salesperson_name: initialData.salesperson_name,
         gross_amount: initialData.gross_amount.toString(),
         payment_method: initialData.payment_method,
@@ -76,7 +71,6 @@ export function SaleFormModal({
     } else {
       setDate(new Date());
       form.reset({
-        salesperson_id: user?.id || "",
         salesperson_name: user?.name || "",
         gross_amount: "",
         payment_method: PaymentMethod.CREDIT,
@@ -89,72 +83,50 @@ export function SaleFormModal({
     }
   }, [initialData, user, form]);
 
-  // foco automático confiável
+  /* foco quando o modal abre */
   useEffect(() => {
     if (open && autoFocusRef.current) {
       requestAnimationFrame(() => autoFocusRef.current?.focus());
     }
   }, [open]);
 
-  const handleDialogClose = useCallback(
-    (isOpen: boolean) => {
-      if (!isOpen && !isSubmitting) onCancel();
-    },
-    [isSubmitting, onCancel]
-  );
-
+  /* ─────────────────────────── submit handler ───────────────────────────── */
   const onSubmit = useCallback(
     (values: z.infer<typeof SaleFormSchema>) => {
-      console.log("Form submitted with values:", values);
-      
-      try {
-        // Convert gross_amount from string to number
-        const grossAmountStr = values.gross_amount.replace(",", ".");
-        const parsedAmount = parseFloat(grossAmountStr);
-        
-        if (isNaN(parsedAmount) || parsedAmount <= 0) {
-          console.error("Invalid amount:", grossAmountStr);
-          throw new Error("Valor bruto inválido. Insira um número maior que zero.");
-        }
-        
-        console.log("Parsed amount:", parsedAmount);
+      console.log("SUBMIT raw values:", values);
 
-        const saleData: Omit<Sale, "id"> = {
-          salesperson_id: values.salesperson_id,
-          salesperson_name: values.salesperson_name,
-          gross_amount: parsedAmount,
-          net_amount: parsedAmount,
-          payment_method: values.payment_method,
-          installments: values.installments,
-          sale_date: values.sale_date.toISOString(),
-          client_name: values.client_name || "",
-          client_phone: values.client_phone || "",
-          client_document: values.client_document || "",
-        };
+      /* converte string com vírgula/ponto para número */
+      const amount = Number(
+        values.gross_amount
+          .replace(/\./g, "") // remove separador de milhares
+          .replace(",", ".")
+      );
 
-        console.log("Calling onSave with data:", saleData);
-        onSave(saleData);
-      } catch (error) {
-        console.error("Error preparing sale data:", error);
-        // Form validation should prevent this, but just in case
-      }
+      const saleData: Omit<Sale, "id"> = {
+        salesperson_id: user?.id || "system",
+        salesperson_name: values.salesperson_name,
+        gross_amount: amount,
+        net_amount: amount, // ajustar se tiver regras de comissão
+        payment_method: values.payment_method,
+        installments: values.installments,
+        sale_date: values.sale_date.toISOString(),
+        client_name: values.client_name || "",
+        client_phone: values.client_phone || "",
+        client_document: values.client_document || "",
+      };
+
+      console.log("Sending saleData:", saleData);
+      onSave(saleData);
     },
-    [onSave]
+    [user, onSave]
   );
 
-  console.log("Form state:", form.formState);
-
+  /* ──────────────────────────── render ──────────────────────────────────── */
   return (
-    <Dialog open={open} onOpenChange={handleDialogClose}>
-      <DialogContent
-        className="sm:max-w-md"
-        aria-describedby={descriptionId}
-      >
+    <Dialog open={open} onOpenChange={(o) => !o && onCancel()} modal={false}>
+      <DialogContent className="sm:max-w-md" aria-describedby={descriptionId}>
         <DialogHeader>
-          <DialogTitle>
-            {initialData ? "Editar Venda" : "Nova Venda"}
-          </DialogTitle>
-
+          <DialogTitle>{initialData ? "Editar Venda" : "Nova Venda"}</DialogTitle>
           <DialogDescription id={descriptionId}>
             {initialData
               ? "Atualize os dados da venda."
