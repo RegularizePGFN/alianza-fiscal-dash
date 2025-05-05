@@ -1,33 +1,39 @@
-
+// SaleFormSchema.ts
 import * as z from "zod";
 import { PaymentMethod } from "@/lib/types";
 
+/**
+ * Converte “1.234,56” → 1234.56 e verifica se é um número > 0
+ */
+const stringToPositive = (v: string) => {
+  const n = Number(v.replace(/\./g, "").replace(",", "."));
+  return !isNaN(n) && n > 0;
+};
+
 export const SaleFormSchema = z.object({
-  salesperson_id: z.string().uuid({
-    message: "ID do vendedor é obrigatório",
+  salesperson_name: z
+    .string()
+    .nonempty("Nome do vendedor é obrigatório"),
+
+  gross_amount: z
+    .string()
+    .nonempty("Informe o valor bruto")
+    .refine(stringToPositive, "Valor deve ser maior que zero"),
+
+  payment_method: z.nativeEnum(PaymentMethod, {
+    errorMap: () => ({ message: "Selecione o método de pagamento" }),
   }),
-  salesperson_name: z.string().min(2, {
-    message: "O nome do vendedor deve ter pelo menos 2 caracteres.",
+
+  installments: z
+    .number()
+    .min(1, "Parcelas deve ser pelo menos 1"),
+
+  sale_date: z.date({
+    required_error: "Informe a data da venda",
+    invalid_type_error: "Data inválida",
   }),
-  gross_amount: z.string().min(1, "Valor bruto é obrigatório").refine((value) => {
-    try {
-      // Substitui vírgulas por pontos e tenta converter para número
-      const parsedValue = parseFloat(value.replace(",", "."));
-      return !isNaN(parsedValue) && parsedValue > 0;
-    } catch (error) {
-      return false;
-    }
-  }, {
-    message: "O valor bruto deve ser um número válido maior que zero.",
-  }),
-  payment_method: z.enum([
-    PaymentMethod.BOLETO,
-    PaymentMethod.PIX,
-    PaymentMethod.CREDIT,
-    PaymentMethod.DEBIT,
-  ]),
-  installments: z.number().min(1).max(12).default(1),
-  sale_date: z.date(),
+
+  /* campos de cliente são opcionais */
   client_name: z.string().optional(),
   client_phone: z.string().optional(),
   client_document: z.string().optional(),
