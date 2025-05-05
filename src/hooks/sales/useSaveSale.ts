@@ -1,4 +1,11 @@
-// …imports mantidos
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { showErrorToast } from "./saleUtils";
+import { Sale } from "@/lib/types";
+
+type UpdateSalesListFunction = (sale: Sale, isNew: boolean) => void;
+
 export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
@@ -11,12 +18,11 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
     setIsSaving(true);
 
     try {
-      // validação mínima
-      if (!saleData.gross_amount || isNaN(saleData.gross_amount) || saleData.gross_amount <= 0) {
+      if (!saleData.gross_amount || saleData.gross_amount <= 0) {
         throw new Error("Valor bruto deve ser maior que zero");
       }
 
-      /* transforma enum → string */
+      /* converte enum para string antes de enviar */
       const supabaseData = {
         ...saleData,
         payment_method: saleData.payment_method.toString(),
@@ -34,19 +40,21 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
       }
 
       if (result.error) throw result.error;
-
-      /* atualiza lista local */
       const row = result.data![0];
+
       const savedSale: Sale = {
         ...saleData,
         id: editingSaleId ?? row.id,
         created_at: row.created_at,
       };
-      updateSalesList(savedSale, !editingSaleId);
 
+      updateSalesList(savedSale, !editingSaleId);
       return true;
     } catch (err: any) {
-      showErrorToast(toast, err.message || "Erro ao salvar venda.");
+      showErrorToast(
+        toast,
+        err.message || "Erro inesperado ao salvar a venda."
+      );
       return false;
     } finally {
       setIsSaving(false);
