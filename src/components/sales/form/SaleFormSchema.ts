@@ -1,13 +1,19 @@
-// SaleFormSchema.ts
+/**
+ * SaleFormSchema.ts  –  esquema Zod usado no SaleFormModal
+ */
 import * as z from "zod";
 import { PaymentMethod } from "@/lib/types";
 
-/**
- * Converte “1.234,56” → 1234.56 e verifica se é um número > 0
- */
-const stringToPositive = (v: string) => {
-  const n = Number(v.replace(/\./g, "").replace(",", "."));
-  return !isNaN(n) && n > 0;
+/* util: converte "1.234,56" → 1234.56  |  "" → undefined */
+const parseAmount = (val: unknown) => {
+  if (typeof val === "number") return val;
+  if (typeof val === "string") {
+    const cleaned = val.replace(/\./g, "").replace(",", ".");
+    if (cleaned.trim() === "") return undefined;
+    const n = Number(cleaned);
+    return isNaN(n) ? undefined : n;
+  }
+  return undefined;
 };
 
 export const SaleFormSchema = z.object({
@@ -15,25 +21,30 @@ export const SaleFormSchema = z.object({
     .string()
     .nonempty("Nome do vendedor é obrigatório"),
 
-  gross_amount: z
-    .string()
-    .nonempty("Informe o valor bruto")
-    .refine(stringToPositive, "Valor deve ser maior que zero"),
+  /* aceita string ou number, converte p/ número e exige > 0 */
+  gross_amount: z.preprocess(
+    parseAmount,
+    z
+      .number({
+        required_error: "Informe o valor bruto",
+        invalid_type_error: "Valor inválido",
+      })
+      .positive("Valor deve ser maior que zero")
+  ),
 
   payment_method: z.nativeEnum(PaymentMethod, {
     errorMap: () => ({ message: "Selecione o método de pagamento" }),
   }),
 
   installments: z
-    .number()
-    .min(1, "Parcelas deve ser pelo menos 1"),
+    .number({ invalid_type_error: "Parcelas inválidas" })
+    .min(1, "Parcela mínima é 1"),
 
   sale_date: z.date({
     required_error: "Informe a data da venda",
     invalid_type_error: "Data inválida",
   }),
 
-  /* campos de cliente são opcionais */
   client_name: z.string().optional(),
   client_phone: z.string().optional(),
   client_document: z.string().optional(),
