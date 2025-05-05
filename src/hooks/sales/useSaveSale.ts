@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -18,8 +19,19 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
     setIsSaving(true);
 
     try {
+      console.log("Saving sale data:", saleData);
+
       if (!saleData.gross_amount || saleData.gross_amount <= 0) {
         throw new Error("Valor bruto deve ser maior que zero");
+      }
+
+      if (!saleData.salesperson_id) {
+        throw new Error("ID do vendedor é obrigatório");
+      }
+
+      // Verificar se o salesperson_name está presente
+      if (!saleData.salesperson_name) {
+        throw new Error("Nome do vendedor é obrigatório");
       }
 
       /* converte enum para string antes de enviar */
@@ -27,6 +39,8 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
         ...saleData,
         payment_method: saleData.payment_method.toString(),
       };
+
+      console.log("Data being sent to Supabase:", supabaseData);
 
       let result;
       if (editingSaleId) {
@@ -36,11 +50,23 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
           .eq("id", editingSaleId)
           .select();
       } else {
-        result = await supabase.from("sales").insert(supabaseData).select();
+        result = await supabase
+          .from("sales")
+          .insert(supabaseData)
+          .select();
       }
 
-      if (result.error) throw result.error;
-      const row = result.data![0];
+      if (result.error) {
+        console.error("Supabase error:", result.error);
+        throw result.error;
+      }
+
+      if (!result.data || result.data.length === 0) {
+        throw new Error("Não foi possível salvar a venda. Nenhum dado retornado.");
+      }
+
+      console.log("Supabase response:", result);
+      const row = result.data[0];
 
       const savedSale: Sale = {
         ...saleData,
@@ -48,9 +74,17 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
         created_at: row.created_at,
       };
 
+      console.log("Updating sales list with:", savedSale);
       updateSalesList(savedSale, !editingSaleId);
+      
+      toast({
+        title: editingSaleId ? "Venda atualizada" : "Venda criada",
+        description: "Operação realizada com sucesso",
+      });
+      
       return true;
     } catch (err: any) {
+      console.error("Error saving sale:", err);
       showErrorToast(
         toast,
         err.message || "Erro inesperado ao salvar a venda."

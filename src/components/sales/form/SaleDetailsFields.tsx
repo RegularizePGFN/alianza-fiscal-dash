@@ -45,7 +45,7 @@ export function SaleDetailsFields({
   const { users, isLoading } = useUsers();
   const [salespeople, setSalespeople] = useState<User[]>([]);
 
-  // Filter users to get only salespersons
+  // Filter users to get only salespeople
   useEffect(() => {
     if (users && users.length > 0) {
       const salesPersons = users.filter(user => 
@@ -54,18 +54,22 @@ export function SaleDetailsFields({
       setSalespeople(salesPersons);
       
       // Set default salesperson if none is selected yet
-      const currentSalesperson = form.getValues("salesperson_id");
-      if (!currentSalesperson && salesPersons.length > 0) {
-        form.setValue("salesperson_id", salesPersons[0].id);
-        form.setValue("salesperson_name", salesPersons[0].name);
+      const currentSalespersonId = form.getValues("salesperson_id");
+      if (!currentSalespersonId && salesPersons.length > 0) {
+        const defaultSalesperson = salesPersons[0];
+        form.setValue("salesperson_id", defaultSalesperson.id);
+        form.setValue("salesperson_name", defaultSalesperson.name);
       }
     }
   }, [users, form]);
 
   // Handle salesperson selection change
   const handleSalespersonChange = (salespersonId: string) => {
+    console.log("Selected salesperson ID:", salespersonId);
     const selectedSalesperson = salespeople.find(person => person.id === salespersonId);
+    
     if (selectedSalesperson) {
+      console.log("Setting salesperson:", selectedSalesperson.name);
       form.setValue("salesperson_id", selectedSalesperson.id);
       form.setValue("salesperson_name", selectedSalesperson.name);
     }
@@ -79,6 +83,7 @@ export function SaleDetailsFields({
           disabled={disabled || isLoading}
           onValueChange={handleSalespersonChange}
           defaultValue={form.getValues("salesperson_id")}
+          value={form.getValues("salesperson_id")}
         >
           <SelectTrigger className="w-full">
             <SelectValue placeholder={isLoading ? "Carregando..." : "Selecione o vendedor"} />
@@ -91,6 +96,9 @@ export function SaleDetailsFields({
             ))}
           </SelectContent>
         </Select>
+        {form.formState.errors.salesperson_id && (
+          <p className="text-xs text-destructive">{form.formState.errors.salesperson_id.message}</p>
+        )}
         {isLoading && <p className="text-xs text-muted-foreground">Carregando vendedores...</p>}
       </div>
 
@@ -104,6 +112,9 @@ export function SaleDetailsFields({
           disabled={disabled}
           ref={autoFocusRef}
         />
+        {form.formState.errors.gross_amount && (
+          <p className="text-xs text-destructive">{form.formState.errors.gross_amount.message}</p>
+        )}
       </div>
 
       <div className="grid gap-2">
@@ -124,6 +135,9 @@ export function SaleDetailsFields({
             <SelectItem value={PaymentMethod.DEBIT}>Débito</SelectItem>
           </SelectContent>
         </Select>
+        {form.formState.errors.payment_method && (
+          <p className="text-xs text-destructive">{form.formState.errors.payment_method.message}</p>
+        )}
       </div>
 
       <div className="grid gap-2">
@@ -135,6 +149,9 @@ export function SaleDetailsFields({
           {...form.register("installments", { valueAsNumber: true })}
           disabled={disabled}
         />
+        {form.formState.errors.installments && (
+          <p className="text-xs text-destructive">{form.formState.errors.installments.message}</p>
+        )}
       </div>
 
       <div className="grid gap-2">
@@ -168,6 +185,9 @@ export function SaleDetailsFields({
             />
           </PopoverContent>
         </Popover>
+        {form.formState.errors.sale_date && (
+          <p className="text-xs text-destructive">{form.formState.errors.sale_date.message}</p>
+        )}
       </div>
     </>
   );

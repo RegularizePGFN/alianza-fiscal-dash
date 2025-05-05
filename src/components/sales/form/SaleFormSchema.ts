@@ -1,16 +1,22 @@
-/* SaleFormSchema.ts  –  versão simplificada */
+
+/* SaleFormSchema.ts */
 
 import * as z from "zod";
 import { PaymentMethod } from "@/lib/types";
 
 export const SaleFormSchema = z.object({
-  /* apenas obrigatório – a conversão para número fica no onSubmit */
-  gross_amount: z.string().nonempty("Informe o valor bruto"),
+  /* campo obrigatório para valor bruto com validação para ser um valor válido */
+  gross_amount: z.string()
+    .nonempty("Informe o valor bruto")
+    .refine(val => {
+      const numVal = Number(val.replace(/\./g, "").replace(",", "."));
+      return !isNaN(numVal) && numVal > 0;
+    }, "Valor bruto deve ser um número válido maior que zero"),
 
-  salesperson_name: z
-    .string()
-    .nonempty("Nome do vendedor é obrigatório"),
-
+  /* campos obrigatórios */
+  salesperson_id: z.string().uuid("Selecione um vendedor válido").nonempty("Vendedor é obrigatório"),
+  salesperson_name: z.string().nonempty("Nome do vendedor é obrigatório"),
+  
   payment_method: z.nativeEnum(PaymentMethod, {
     errorMap: () => ({ message: "Selecione o método de pagamento" }),
   }),
@@ -24,6 +30,7 @@ export const SaleFormSchema = z.object({
     invalid_type_error: "Data inválida",
   }),
 
+  /* campos opcionais */
   client_name: z.string().optional(),
   client_phone: z.string().optional(),
   client_document: z.string().optional(),

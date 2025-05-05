@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Sale, UserRole } from "@/lib/types";
@@ -62,16 +63,30 @@ export default function SalesPage() {
 
   const handleSaveSaleForm = useCallback(
     async (saleData: Omit<Sale, "id">) => {
-      setIsProcessingAction(true);
-      const success = await handleSaveSale(saleData, editingSale?.id);
-      setIsProcessingAction(false);
+      try {
+        console.log("Saving sale from form:", saleData);
+        setIsProcessingAction(true);
+        const success = await handleSaveSale(saleData, editingSale?.id);
+        setIsProcessingAction(false);
 
-      if (success) {
-        fetchSales();
-        setShowSaleModal(false);
-        setEditingSale(null);
+        if (success) {
+          console.log("Sale saved successfully");
+          fetchSales();
+          setShowSaleModal(false);
+          setEditingSale(null);
+          toast({
+            title: editingSale ? "Venda atualizada" : "Venda adicionada",
+          });
+        } else {
+          console.error("Failed to save sale");
+        }
+      } catch (error) {
+        console.error("Error in handleSaveSaleForm:", error);
+        setIsProcessingAction(false);
         toast({
-          title: editingSale ? "Venda atualizada" : "Venda adicionada",
+          title: "Erro ao salvar a venda",
+          description: "Ocorreu um erro inesperado",
+          variant: "destructive"
         });
       }
     },
