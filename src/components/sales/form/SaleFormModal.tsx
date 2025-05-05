@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef, useId } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { SaleFormSchema } from "./SaleFormSchema";
 import {
   Dialog, DialogContent, DialogHeader,

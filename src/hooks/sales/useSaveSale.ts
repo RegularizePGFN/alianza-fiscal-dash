@@ -42,19 +42,22 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
         salesperson_name: saleData.salesperson_name,
       };
 
-      console.log("Data being sent to Supabase:", supabaseData);
+      // Remove net_amount as it's not in the database schema
+      const { net_amount, ...dataWithoutNetAmount } = supabaseData;
+      
+      console.log("Data being sent to Supabase:", dataWithoutNetAmount);
 
       let result;
       if (editingSaleId) {
         result = await supabase
           .from("sales")
-          .update(supabaseData)
+          .update(dataWithoutNetAmount)
           .eq("id", editingSaleId)
           .select();
       } else {
         result = await supabase
           .from("sales")
-          .insert(supabaseData)
+          .insert(dataWithoutNetAmount)
           .select();
       }
 
