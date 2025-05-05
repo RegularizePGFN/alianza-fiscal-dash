@@ -105,7 +105,11 @@ export function SaleFormModal({
 
   const onSubmit = useCallback(
     (values: z.infer<typeof SaleFormSchema>) => {
+      console.log("Form submitted with values:", values);
+      
+      // Convert gross_amount from string to number
       const parsedAmount = parseFloat(values.gross_amount.replace(",", "."));
+      console.log("Parsed amount:", parsedAmount);
 
       const saleData: Omit<Sale, "id"> = {
         salesperson_id: values.salesperson_id,
@@ -120,10 +124,13 @@ export function SaleFormModal({
         client_document: values.client_document || "",
       };
 
+      console.log("Calling onSave with data:", saleData);
       onSave(saleData);
     },
     [onSave]
   );
+
+  console.log("Form state:", form.formState);
 
   return (
     <Dialog open={open} onOpenChange={handleDialogClose}>

@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Sale } from "@/lib/types";
+import { Sale, PaymentMethod } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { showErrorToast } from "./saleUtils";
@@ -19,6 +19,7 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
     }
     
     setIsSaving(true);
+    console.log("Starting save operation with data:", saleData);
     
     try {
       console.log("Saving sale:", editingSaleId ? "Editing" : "New", saleData);
@@ -51,15 +52,18 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
         payment_method: saleData.payment_method.toString(),
         installments: saleData.installments,
         sale_date: saleData.sale_date,
-        client_name: saleData.client_name,
-        client_phone: saleData.client_phone,
-        client_document: saleData.client_document
+        client_name: saleData.client_name || '',
+        client_phone: saleData.client_phone || '',
+        client_document: saleData.client_document || ''
       };
+
+      console.log("Prepared data for Supabase:", supabaseData);
       
       let result;
       
       if (editingSaleId) {
         // Update existing sale
+        console.log("Updating sale with ID:", editingSaleId);
         result = await supabase
           .from('sales')
           .update(supabaseData)
@@ -91,6 +95,7 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
         }
       } else {
         // Insert new sale
+        console.log("Inserting new sale");
         result = await supabase
           .from('sales')
           .insert(supabaseData)
@@ -137,6 +142,7 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
     } finally {
       // Always reset the saving state, even if there's an error
       setIsSaving(false);
+      console.log("Save operation completed");
     }
   };
   
