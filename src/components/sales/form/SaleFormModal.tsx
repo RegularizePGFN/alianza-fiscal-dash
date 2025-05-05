@@ -35,9 +35,12 @@ export function SaleFormModal({
   const { toast } = useToast();
   const autoFocusRef = useRef<HTMLInputElement>(null);
   const descriptionId = useId();
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Parse the initialData correctly to ensure dates are properly set
-  const getInitialFormValues = () => {
+  const getInitialFormValues = useCallback(() => {
+    console.log("Getting initial form values, initialData:", initialData);
+    
     if (!initialData) {
       return {
         salesperson_id: user?.id || "",
@@ -52,19 +55,43 @@ export function SaleFormModal({
       };
     }
     
+    console.log("Using initialData sale_date:", initialData.sale_date);
+    
     // For editing existing sales, ensure we properly convert the date string to a Date object
+    // without timezone adjustments
+    let saleDate = new Date();
+    try {
+      if (typeof initialData.sale_date === 'string') {
+        // If it's in YYYY-MM-DD format, parse it to preserve the correct date
+        const parts = initialData.sale_date.split('-');
+        if (parts.length === 3) {
+          const year = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed in JavaScript
+          const day = parseInt(parts[2], 10);
+          saleDate = new Date(year, month, day);
+        } else {
+          saleDate = new Date(initialData.sale_date);
+        }
+      }
+    } catch (error) {
+      console.error("Error parsing date:", error);
+      saleDate = new Date();
+    }
+    
+    console.log("Parsed sale date:", saleDate);
+    
     return {
       salesperson_id: initialData.salesperson_id,
       salesperson_name: initialData.salesperson_name || '',
       gross_amount: initialData.gross_amount.toString(),
       payment_method: initialData.payment_method,
       installments: initialData.installments,
-      sale_date: new Date(initialData.sale_date),
+      sale_date: saleDate,
       client_name: initialData.client_name || "",
       client_phone: initialData.client_phone || "",
       client_document: initialData.client_document || "",
     };
-  };
+  }, [initialData, user]);
 
   // Corrected to use the proper type
   const form = useForm<FormSchema>({
@@ -75,14 +102,25 @@ export function SaleFormModal({
   // Reset form when initialData changes (for editing)
   useEffect(() => {
     if (open) {
-      form.reset(getInitialFormValues());
+      console.log("Modal opened, resetting form with initialData", initialData);
+      const formValues = getInitialFormValues();
+      console.log("Form values to set:", formValues);
+      form.reset(formValues);
+      setIsInitialized(true);
+    } else {
+      setIsInitialized(false);
     }
-  }, [initialData, open]);
+  }, [initialData, open, form, getInitialFormValues]);
 
   /* foco ao abrir */
   useEffect(() => {
     if (open && autoFocusRef.current) {
-      requestAnimationFrame(() => autoFocusRef.current?.focus());
+      // Ensure the component is properly mounted before focusing
+      const timeoutId = setTimeout(() => {
+        autoFocusRef.current?.focus();
+      }, 100);
+      
+      return () => clearTimeout(timeoutId);
     }
   }, [open]);
 
@@ -141,8 +179,14 @@ export function SaleFormModal({
     }
   }, [onSave, toast]);
 
+  // Don't render the modal content until it's properly initialized
+  if (!isInitialized && initialData) {
+    console.log("Waiting for form initialization...");
+    return null;
+  }
+
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onCancel()} modal={false}>
+    <Dialog open={open} onOpenChange={(o) => !o && onCancel()} modal={true}>
       <DialogContent className="sm:max-w-md" aria-describedby={descriptionId}>
         <DialogHeader>
           <DialogTitle>{initialData ? "Editar Venda" : "Nova Venda"}</DialogTitle>

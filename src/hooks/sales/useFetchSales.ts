@@ -68,20 +68,24 @@ export const useFetchSales = (user: User | null) => {
         }
         
         // Map data and ensure all required fields are present
-        const formattedSales: Sale[] = filteredData.map((sale) => ({
-          id: sale.id,
-          salesperson_id: sale.salesperson_id,
-          salesperson_name: sale.salesperson_name || 'Unknown',
-          gross_amount: sale.gross_amount,
-          net_amount: sale.gross_amount, // Use gross_amount as net_amount
-          payment_method: convertToPaymentMethod(sale.payment_method),
-          installments: sale.installments || 1,
-          sale_date: sale.sale_date,
-          created_at: sale.created_at,
-          client_name: sale.client_name || 'Client',
-          client_phone: sale.client_phone || '',
-          client_document: sale.client_document || ''
-        }));
+        const formattedSales: Sale[] = filteredData.map((sale) => {
+          console.log("Processing sale with date:", sale.sale_date, "original format");
+          
+          return {
+            id: sale.id,
+            salesperson_id: sale.salesperson_id,
+            salesperson_name: sale.salesperson_name || 'Unknown',
+            gross_amount: sale.gross_amount,
+            net_amount: sale.gross_amount, // Use gross_amount as net_amount
+            payment_method: convertToPaymentMethod(sale.payment_method),
+            installments: sale.installments || 1,
+            sale_date: sale.sale_date, // Keep the original date format as it comes from Supabase
+            created_at: sale.created_at,
+            client_name: sale.client_name || 'Client',
+            client_phone: sale.client_phone || '',
+            client_document: sale.client_document || ''
+          };
+        });
         
         setSales(formattedSales);
         console.log("Data formatted and set to state:", formattedSales.length, "sales");

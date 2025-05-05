@@ -15,12 +15,27 @@ export function formatCurrency(value: number): string {
   }).format(value);
 }
 
-// Format date to Brazilian format
+// Format date to Brazilian format - Fixed timezone issue
 export function formatDate(date: Date | string): string {
   if (typeof date === 'string') {
-    date = new Date(date);
+    // Create a date object that preserves the date and does not adjust for timezone
+    const parts = date.split('-');
+    if (parts.length === 3) {
+      // If it's in YYYY-MM-DD format, parse it directly
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed in JavaScript
+      const day = parseInt(parts[2], 10);
+      return new Intl.DateTimeFormat('pt-BR').format(new Date(year, month, day));
+    }
   }
-  return new Intl.DateTimeFormat('pt-BR').format(date);
+  
+  // For Date objects, use a method that prevents timezone adjustments
+  if (date instanceof Date) {
+    return new Intl.DateTimeFormat('pt-BR').format(date);
+  }
+  
+  // Fallback
+  return new Intl.DateTimeFormat('pt-BR').format(new Date(date));
 }
 
 // Format percentage
