@@ -9,7 +9,7 @@ import {
   Dialog, DialogContent, DialogHeader,
   DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
-import { Sale, PaymentMethod } from "@/lib/types";
+import { Sale, PaymentMethod, UserRole } from "@/lib/types";
 import { useAuth } from "@/contexts/auth";
 import { SaleDetailsFields } from "./SaleDetailsFields";
 import { ClientFormFields } from "./ClientFormFields";
@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 
 // Define the form schema type for TypeScript
 type FormSchema = z.infer<typeof SaleFormSchema>;
+const FORM_STORAGE_KEY = "sale_form_data";
 
 interface Props {
   initialData?: Sale | null;
@@ -36,12 +37,32 @@ export function SaleFormModal({
   const autoFocusRef = useRef<HTMLInputElement>(null);
   const descriptionId = useId();
   const [isInitialized, setIsInitialized] = useState(false);
-
+  const isAdmin = user?.role === UserRole.ADMIN;
+  
   // Parse the initialData correctly to ensure dates are properly set
   const getInitialFormValues = useCallback(() => {
     console.log("Getting initial form values, initialData:", initialData);
     
+    // Verifica se existem dados salvos no localStorage e se não há dados iniciais
+    // (não queremos usar o localStorage ao editar uma venda existente)
     if (!initialData) {
+      try {
+        const savedFormData = localStorage.getItem(FORM_STORAGE_KEY);
+        if (savedFormData) {
+          const parsedData = JSON.parse(savedFormData);
+          console.log("Restored form data from localStorage:", parsedData);
+          
+          // Converter a string de data para objeto Date
+          if (parsedData.sale_date) {
+            parsedData.sale_date = new Date(parsedData.sale_date);
+          }
+          
+          return parsedData;
+        }
+      } catch (error) {
+        console.error("Error loading form data from localStorage:", error);
+      }
+      
       return {
         salesperson_id: user?.id || "",
         salesperson_name: user?.name || "",
@@ -107,10 +128,42 @@ export function SaleFormModal({
       console.log("Form values to set:", formValues);
       form.reset(formValues);
       setIsInitialized(true);
+      
+      // Limpar dados salvados ao abrir o modal para edição
+      if (initialData) {
+        localStorage.removeItem(FORM_STORAGE_KEY);
+      }
     } else {
       setIsInitialized(false);
+      
+      // Limpar dados salvados quando o formulário é cancelado ou enviado com sucesso
+      if (!isSubmitting) {
+        localStorage.removeItem(FORM_STORAGE_KEY);
+      }
     }
-  }, [initialData, open, form, getInitialFormValues]);
+  }, [initialData, open, form, getInitialFormValues, isSubmitting]);
+
+  /* Salvar dados do formulário quando mudam */
+  useEffect(() => {
+    if (open && !initialData) {
+      const subscription = form.watch((value) => {
+        // Não salvar quando estiver editando uma venda existente
+        try {
+          // Converter a data para formato ISO antes de salvar
+          const valueToSave = {...value};
+          if (valueToSave.sale_date instanceof Date) {
+            valueToSave.sale_date = valueToSave.sale_date.toISOString();
+          }
+          
+          localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(valueToSave));
+        } catch (error) {
+          console.error("Error saving form data to localStorage:", error);
+        }
+      });
+      
+      return () => subscription.unsubscribe();
+    }
+  }, [form, open, initialData]);
 
   /* foco ao abrir */
   useEffect(() => {
@@ -168,6 +221,10 @@ export function SaleFormModal({
       };
       
       console.log("Sale data being sent:", saleData);
+      
+      // Limpar dados salvados após envio bem-sucedido
+      localStorage.removeItem(FORM_STORAGE_KEY);
+      
       onSave(saleData);
     } catch (error) {
       console.error("Error in form submission:", error);
@@ -219,6 +276,7 @@ export function SaleFormModal({
             setDate={(d) => form.setValue("sale_date", d!)}
             disabled={isSubmitting}
             autoFocusRef={autoFocusRef}
+            isAdmin={isAdmin}
           />
           <ClientFormFields form={form} disabled={isSubmitting} />
           <SaleFormActions

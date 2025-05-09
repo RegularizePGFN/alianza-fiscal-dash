@@ -25,13 +25,22 @@ export function formatDate(date: Date | string): string {
       const year = parseInt(parts[0], 10);
       const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed in JavaScript
       const day = parseInt(parts[2], 10);
-      return new Intl.DateTimeFormat('pt-BR').format(new Date(year, month, day));
+      
+      // Cria a data com hora zero para evitar problemas de timezone
+      // Importante: aqui usamos UTC para garantir a data exata
+      const utcDate = new Date(Date.UTC(year, month, day));
+      return new Intl.DateTimeFormat('pt-BR').format(utcDate);
     }
   }
   
   // For Date objects, use a method that prevents timezone adjustments
   if (date instanceof Date) {
-    return new Intl.DateTimeFormat('pt-BR').format(date);
+    // Cria uma nova data com hora zero para evitar problemas de timezone
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
+    const utcDate = new Date(Date.UTC(year, month, day));
+    return new Intl.DateTimeFormat('pt-BR').format(utcDate);
   }
   
   // Fallback

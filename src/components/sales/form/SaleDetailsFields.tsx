@@ -1,41 +1,26 @@
 
-// SaleDetailsFields.tsx
-import { PaymentMethod, User, UserRole } from "@/lib/types";
+import { useRef, useState, useEffect } from "react";
+import { UseFormReturn } from "react-hook-form";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import { Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
-import { ptBR } from "date-fns/locale";
-import { SaleFormSchema } from "./SaleFormSchema";
-import { UseFormReturn } from "react-hook-form";
-import * as z from "zod";
+import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PaymentMethod } from "@/lib/types";
 import { useUsers } from "@/hooks/useUsers";
-import { useState, useEffect } from "react";
-
-// Define the form schema type
-type FormSchema = z.infer<typeof SaleFormSchema>;
+import { pt } from "date-fns/locale";
 
 interface SaleDetailsFieldsProps {
-  form: UseFormReturn<FormSchema>;
-  date: Date | undefined;
+  form: UseFormReturn<any>;
+  date: Date;
   setDate: (date: Date | undefined) => void;
   disabled?: boolean;
   autoFocusRef?: React.RefObject<HTMLInputElement>;
+  isAdmin?: boolean;
 }
 
 export function SaleDetailsFields({
@@ -43,173 +28,212 @@ export function SaleDetailsFields({
   date,
   setDate,
   disabled = false,
-  autoFocusRef
+  autoFocusRef,
+  isAdmin = false
 }: SaleDetailsFieldsProps) {
-  const { users, isLoading } = useUsers();
-  const [salespeople, setSalespeople] = useState<User[]>([]);
-
-  // Filter users to get only salespeople
-  useEffect(() => {
-    if (users && users.length > 0) {
-      const salesPersons = users.filter(user => 
-        user.role === UserRole.SALESPERSON || user.role === UserRole.ADMIN
-      );
-      setSalespeople(salesPersons);
-      
-      // Set default salesperson if none is selected yet
-      const currentSalespersonId = form.getValues("salesperson_id");
-      if (!currentSalespersonId && salesPersons.length > 0) {
-        const defaultSalesperson = salesPersons[0];
-        form.setValue("salesperson_id", defaultSalesperson.id);
-        form.setValue("salesperson_name", defaultSalesperson.name);
-      }
-    }
-  }, [users, form]);
-
-  // Handle salesperson selection change
-  const handleSalespersonChange = (salespersonId: string) => {
-    console.log("Selected salesperson ID:", salespersonId);
-    const selectedSalesperson = salespeople.find(person => person.id === salespersonId);
-    
-    if (selectedSalesperson) {
-      console.log("Setting salesperson:", selectedSalesperson.name);
-      form.setValue("salesperson_id", selectedSalesperson.id);
-      form.setValue("salesperson_name", selectedSalesperson.name);
-    }
-  };
-
-  // Function to handle gross amount input formatting
-  const handleGrossAmountInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value;
-    
-    // Remove qualquer caractere que não seja número ou vírgula
-    value = value.replace(/[^\d,]/g, '');
-    
-    // Certifique-se de ter no máximo uma vírgula
-    const commaCount = (value.match(/,/g) || []).length;
-    if (commaCount > 1) {
-      value = value.replace(/,/g, (match, index, original) => 
-        index === original.indexOf(',') ? ',' : '');
-    }
-    
-    form.setValue("gross_amount", value);
-  };
-
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const { users, loading: loadingUsers } = isAdmin ? useUsers() : { users: [], loading: false };
+  
   return (
-    <>
-      <div className="grid gap-2">
-        <Label htmlFor="salesperson_id">Nome do Vendedor</Label>
-        <Select
-          disabled={disabled || isLoading}
-          onValueChange={handleSalespersonChange}
-          defaultValue={form.getValues("salesperson_id")}
-          value={form.getValues("salesperson_id")}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder={isLoading ? "Carregando..." : "Selecione o vendedor"} />
-          </SelectTrigger>
-          <SelectContent>
-            {salespeople.map((salesperson) => (
-              <SelectItem key={salesperson.id} value={salesperson.id}>
-                {salesperson.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {form.formState.errors.salesperson_id && (
-          <p className="text-xs text-destructive">{form.formState.errors.salesperson_id.message}</p>
-        )}
-        {isLoading && <p className="text-xs text-muted-foreground">Carregando vendedores...</p>}
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="gross_amount">Valor Bruto</Label>
-        <Input
-          id="gross_amount"
-          type="text"
-          placeholder="0,00"
-          value={form.watch("gross_amount")}
-          onChange={handleGrossAmountInput}
-          disabled={disabled}
-          ref={autoFocusRef}
+    <div className="space-y-4">
+      {/* Campo de vendedor - mostra select para admin ou input para vendedor */}
+      {isAdmin ? (
+        <FormField
+          control={form.control}
+          name="salesperson_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Vendedor</FormLabel>
+              <Select
+                disabled={disabled || loadingUsers}
+                value={field.value}
+                onValueChange={(value) => {
+                  // Ao selecionar um vendedor, atualiza também o nome do vendedor
+                  const selectedUser = users.find(user => user.id === value);
+                  if (selectedUser) {
+                    form.setValue("salesperson_name", selectedUser.name || '');
+                  }
+                  field.onChange(value);
+                }}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o vendedor" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {loadingUsers ? (
+                    <SelectItem value="loading" disabled>Carregando...</SelectItem>
+                  ) : (
+                    users.map(user => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.name || user.email}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        {form.formState.errors.gross_amount && (
-          <p className="text-xs text-destructive">{form.formState.errors.gross_amount.message}</p>
-        )}
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="payment_method">Forma de Pagamento</Label>
-        <Select
-          onValueChange={(value) =>
-            form.setValue("payment_method", value as PaymentMethod)
-          }
-          defaultValue={form.getValues("payment_method")}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Selecione" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={PaymentMethod.BOLETO}>Boleto</SelectItem>
-            <SelectItem value={PaymentMethod.PIX}>Pix</SelectItem>
-            <SelectItem value={PaymentMethod.CREDIT}>Crédito</SelectItem>
-            <SelectItem value={PaymentMethod.DEBIT}>Débito</SelectItem>
-          </SelectContent>
-        </Select>
-        {form.formState.errors.payment_method && (
-          <p className="text-xs text-destructive">{form.formState.errors.payment_method.message}</p>
-        )}
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="installments">Parcelas</Label>
-        <Input
-          id="installments"
-          type="number"
-          placeholder="1"
-          {...form.register("installments", { valueAsNumber: true })}
-          disabled={disabled}
+      ) : (
+        <FormField
+          control={form.control}
+          name="salesperson_name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nome do Vendedor</FormLabel>
+              <FormControl>
+                <Input {...field} disabled={true} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        {form.formState.errors.installments && (
-          <p className="text-xs text-destructive">{form.formState.errors.installments.message}</p>
-        )}
-      </div>
+      )}
 
-      <div className="grid gap-2">
-        <Label>Data da Venda</Label>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant={"outline"}
-              className={cn(
-                "w-full justify-start text-left font-normal",
-                !date && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {date
-                ? format(date, "dd/MM/yyyy", { locale: ptBR })
-                : "Selecione a data"}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              locale={ptBR}
-              selected={date}
-              onSelect={(selectedDate) => {
-                setDate(selectedDate);
-                form.setValue("sale_date", selectedDate || new Date());
-              }}
-              disabled={disabled}
-              initialFocus
-            />
-          </PopoverContent>
-        </Popover>
-        {form.formState.errors.sale_date && (
-          <p className="text-xs text-destructive">{form.formState.errors.sale_date.message}</p>
+      {/* Valor da venda */}
+      <FormField
+        control={form.control}
+        name="gross_amount"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Valor da Venda (R$)</FormLabel>
+            <FormControl>
+              <Input
+                {...field}
+                type="text"
+                placeholder="0,00"
+                disabled={disabled}
+                ref={autoFocusRef}
+                inputMode="decimal"
+                onChange={(e) => {
+                  // Formatar entrada numérica para moeda brasileira
+                  let value = e.target.value;
+                  
+                  // Remove tudo exceto números e vírgula
+                  value = value.replace(/[^\d,]/g, '');
+                  
+                  // Substitui vírgula por ponto para cálculos
+                  field.onChange(value);
+                }}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      {/* Data da venda */}
+      <FormField
+        control={form.control}
+        name="sale_date"
+        render={({ field }) => (
+          <FormItem className="flex flex-col">
+            <FormLabel>Data da Venda</FormLabel>
+            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+              <PopoverTrigger asChild>
+                <FormControl>
+                  <Button
+                    variant="outline"
+                    disabled={disabled}
+                    className={cn(
+                      "w-full pl-3 text-left font-normal",
+                      !date && "text-muted-foreground"
+                    )}
+                  >
+                    {date ? (
+                      format(date, "dd/MM/yyyy", { locale: pt })
+                    ) : (
+                      <span>Selecione uma data</span>
+                    )}
+                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                  </Button>
+                </FormControl>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={(date) => {
+                    setDate(date);
+                    setCalendarOpen(false);
+                  }}
+                  disabled={disabled}
+                  locale={pt}
+                  initialFocus
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      {/* Método de pagamento */}
+      <div className="grid grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="payment_method"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Método de Pagamento</FormLabel>
+              <Select
+                disabled={disabled}
+                value={field.value}
+                onValueChange={field.onChange}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value={PaymentMethod.CREDIT}>Cartão de Crédito</SelectItem>
+                  <SelectItem value={PaymentMethod.DEBIT}>Cartão de Débito</SelectItem>
+                  <SelectItem value={PaymentMethod.PIX}>Pix</SelectItem>
+                  <SelectItem value={PaymentMethod.BOLETO}>Boleto</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Parcelas - somente visível para cartão de crédito */}
+        {form.watch("payment_method") === PaymentMethod.CREDIT && (
+          <FormField
+            control={form.control}
+            name="installments"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Parcelas</FormLabel>
+                <Select
+                  disabled={disabled}
+                  value={field.value.toString()}
+                  onValueChange={(value) => field.onChange(parseInt(value, 10))}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => (
+                      <SelectItem key={n} value={n.toString()}>
+                        {n}x
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         )}
       </div>
-    </>
+    </div>
   );
 }

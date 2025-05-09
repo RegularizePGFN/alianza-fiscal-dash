@@ -20,7 +20,7 @@ export default function DashboardPage() {
         ) : (
           <>
             <SalesSummarySection summary={summary} trends={trends} />
-            <GoalsCommissionsSection summary={summary} />
+            <GoalsCommissionsSection summary={summary} salesData={salesData} />
             <RecentSalesSection salesData={salesData} />
           </>
         )}
