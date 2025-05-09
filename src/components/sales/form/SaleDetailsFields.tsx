@@ -34,6 +34,10 @@ export function SaleDetailsFields({
   const [calendarOpen, setCalendarOpen] = useState(false);
   const { users, isLoading: loadingUsers } = isAdmin ? useUsers() : { users: [], isLoading: false };
   
+  useEffect(() => {
+    console.log("SaleDetailsFields rendered with date:", date);
+  }, [date]);
+  
   return (
     <div className="space-y-4">
       {/* Campo de vendedor - mostra select para admin ou input para vendedor */}
@@ -142,6 +146,7 @@ export function SaleDetailsFields({
                       "w-full pl-3 text-left font-normal",
                       !date && "text-muted-foreground"
                     )}
+                    type="button"
                   >
                     {date ? (
                       format(date, "dd/MM/yyyy", { locale: pt })

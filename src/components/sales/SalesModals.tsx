@@ -2,6 +2,7 @@
 import { Sale } from "@/lib/types";
 import { SaleFormModal } from "@/components/sales/form/SaleFormModal";
 import { DeleteSaleDialog } from "@/components/sales/DeleteSaleDialog";
+import { useEffect } from "react";
 
 interface SalesModalsProps {
   editingSale: Sale | null;
@@ -24,9 +25,13 @@ export function SalesModals({
   onDeleteCancel,
   onDeleteConfirm
 }: SalesModalsProps) {
+  // Log para verificar visibilidade do modal
+  useEffect(() => {
+    console.log("SalesModals render - showSaleModal:", showSaleModal, "saleToDelete:", !!saleToDelete);
+  }, [showSaleModal, saleToDelete]);
+
   return (
     <>
-      {/* Always render the SaleFormModal and control visibility via open prop */}
       <SaleFormModal
         key={editingSale?.id || "new-sale"} 
         initialData={editingSale}
@@ -36,7 +41,6 @@ export function SalesModals({
         open={showSaleModal}
       />
       
-      {/* Always render DeleteSaleDialog and control visibility via isOpen prop */}
       <DeleteSaleDialog
         isOpen={!!saleToDelete}
         onClose={onDeleteCancel}

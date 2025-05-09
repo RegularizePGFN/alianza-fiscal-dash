@@ -93,7 +93,7 @@ export function SaleFormModal({
     
     // For editing existing sales, ensure we properly convert the date string to a Date object
     // without timezone adjustments
-    let saleDate = new Date();
+    let saleDate: Date;
     try {
       if (typeof initialData.sale_date === 'string') {
         // If it's in YYYY-MM-DD format, parse it to preserve the correct date
@@ -106,6 +106,8 @@ export function SaleFormModal({
         } else {
           saleDate = new Date(initialData.sale_date);
         }
+      } else {
+        saleDate = new Date(); // Fallback to today if unable to parse
       }
     } catch (error) {
       console.error("Error parsing date:", error);
@@ -250,11 +252,10 @@ export function SaleFormModal({
     }
   }, [onSave, toast]);
 
-  // Don't render the modal content until it's properly initialized
-  if (!isInitialized && initialData) {
-    console.log("Waiting for form initialization...");
-    return null;
-  }
+  // Exibe mensagem de log para verificar o fluxo de inicialização
+  useEffect(() => {
+    console.log("SaleFormModal render - open:", open, "isInitialized:", isInitialized, "initialData:", initialData);
+  }, [open, isInitialized, initialData]);
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onCancel()} modal={true}>
