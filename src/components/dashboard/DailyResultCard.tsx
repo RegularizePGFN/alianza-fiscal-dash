@@ -73,7 +73,7 @@ export function DailyResultCard({ salesData }: DailyResultCardProps) {
           </span>
         </div>
         
-        <div className="h-48 w-full">
+        <div className="w-full h-48">
           <ChartContainer
             config={{
               sales: {
@@ -82,7 +82,10 @@ export function DailyResultCard({ salesData }: DailyResultCardProps) {
             }}
           >
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={dailyData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+              <LineChart 
+                data={dailyData} 
+                margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                 <XAxis 
                   dataKey="day" 
@@ -92,10 +95,17 @@ export function DailyResultCard({ salesData }: DailyResultCardProps) {
                 <YAxis 
                   tickFormatter={(value) => `${value > 1000 ? `${(value/1000).toFixed(0)}k` : value}`}
                   tick={{ fontSize: 10 }}
+                  width={30}
                 />
                 <Tooltip
                   formatter={formatTooltip}
                   labelFormatter={(label) => `Dia ${label}`}
+                  contentStyle={{
+                    backgroundColor: "white",
+                    border: "1px solid #e0e0e0",
+                    borderRadius: "4px",
+                    padding: "8px"
+                  }}
                 />
                 <Line 
                   type="monotone" 
@@ -103,8 +113,9 @@ export function DailyResultCard({ salesData }: DailyResultCardProps) {
                   name="Vendas"
                   stroke="#8B5CF6" 
                   strokeWidth={2}
-                  dot={{ r: 3, fill: "#8B5CF6" }}
-                  activeDot={{ r: 5, stroke: "#8B5CF6", strokeWidth: 1, fill: "#8B5CF6" }}
+                  dot={{ r: 2, fill: "#8B5CF6" }}
+                  activeDot={{ r: 4, stroke: "#8B5CF6", strokeWidth: 1, fill: "#8B5CF6" }}
+                  isAnimationActive={false}
                 />
               </LineChart>
             </ResponsiveContainer>
