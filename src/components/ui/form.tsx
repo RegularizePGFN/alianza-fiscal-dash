@@ -9,6 +9,7 @@ import {
   FieldValues,
   FormProvider,
   useFormContext,
+  FieldError,
 } from "react-hook-form"
 
 import { cn } from "@/lib/utils"
@@ -43,39 +44,15 @@ const FormField = <
 const useFormField = () => {
   const fieldContext = React.useContext(FormFieldContext)
   const itemContext = React.useContext(FormItemContext)
-  const formContext = useFormContext()
+  const { getFieldState, formState } = useFormContext()
+
+  const fieldState = getFieldState(fieldContext.name, formState)
 
   if (!fieldContext) {
     throw new Error("useFormField should be used within <FormField>")
   }
 
-  // Se formContext não estiver disponível, retorne valores default
-  // em vez de lançar um erro
-  if (!formContext) {
-    console.warn("useFormField used outside of Form context. Make sure to wrap your form with <Form>")
-    return {
-      id: itemContext?.id || "",
-      name: fieldContext.name,
-      formItemId: itemContext ? `${itemContext.id}-form-item` : "",
-      formDescriptionId: itemContext ? `${itemContext.id}-form-item-description` : "",
-      formMessageId: itemContext ? `${itemContext.id}-form-item-message` : "",
-      error: undefined,
-    }
-  }
-
-  // Safely access getFieldState with adequate fallbacks
-  const { getFieldState, formState } = formContext
-  let fieldState = { invalid: false, isDirty: false, isTouched: false, error: undefined };
-  
-  try {
-    if (getFieldState) {
-      fieldState = getFieldState(fieldContext.name, formState);
-    }
-  } catch (error) {
-    console.error("Error getting field state:", error);
-  }
-
-  const { id } = itemContext || { id: "" }
+  const { id } = itemContext
 
   return {
     id,
@@ -91,7 +68,9 @@ type FormItemContextValue = {
   id: string
 }
 
-const FormItemContext = React.createContext<FormItemContextValue | undefined>(undefined)
+const FormItemContext = React.createContext<FormItemContextValue>(
+  {} as FormItemContextValue
+)
 
 const FormItem = React.forwardRef<
   HTMLDivElement,

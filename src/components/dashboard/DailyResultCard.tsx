@@ -73,17 +73,18 @@ export function DailyResultCard({ salesData }: DailyResultCardProps) {
           </span>
         </div>
         
-        <div className="w-full h-48">
+        <div className="w-full h-40 overflow-hidden">
           <ChartContainer
             config={{
               sales: {
                 color: '#8B5CF6'  // Cor primária
               }
             }}
+            className="w-full h-full"
           >
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="99%" height="99%">
               <LineChart 
-                data={dailyData} 
+                data={dailyData}
                 margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
