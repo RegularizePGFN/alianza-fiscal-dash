@@ -32,7 +32,7 @@ export function SaleDetailsFields({
   isAdmin = false
 }: SaleDetailsFieldsProps) {
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const { users, loading: loadingUsers } = isAdmin ? useUsers() : { users: [], loading: false };
+  const { users, isLoading: loadingUsers } = isAdmin ? useUsers() : { users: [], isLoading: false };
   
   return (
     <div className="space-y-4">

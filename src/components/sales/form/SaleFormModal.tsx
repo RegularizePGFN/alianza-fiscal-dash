@@ -15,6 +15,7 @@ import { SaleDetailsFields } from "./SaleDetailsFields";
 import { ClientFormFields } from "./ClientFormFields";
 import { SaleFormActions } from "./SaleFormActions";
 import { useToast } from "@/hooks/use-toast";
+import { Form } from "@/components/ui/form";
 
 // Define the form schema type for TypeScript
 type FormSchema = z.infer<typeof SaleFormSchema>;
@@ -39,6 +40,9 @@ export function SaleFormModal({
   const [isInitialized, setIsInitialized] = useState(false);
   const isAdmin = user?.role === UserRole.ADMIN;
   
+  // Estado para armazenar a data de venda
+  const [saleDate, setSaleDate] = useState<Date>(new Date());
+  
   // Parse the initialData correctly to ensure dates are properly set
   const getInitialFormValues = useCallback(() => {
     console.log("Getting initial form values, initialData:", initialData);
@@ -54,7 +58,13 @@ export function SaleFormModal({
           
           // Converter a string de data para objeto Date
           if (parsedData.sale_date) {
-            parsedData.sale_date = new Date(parsedData.sale_date);
+            const date = new Date(parsedData.sale_date);
+            parsedData.sale_date = date;
+            setSaleDate(date);
+          } else {
+            const today = new Date();
+            parsedData.sale_date = today;
+            setSaleDate(today);
           }
           
           return parsedData;
@@ -63,13 +73,16 @@ export function SaleFormModal({
         console.error("Error loading form data from localStorage:", error);
       }
       
+      const today = new Date();
+      setSaleDate(today);
+      
       return {
         salesperson_id: user?.id || "",
         salesperson_name: user?.name || "",
         gross_amount: "",
         payment_method: PaymentMethod.CREDIT,
         installments: 1,
-        sale_date: new Date(),
+        sale_date: today,
         client_name: "",
         client_phone: "",
         client_document: "",
@@ -100,6 +113,7 @@ export function SaleFormModal({
     }
     
     console.log("Parsed sale date:", saleDate);
+    setSaleDate(saleDate);
     
     return {
       salesperson_id: initialData.salesperson_id,
@@ -252,39 +266,46 @@ export function SaleFormModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form
-          onSubmit={form.handleSubmit(onSubmit, (err) => {
-            console.log("FORM‑ERRORS:", err);
-            let errorMessage = "Verifique os campos do formulário";
-            
-            // Check specifically for gross_amount errors
-            if (err.gross_amount) {
-              errorMessage = err.gross_amount.message || "Valor bruto inválido";
-            }
-            
-            toast({ 
-              title: "Erro de validação", 
-              description: errorMessage, 
-              variant: "destructive"
-            });
-          })}
-          className="space-y-4"
-        >
-          <SaleDetailsFields
-            form={form}
-            date={form.watch("sale_date")}
-            setDate={(d) => form.setValue("sale_date", d!)}
-            disabled={isSubmitting}
-            autoFocusRef={autoFocusRef}
-            isAdmin={isAdmin}
-          />
-          <ClientFormFields form={form} disabled={isSubmitting} />
-          <SaleFormActions
-            isSubmitting={isSubmitting}
-            initialData={initialData}
-            onCancel={onCancel}
-          />
-        </form>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit, (err) => {
+              console.log("FORM‑ERRORS:", err);
+              let errorMessage = "Verifique os campos do formulário";
+              
+              // Check specifically for gross_amount errors
+              if (err.gross_amount) {
+                errorMessage = err.gross_amount.message || "Valor bruto inválido";
+              }
+              
+              toast({ 
+                title: "Erro de validação", 
+                description: errorMessage, 
+                variant: "destructive"
+              });
+            })}
+            className="space-y-4"
+          >
+            <SaleDetailsFields
+              form={form}
+              date={saleDate}
+              setDate={(d) => {
+                if (d) {
+                  setSaleDate(d);
+                  form.setValue("sale_date", d);
+                }
+              }}
+              disabled={isSubmitting}
+              autoFocusRef={autoFocusRef}
+              isAdmin={isAdmin}
+            />
+            <ClientFormFields form={form} disabled={isSubmitting} />
+            <SaleFormActions
+              isSubmitting={isSubmitting}
+              initialData={initialData}
+              onCancel={onCancel}
+            />
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
