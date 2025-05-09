@@ -1,5 +1,5 @@
 
-import { useRef, useState, useEffect } from "react";
+import { useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -31,7 +31,7 @@ export function SaleDetailsFields({
   autoFocusRef,
   isAdmin = false
 }: SaleDetailsFieldsProps) {
-  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = React.useState(false);
   const { users, isLoading: loadingUsers } = isAdmin ? useUsers() : { users: [], isLoading: false };
   
   useEffect(() => {

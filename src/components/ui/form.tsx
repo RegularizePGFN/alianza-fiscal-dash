@@ -63,9 +63,15 @@ const useFormField = () => {
     }
   }
 
+  // Safely access getFieldState with adequate fallbacks
   const { getFieldState, formState } = formContext
-
-  const fieldState = getFieldState(fieldContext.name, formState)
+  let fieldState = { invalid: false, isDirty: false, isTouched: false, error: undefined };
+  
+  try {
+    fieldState = getFieldState(fieldContext.name, formState)
+  } catch (error) {
+    console.error("Error getting field state:", error);
+  }
 
   const { id } = itemContext || { id: "" }
 

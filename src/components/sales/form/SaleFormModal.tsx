@@ -59,8 +59,14 @@ export function SaleFormModal({
           // Converter a string de data para objeto Date
           if (parsedData.sale_date) {
             const date = new Date(parsedData.sale_date);
-            parsedData.sale_date = date;
-            setSaleDate(date);
+            if (!isNaN(date.getTime())) {
+              parsedData.sale_date = date;
+              setSaleDate(date);
+            } else {
+              const today = new Date();
+              parsedData.sale_date = today;
+              setSaleDate(today);
+            }
           } else {
             const today = new Date();
             parsedData.sale_date = today;
@@ -106,6 +112,8 @@ export function SaleFormModal({
         } else {
           saleDate = new Date(initialData.sale_date);
         }
+      } else if (initialData.sale_date instanceof Date) {
+        saleDate = initialData.sale_date;
       } else {
         saleDate = new Date(); // Fallback to today if unable to parse
       }
@@ -115,7 +123,8 @@ export function SaleFormModal({
     }
     
     console.log("Parsed sale date:", saleDate);
-    setSaleDate(saleDate);
+    // Use the function parameter instead of directly setting state
+    // This avoids unnecessary renders during initialization
     
     return {
       salesperson_id: initialData.salesperson_id,
@@ -143,6 +152,7 @@ export function SaleFormModal({
       const formValues = getInitialFormValues();
       console.log("Form values to set:", formValues);
       form.reset(formValues);
+      setSaleDate(formValues.sale_date); // Set the date state outside form reset
       setIsInitialized(true);
       
       // Limpar dados salvados ao abrir o modal para edição
@@ -179,6 +189,8 @@ export function SaleFormModal({
       
       return () => subscription.unsubscribe();
     }
+    // Return an empty cleanup function when the condition is not met
+    return () => {};
   }, [form, open, initialData]);
 
   /* foco ao abrir */
