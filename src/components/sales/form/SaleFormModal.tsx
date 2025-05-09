@@ -45,8 +45,6 @@ export function SaleFormModal({
   
   // Parse the initialData correctly to ensure dates are properly set
   const getInitialFormValues = useCallback(() => {
-    console.log("Getting initial form values, initialData:", initialData);
-    
     // Verifica se existem dados salvos no localStorage e se não há dados iniciais
     // (não queremos usar o localStorage ao editar uma venda existente)
     if (!initialData) {
@@ -54,23 +52,17 @@ export function SaleFormModal({
         const savedFormData = localStorage.getItem(FORM_STORAGE_KEY);
         if (savedFormData) {
           const parsedData = JSON.parse(savedFormData);
-          console.log("Restored form data from localStorage:", parsedData);
           
           // Converter a string de data para objeto Date
           if (parsedData.sale_date) {
             const date = new Date(parsedData.sale_date);
             if (!isNaN(date.getTime())) {
               parsedData.sale_date = date;
-              setSaleDate(date);
             } else {
-              const today = new Date();
-              parsedData.sale_date = today;
-              setSaleDate(today);
+              parsedData.sale_date = new Date();
             }
           } else {
-            const today = new Date();
-            parsedData.sale_date = today;
-            setSaleDate(today);
+            parsedData.sale_date = new Date();
           }
           
           return parsedData;
@@ -79,26 +71,20 @@ export function SaleFormModal({
         console.error("Error loading form data from localStorage:", error);
       }
       
-      const today = new Date();
-      setSaleDate(today);
-      
       return {
         salesperson_id: user?.id || "",
         salesperson_name: user?.name || "",
         gross_amount: "",
         payment_method: PaymentMethod.CREDIT,
         installments: 1,
-        sale_date: today,
+        sale_date: new Date(),
         client_name: "",
         client_phone: "",
         client_document: "",
       };
     }
     
-    console.log("Using initialData sale_date:", initialData.sale_date);
-    
     // For editing existing sales, ensure we properly convert the date string to a Date object
-    // without timezone adjustments
     let saleDate: Date;
     try {
       if (typeof initialData.sale_date === 'string') {
@@ -112,19 +98,13 @@ export function SaleFormModal({
         } else {
           saleDate = new Date(initialData.sale_date);
         }
-      } else if (initialData.sale_date instanceof Date) {
-        saleDate = initialData.sale_date;
       } else {
-        saleDate = new Date(); // Fallback to today if unable to parse
+        saleDate = new Date();
       }
     } catch (error) {
       console.error("Error parsing date:", error);
       saleDate = new Date();
     }
-    
-    console.log("Parsed sale date:", saleDate);
-    // Use the function parameter instead of directly setting state
-    // This avoids unnecessary renders during initialization
     
     return {
       salesperson_id: initialData.salesperson_id,
@@ -139,7 +119,6 @@ export function SaleFormModal({
     };
   }, [initialData, user]);
 
-  // Corrected to use the proper type
   const form = useForm<FormSchema>({
     resolver: zodResolver(SaleFormSchema),
     defaultValues: getInitialFormValues(),
@@ -148,11 +127,9 @@ export function SaleFormModal({
   // Reset form when initialData changes (for editing)
   useEffect(() => {
     if (open) {
-      console.log("Modal opened, resetting form with initialData", initialData);
       const formValues = getInitialFormValues();
-      console.log("Form values to set:", formValues);
       form.reset(formValues);
-      setSaleDate(formValues.sale_date); // Set the date state outside form reset
+      setSaleDate(formValues.sale_date);
       setIsInitialized(true);
       
       // Limpar dados salvados ao abrir o modal para edição
@@ -189,7 +166,6 @@ export function SaleFormModal({
       
       return () => subscription.unsubscribe();
     }
-    // Return an empty cleanup function when the condition is not met
     return () => {};
   }, [form, open, initialData]);
 
@@ -203,16 +179,14 @@ export function SaleFormModal({
       
       return () => clearTimeout(timeoutId);
     }
+    return () => {};
   }, [open]);
 
   /* submit */
   const onSubmit = useCallback((values: FormSchema) => {
     try {
-      console.log("Form values on submit:", values);
-      
       // Certifique-se de que temos um ID de vendedor
       if (!values.salesperson_id) {
-        console.error("Missing salesperson_id");
         toast({ 
           title: "Erro ao salvar",
           description: "Selecione um vendedor válido",
@@ -223,10 +197,8 @@ export function SaleFormModal({
 
       // Número já é transformado pelo schema
       const amount = Number(values.gross_amount);
-      console.log("Converted amount:", amount);
 
       if (isNaN(amount) || amount <= 0) {
-        console.error("Invalid gross_amount:", values.gross_amount);
         toast({ 
           title: "Erro ao salvar",
           description: "Valor bruto inválido",
@@ -248,8 +220,6 @@ export function SaleFormModal({
         client_document: values.client_document || "",
       };
       
-      console.log("Sale data being sent:", saleData);
-      
       // Limpar dados salvados após envio bem-sucedido
       localStorage.removeItem(FORM_STORAGE_KEY);
       
@@ -264,13 +234,12 @@ export function SaleFormModal({
     }
   }, [onSave, toast]);
 
-  // Exibe mensagem de log para verificar o fluxo de inicialização
-  useEffect(() => {
-    console.log("SaleFormModal render - open:", open, "isInitialized:", isInitialized, "initialData:", initialData);
-  }, [open, isInitialized, initialData]);
-
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onCancel()} modal={true}>
+    <Dialog open={open} onOpenChange={(o) => {
+      if (!o && !isSubmitting) {
+        onCancel();
+      }
+    }}>
       <DialogContent className="sm:max-w-md" aria-describedby={descriptionId}>
         <DialogHeader>
           <DialogTitle>{initialData ? "Editar Venda" : "Nova Venda"}</DialogTitle>
@@ -282,7 +251,6 @@ export function SaleFormModal({
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit, (err) => {
-              console.log("FORM‑ERRORS:", err);
               let errorMessage = "Verifique os campos do formulário";
               
               // Check specifically for gross_amount errors

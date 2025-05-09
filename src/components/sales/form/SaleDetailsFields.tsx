@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -33,10 +33,6 @@ export function SaleDetailsFields({
 }: SaleDetailsFieldsProps) {
   const [calendarOpen, setCalendarOpen] = React.useState(false);
   const { users, isLoading: loadingUsers } = isAdmin ? useUsers() : { users: [], isLoading: false };
-  
-  useEffect(() => {
-    console.log("SaleDetailsFields rendered with date:", date);
-  }, [date]);
   
   return (
     <div className="space-y-4">
@@ -162,8 +158,10 @@ export function SaleDetailsFields({
                   mode="single"
                   selected={date}
                   onSelect={(date) => {
-                    setDate(date);
-                    setCalendarOpen(false);
+                    if (date) {
+                      setDate(date);
+                      setCalendarOpen(false);
+                    }
                   }}
                   disabled={disabled}
                   locale={pt}

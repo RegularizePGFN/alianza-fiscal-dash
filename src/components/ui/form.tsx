@@ -68,7 +68,9 @@ const useFormField = () => {
   let fieldState = { invalid: false, isDirty: false, isTouched: false, error: undefined };
   
   try {
-    fieldState = getFieldState(fieldContext.name, formState)
+    if (getFieldState) {
+      fieldState = getFieldState(fieldContext.name, formState);
+    }
   } catch (error) {
     console.error("Error getting field state:", error);
   }
