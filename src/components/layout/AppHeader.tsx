@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { NotificationsPopover } from "@/components/notifications/NotificationsPopover";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export function AppHeader() {
   const { user, logout } = useAuth();
@@ -49,6 +50,7 @@ export function AppHeader() {
       <div className="flex items-center gap-3">
         {user && (
           <>
+            <ThemeToggle />
             <NotificationsPopover onNotificationsChange={setHasNotifications} />
 
             <DropdownMenu>

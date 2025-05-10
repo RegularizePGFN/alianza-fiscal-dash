@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/auth";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -8,7 +7,6 @@ import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SettingsHeader } from "@/components/settings/SettingsHeader";
 import { MonthlyGoalsSettings } from "@/components/settings/MonthlyGoalsSettings";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function SettingsPage() {
   const { user } = useAuth();
@@ -35,10 +33,7 @@ export default function SettingsPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <SettingsHeader />
-          <ThemeToggle />
-        </div>
+        <SettingsHeader />
 
         <Tabs
           defaultValue={activeTab}

@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -77,10 +76,7 @@ export default function UsersPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <UsersHeader onAddUser={handleAddUser} />
-          <ThemeToggle />
-        </div>
+        <UsersHeader onAddUser={handleAddUser} />
         
         <Card className="overflow-hidden border-0 shadow-md bg-white/80 backdrop-blur-sm dark:bg-gray-800/90 dark:border-gray-700 transition-all duration-300">
           <CardHeader className="dark:border-gray-700">

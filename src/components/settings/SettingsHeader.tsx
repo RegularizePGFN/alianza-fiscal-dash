@@ -4,7 +4,7 @@ import { NotificationsPopover } from "@/components/notifications/NotificationsPo
 
 export function SettingsHeader() {
   return (
-    <div className="flex items-center justify-between">
+    <div>
       <div className="flex items-center gap-2">
         <Settings className="h-5 w-5 text-primary" />
         <div>
@@ -13,9 +13,6 @@ export function SettingsHeader() {
             Gerencie as configurações do sistema e metas dos vendedores
           </p>
         </div>
-      </div>
-      <div className="flex items-center gap-2">
-        <NotificationsPopover />
       </div>
     </div>
   );

@@ -6,7 +6,6 @@ import { SalesSummarySection } from "@/components/dashboard/SalesSummarySection"
 import { GoalsCommissionsSection } from "@/components/dashboard/GoalsCommissionsSection";
 import { RecentSalesSection } from "@/components/dashboard/RecentSalesSection";
 import { useDashboardData } from "@/hooks/useDashboardData";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function DashboardPage() {
   const { salesData, summary, trends, loading } = useDashboardData();
@@ -14,10 +13,7 @@ export default function DashboardPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <DashboardHeader isLoading={loading} />
-          <ThemeToggle />
-        </div>
+        <DashboardHeader isLoading={loading} />
 
         {loading ? (
           <LoadingSpinner />

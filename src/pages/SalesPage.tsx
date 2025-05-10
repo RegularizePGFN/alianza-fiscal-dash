@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Sale, UserRole } from "@/lib/types";
@@ -9,7 +8,6 @@ import { importSalesFromExcel } from "@/lib/excelUtils";
 import { SalesContent } from "@/components/sales/SalesContent";
 import { SalesModals } from "@/components/sales/SalesModals";
 import { SalesActions } from "@/components/sales/SalesActions";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function SalesPage() {
   const { user } = useAuth();
@@ -117,14 +115,11 @@ export default function SalesPage() {
                 Gerencie as vendas e comissões da equipe.
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <ThemeToggle />
-              <SalesActions
-                isAdmin={isAdmin}
-                onAddSale={handleAddSale}
-                onImport={() => {}}
-              />
-            </div>
+            <SalesActions
+              isAdmin={isAdmin}
+              onAddSale={handleAddSale}
+              onImport={() => {}}
+            />
           </div>
         </div>
 
