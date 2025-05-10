@@ -26,16 +26,15 @@ export function SalesModals({
 }: SalesModalsProps) {
   return (
     <>
-      {showSaleModal && (
-        <SaleFormModal
-          key={editingSale?.id || "new-sale"} 
-          initialData={editingSale}
-          onSave={onSave}
-          onCancel={onFormCancel}
-          isSubmitting={isProcessingAction}
-          open={showSaleModal}
-        />
-      )}
+      {/* Using key to force re-render when switching between edit and new */}
+      <SaleFormModal
+        key={editingSale?.id || "new-sale"} 
+        initialData={editingSale}
+        onSave={onSave}
+        onCancel={onFormCancel}
+        isSubmitting={isProcessingAction}
+        open={showSaleModal}
+      />
       
       <DeleteSaleDialog
         isOpen={!!saleToDelete}

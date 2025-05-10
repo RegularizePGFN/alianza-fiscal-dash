@@ -15,6 +15,7 @@ import { useUsers } from "@/hooks/useUsers";
 import { pt } from "date-fns/locale";
 import { SaleFormSchema } from "./SaleFormSchema";
 import * as z from "zod";
+import { useAuth } from "@/contexts/auth";
 
 interface SaleDetailsFieldsProps {
   form: UseFormReturn<z.infer<typeof SaleFormSchema>>;
@@ -22,7 +23,6 @@ interface SaleDetailsFieldsProps {
   setDate: (date: Date | undefined) => void;
   disabled?: boolean;
   autoFocusRef?: React.RefObject<HTMLInputElement>;
-  isAdmin?: boolean;
 }
 
 export function SaleDetailsFields({
@@ -31,10 +31,11 @@ export function SaleDetailsFields({
   setDate,
   disabled = false,
   autoFocusRef,
-  isAdmin = false
 }: SaleDetailsFieldsProps) {
   const [calendarOpen, setCalendarOpen] = React.useState(false);
-  const { users, isLoading: loadingUsers } = isAdmin ? useUsers() : { users: [], isLoading: false };
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+  const { users, isLoading: loadingUsers } = useUsers();
   
   return (
     <div className="space-y-4">

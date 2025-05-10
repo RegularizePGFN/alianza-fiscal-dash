@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,7 +10,8 @@ import { Form } from "@/components/ui/form";
 import { ClientFormFields } from "./ClientFormFields";
 import { SaleDetailsFields } from "./SaleDetailsFields";
 import { SaleFormActions } from "./SaleFormActions";
-import { format, parse } from "date-fns";
+import { format } from "date-fns";
+import { useAuth } from "@/contexts/auth";
 
 export type SaleFormData = z.infer<typeof SaleFormSchema>;
 
@@ -29,16 +30,18 @@ export function SaleFormModal({
   isSubmitting = false,
   open = false,
 }: SaleFormModalProps) {
+  const { user } = useAuth();
   const isEditing = !!initialData?.id;
   const [date, setDate] = useState<Date>(new Date());
+  const autoFocusRef = useRef<HTMLInputElement>(null);
   
-  // Generate default values function since it doesn't exist in SaleFormUtils
+  // Generate default values function
   const generateDefaultValues = (sale: Sale | null): SaleFormData => {
     if (!sale) {
       return {
         gross_amount: "",
-        salesperson_id: "",
-        salesperson_name: "",
+        salesperson_id: user?.id || "",
+        salesperson_name: user?.name || "",
         payment_method: "Crédito" as any,
         installments: 1,
         sale_date: new Date(),
@@ -82,6 +85,15 @@ export function SaleFormModal({
     }
   }, [initialData, form, open]);
 
+  // Focus on the gross_amount input when modal opens
+  useEffect(() => {
+    if (open && autoFocusRef.current) {
+      setTimeout(() => {
+        autoFocusRef.current?.focus();
+      }, 100);
+    }
+  }, [open]);
+
   // Form submission handler
   const onSubmit = async (formData: SaleFormData) => {
     try {
@@ -91,8 +103,8 @@ export function SaleFormModal({
       const saleData: Omit<Sale, "id"> = {
         salesperson_id: formData.salesperson_id,
         salesperson_name: formData.salesperson_name,
-        gross_amount: Number(formData.gross_amount),
-        net_amount: Number(formData.gross_amount), // For now, net_amount equals gross_amount
+        gross_amount: Number(formData.gross_amount.replace(',', '.')),
+        net_amount: Number(formData.gross_amount.replace(',', '.')), // For now, net_amount equals gross_amount
         payment_method: formData.payment_method,
         installments: formData.installments,
         sale_date: formattedSaleDate,
@@ -121,6 +133,7 @@ export function SaleFormModal({
               form={form}
               date={date}
               setDate={setDate}
+              autoFocusRef={autoFocusRef}
             />
             <ClientFormFields 
               form={form} 
