@@ -1,11 +1,10 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Sale } from "@/lib/types";
-import { saleFormSchema } from "./SaleFormSchema";
-import { generateDefaultValues } from "./SaleFormUtils";
+import { SaleFormSchema } from "./SaleFormSchema";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { ClientFormFields } from "./ClientFormFields";
@@ -13,7 +12,7 @@ import { SaleDetailsFields } from "./SaleDetailsFields";
 import { SaleFormActions } from "./SaleFormActions";
 import { format, parse } from "date-fns";
 
-export type SaleFormData = z.infer<typeof saleFormSchema>;
+export type SaleFormData = z.infer<typeof SaleFormSchema>;
 
 interface SaleFormModalProps {
   initialData: Sale | null;
@@ -31,17 +30,55 @@ export function SaleFormModal({
   open = false,
 }: SaleFormModalProps) {
   const isEditing = !!initialData?.id;
+  const [date, setDate] = useState<Date>(new Date());
+  
+  // Generate default values function since it doesn't exist in SaleFormUtils
+  const generateDefaultValues = (sale: Sale | null): SaleFormData => {
+    if (!sale) {
+      return {
+        gross_amount: "",
+        salesperson_id: "",
+        salesperson_name: "",
+        payment_method: "Crédito" as any,
+        installments: 1,
+        sale_date: new Date(),
+        client_name: "",
+        client_phone: "",
+        client_document: "",
+      };
+    }
+
+    return {
+      gross_amount: sale.gross_amount.toString(),
+      salesperson_id: sale.salesperson_id || "",
+      salesperson_name: sale.salesperson_name || "",
+      payment_method: sale.payment_method,
+      installments: sale.installments || 1,
+      sale_date: sale.sale_date ? new Date(sale.sale_date) : new Date(),
+      client_name: sale.client_name || "",
+      client_phone: sale.client_phone || "",
+      client_document: sale.client_document || "",
+    };
+  };
   
   // Prepare form with either initial data or defaults
   const form = useForm<SaleFormData>({
-    resolver: zodResolver(saleFormSchema),
+    resolver: zodResolver(SaleFormSchema),
     defaultValues: generateDefaultValues(initialData),
   });
 
   // Reset form when initialData changes or when modal is opened/closed
   useEffect(() => {
     if (open) {
-      form.reset(generateDefaultValues(initialData));
+      const defaultValues = generateDefaultValues(initialData);
+      form.reset(defaultValues);
+      
+      // Set the date state for the calendar
+      if (initialData?.sale_date) {
+        setDate(new Date(initialData.sale_date));
+      } else {
+        setDate(new Date());
+      }
     }
   }, [initialData, form, open]);
 
@@ -49,11 +86,7 @@ export function SaleFormModal({
   const onSubmit = async (formData: SaleFormData) => {
     try {
       // Format date properly for submission
-      const saleDateObj = formData.sale_date instanceof Date 
-        ? formData.sale_date
-        : parse(formData.sale_date as unknown as string, 'yyyy-MM-dd', new Date());
-      
-      const formattedSaleDate = format(saleDateObj, 'yyyy-MM-dd');
+      const formattedSaleDate = format(date, 'yyyy-MM-dd');
 
       const saleData: Omit<Sale, "id"> = {
         salesperson_id: formData.salesperson_id,
@@ -63,7 +96,7 @@ export function SaleFormModal({
         payment_method: formData.payment_method,
         installments: formData.installments,
         sale_date: formattedSaleDate,
-        client_name: formData.client_name,
+        client_name: formData.client_name || "",
         client_phone: formData.client_phone || "",
         client_document: formData.client_document || "",
         created_at: initialData?.created_at || new Date().toISOString(),
@@ -84,11 +117,18 @@ export function SaleFormModal({
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <SaleDetailsFields control={form.control} />
-            <ClientFormFields control={form.control} />
+            <SaleDetailsFields 
+              form={form}
+              date={date}
+              setDate={setDate}
+            />
+            <ClientFormFields 
+              form={form} 
+            />
             <SaleFormActions 
               isSubmitting={isSubmitting} 
               onCancel={onCancel}
+              initialData={initialData}
             />
           </form>
         </Form>

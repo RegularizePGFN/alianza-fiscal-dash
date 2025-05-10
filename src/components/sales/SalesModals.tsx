@@ -24,8 +24,6 @@ export function SalesModals({
   onDeleteCancel,
   onDeleteConfirm
 }: SalesModalsProps) {
-  // Only render the SaleFormModal if showSaleModal is true
-  // This prevents unnecessary renders and potential infinite loops
   return (
     <>
       {showSaleModal && (

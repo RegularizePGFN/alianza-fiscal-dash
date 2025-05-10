@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import { UseFormReturn } from "react-hook-form";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -13,9 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PaymentMethod } from "@/lib/types";
 import { useUsers } from "@/hooks/useUsers";
 import { pt } from "date-fns/locale";
+import { SaleFormSchema } from "./SaleFormSchema";
+import * as z from "zod";
 
 interface SaleDetailsFieldsProps {
-  form: UseFormReturn<any>;
+  form: UseFormReturn<z.infer<typeof SaleFormSchema>>;
   date: Date;
   setDate: (date: Date | undefined) => void;
   disabled?: boolean;
@@ -160,6 +162,7 @@ export function SaleDetailsFields({
                   onSelect={(date) => {
                     if (date) {
                       setDate(date);
+                      field.onChange(date);
                       setCalendarOpen(false);
                     }
                   }}
