@@ -1,3 +1,4 @@
+
 import { ReactNode, useEffect, useState } from "react";
 import { AppSidebar } from "./AppSidebar";
 import { AppHeader } from "./AppHeader";
@@ -14,7 +15,7 @@ export function AppLayout({ children, requireAuth = true }: AppLayoutProps) {
   const [errorDetected, setErrorDetected] = useState<string | null>(null);
 
   /* ╭──────────────────────────────────────────────────────────╮
-     │ Desfaz “pointer‑events:none” que o listener de atalhos    │
+     │ Desfaz "pointer‑events:none" que o listener de atalhos    │
      │ coloca no #root e congela toda a interface                │
      ╰──────────────────────────────────────────────────────────╯ */
   useEffect(() => {
@@ -44,7 +45,7 @@ export function AppLayout({ children, requireAuth = true }: AppLayoutProps) {
       <div className="flex h-screen w-full items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
         <div className="flex flex-col items-center gap-4 p-8 bg-white/30 dark:bg-black/20 backdrop-blur-sm rounded-xl shadow-lg">
           <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="text-lg font-medium text-muted-foreground animate-pulse">
+          <p className="text-lg font-medium text-muted-foreground animate-pulse dark:text-gray-300">
             Carregando sistema...
           </p>
         </div>
@@ -60,15 +61,15 @@ export function AppLayout({ children, requireAuth = true }: AppLayoutProps) {
   // Error screen
   if (errorDetected) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-gradient-to-br from-red-50 to-gray-100">
-        <div className="flex flex-col items-center gap-4 max-w-md p-8 bg-white rounded-xl shadow-lg text-center">
-          <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
-            <span className="text-red-500 text-xl font-bold">!</span>
+      <div className="flex h-screen w-full items-center justify-center bg-gradient-to-br from-red-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="flex flex-col items-center gap-4 max-w-md p-8 bg-white dark:bg-gray-800 rounded-xl shadow-lg text-center">
+          <div className="h-12 w-12 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center">
+            <span className="text-red-500 dark:text-red-300 text-xl font-bold">!</span>
           </div>
-          <h2 className="text-xl font-semibold text-gray-800">
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
             Oops! Algo deu errado
           </h2>
-          <p className="text-sm text-gray-600">{errorDetected}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">{errorDetected}</p>
           <button
             onClick={() => window.location.reload()}
             className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
@@ -82,7 +83,7 @@ export function AppLayout({ children, requireAuth = true }: AppLayoutProps) {
 
   // Main layout
   return (
-    <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
       <AppSidebar />
       <div className="flex flex-col flex-1 overflow-hidden">
         <AppHeader />

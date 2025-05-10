@@ -8,6 +8,7 @@ import { DateFilter, PaymentMethod, UserRole } from "@/lib/types";
 import { useReportsData } from "@/hooks/useReportsData";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function ReportsPage() {
   const { user } = useAuth();
@@ -30,12 +31,15 @@ export default function ReportsPage() {
     <AppLayout>
       <div className="max-w-7xl mx-auto print:m-4">
         <div className="space-y-6 p-0">
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden print:hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden print:hidden transition-colors duration-300">
             <div className="p-4 sm:p-6">
-              <ReportsHeader />
+              <div className="flex justify-between items-center">
+                <ReportsHeader />
+                <ThemeToggle />
+              </div>
             </div>
             
-            <div className="border-t border-gray-100 p-4 sm:p-6">
+            <div className="border-t border-gray-100 dark:border-gray-700 p-4 sm:p-6">
               <ReportsFilter 
                 onSalespersonChange={setSelectedSalesperson}
                 onPaymentMethodChange={setSelectedPaymentMethod}
@@ -44,7 +48,7 @@ export default function ReportsPage() {
             </div>
           </div>
           
-          <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 print:break-inside-avoid print:mb-10">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 print:break-inside-avoid print:mb-10 transition-colors duration-300">
             <ReportsCharts 
               salesData={salesData} 
               loading={loading}

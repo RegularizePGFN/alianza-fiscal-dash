@@ -11,6 +11,7 @@ import { useUsers } from "@/hooks/useUsers";
 import { DeleteUserDialog } from "@/components/users/DeleteUserDialog";
 import { UserFormModal } from "@/components/users/UserFormModal";
 import { useToast } from "@/hooks/use-toast";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function UsersPage() {
   const { user } = useAuth();
@@ -76,12 +77,15 @@ export default function UsersPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <UsersHeader onAddUser={handleAddUser} />
+        <div className="flex justify-between items-center">
+          <UsersHeader onAddUser={handleAddUser} />
+          <ThemeToggle />
+        </div>
         
-        <Card className="overflow-hidden border-0 shadow-md bg-white/80 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle>Todos os Usuários</CardTitle>
-            <CardDescription>
+        <Card className="overflow-hidden border-0 shadow-md bg-white/80 backdrop-blur-sm dark:bg-gray-800/90 dark:border-gray-700 transition-all duration-300">
+          <CardHeader className="dark:border-gray-700">
+            <CardTitle className="dark:text-white">Todos os Usuários</CardTitle>
+            <CardDescription className="dark:text-gray-300">
               {isLoading 
                 ? "Carregando usuários..." 
                 : `Total de ${users.length} usuários ativos no sistema.`}

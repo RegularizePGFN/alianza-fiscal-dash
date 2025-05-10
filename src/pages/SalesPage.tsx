@@ -9,6 +9,7 @@ import { importSalesFromExcel } from "@/lib/excelUtils";
 import { SalesContent } from "@/components/sales/SalesContent";
 import { SalesModals } from "@/components/sales/SalesModals";
 import { SalesActions } from "@/components/sales/SalesActions";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function SalesPage() {
   const { user } = useAuth();
@@ -108,19 +109,22 @@ export default function SalesPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 transition-colors duration-300">
           <div className="flex justify-between items-start">
             <div>
-              <h2 className="text-3xl font-bold tracking-tight">Vendas</h2>
-              <p className="text-muted-foreground">
+              <h2 className="text-3xl font-bold tracking-tight dark:text-white">Vendas</h2>
+              <p className="text-muted-foreground dark:text-gray-300">
                 Gerencie as vendas e comissões da equipe.
               </p>
             </div>
-            <SalesActions
-              isAdmin={isAdmin}
-              onAddSale={handleAddSale}
-              onImport={() => {}}
-            />
+            <div className="flex items-center gap-3">
+              <ThemeToggle />
+              <SalesActions
+                isAdmin={isAdmin}
+                onAddSale={handleAddSale}
+                onImport={() => {}}
+              />
+            </div>
           </div>
         </div>
 

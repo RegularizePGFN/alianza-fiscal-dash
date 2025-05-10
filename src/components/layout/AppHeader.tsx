@@ -41,8 +41,8 @@ export function AppHeader() {
   };
 
   return (
-    <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 py-3 px-6 flex justify-between items-center shadow-sm">
-      <h1 className="text-xl font-semibold text-gray-800 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+    <header className="app-header bg-white/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 py-3 px-6 flex justify-between items-center shadow-sm dark:bg-gray-800/80 transition-colors duration-300">
+      <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-100 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
         Intranet Aliança Fiscal
       </h1>
       
@@ -53,7 +53,7 @@ export function AppHeader() {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full hover:bg-gray-100 transition-colors duration-200">
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
                   <Avatar className="h-9 w-9 ring-2 ring-primary/10 transition-all duration-300 hover:ring-primary/30">
                     <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-primary-foreground">
                       {getInitials(user.name)}
@@ -61,25 +61,25 @@ export function AppHeader() {
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 overflow-hidden p-0">
-                <div className="p-3 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+              <DropdownMenuContent align="end" className="w-56 overflow-hidden p-0 dark:bg-gray-800 dark:border-gray-700">
+                <div className="p-3 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-700">
                   <DropdownMenuLabel className="px-0 py-0">
-                    <p className="font-medium">{user.name}</p>
+                    <p className="font-medium dark:text-white">{user.name}</p>
                     <p className="text-xs text-muted-foreground mt-1">{user.email}</p>
                   </DropdownMenuLabel>
                 </div>
-                <div className="p-2">
+                <div className="p-2 dark:bg-gray-800">
                   <div className="px-2 py-1.5">
-                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">
+                    <span className="text-xs bg-primary/10 text-primary dark:bg-primary/20 px-2 py-1 rounded-full font-medium">
                       {getRoleDisplay(user.role)}
                     </span>
                   </div>
                   
                   {user.role === UserRole.ADMIN && (
                     <>
-                      <DropdownMenuSeparator />
+                      <DropdownMenuSeparator className="dark:bg-gray-700" />
                       <DropdownMenuItem asChild>
-                        <Link to="/configuracoes" className="flex items-center cursor-pointer">
+                        <Link to="/configuracoes" className="flex items-center cursor-pointer dark:text-gray-200 dark:hover:text-white">
                           <Settings className="mr-2 h-4 w-4" />
                           <span>Configurações</span>
                         </Link>
@@ -87,7 +87,7 @@ export function AppHeader() {
                     </>
                   )}
                   
-                  <DropdownMenuSeparator />
+                  <DropdownMenuSeparator className="dark:bg-gray-700" />
                   <DropdownMenuItem 
                     className="cursor-pointer text-destructive focus:text-destructive hover:bg-destructive/10 transition-colors duration-200" 
                     onClick={logout}
