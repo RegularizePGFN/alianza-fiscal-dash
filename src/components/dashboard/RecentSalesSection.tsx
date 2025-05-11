@@ -1,5 +1,5 @@
 
-import { SalesTable } from "@/components/sales/SalesTable";
+import { PaginatedSalesTable } from "@/components/sales/PaginatedSalesTable";
 import { Sale, UserRole } from "@/lib/types";
 import { useAuth } from "@/contexts/auth";
 
@@ -13,9 +13,10 @@ export function RecentSalesSection({ salesData }: RecentSalesSectionProps) {
   return (
     <div>
       <h3 className="text-xl font-semibold mb-4">Últimas Vendas</h3>
-      <SalesTable 
+      <PaginatedSalesTable 
         sales={salesData} 
         showSalesperson={user?.role !== UserRole.SALESPERSON}
+        itemsPerPage={5}  // Show fewer items on dashboard
       />
     </div>
   );

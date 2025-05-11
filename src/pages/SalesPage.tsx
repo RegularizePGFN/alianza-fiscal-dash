@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Sale, UserRole } from "@/lib/types";
@@ -100,6 +101,55 @@ export default function SalesPage() {
     }
   }, [isProcessingAction]);
 
+  const handleImport = useCallback(async (file: File) => {
+    try {
+      setIsProcessingAction(true);
+      const salesData = await importSalesFromExcel(file);
+      
+      if (salesData && salesData.length > 0) {
+        let successCount = 0;
+        
+        // Process each sale
+        for (const sale of salesData) {
+          const success = await handleSaveSale(sale);
+          if (success) successCount++;
+        }
+        
+        // Refresh sales list
+        fetchSales();
+        
+        // Show success/error message
+        if (successCount > 0) {
+          toast({
+            title: "Importação concluída",
+            description: `${successCount} de ${salesData.length} vendas foram importadas.`,
+          });
+        } else {
+          toast({
+            title: "Falha na importação",
+            description: "Nenhuma venda foi importada.",
+            variant: "destructive"
+          });
+        }
+      } else {
+        toast({
+          title: "Arquivo inválido",
+          description: "O arquivo não contém dados de vendas válidos.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error importing sales:", error);
+      toast({
+        title: "Erro na importação",
+        description: "Ocorreu um erro ao importar as vendas.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessingAction(false);
+    }
+  }, [handleSaveSale, fetchSales, toast]);
+
   /* ---------------------- render ---------------------- */
   const isAdmin = user?.role === UserRole.ADMIN;
   const isSalesperson = user?.role === UserRole.SALESPERSON;
@@ -118,7 +168,7 @@ export default function SalesPage() {
             <SalesActions
               isAdmin={isAdmin}
               onAddSale={handleAddSale}
-              onImport={() => {}}
+              onImport={handleImport}
             />
           </div>
         </div>
