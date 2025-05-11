@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sale } from "@/lib/types";
 import { PaginatedSalesTable } from "./PaginatedSalesTable";
 import { SalesFilter } from "./SalesFilter";
@@ -23,9 +23,11 @@ export function SalesContent({
   const [searchTerm, setSearchTerm] = useState<string>("");
   
   // When sales prop changes, update filteredSales
-  if (sales !== filteredSales && searchTerm === "") {
-    setFilteredSales(sales);
-  }
+  useEffect(() => {
+    if (sales && searchTerm === "") {
+      setFilteredSales(sales);
+    }
+  }, [sales, searchTerm]);
   
   return (
     <div className="space-y-4">

@@ -181,7 +181,7 @@ export function SalesFilter({ sales, onFilter, onSearch }: SalesFilterProps) {
               <SelectValue placeholder="Selecionar vendedor" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos</SelectItem>
+              <SelectItem value="all">Todos</SelectItem>
               {salespersons.map((name) => (
                 <SelectItem key={name} value={name}>
                   {name}
@@ -198,7 +198,7 @@ export function SalesFilter({ sales, onFilter, onSearch }: SalesFilterProps) {
               <SelectValue placeholder="Selecionar método" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos</SelectItem>
+              <SelectItem value="all">Todos</SelectItem>
               {paymentMethods.map((method) => (
                 <SelectItem key={method} value={method}>
                   {method}
@@ -215,7 +215,7 @@ export function SalesFilter({ sales, onFilter, onSearch }: SalesFilterProps) {
               <SelectValue placeholder="Selecionar período" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos</SelectItem>
+              <SelectItem value="all">Todos</SelectItem>
               {dateRangeOptions.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
