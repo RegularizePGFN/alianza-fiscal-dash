@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -66,7 +65,7 @@ export function ReportsCharts({ salesData, loading, error }: ReportsChartsProps)
       <Tabs defaultValue="monthly" onValueChange={setChartView} className="w-full">
         <ScrollArea className="w-full pb-2">
           <TabsList className="inline-flex w-auto mb-2 px-1">
-            <TabsTrigger value="monthly" className="px-4">Mensal</TabsTrigger>
+            <TabsTrigger value="monthly" className="px-4">Diário</TabsTrigger>
             <TabsTrigger value="payment" className="px-4">Por Pagamento</TabsTrigger>
             <TabsTrigger value="salesperson" className="px-4">Por Vendedor</TabsTrigger>
           </TabsList>
@@ -76,9 +75,9 @@ export function ReportsCharts({ salesData, loading, error }: ReportsChartsProps)
           <TabsContent value="monthly" className="space-y-6 m-0">
             <Card className="shadow-md border-primary/10 hover:border-primary/20 transition-all">
               <CardHeader className="bg-gradient-to-r from-sky-50 to-indigo-50 dark:from-slate-900 dark:to-indigo-950 rounded-t-lg">
-                <CardTitle>Vendas por Mês</CardTitle>
+                <CardTitle>Vendas por Dia</CardTitle>
                 <CardDescription>
-                  Volume de vendas distribuído pelos meses do período selecionado
+                  Volume de vendas distribuído por dias no período selecionado
                 </CardDescription>
               </CardHeader>
               <CardContent className={`h-[${chartHeight}]`}>
