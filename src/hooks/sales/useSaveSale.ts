@@ -46,14 +46,20 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
       } 
       // Convert to YYYY-MM-DD string
       else {
-        if (typeof saleData.sale_date === 'object' && saleData.sale_date instanceof Date) {
+        if (typeof saleData.sale_date === 'object' && saleData.sale_date !== null) {
           // Format as YYYY-MM-DD using local date parts
-          const d = saleData.sale_date;
+          const d = saleData.sale_date as Date;
           formattedDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         } else if (typeof saleData.sale_date === 'string') {
           // Try to parse as date then format
           const d = new Date(saleData.sale_date);
-          formattedDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          if (!isNaN(d.getTime())) {
+            formattedDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          } else {
+            // Fallback if parsing fails
+            formattedDate = new Date().toISOString().split('T')[0];
+            console.warn("Failed to parse date string, using today's date instead:", formattedDate);
+          }
         } else {
           // Fallback
           formattedDate = new Date().toISOString().split('T')[0];
