@@ -1,3 +1,4 @@
+
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { PaymentMethod } from "./types"
@@ -14,35 +15,35 @@ export function formatCurrency(value: number): string {
   }).format(value);
 }
 
-// Format date to Brazilian format - Fixed timezone issue
+// Format date to Brazilian format with improved timezone handling
 export function formatDate(date: Date | string): string {
-  if (typeof date === 'string') {
-    // Create a date object that preserves the date and does not adjust for timezone
-    const parts = date.split('-');
-    if (parts.length === 3) {
-      // If it's in YYYY-MM-DD format, parse it directly
-      const year = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed in JavaScript
-      const day = parseInt(parts[2], 10);
-      
-      // Create date with UTC to avoid timezone shifts
-      const utcDate = new Date(Date.UTC(year, month, day));
-      return new Intl.DateTimeFormat('pt-BR').format(utcDate);
-    }
-  }
+  if (!date) return '';
   
-  // For Date objects, use a method that prevents timezone adjustments
-  if (date instanceof Date) {
-    // Create a new date with UTC to avoid timezone shifts
+  try {
+    if (typeof date === 'string') {
+      // Handle date strings in ISO format (YYYY-MM-DD)
+      if (date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const [year, month, day] = date.split('-').map(Number);
+        // Create date with UTC to avoid timezone shifts
+        const utcDate = new Date(Date.UTC(year, month - 1, day));
+        return new Intl.DateTimeFormat('pt-BR').format(utcDate);
+      }
+      
+      // For other string formats, try to parse without timezone shifts
+      const parsedDate = new Date(date);
+      return new Intl.DateTimeFormat('pt-BR').format(parsedDate);
+    }
+    
+    // For Date objects, use a method that prevents timezone adjustments
     const year = date.getFullYear();
     const month = date.getMonth();
     const day = date.getDate();
     const utcDate = new Date(Date.UTC(year, month, day));
     return new Intl.DateTimeFormat('pt-BR').format(utcDate);
+  } catch (error) {
+    console.error("Error formatting date:", error, date);
+    return String(date);
   }
-  
-  // Fallback
-  return new Intl.DateTimeFormat('pt-BR').format(new Date(date));
 }
 
 // Format percentage

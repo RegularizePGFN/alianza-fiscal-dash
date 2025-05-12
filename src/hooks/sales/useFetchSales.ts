@@ -3,7 +3,8 @@ import { useState, useEffect, useRef } from "react";
 import { Sale, UserRole } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { convertToPaymentMethod, showErrorToast } from "./saleUtils";
+import { convertToPaymentMethod } from "./saleUtils";
+import { showErrorToast } from "./saleUtils";
 
 type User = {
   id: string;
@@ -59,6 +60,7 @@ export const useFetchSales = (user: User | null) => {
       
       if (data && isMountedRef.current) {
         console.log("Sales data retrieved:", data.length, "records");
+        console.log("Sample sale data:", data[0]);
         
         // Client-side filtering based on user role
         let filteredData = data;
@@ -69,7 +71,8 @@ export const useFetchSales = (user: User | null) => {
         
         // Map data and ensure all required fields are present
         const formattedSales: Sale[] = filteredData.map((sale) => {
-          console.log("Processing sale with date:", sale.sale_date, "original format");
+          // Log to debug date issues
+          console.log(`Sale ID: ${sale.id} - Database sale_date:`, sale.sale_date);
           
           return {
             id: sale.id,
@@ -79,7 +82,8 @@ export const useFetchSales = (user: User | null) => {
             net_amount: sale.gross_amount, // Use gross_amount as net_amount
             payment_method: convertToPaymentMethod(sale.payment_method),
             installments: sale.installments || 1,
-            sale_date: sale.sale_date, // Keep the original date format
+            // Ensure we use the date exactly as stored in the database
+            sale_date: sale.sale_date,
             created_at: sale.created_at,
             client_name: sale.client_name || 'Client',
             client_phone: sale.client_phone || '',

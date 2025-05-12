@@ -64,7 +64,13 @@ export function SalesTable({
                   <TableCell>{sale.salesperson_name}</TableCell>
                 )}
                 <TableCell>{sale.client_name}</TableCell>
-                <TableCell>{formatDate(sale.sale_date)}</TableCell>
+                <TableCell>
+                  {/* Add debugging info to see raw date */}
+                  <div>
+                    {formatDate(sale.sale_date)}
+                    {/* <div className="text-xs text-muted-foreground">{sale.sale_date}</div> */}
+                  </div>
+                </TableCell>
                 <TableCell>{sale.payment_method}</TableCell>
                 <TableCell>
                   {sale.installments > 1
