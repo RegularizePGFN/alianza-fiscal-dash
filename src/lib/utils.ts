@@ -15,7 +15,7 @@ export function formatCurrency(value: number): string {
   }).format(value);
 }
 
-// Format date to Brazilian format with correct timezone handling
+// Enhanced format date function to handle different date formats consistently
 export function formatDate(date: Date | string): string {
   if (!date) return '';
   
@@ -23,22 +23,23 @@ export function formatDate(date: Date | string): string {
     // For debugging
     console.log("formatDate input:", date, typeof date);
     
-    // Special handling for ISO date strings in YYYY-MM-DD format
+    // Handle YYYY-MM-DD format (from database)
     if (typeof date === 'string') {
-      // Check if it's already in YYYY-MM-DD format
+      // Check if it's in YYYY-MM-DD format
       if (date.match(/^\d{4}-\d{2}-\d{2}$/)) {
         const [year, month, day] = date.split('-').map(Number);
-        // Create date using local timezone
+        // Create date using local timezone explicitly
         const localDate = new Date(year, month - 1, day);
-        console.log("YYYY-MM-DD string parsed as:", localDate);
+        console.log("YYYY-MM-DD string parsed to local date:", localDate);
         return new Intl.DateTimeFormat('pt-BR').format(localDate);
       }
     }
     
-    // For Date objects or other string formats
+    // Handle Date objects or other date string formats
     const dateObj = typeof date === 'string' ? new Date(date) : date;
-    console.log("Formatted date result:", new Intl.DateTimeFormat('pt-BR').format(dateObj));
-    return new Intl.DateTimeFormat('pt-BR').format(dateObj);
+    const result = new Intl.DateTimeFormat('pt-BR').format(dateObj);
+    console.log("Formatted date result:", result);
+    return result;
     
   } catch (error) {
     console.error("Error formatting date:", error, date);
@@ -62,6 +63,22 @@ export function getCurrentMonthDates(): { start: Date; end: Date } {
   const start = new Date(now.getFullYear(), now.getMonth(), 1);
   const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
   return { start, end };
+}
+
+// Convert date to YYYY-MM-DD format (ISO date string without time)
+export function toISODateString(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+// Parse YYYY-MM-DD string to a Date object in local timezone
+export function parseISODateString(dateString: string): Date {
+  if (!dateString || !dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    console.warn("Invalid date string format:", dateString);
+    return new Date();
+  }
+  
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day);
 }
 
 // Calculate commission amount based on performance against goal - SIMPLIFIED

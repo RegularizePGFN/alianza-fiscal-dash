@@ -35,8 +35,8 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
         throw new Error("Nome do vendedor é obrigatório");
       }
       
-      // Essential: Ensure date is in YYYY-MM-DD format for database storage
-      // This is critical because PostgreSQL expects dates in this format
+      // Critical: Ensure date is in YYYY-MM-DD format for database storage
+      // If sale_date isn't a string, it's probably a Date object that needs formatting
       let formattedDate: string;
       
       // If already in YYYY-MM-DD format, use as is
@@ -44,18 +44,20 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
         formattedDate = saleData.sale_date;
         console.log("Using existing YYYY-MM-DD format:", formattedDate);
       } 
-      // For Date objects or other string formats, convert to YYYY-MM-DD
+      // Convert to YYYY-MM-DD string
       else {
-        let dateObj: Date;
-        
-        if (typeof saleData.sale_date === 'string') {
-          dateObj = new Date(saleData.sale_date);
+        if (typeof saleData.sale_date === 'object' && saleData.sale_date instanceof Date) {
+          // Format as YYYY-MM-DD using local date parts
+          const d = saleData.sale_date;
+          formattedDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        } else if (typeof saleData.sale_date === 'string') {
+          // Try to parse as date then format
+          const d = new Date(saleData.sale_date);
+          formattedDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         } else {
-          dateObj = saleData.sale_date as unknown as Date;
+          // Fallback
+          formattedDate = new Date().toISOString().split('T')[0];
         }
-        
-        // Format as YYYY-MM-DD ensuring local date parts
-        formattedDate = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
         console.log("Converted to YYYY-MM-DD format:", formattedDate);
       }
 
@@ -101,12 +103,12 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
       const row = result.data[0];
       console.log("Returned sale_date:", row.sale_date);
 
+      // Use the date returned from the database to ensure consistency
       const savedSale: Sale = {
         ...saleData,
         id: editingSaleId ?? row.id,
         created_at: row.created_at,
-        // Critical: Use exactly what the database returned
-        sale_date: row.sale_date
+        sale_date: row.sale_date // Use exactly what the database returned
       };
 
       console.log("Updating sales list with:", savedSale);

@@ -2,7 +2,8 @@
 import React from "react";
 import { ResponsiveContainer, LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import { Sale } from "@/lib/types";
-import { format, parseISO } from "date-fns";
+import { parseISODateString } from "@/lib/utils";
+import { format } from "date-fns";
 import { ChartContainer } from "@/components/ui/chart";
 
 interface LineChartProps {
@@ -12,7 +13,11 @@ interface LineChartProps {
 export const LineChart: React.FC<LineChartProps> = ({ data }) => {
   // Group sales by month and calculate totals
   const monthlySales = data.reduce((acc: Record<string, { month: string, amount: number, count: number }>, sale) => {
-    const date = parseISO(sale.sale_date);
+    // Parse the sale date properly using our helper function
+    const date = typeof sale.sale_date === 'string' && sale.sale_date.match(/^\d{4}-\d{2}-\d{2}$/)
+      ? parseISODateString(sale.sale_date)
+      : new Date(sale.sale_date);
+      
     const monthKey = format(date, 'yyyy-MM');
     const monthLabel = format(date, 'MMM yyyy');
     

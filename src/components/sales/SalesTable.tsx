@@ -66,10 +66,6 @@ export function SalesTable({
                 <TableCell>{sale.client_name}</TableCell>
                 <TableCell>
                   {formatDate(sale.sale_date)}
-                  {/* Debug info to see raw date */}
-                  <div className="text-xs text-muted-foreground opacity-50">
-                    {typeof sale.sale_date === 'string' ? sale.sale_date.substring(0, 10) : 'N/A'}
-                  </div>
                 </TableCell>
                 <TableCell>{sale.payment_method}</TableCell>
                 <TableCell>

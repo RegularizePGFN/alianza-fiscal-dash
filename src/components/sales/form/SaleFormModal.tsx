@@ -11,6 +11,7 @@ import { SaleDetailsFields } from "./SaleDetailsFields";
 import { SaleFormActions } from "./SaleFormActions";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/auth";
+import { parseISODateString } from "@/lib/utils";
 
 export type SaleFormData = z.infer<typeof SaleFormSchema>;
 
@@ -56,10 +57,9 @@ export function SaleFormModal({
     if (sale.sale_date) {
       console.log("Sale date from initialData:", sale.sale_date, typeof sale.sale_date);
       
-      // If it's a string in YYYY-MM-DD format
+      // If it's a string in YYYY-MM-DD format (from database)
       if (typeof sale.sale_date === 'string' && sale.sale_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        const [year, month, day] = sale.sale_date.split('-').map(Number);
-        saleDate = new Date(year, month - 1, day);
+        saleDate = parseISODateString(sale.sale_date);
         console.log("Parsed YYYY-MM-DD date:", saleDate);
       } 
       // Other string formats
@@ -105,15 +105,13 @@ export function SaleFormModal({
       if (initialData?.sale_date) {
         let dateToUse: Date;
         
-        // Handle string dates (from DB)
-        if (typeof initialData.sale_date === 'string') {
-          // Check if YYYY-MM-DD format
-          if (initialData.sale_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-            const [year, month, day] = initialData.sale_date.split('-').map(Number);
-            dateToUse = new Date(year, month - 1, day);
-          } else {
-            dateToUse = new Date(initialData.sale_date);
-          }
+        // Handle YYYY-MM-DD string format from database
+        if (typeof initialData.sale_date === 'string' && initialData.sale_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          dateToUse = parseISODateString(initialData.sale_date);
+        } 
+        // Handle other string formats
+        else if (typeof initialData.sale_date === 'string') {
+          dateToUse = new Date(initialData.sale_date);
         } 
         // Handle Date objects
         else {
@@ -140,7 +138,7 @@ export function SaleFormModal({
   // Form submission handler
   const onSubmit = async (formData: SaleFormData) => {
     try {
-      // Format date properly for submission
+      // Format date properly for submission using date from the calendar
       const formattedSaleDate = format(date, 'yyyy-MM-dd');
       console.log("Submitting with date:", date);
       console.log("Formatted to YYYY-MM-DD:", formattedSaleDate);

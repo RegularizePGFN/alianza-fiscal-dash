@@ -61,8 +61,11 @@ export const useFetchSales = (user: User | null) => {
       if (data && isMountedRef.current) {
         console.log("Sales data retrieved:", data.length, "records");
         if (data.length > 0) {
-          console.log("Sample sale data (first record):", data[0]);
-          console.log("Sample sale_date (first record):", data[0].sale_date, typeof data[0].sale_date);
+          // Log sample dates for debugging
+          console.log("First 3 sale dates from database:");
+          data.slice(0, 3).forEach((sale, i) => {
+            console.log(`Sale ${i+1}:`, sale.id, "Date:", sale.sale_date, "Type:", typeof sale.sale_date);
+          });
         }
         
         // Client-side filtering based on user role
@@ -96,7 +99,7 @@ export const useFetchSales = (user: User | null) => {
         });
         
         setSales(formattedSales);
-        console.log("Sales data after mapping:", formattedSales);
+        console.log("Sales data after mapping:", formattedSales.length, "records");
       }
     } catch (error: any) {
       console.error('Error fetching sales:', error);

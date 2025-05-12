@@ -2,7 +2,7 @@
 import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sale } from "@/lib/types";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, parseISODateString } from "@/lib/utils";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { ChartContainer } from "@/components/ui/chart";
 
@@ -19,7 +19,11 @@ export function DailyResultCard({ salesData }: DailyResultCardProps) {
     
     // Filtrar vendas do mês atual
     const currentMonthSales = salesData.filter(sale => {
-      const saleDate = new Date(sale.sale_date);
+      // Parse the sale date properly
+      const saleDate = typeof sale.sale_date === 'string' && sale.sale_date.match(/^\d{4}-\d{2}-\d{2}$/)
+        ? parseISODateString(sale.sale_date)
+        : new Date(sale.sale_date);
+        
       return saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear;
     });
     
@@ -27,7 +31,11 @@ export function DailyResultCard({ salesData }: DailyResultCardProps) {
     const salesByDay: Record<string, { day: string, value: number, date: string }> = {};
     
     currentMonthSales.forEach(sale => {
-      const saleDate = new Date(sale.sale_date);
+      // Parse the sale_date consistently
+      const saleDate = typeof sale.sale_date === 'string' && sale.sale_date.match(/^\d{4}-\d{2}-\d{2}$/)
+        ? parseISODateString(sale.sale_date)
+        : new Date(sale.sale_date);
+        
       const dayKey = saleDate.getDate().toString();
       const formattedDay = dayKey.padStart(2, '0');
       
