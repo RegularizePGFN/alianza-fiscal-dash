@@ -60,7 +60,10 @@ export const useFetchSales = (user: User | null) => {
       
       if (data && isMountedRef.current) {
         console.log("Sales data retrieved:", data.length, "records");
-        console.log("Sample sale data:", data[0]);
+        if (data.length > 0) {
+          console.log("Sample sale data (first record):", data[0]);
+          console.log("Sample sale_date (first record):", data[0].sale_date, typeof data[0].sale_date);
+        }
         
         // Client-side filtering based on user role
         let filteredData = data;
@@ -72,8 +75,9 @@ export const useFetchSales = (user: User | null) => {
         // Map data and ensure all required fields are present
         const formattedSales: Sale[] = filteredData.map((sale) => {
           // Log to debug date issues
-          console.log(`Sale ID: ${sale.id} - Database sale_date:`, sale.sale_date);
+          console.log(`Sale ID: ${sale.id}, Sale date from DB:`, sale.sale_date, typeof sale.sale_date);
           
+          // Preserve the exact date string from the database
           return {
             id: sale.id,
             salesperson_id: sale.salesperson_id,
@@ -92,7 +96,7 @@ export const useFetchSales = (user: User | null) => {
         });
         
         setSales(formattedSales);
-        console.log("Data formatted and set to state:", formattedSales.length, "sales");
+        console.log("Sales data after mapping:", formattedSales);
       }
     } catch (error: any) {
       console.error('Error fetching sales:', error);

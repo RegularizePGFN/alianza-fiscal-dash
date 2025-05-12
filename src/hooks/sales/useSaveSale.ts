@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -19,7 +20,7 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
 
     try {
       console.log("Saving sale data:", saleData);
-      console.log("Sale date before processing:", saleData.sale_date);
+      console.log("Sale date before processing:", saleData.sale_date, typeof saleData.sale_date);
 
       if (!saleData.gross_amount || saleData.gross_amount <= 0) {
         throw new Error("Valor bruto deve ser maior que zero");
@@ -34,25 +35,36 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
         throw new Error("Nome do vendedor é obrigatório");
       }
       
-      // Ensure date is in YYYY-MM-DD format for database storage
-      let formattedDate = saleData.sale_date;
+      // Essential: Ensure date is in YYYY-MM-DD format for database storage
+      // This is critical because PostgreSQL expects dates in this format
+      let formattedDate: string;
       
-      // If it's already a string in YYYY-MM-DD format, keep it
-      if (typeof formattedDate === 'string' && formattedDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        console.log("Date is already in YYYY-MM-DD format:", formattedDate);
-      } else {
-        // Otherwise, format it properly
-        formattedDate = new Date(saleData.sale_date).toISOString().split('T')[0];
-        console.log("Date formatted for database:", formattedDate);
+      // If already in YYYY-MM-DD format, use as is
+      if (typeof saleData.sale_date === 'string' && saleData.sale_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        formattedDate = saleData.sale_date;
+        console.log("Using existing YYYY-MM-DD format:", formattedDate);
+      } 
+      // For Date objects or other string formats, convert to YYYY-MM-DD
+      else {
+        let dateObj: Date;
+        
+        if (typeof saleData.sale_date === 'string') {
+          dateObj = new Date(saleData.sale_date);
+        } else {
+          dateObj = saleData.sale_date as unknown as Date;
+        }
+        
+        // Format as YYYY-MM-DD ensuring local date parts
+        formattedDate = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
+        console.log("Converted to YYYY-MM-DD format:", formattedDate);
       }
 
-      /* converte enum para string antes de enviar */
+      /* Prepare data for Supabase */
       const supabaseData = {
         ...saleData,
         payment_method: saleData.payment_method.toString(),
-        // Garantir que salesperson_name não seja undefined
         salesperson_name: saleData.salesperson_name,
-        // Ensure date is in YYYY-MM-DD format for storage
+        // Use the properly formatted date
         sale_date: formattedDate
       };
 
@@ -60,6 +72,7 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
       const { net_amount, ...dataWithoutNetAmount } = supabaseData;
       
       console.log("Data being sent to Supabase:", dataWithoutNetAmount);
+      console.log("Final sale_date being sent:", dataWithoutNetAmount.sale_date);
 
       let result;
       if (editingSaleId) {
@@ -86,12 +99,13 @@ export const useSaveSale = (updateSalesList: UpdateSalesListFunction) => {
 
       console.log("Supabase response:", result);
       const row = result.data[0];
+      console.log("Returned sale_date:", row.sale_date);
 
       const savedSale: Sale = {
         ...saleData,
         id: editingSaleId ?? row.id,
         created_at: row.created_at,
-        // Ensure we use the date exactly as stored in the database
+        // Critical: Use exactly what the database returned
         sale_date: row.sale_date
       };
 

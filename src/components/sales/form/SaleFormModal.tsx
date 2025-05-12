@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -51,14 +50,38 @@ export function SaleFormModal({
       };
     }
 
+    // Handle the date conversion more carefully
+    let saleDate: Date;
+    
+    if (sale.sale_date) {
+      console.log("Sale date from initialData:", sale.sale_date, typeof sale.sale_date);
+      
+      // If it's a string in YYYY-MM-DD format
+      if (typeof sale.sale_date === 'string' && sale.sale_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const [year, month, day] = sale.sale_date.split('-').map(Number);
+        saleDate = new Date(year, month - 1, day);
+        console.log("Parsed YYYY-MM-DD date:", saleDate);
+      } 
+      // Other string formats
+      else if (typeof sale.sale_date === 'string') {
+        saleDate = new Date(sale.sale_date);
+        console.log("Parsed string date:", saleDate);
+      }
+      // Already a Date object
+      else {
+        saleDate = sale.sale_date as unknown as Date;
+      }
+    } else {
+      saleDate = new Date();
+    }
+
     return {
       gross_amount: sale.gross_amount.toString(),
       salesperson_id: sale.salesperson_id || "",
       salesperson_name: sale.salesperson_name || "",
       payment_method: sale.payment_method,
       installments: sale.installments || 1,
-      // Convert string date to Date object for the form
-      sale_date: sale.sale_date ? new Date(sale.sale_date) : new Date(),
+      sale_date: saleDate,
       client_name: sale.client_name || "",
       client_phone: sale.client_phone || "",
       client_document: sale.client_document || "",
@@ -74,12 +97,31 @@ export function SaleFormModal({
   // Reset form when initialData changes or when modal is opened/closed
   useEffect(() => {
     if (open) {
+      console.log("Modal opened with initialData:", initialData);
       const defaultValues = generateDefaultValues(initialData);
       form.reset(defaultValues);
       
       // Set the date state for the calendar
       if (initialData?.sale_date) {
-        setDate(new Date(initialData.sale_date));
+        let dateToUse: Date;
+        
+        // Handle string dates (from DB)
+        if (typeof initialData.sale_date === 'string') {
+          // Check if YYYY-MM-DD format
+          if (initialData.sale_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            const [year, month, day] = initialData.sale_date.split('-').map(Number);
+            dateToUse = new Date(year, month - 1, day);
+          } else {
+            dateToUse = new Date(initialData.sale_date);
+          }
+        } 
+        // Handle Date objects
+        else {
+          dateToUse = initialData.sale_date as unknown as Date;
+        }
+        
+        console.log("Setting form date to:", dateToUse);
+        setDate(dateToUse);
       } else {
         setDate(new Date());
       }
@@ -98,8 +140,10 @@ export function SaleFormModal({
   // Form submission handler
   const onSubmit = async (formData: SaleFormData) => {
     try {
-      // Format date properly for submission - ensure YYYY-MM-DD format
+      // Format date properly for submission
       const formattedSaleDate = format(date, 'yyyy-MM-dd');
+      console.log("Submitting with date:", date);
+      console.log("Formatted to YYYY-MM-DD:", formattedSaleDate);
 
       const saleData: Omit<Sale, "id"> = {
         salesperson_id: formData.salesperson_id,

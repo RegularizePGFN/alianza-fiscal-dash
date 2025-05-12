@@ -15,31 +15,31 @@ export function formatCurrency(value: number): string {
   }).format(value);
 }
 
-// Format date to Brazilian format with improved timezone handling
+// Format date to Brazilian format with correct timezone handling
 export function formatDate(date: Date | string): string {
   if (!date) return '';
   
   try {
+    // For debugging
+    console.log("formatDate input:", date, typeof date);
+    
+    // Special handling for ISO date strings in YYYY-MM-DD format
     if (typeof date === 'string') {
-      // Handle date strings in ISO format (YYYY-MM-DD)
+      // Check if it's already in YYYY-MM-DD format
       if (date.match(/^\d{4}-\d{2}-\d{2}$/)) {
         const [year, month, day] = date.split('-').map(Number);
-        // Create date with UTC to avoid timezone shifts
-        const utcDate = new Date(Date.UTC(year, month - 1, day));
-        return new Intl.DateTimeFormat('pt-BR').format(utcDate);
+        // Create date using local timezone
+        const localDate = new Date(year, month - 1, day);
+        console.log("YYYY-MM-DD string parsed as:", localDate);
+        return new Intl.DateTimeFormat('pt-BR').format(localDate);
       }
-      
-      // For other string formats, try to parse without timezone shifts
-      const parsedDate = new Date(date);
-      return new Intl.DateTimeFormat('pt-BR').format(parsedDate);
     }
     
-    // For Date objects, use a method that prevents timezone adjustments
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const day = date.getDate();
-    const utcDate = new Date(Date.UTC(year, month, day));
-    return new Intl.DateTimeFormat('pt-BR').format(utcDate);
+    // For Date objects or other string formats
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    console.log("Formatted date result:", new Intl.DateTimeFormat('pt-BR').format(dateObj));
+    return new Intl.DateTimeFormat('pt-BR').format(dateObj);
+    
   } catch (error) {
     console.error("Error formatting date:", error, date);
     return String(date);
