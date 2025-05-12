@@ -57,6 +57,7 @@ export function SaleFormModal({
       salesperson_name: sale.salesperson_name || "",
       payment_method: sale.payment_method,
       installments: sale.installments || 1,
+      // Convert string date to Date object for the form
       sale_date: sale.sale_date ? new Date(sale.sale_date) : new Date(),
       client_name: sale.client_name || "",
       client_phone: sale.client_phone || "",
@@ -97,7 +98,7 @@ export function SaleFormModal({
   // Form submission handler
   const onSubmit = async (formData: SaleFormData) => {
     try {
-      // Format date properly for submission
+      // Format date properly for submission - ensure YYYY-MM-DD format
       const formattedSaleDate = format(date, 'yyyy-MM-dd');
 
       const saleData: Omit<Sale, "id"> = {

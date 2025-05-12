@@ -79,7 +79,7 @@ export const useFetchSales = (user: User | null) => {
             net_amount: sale.gross_amount, // Use gross_amount as net_amount
             payment_method: convertToPaymentMethod(sale.payment_method),
             installments: sale.installments || 1,
-            sale_date: sale.sale_date, // Keep the original date format as it comes from Supabase
+            sale_date: sale.sale_date, // Keep the original date format
             created_at: sale.created_at,
             client_name: sale.client_name || 'Client',
             client_phone: sale.client_phone || '',

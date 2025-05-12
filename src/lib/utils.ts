@@ -1,4 +1,3 @@
-
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { PaymentMethod } from "./types"
@@ -26,8 +25,7 @@ export function formatDate(date: Date | string): string {
       const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed in JavaScript
       const day = parseInt(parts[2], 10);
       
-      // Cria a data com hora zero para evitar problemas de timezone
-      // Importante: aqui usamos UTC para garantir a data exata
+      // Create date with UTC to avoid timezone shifts
       const utcDate = new Date(Date.UTC(year, month, day));
       return new Intl.DateTimeFormat('pt-BR').format(utcDate);
     }
@@ -35,7 +33,7 @@ export function formatDate(date: Date | string): string {
   
   // For Date objects, use a method that prevents timezone adjustments
   if (date instanceof Date) {
-    // Cria uma nova data com hora zero para evitar problemas de timezone
+    // Create a new date with UTC to avoid timezone shifts
     const year = date.getFullYear();
     const month = date.getMonth();
     const day = date.getDate();
