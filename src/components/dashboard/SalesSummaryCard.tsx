@@ -31,26 +31,26 @@ export function SalesSummaryCard({
 }: SalesSummaryCardProps) {
   return (
     <Card className={cn("h-full", className)}>
-      <CardHeader className="flex flex-row items-center justify-between pb-1 pt-3 px-4">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div>
-          <CardTitle className="text-xs font-medium text-muted-foreground">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
             {title}
           </CardTitle>
-          <CardDescription className="text-xl font-bold">
+          <CardDescription className="text-2xl font-bold">
             {formatCurrency(amount)}
           </CardDescription>
         </div>
         {icon && (
-          <div className="rounded-md bg-primary/10 p-1.5 text-primary">
+          <div className="rounded-md bg-primary/10 p-2 text-primary">
             {icon}
           </div>
         )}
       </CardHeader>
-      <CardContent className="px-4 pb-3 pt-0">
+      <CardContent>
         {description && <p className="text-xs text-muted-foreground">{description}</p>}
         {trend && trend.value > 0 && (
           <div className={cn(
-            "mt-1 text-xs font-medium",
+            "mt-2 text-xs font-medium",
             trend.isPositive ? "text-green-500" : "text-destructive"
           )}>
             <span>

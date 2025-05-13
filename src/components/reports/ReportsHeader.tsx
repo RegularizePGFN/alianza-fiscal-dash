@@ -11,13 +11,13 @@ import {
 
 export function ReportsHeader() {
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-      <div className="space-y-0.5">
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-2">
+      <div className="space-y-1">
         <div className="flex items-center gap-2">
-          <ChartPie className="h-5 w-5 text-primary" />
-          <h2 className="text-2xl font-bold tracking-tight">Relatórios</h2>
+          <ChartPie className="h-6 w-6 text-primary" />
+          <h2 className="text-3xl font-bold tracking-tight">Relatórios</h2>
         </div>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground">
           Análise consolidada de vendas e visualizações gráficas dos dados.
         </p>
       </div>
@@ -29,11 +29,11 @@ export function ReportsHeader() {
               <Button 
                 variant="outline" 
                 size="sm"
-                className="h-8 gap-1.5"
+                className="h-9 gap-1.5"
                 onClick={() => window.print()}
               >
-                <Download className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline text-xs">Exportar</span>
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline">Exportar</span>
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">
@@ -45,8 +45,8 @@ export function ReportsHeader() {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                <Info className="h-3.5 w-3.5" />
+              <Button variant="outline" size="sm" className="h-9 w-9 p-0">
+                <Info className="h-4 w-4" />
                 <span className="sr-only">Informações</span>
               </Button>
             </TooltipTrigger>

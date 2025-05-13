@@ -68,20 +68,20 @@ export default function UsersPage() {
     }, 500);
   }, [fetchUsers, toast]);
   
-  // Check for user role - hooks need to be used before conditional returns
+  // Check for user role - IMPORTANT: We're not using early return as it would break hooks
   if (user?.role !== UserRole.ADMIN) {
     return <Navigate to="/" />;
   }
   
   return (
     <AppLayout>
-      <div className="space-y-4">
+      <div className="space-y-6">
         <UsersHeader onAddUser={handleAddUser} />
         
         <Card className="overflow-hidden border-0 shadow-md bg-white/80 backdrop-blur-sm dark:bg-gray-800/90 dark:border-gray-700 transition-all duration-300">
-          <CardHeader className="dark:border-gray-700 py-3">
-            <CardTitle className="dark:text-white text-base">Todos os Usuários</CardTitle>
-            <CardDescription className="dark:text-gray-300 text-xs">
+          <CardHeader className="dark:border-gray-700">
+            <CardTitle className="dark:text-white">Todos os Usuários</CardTitle>
+            <CardDescription className="dark:text-gray-300">
               {isLoading 
                 ? "Carregando usuários..." 
                 : `Total de ${users.length} usuários ativos no sistema.`}
