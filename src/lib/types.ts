@@ -12,6 +12,9 @@ export interface User {
   email: string;
   role: UserRole;
   created_at?: string;
+  // Campos para impersonificação
+  isImpersonated?: boolean;
+  impersonatedBy?: string;
 }
 
 // Authentication state

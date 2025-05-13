@@ -16,10 +16,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, UserRound } from "lucide-react";
 import { User, UserRole } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { useAuth } from "@/contexts/auth";
+import { useToast } from "@/hooks/use-toast";
 
 interface UsersTableProps {
   users: User[];
@@ -38,6 +40,9 @@ export function UsersTable({
   onEditUser,
   onDeleteUser,
 }: UsersTableProps) {
+  const { user: currentUser, impersonateUser } = useAuth();
+  const { toast } = useToast();
+
   const getRoleBadge = (role: UserRole) => {
     switch (role) {
       case UserRole.ADMIN:
@@ -46,6 +51,24 @@ export function UsersTable({
         return <Badge variant="outline">Vendedor</Badge>;
       default:
         return null;
+    }
+  };
+
+  const handleImpersonateUser = async (userToImpersonate: User) => {
+    try {
+      await impersonateUser(userToImpersonate.id);
+      
+      toast({
+        title: "Sucesso",
+        description: `Agora você está visualizando como ${userToImpersonate.name}`,
+      });
+    } catch (error) {
+      console.error("Erro ao impersonar usuário:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível acessar a conta do usuário",
+        variant: "destructive",
+      });
     }
   };
 
@@ -68,6 +91,8 @@ export function UsersTable({
     );
   }
 
+  const isAdmin = currentUser?.role === UserRole.ADMIN;
+
   return (
     <Table>
       <TableHeader>
@@ -76,13 +101,14 @@ export function UsersTable({
           <TableHead>Email</TableHead>
           <TableHead>Função</TableHead>
           <TableHead>Data de Criação</TableHead>
+          {isAdmin && <TableHead className="w-[70px]">Acessar</TableHead>}
           <TableHead className="w-[70px]">Ações</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {users.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={5} className="text-center py-6">
+            <TableCell colSpan={isAdmin ? 6 : 5} className="text-center py-6">
               Nenhum usuário encontrado
             </TableCell>
           </TableRow>
@@ -93,6 +119,22 @@ export function UsersTable({
               <TableCell>{user.email}</TableCell>
               <TableCell>{getRoleBadge(user.role)}</TableCell>
               <TableCell>{user.created_at && formatDate(user.created_at)}</TableCell>
+              {isAdmin && (
+                <TableCell>
+                  {user.id !== currentUser?.id && user.role !== UserRole.ADMIN && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => handleImpersonateUser(user)}
+                      title={`Entrar como ${user.name}`}
+                    >
+                      <UserRound className="h-4 w-4" />
+                      <span className="sr-only">Entrar como {user.name}</span>
+                    </Button>
+                  )}
+                </TableCell>
+              )}
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

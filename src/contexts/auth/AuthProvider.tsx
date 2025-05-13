@@ -13,6 +13,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   // Add reference to track processing state to prevent duplicate updates
   const isProcessingAuthChange = useRef(false);
+  
+  // Reference to store original user session when impersonating
+  const originalUserSessionRef = useRef<{ user: User | null, session: Session | null } | null>(null);
 
   // Handle session update - memoized to prevent recreating on each render
   const handleSession = useCallback(async (session: Session | null) => {
@@ -161,9 +164,97 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  // Impersonate user function (only for admins)
+  const impersonateUser = async (userId: string): Promise<boolean> => {
+    try {
+      // Check if current user is admin
+      if (authState.user?.role !== UserRole.ADMIN) {
+        console.error("Impersonation error: Only admins can impersonate users");
+        return false;
+      }
+
+      // Store original user session before impersonating
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      originalUserSessionRef.current = {
+        user: authState.user,
+        session: currentSession
+      };
+
+      // Get user profile data
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('name, email, role')
+        .eq('id', userId)
+        .single();
+
+      if (profileError) {
+        console.error("Error fetching user profile for impersonation:", profileError);
+        return false;
+      }
+
+      // Create impersonated user object
+      const impersonatedUser: User = {
+        id: userId,
+        name: profileData.name || 'Usuário',
+        email: profileData.email || '',
+        role: mapUserRole(profileData.role, profileData.email),
+        // Add flag to indicate this is an impersonated session
+        isImpersonated: true,
+        impersonatedBy: authState.user?.id || ''
+      };
+
+      // Update auth state with impersonated user
+      setAuthState({
+        isAuthenticated: true,
+        user: impersonatedUser,
+        isLoading: false,
+      });
+
+      console.log("Impersonation successful:", impersonatedUser);
+      return true;
+    } catch (error) {
+      console.error("Impersonation error:", error);
+      return false;
+    }
+  };
+
+  // Stop impersonating and return to original user
+  const stopImpersonating = async (): Promise<boolean> => {
+    try {
+      // Check if we have an original user session stored
+      if (!originalUserSessionRef.current) {
+        console.error("No original user session found");
+        return false;
+      }
+
+      // Restore original user
+      setAuthState({
+        isAuthenticated: true,
+        user: originalUserSessionRef.current.user,
+        isLoading: false,
+      });
+
+      // Clear the stored original session
+      originalUserSessionRef.current = null;
+
+      console.log("Stopped impersonating, returned to original user");
+      return true;
+    } catch (error) {
+      console.error("Error stopping impersonation:", error);
+      return false;
+    }
+  };
+
   // Logout function
   const logout = async () => {
     try {
+      // If impersonating, just return to original user instead of full logout
+      if (authState.user?.isImpersonated) {
+        await stopImpersonating();
+        return;
+      }
+
+      // Regular logout
       const { error } = await supabase.auth.signOut();
       
       if (error) {
@@ -175,6 +266,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         user: null,
         isLoading: false,
       });
+
+      // Clear any stored original user session
+      originalUserSessionRef.current = null;
     } catch (error) {
       console.error("Logout error:", error);
     }
@@ -186,6 +280,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         ...authState,
         login,
         logout,
+        impersonateUser,
+        stopImpersonating,
+        isImpersonating: !!authState.user?.isImpersonated
       }}
     >
       {children}
