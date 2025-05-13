@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -67,14 +66,13 @@ export function SalespeopleCommissionsCard() {
             }
             
             // 3. Get their monthly goal
-            // Convert month and year to the correct types based on the database schema
-            // Looking at the Supabase database schema, monthly_goals expects month and year as numbers
+            // The monthly_goals table expects month and year as integers (numbers)
             const { data: goalData, error: goalError } = await supabase
               .from("monthly_goals")
               .select("goal_amount")
               .eq("user_id", profile.id)
-              .eq("month", currentMonth.toString()) // Convert number to string for the query
-              .eq("year", currentYear.toString()) // Convert number to string for the query
+              .eq("month", currentMonth) // Use the number directly, not a string
+              .eq("year", currentYear) // Use the number directly, not a string
               .maybeSingle();
               
             // Calculate total sales
