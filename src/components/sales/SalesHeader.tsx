@@ -60,23 +60,23 @@ export function SalesHeader({ isAdmin, onAddSale, sales, onImport }: SalesHeader
 
   return (
     <div className="flex justify-between items-start">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Vendas</h2>
-        <p className="text-muted-foreground">
+      <div className="space-y-0.5">
+        <h2 className="text-2xl font-bold tracking-tight">Vendas</h2>
+        <p className="text-sm text-muted-foreground">
           Gerencie as vendas e comissões da equipe.
         </p>
       </div>
       
       <div className="flex gap-2">
-        <Button onClick={onAddSale}>
-          <PlusCircle className="mr-2 h-4 w-4" />
+        <Button onClick={onAddSale} size="sm" className="h-9">
+          <PlusCircle className="mr-2 h-3.5 w-3.5" />
           Nova Venda
         </Button>
         
         {isAdmin && (
           <>
-            <Button variant="outline" onClick={handleImportClick}>
-              <FileUp className="mr-2 h-4 w-4" />
+            <Button variant="outline" onClick={handleImportClick} size="sm" className="h-9">
+              <FileUp className="mr-2 h-3.5 w-3.5" />
               Importar
               <input 
                 type="file" 
@@ -86,8 +86,8 @@ export function SalesHeader({ isAdmin, onAddSale, sales, onImport }: SalesHeader
                 onChange={handleFileChange}
               />
             </Button>
-            <Button variant="outline" onClick={handleExport}>
-              <FileDown className="mr-2 h-4 w-4" />
+            <Button variant="outline" onClick={handleExport} size="sm" className="h-9">
+              <FileDown className="mr-2 h-3.5 w-3.5" />
               Exportar
             </Button>
           </>

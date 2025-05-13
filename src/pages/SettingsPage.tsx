@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/auth";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -32,20 +33,20 @@ export default function SettingsPage() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
+      <div className="space-y-4">
         <SettingsHeader />
 
         <Tabs
           defaultValue={activeTab}
           onValueChange={setActiveTab}
-          className="space-y-4"
+          className="space-y-3"
         >
           <TabsList className="dark:bg-gray-700/50">
-            <TabsTrigger value="monthly-goals" className="dark:data-[state=active]:bg-gray-600">Metas Mensais</TabsTrigger>
+            <TabsTrigger value="monthly-goals" className="dark:data-[state=active]:bg-gray-600 text-sm">Metas Mensais</TabsTrigger>
             {/* Add more tabs here as needed */}
           </TabsList>
           
-          <TabsContent value="monthly-goals" className="space-y-4">
+          <TabsContent value="monthly-goals" className="space-y-3">
             <MonthlyGoalsSettings />
           </TabsContent>
         </Tabs>

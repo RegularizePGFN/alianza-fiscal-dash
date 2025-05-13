@@ -10,15 +10,15 @@ interface UsersHeaderProps {
 export function UsersHeader({ onAddUser }: UsersHeaderProps) {
   return (
     <div className="flex justify-between items-start">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Usuários</h2>
-        <p className="text-muted-foreground">
+      <div className="space-y-0.5">
+        <h2 className="text-2xl font-bold tracking-tight">Usuários</h2>
+        <p className="text-sm text-muted-foreground">
           Gerencie os usuários do sistema e suas permissões.
         </p>
       </div>
       
-      <Button onClick={onAddUser}>
-        <PlusCircle className="mr-2 h-4 w-4" />
+      <Button onClick={onAddUser} size="sm" className="h-9">
+        <PlusCircle className="mr-2 h-3.5 w-3.5" />
         Novo Usuário
       </Button>
     </div>

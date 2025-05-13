@@ -12,13 +12,13 @@ export default function DashboardPage() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
+      <div className="space-y-4">
         <DashboardHeader isLoading={loading} />
 
         {loading ? (
           <LoadingSpinner />
         ) : (
-          <div className="space-y-6 animate-fade-in">
+          <div className="space-y-4 animate-fade-in">
             <SalesSummarySection summary={summary} trends={trends} />
             <GoalsCommissionsSection summary={summary} salesData={salesData} />
             <RecentSalesSection salesData={salesData} />

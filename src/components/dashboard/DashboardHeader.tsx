@@ -10,9 +10,11 @@ export function DashboardHeader({ isLoading }: DashboardHeaderProps) {
   const monthLabel = monthStart.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
   return (
-    <div>
-      <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-      <p className="text-muted-foreground">
+    <div className="mb-1">
+      <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+        Dashboard
+      </h2>
+      <p className="text-sm text-muted-foreground">
         Visão geral de vendas e comissões para {monthLabel}
       </p>
     </div>

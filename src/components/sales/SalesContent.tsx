@@ -30,7 +30,7 @@ export function SalesContent({
   }, [sales, searchTerm]);
   
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {!loading && (
         <SalesFilter 
           sales={sales} 
@@ -41,10 +41,10 @@ export function SalesContent({
       
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden transition-colors">
         {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="flex flex-col items-center gap-4">
-              <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-              <p className="text-sm text-muted-foreground">Carregando dados...</p>
+          <div className="flex justify-center py-8">
+            <div className="flex flex-col items-center gap-3">
+              <div className="h-8 w-8 animate-spin rounded-full border-3 border-primary border-t-transparent"></div>
+              <p className="text-xs text-muted-foreground">Carregando dados...</p>
             </div>
           </div>
         ) : (

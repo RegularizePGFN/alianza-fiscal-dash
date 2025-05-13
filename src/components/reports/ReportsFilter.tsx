@@ -29,7 +29,7 @@ export function ReportsFilter({
   const [date, setDate] = useState<DateRange | undefined>();
   const [selectedSalesperson, setSelectedSalesperson] = useState<string | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
-  const [showFilters, setShowFilters] = useState(true);
+  const [showFilters, setShowFilters] = useState(false); // Changed to collapsed by default
 
   // Handle date selection
   const handleDateSelect = (range: DateRange | undefined) => {
@@ -78,13 +78,17 @@ export function ReportsFilter({
                           (date?.from !== undefined && date?.to !== undefined);
 
   return (
-    <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
-      <CardHeader className="pb-3 flex flex-row items-center justify-between bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950 rounded-t-lg">
-        <CardTitle className="text-lg">Filtros</CardTitle>
+    <Card className="shadow-sm border-opacity-50 mb-4">
+      <CardHeader className="pb-2 flex flex-row items-center justify-between bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950 rounded-t-lg py-2">
+        <CardTitle className="text-sm">Filtros{hasActiveFilters && 
+          <span className="ml-2 px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900 rounded-full text-xs inline-flex items-center justify-center">
+            {(selectedSalesperson ? 1 : 0) + (selectedPaymentMethod ? 1 : 0) + (date?.from && date?.to ? 1 : 0)}
+          </span>}
+        </CardTitle>
         <Button 
-          variant="outline" 
+          variant="ghost" 
           size="sm" 
-          className="h-8"
+          className="h-7 text-xs px-2"
           onClick={() => setShowFilters(!showFilters)}
         >
           {showFilters ? 'Ocultar' : 'Mostrar'}
@@ -92,23 +96,23 @@ export function ReportsFilter({
       </CardHeader>
 
       {showFilters && (
-        <CardContent className="pt-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <CardContent className="pt-3 pb-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {/* Salesperson Filter */}
-            <div className="space-y-2">
-              <Label htmlFor="salesperson" className="flex items-center gap-2">
-                <Search className="h-3.5 w-3.5" />
+            <div className="space-y-1">
+              <Label htmlFor="salesperson" className="flex items-center gap-1 text-xs">
+                <Search className="h-3 w-3" />
                 Vendedor
               </Label>
               <Select 
                 value={selectedSalesperson || "all"} 
                 onValueChange={handleSalespersonChange}
               >
-                <SelectTrigger id="salesperson">
+                <SelectTrigger id="salesperson" className="h-8 text-xs">
                   <SelectValue placeholder="Todos os vendedores" />
                 </SelectTrigger>
                 <SelectContent>
-                  <ScrollArea className="h-[200px]">
+                  <ScrollArea className="h-[180px]">
                     <SelectItem value="all">Todos os vendedores</SelectItem>
                     {!isLoading && users.map(user => (
                       <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
@@ -119,16 +123,16 @@ export function ReportsFilter({
             </div>
 
             {/* Payment Method Filter */}
-            <div className="space-y-2">
-              <Label htmlFor="paymentMethod" className="flex items-center gap-2">
-                <Search className="h-3.5 w-3.5" />
+            <div className="space-y-1">
+              <Label htmlFor="paymentMethod" className="flex items-center gap-1 text-xs">
+                <Search className="h-3 w-3" />
                 Método de Pagamento
               </Label>
               <Select 
                 value={selectedPaymentMethod || "all"} 
                 onValueChange={handlePaymentMethodChange}
               >
-                <SelectTrigger id="paymentMethod">
+                <SelectTrigger id="paymentMethod" className="h-8 text-xs">
                   <SelectValue placeholder="Todos os métodos" />
                 </SelectTrigger>
                 <SelectContent>
@@ -142,9 +146,9 @@ export function ReportsFilter({
             </div>
 
             {/* Date Range Filter */}
-            <div className="space-y-2">
-              <Label htmlFor="dateRange" className="flex items-center gap-2">
-                <CalendarIcon className="h-3.5 w-3.5" />
+            <div className="space-y-1">
+              <Label htmlFor="dateRange" className="flex items-center gap-1 text-xs">
+                <CalendarIcon className="h-3 w-3" />
                 Período
               </Label>
               <Popover>
@@ -153,12 +157,12 @@ export function ReportsFilter({
                     id="dateRange"
                     variant={"outline"}
                     className={cn(
-                      "w-full justify-start text-left font-normal",
+                      "w-full justify-start text-left font-normal h-8 text-xs",
                       !date && "text-muted-foreground",
                       date && "border-primary/50"
                     )}
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    <CalendarIcon className="mr-2 h-3 w-3" />
                     {date?.from ? (
                       date.to ? (
                         <>
@@ -188,23 +192,20 @@ export function ReportsFilter({
             </div>
           </div>
           
-          <div className="flex justify-end mt-6">
+          <div className="flex justify-end mt-2">
             <Button 
               variant="outline" 
               onClick={clearFilters}
               className={cn(
-                "gap-2",
+                "gap-1 h-7 text-xs",
                 hasActiveFilters 
                   ? "bg-red-50 hover:bg-red-100 border-red-200 text-red-600 dark:bg-red-950 dark:hover:bg-red-900 dark:border-red-800 dark:text-red-400"
                   : ""
               )}
               disabled={!hasActiveFilters}
             >
-              <FilterX className="h-4 w-4" />
+              <FilterX className="h-3 w-3" />
               Limpar Filtros
-              {hasActiveFilters && <span className="ml-1 w-5 h-5 bg-red-100 dark:bg-red-800 rounded-full grid place-items-center text-xs">
-                {(selectedSalesperson ? 1 : 0) + (selectedPaymentMethod ? 1 : 0) + (date?.from && date?.to ? 1 : 0)}
-              </span>}
             </Button>
           </div>
         </CardContent>
