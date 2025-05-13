@@ -73,8 +73,8 @@ export function SalespeopleCommissionsCard() {
               .from("monthly_goals")
               .select("goal_amount")
               .eq("user_id", profile.id)
-              .eq("month", currentMonth) // Using number type for month
-              .eq("year", currentYear) // Using number type for year
+              .eq("month", currentMonth.toString()) // Convert number to string for the query
+              .eq("year", currentYear.toString()) // Convert number to string for the query
               .maybeSingle();
               
             // Calculate total sales
