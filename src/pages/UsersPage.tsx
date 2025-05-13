@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +11,6 @@ import { useUsers } from "@/hooks/useUsers";
 import { DeleteUserDialog } from "@/components/users/DeleteUserDialog";
 import { UserFormModal } from "@/components/users/UserFormModal";
 import { useToast } from "@/hooks/use-toast";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function UsersPage() {
   const { user } = useAuth();
@@ -22,11 +22,6 @@ export default function UsersPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  
-  // Redirect if not admin
-  if (user?.role !== UserRole.ADMIN) {
-    return <Navigate to="/" />;
-  }
   
   // User management handlers
   const handleAddUser = useCallback(() => {
@@ -72,6 +67,11 @@ export default function UsersPage() {
       });
     }, 500);
   }, [fetchUsers, toast]);
+  
+  // Check for user role - IMPORTANT: We're not using early return as it would break hooks
+  if (user?.role !== UserRole.ADMIN) {
+    return <Navigate to="/" />;
+  }
   
   return (
     <AppLayout>
