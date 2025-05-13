@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
 import { LoadingSpinner } from "../ui/loading-spinner";
+import { toast } from "@/components/ui/use-toast";
 
 type SalespersonCommission = {
   id: string;
@@ -19,11 +20,6 @@ export function SalespeopleCommissionsCard() {
   const [salespeople, setSalespeople] = useState<SalespersonCommission[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-
-  // Only admins should see this component
-  if (user?.role !== UserRole.ADMIN) {
-    return null;
-  }
 
   useEffect(() => {
     const fetchSalespeopleCommissions = async () => {
@@ -43,6 +39,11 @@ export function SalespeopleCommissionsCard() {
         
         if (profilesError) {
           console.error("Error fetching salespeople:", profilesError);
+          toast({
+            title: "Erro",
+            description: "Falha ao carregar dados dos vendedores",
+            variant: "destructive"
+          });
           return;
         }
         
@@ -70,8 +71,8 @@ export function SalespeopleCommissionsCard() {
               .from("monthly_goals")
               .select("goal_amount")
               .eq("user_id", profile.id)
-              .eq("month", currentMonth)
-              .eq("year", currentYear)
+              .eq("month", currentMonth.toString()) // Fix: Convert number to string
+              .eq("year", currentYear.toString()) // Fix: Convert number to string
               .maybeSingle();
               
             // Calculate total sales
@@ -106,6 +107,11 @@ export function SalespeopleCommissionsCard() {
         setSalespeople(validCommissions as SalespersonCommission[]);
       } catch (error) {
         console.error("Error fetching salespeople commissions:", error);
+        toast({
+          title: "Erro",
+          description: "Falha ao carregar comissões dos vendedores",
+          variant: "destructive"
+        });
       } finally {
         setLoading(false);
       }
@@ -113,6 +119,11 @@ export function SalespeopleCommissionsCard() {
     
     fetchSalespeopleCommissions();
   }, []);
+
+  // Only admins should see this component
+  if (user?.role !== UserRole.ADMIN) {
+    return null;
+  }
 
   if (loading) {
     return (
