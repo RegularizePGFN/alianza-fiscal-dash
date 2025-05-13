@@ -67,12 +67,14 @@ export function SalespeopleCommissionsCard() {
             }
             
             // 3. Get their monthly goal
+            // Convert month and year to the correct types based on the database schema
+            // Looking at the Supabase database schema, monthly_goals expects month and year as numbers
             const { data: goalData, error: goalError } = await supabase
               .from("monthly_goals")
               .select("goal_amount")
               .eq("user_id", profile.id)
-              .eq("month", currentMonth.toString()) // Fix: Convert number to string
-              .eq("year", currentYear.toString()) // Fix: Convert number to string
+              .eq("month", currentMonth) // Using number type for month
+              .eq("year", currentYear) // Using number type for year
               .maybeSingle();
               
             // Calculate total sales
