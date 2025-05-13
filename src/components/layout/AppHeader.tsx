@@ -42,8 +42,7 @@ export function AppHeader() {
           to="/dashboard"
           className="font-semibold text-xl flex items-center space-x-2"
         >
-          <span className="dark:text-white">Aliança</span>
-          <span className="text-purple-500">Fiscal</span>
+          {/* Removed Aliança Fiscal text as requested */}
         </Link>
 
         <div className="flex items-center space-x-4">
