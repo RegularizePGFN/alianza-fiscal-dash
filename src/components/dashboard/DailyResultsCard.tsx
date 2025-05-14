@@ -5,48 +5,42 @@ import { formatCurrency, getTodayISO } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CircleDollarSign, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-
 interface DailyResultsCardProps {
   salesData: Sale[];
 }
-
 interface DailySalesperson {
   id: string;
   name: string;
   salesCount: number;
   salesAmount: number;
 }
-
-export function DailyResultsCard({ salesData }: DailyResultsCardProps) {
+export function DailyResultsCard({
+  salesData
+}: DailyResultsCardProps) {
   const [todaySales, setTodaySales] = useState<Sale[]>([]);
   const [salespeople, setSalespeople] = useState<DailySalesperson[]>([]);
   const [loading, setLoading] = useState(true);
-  
   useEffect(() => {
     // Get today's date in ISO format (YYYY-MM-DD)
     const todayStr = getTodayISO();
-    
+
     // Filter sales for today only
-    const filteredSales = salesData.filter(sale => 
-      sale.sale_date === todayStr
-    );
-    
+    const filteredSales = salesData.filter(sale => sale.sale_date === todayStr);
     setTodaySales(filteredSales);
-    
+
     // Fetch all salespeople first
     const fetchAllSalespeople = async () => {
       setLoading(true);
       try {
-        const { data: profilesData, error } = await supabase
-          .from("profiles")
-          .select("id, name")
-          .eq("role", "vendedor");
-          
+        const {
+          data: profilesData,
+          error
+        } = await supabase.from("profiles").select("id, name").eq("role", "vendedor");
         if (error) {
           console.error("Error fetching salespeople:", error);
           return;
         }
-        
+
         // Initialize all salespeople with zero sales
         const allSalespeople = (profilesData || []).map(profile => ({
           id: profile.id,
@@ -54,11 +48,10 @@ export function DailyResultsCard({ salesData }: DailyResultsCardProps) {
           salesCount: 0,
           salesAmount: 0
         }));
-        
+
         // Update counts for salespeople who made sales today
         filteredSales.forEach(sale => {
           const existingSalesperson = allSalespeople.find(sp => sp.id === sale.salesperson_id);
-          
           if (existingSalesperson) {
             existingSalesperson.salesCount += 1;
             existingSalesperson.salesAmount += sale.gross_amount;
@@ -72,7 +65,7 @@ export function DailyResultsCard({ salesData }: DailyResultsCardProps) {
             });
           }
         });
-        
+
         // Sort by sales amount (highest first)
         setSalespeople(allSalespeople.sort((a, b) => b.salesAmount - a.salesAmount));
       } catch (error) {
@@ -81,20 +74,15 @@ export function DailyResultsCard({ salesData }: DailyResultsCardProps) {
         setLoading(false);
       }
     };
-    
     fetchAllSalespeople();
   }, [salesData]);
-  
+
   // Calculate totals
   const totalSalesCount = todaySales.length;
   const totalSalesAmount = todaySales.reduce((sum, sale) => sum + sale.gross_amount, 0);
-  
-  return (
-    <Card className="transition-all duration-300 hover:shadow-md">
+  return <Card className="transition-all duration-300 hover:shadow-md">
       <CardHeader className="pb-2 px-4 pt-4">
-        <CardTitle className="text-sm font-medium flex items-center gap-1">
-          RESULTADO DO DIA
-        </CardTitle>
+        <CardTitle className="text-sm font-medium flex items-center gap-1">Resultado do Dia</CardTitle>
       </CardHeader>
       <CardContent className="px-4 pb-4 pt-0">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-2">
@@ -123,12 +111,9 @@ export function DailyResultsCard({ salesData }: DailyResultsCardProps) {
           
           {/* Salespeople breakdown - 9 columns */}
           <div className="md:col-span-9">
-            {loading ? (
-              <div className="flex h-[70px] items-center justify-center">
+            {loading ? <div className="flex h-[70px] items-center justify-center">
                 <p className="text-xs text-muted-foreground">Carregando dados...</p>
-              </div>
-            ) : salespeople.length > 0 ? (
-              <div className="max-h-[120px] overflow-y-auto pr-2">
+              </div> : salespeople.length > 0 ? <div className="max-h-[120px] overflow-y-auto pr-2">
                 <table className="w-full text-xs">
                   <thead className="sticky top-0 bg-white z-10">
                     <tr className="border-b">
@@ -138,24 +123,18 @@ export function DailyResultsCard({ salesData }: DailyResultsCardProps) {
                     </tr>
                   </thead>
                   <tbody>
-                    {salespeople.map((person) => (
-                      <tr key={person.id} className="border-b border-gray-50">
+                    {salespeople.map(person => <tr key={person.id} className="border-b border-gray-50">
                         <td className="py-1 text-left">{person.name}</td>
                         <td className="text-center py-1">{person.salesCount}</td>
                         <td className="text-right py-1">{formatCurrency(person.salesAmount)}</td>
-                      </tr>
-                    ))}
+                      </tr>)}
                   </tbody>
                 </table>
-              </div>
-            ) : (
-              <div className="flex h-[70px] items-center justify-center text-xs text-muted-foreground">
+              </div> : <div className="flex h-[70px] items-center justify-center text-xs text-muted-foreground">
                 Sem vendedores cadastrados
-              </div>
-            )}
+              </div>}
           </div>
         </div>
       </CardContent>
-    </Card>
-  );
+    </Card>;
 }
