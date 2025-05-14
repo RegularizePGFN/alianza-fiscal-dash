@@ -13,6 +13,8 @@ type SalespersonCommission = {
   goalAmount: number;
   projectedCommission: number;
   goalPercentage: number;
+  salesCount: number;
+  metaGap: number;
 };
 
 export function SalespeopleCommissionsCard() {
@@ -34,6 +36,13 @@ export function SalespeopleCommissionsCard() {
         const today = new Date();
         const currentMonth = today.getMonth() + 1;
         const currentYear = today.getFullYear();
+        
+        // Calculate business days and progress
+        const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+        const totalBusinessDays = 22; // Simplification for business days in month
+        const currentDay = today.getDate();
+        const businessDaysElapsed = Math.min(currentDay, totalBusinessDays);
+        const goalProgressFactor = businessDaysElapsed / totalBusinessDays;
         
         // 1. Fetch all salespeople (users with role 'vendedor')
         const { data: profilesData, error: profilesError } = await supabase
@@ -75,10 +84,19 @@ export function SalespeopleCommissionsCard() {
               .maybeSingle();
               
             // Calculate total sales
-            const totalSales = salesData?.reduce((sum, sale) => sum + parseFloat(sale.gross_amount), 0) || 0;
+            const totalSales = salesData?.reduce((sum, sale) => sum + Number(sale.gross_amount), 0) || 0;
+            
+            // Count number of sales
+            const salesCount = salesData?.length || 0;
             
             // Get goal amount (default to 0 if not set)
-            const goalAmount = goalData?.goal_amount ? parseFloat(goalData.goal_amount) : 0;
+            const goalAmount = goalData?.goal_amount ? Number(goalData.goal_amount) : 0;
+            
+            // Calculate expected goal progress until today
+            const expectedGoalProgress = goalAmount * goalProgressFactor;
+            
+            // Calculate the gap between actual and expected
+            const metaGap = totalSales - expectedGoalProgress;
             
             // Calculate commission rate based on goal achievement
             const commissionRate = totalSales >= goalAmount ? 0.25 : 0.2; // 25% if goal met, 20% otherwise
@@ -93,7 +111,9 @@ export function SalespeopleCommissionsCard() {
               totalSales,
               goalAmount,
               projectedCommission,
-              goalPercentage
+              goalPercentage,
+              salesCount,
+              metaGap
             };
           })
         );
@@ -137,50 +157,63 @@ export function SalespeopleCommissionsCard() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200">
-                <th className="text-left py-2 font-medium">Vendedor</th>
-                <th className="text-right py-2 font-medium">Total Vendido</th>
-                <th className="text-right py-2 font-medium">Meta</th>
-                <th className="text-right py-2 font-medium">% da Meta</th>
-                <th className="text-right py-2 font-medium">Comissão Projetada</th>
+                <th className="text-center py-2 font-medium">Vendedor</th>
+                <th className="text-center py-2 font-medium">Total Vendas</th>
+                <th className="text-center py-2 font-medium">Total R$</th>
+                <th className="text-center py-2 font-medium">Meta</th>
+                <th className="text-center py-2 font-medium">% da Meta</th>
+                <th className="text-center py-2 font-medium">GAP Meta</th>
+                <th className="text-center py-2 font-medium">Comissão Projetada</th>
               </tr>
             </thead>
             <tbody>
               {salespeople.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-4 text-center text-gray-500">
+                  <td colSpan={7} className="py-4 text-center text-gray-500">
                     Nenhum vendedor encontrado
                   </td>
                 </tr>
               ) : (
-                salespeople.map((person) => (
-                  <tr key={person.id} className="border-b border-gray-100">
-                    <td className="py-3">{person.name}</td>
-                    <td className="text-right py-3">
-                      {person.totalSales.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                    </td>
-                    <td className="text-right py-3">
-                      {person.goalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                    </td>
-                    <td className="text-right py-3">
-                      <div className="flex items-center justify-end">
-                        <div className="w-16 h-2 bg-gray-200 rounded-full mr-2">
-                          <div
-                            className={`h-2 rounded-full ${
-                              person.goalPercentage >= 100 ? 'bg-green-500' : 'bg-blue-500'
-                            }`}
-                            style={{
-                              width: `${person.goalPercentage}%`
-                            }}
-                          />
+                salespeople.map((person) => {
+                  // Determine if person is ahead or behind expected goal progress
+                  const isAheadOfTarget = person.metaGap >= 0;
+                  
+                  return (
+                    <tr key={person.id} className="border-b border-gray-100">
+                      <td className="py-3 text-center">{person.name}</td>
+                      <td className="text-center py-3">
+                        {person.salesCount}
+                      </td>
+                      <td className="text-center py-3">
+                        {person.totalSales.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </td>
+                      <td className="text-center py-3">
+                        {person.goalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </td>
+                      <td className="text-center py-3">
+                        <div className="flex items-center justify-center">
+                          <div className="w-16 h-2 bg-gray-200 rounded-full mr-2">
+                            <div
+                              className={`h-2 rounded-full ${
+                                isAheadOfTarget ? 'bg-blue-500' : 'bg-red-500'
+                              }`}
+                              style={{
+                                width: `${person.goalPercentage}%`
+                              }}
+                            />
+                          </div>
+                          <span>{person.goalPercentage.toFixed(0)}%</span>
                         </div>
-                        <span>{person.goalPercentage.toFixed(0)}%</span>
-                      </div>
-                    </td>
-                    <td className="text-right py-3 font-medium">
-                      {person.projectedCommission.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className={`text-center py-3 ${isAheadOfTarget ? 'text-green-600' : 'text-red-600'} font-medium`}>
+                        {isAheadOfTarget ? 'R$ ' + person.metaGap.toFixed(2).replace('.', ',') + '+' : 'R$ ' + Math.abs(person.metaGap).toFixed(2).replace('.', ',') + '-'}
+                      </td>
+                      <td className="text-center py-3 font-medium">
+                        {person.projectedCommission.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
