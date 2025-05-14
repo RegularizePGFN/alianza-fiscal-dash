@@ -15,9 +15,9 @@ type SalespersonCommission = {
   salesCount: number;
   metaGap: number;
   expectedProgress: number;
+  remainingDailyTarget: number;
 };
 
-// Função para contar dias úteis do mês
 function getBusinessDaysInMonth(month: number, year: number): number {
   let count = 0;
   const daysInMonth = new Date(year, month, 0).getDate();
@@ -29,20 +29,19 @@ function getBusinessDaysInMonth(month: number, year: number): number {
   return count;
 }
 
-// Função para contar dias úteis até hoje
 function getBusinessDaysElapsedUntilToday(): number {
   const today = new Date();
-  const day = today.getDate();
-  const month = today.getMonth();
-  const year = today.getFullYear();
+  const start = new Date(today.getFullYear(), today.getMonth(), 1);
   let count = 0;
-  for (let i = 1; i <= day; i++) {
-    const date = new Date(year, month, i);
-    const weekday = date.getDay();
-    if (weekday !== 0 && weekday !== 6) {
+
+  while (start <= today) {
+    const dayOfWeek = start.getDay();
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
       count++;
     }
+    start.setDate(start.getDate() + 1);
   }
+
   return count;
 }
 
@@ -66,6 +65,7 @@ export function SalespeopleCommissionsCard() {
 
         const totalBusinessDays = getBusinessDaysInMonth(currentMonth, currentYear);
         const businessDaysElapsed = getBusinessDaysElapsedUntilToday();
+        const businessDaysRemaining = totalBusinessDays - businessDaysElapsed;
 
         const { data: profilesData, error: profilesError } = await supabase
           .from("profiles")
@@ -117,6 +117,9 @@ export function SalespeopleCommissionsCard() {
               ? (totalSales / expectedProgress) * 100
               : 0;
 
+            const remainingAmount = goalAmount - totalSales;
+            const remainingDailyTarget = businessDaysRemaining > 0 ? remainingAmount / businessDaysRemaining : 0;
+
             return {
               id: profile.id,
               name: profile.name || "Sem nome",
@@ -126,7 +129,8 @@ export function SalespeopleCommissionsCard() {
               goalPercentage,
               salesCount,
               metaGap,
-              expectedProgress
+              expectedProgress,
+              remainingDailyTarget
             };
           })
         );
@@ -175,13 +179,14 @@ export function SalespeopleCommissionsCard() {
                 <th className="text-center py-2 font-medium">Meta</th>
                 <th className="text-center py-2 font-medium">% da Meta</th>
                 <th className="text-center py-2 font-medium">GAP Meta</th>
+                <th className="text-center py-2 font-medium">Meta Diária Restante</th>
                 <th className="text-center py-2 font-medium">Comissão Projetada</th>
               </tr>
             </thead>
             <tbody>
               {salespeople.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-4 text-center text-gray-500">
+                  <td colSpan={8} className="py-4 text-center text-gray-500">
                     Nenhum vendedor encontrado
                   </td>
                 </tr>
@@ -210,6 +215,11 @@ export function SalespeopleCommissionsCard() {
                         {isAheadOfTarget 
                           ? 'R$ ' + Math.abs(person.metaGap).toFixed(2).replace('.', ',') + '+' 
                           : 'R$ ' + Math.abs(person.metaGap).toFixed(2).replace('.', ',') + '-'}
+                      </td>
+                      <td className="text-center py-3">
+                        {person.remainingDailyTarget > 0
+                          ? person.remainingDailyTarget.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                          : 'Meta alcançada'}
                       </td>
                       <td className="text-center py-3 font-medium">
                         {person.projectedCommission.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
