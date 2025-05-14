@@ -5,6 +5,7 @@ import { toast } from "@/components/ui/use-toast";
 export type SalespersonCommission = {
   id: string;
   name: string;
+  salesCount: number;  // Added sales count
   totalSales: number;
   goalAmount: number;
   projectedCommission: number;
@@ -67,10 +68,13 @@ export async function fetchSalespeopleCommissions(): Promise<SalespersonCommissi
           .maybeSingle();
           
         // Calculate total sales
-        const totalSales = salesData?.reduce((sum, sale) => sum + parseFloat(sale.gross_amount), 0) || 0;
+        const totalSales = salesData?.reduce((sum, sale) => sum + parseFloat(sale.gross_amount.toString()), 0) || 0;
+        
+        // Get count of sales
+        const salesCount = salesData?.length || 0;
         
         // Get goal amount (default to 0 if not set)
-        const goalAmount = goalData?.goal_amount ? parseFloat(goalData.goal_amount) : 0;
+        const goalAmount = goalData?.goal_amount ? parseFloat(goalData.goal_amount.toString()) : 0;
         
         // Calculate commission rate based on goal achievement
         const commissionRate = totalSales >= goalAmount ? 0.25 : 0.2; // 25% if goal met, 20% otherwise
@@ -82,6 +86,7 @@ export async function fetchSalespeopleCommissions(): Promise<SalespersonCommissi
         return {
           id: profile.id,
           name: profile.name || "Sem nome",
+          salesCount, // Add the sales count
           totalSales,
           goalAmount,
           projectedCommission,

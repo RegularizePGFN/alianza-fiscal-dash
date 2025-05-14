@@ -3,6 +3,10 @@ import { useState, useEffect } from "react";
 import { Sale } from "@/lib/types";
 import { PaginatedSalesTable } from "./PaginatedSalesTable";
 import { SalesFilter } from "./SalesFilter";
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from "lucide-react";
+import { useAuth } from "@/contexts/auth";
+import { UserRole } from "@/lib/types";
 
 interface SalesContentProps {
   loading: boolean;
@@ -10,17 +14,23 @@ interface SalesContentProps {
   isSalesperson: boolean;
   onEdit: (sale: Sale) => void;
   onDelete: (saleId: string) => void;
+  onAddSale: () => void;
+  onImport?: (file: File) => void;
 }
 
 export function SalesContent({ 
   loading, 
   sales, 
-  isSalesperson, 
+  isSalesperson,
   onEdit, 
-  onDelete 
+  onDelete,
+  onAddSale,
+  onImport
 }: SalesContentProps) {
   const [filteredSales, setFilteredSales] = useState<Sale[]>(sales);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const { user } = useAuth();
+  const isAdmin = user?.role === UserRole.ADMIN;
   
   // When sales prop changes, update filteredSales
   useEffect(() => {
@@ -36,6 +46,9 @@ export function SalesContent({
           sales={sales} 
           onFilter={setFilteredSales}
           onSearch={setSearchTerm}
+          onAddSale={onAddSale}
+          onImport={isAdmin ? onImport : undefined}
+          isAdmin={isAdmin}
         />
       )}
       

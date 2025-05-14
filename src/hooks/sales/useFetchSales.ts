@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Sale, UserRole } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -25,7 +25,7 @@ export const useFetchSales = (user: User | null) => {
   // Add sales fetch timestamp to prevent redundant fetches
   const lastFetchTimestampRef = useRef(0);
   
-  const fetchSales = async () => {
+  const fetchSales = useCallback(async () => {
     try {
       // Prevent concurrent fetches and redundant fetches within 2 seconds
       const now = Date.now();
@@ -41,6 +41,8 @@ export const useFetchSales = (user: User | null) => {
       
       if (!user) {
         console.log("No authenticated user found");
+        setLoading(false);
+        isFetchingRef.current = false;
         return;
       }
       
@@ -55,18 +57,13 @@ export const useFetchSales = (user: User | null) => {
       
       if (error) {
         console.error("Error querying Supabase:", error);
+        setLoading(false);
+        isFetchingRef.current = false;
         throw error;
       }
       
       if (data && isMountedRef.current) {
         console.log("Sales data retrieved:", data.length, "records");
-        if (data.length > 0) {
-          // Log sample dates for debugging
-          console.log("First 3 sale dates from database:");
-          data.slice(0, 3).forEach((sale, i) => {
-            console.log(`Sale ${i+1}:`, sale.id, "Date:", sale.sale_date, "Type:", typeof sale.sale_date);
-          });
-        }
         
         // Client-side filtering based on user role
         let filteredData = data;
@@ -77,10 +74,6 @@ export const useFetchSales = (user: User | null) => {
         
         // Map data and ensure all required fields are present
         const formattedSales: Sale[] = filteredData.map((sale) => {
-          // Log to debug date issues
-          console.log(`Sale ID: ${sale.id}, Sale date from DB:`, sale.sale_date, typeof sale.sale_date);
-          
-          // Preserve the exact date string from the database
           return {
             id: sale.id,
             salesperson_id: sale.salesperson_id,
@@ -112,14 +105,14 @@ export const useFetchSales = (user: User | null) => {
       }
       isFetchingRef.current = false;
     }
-  };
+  }, [user, toast, sales.length]);
 
   // Update sales list handlers
-  const updateSalesListAfterDelete = (deletedSaleId: string) => {
+  const updateSalesListAfterDelete = useCallback((deletedSaleId: string) => {
     setSales((prevSales) => prevSales.filter((sale) => sale.id !== deletedSaleId));
-  };
+  }, []);
 
-  const updateSalesListAfterSave = (sale: Sale, isNew: boolean) => {
+  const updateSalesListAfterSave = useCallback((sale: Sale, isNew: boolean) => {
     if (isNew) {
       setSales(prevSales => [sale, ...prevSales]);
     } else {
@@ -129,22 +122,22 @@ export const useFetchSales = (user: User | null) => {
         )
       );
     }
-  };
+  }, []);
 
-  // Fetch sales when user changes
+  // Fetch sales when user changes - run only once
   useEffect(() => {
-    if (user) {
+    if (user && !isFetchingRef.current) {
       console.log("Authenticated user, fetching sales");
       fetchSales();
     } else {
-      console.log("No authenticated user, skipping sales fetch");
+      console.log("No authenticated user or already fetching, skipping fetch");
     }
     
     // Reset mount status on unmount
     return () => {
       isMountedRef.current = false;
     };
-  }, [user]);
+  }, [user, fetchSales]);
   
   // Reset mount status when component mounts
   useEffect(() => {

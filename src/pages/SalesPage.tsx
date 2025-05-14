@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Sale, UserRole } from "@/lib/types";
@@ -7,7 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 import { importSalesFromExcel } from "@/lib/excelUtils";
 import { SalesContent } from "@/components/sales/SalesContent";
 import { SalesModals } from "@/components/sales/SalesModals";
-import { SalesActions } from "@/components/sales/SalesActions";
 
 export default function SalesPage() {
   const { user } = useAuth();
@@ -149,6 +149,14 @@ export default function SalesPage() {
     }
   }, [handleSaveSale, fetchSales, toast]);
 
+  // Fix the infinite loading issue
+  useEffect(() => {
+    // Make sure fetchSales is only called once when the component mounts
+    if (user) {
+      fetchSales();
+    }
+  }, [user, fetchSales]);
+
   /* ---------------------- render ---------------------- */
   const isAdmin = user?.role === UserRole.ADMIN;
   const isSalesperson = user?.role === UserRole.SALESPERSON;
@@ -156,20 +164,14 @@ export default function SalesPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex justify-end">
-          <SalesActions
-            isAdmin={isAdmin}
-            onAddSale={handleAddSale}
-            onImport={handleImport}
-          />
-        </div>
-
         <SalesContent
           loading={loading}
           sales={sales}
           isSalesperson={isSalesperson}
           onEdit={handleEdit}
           onDelete={handleDeleteConfirm}
+          onAddSale={handleAddSale}
+          onImport={handleImport}
         />
 
         <SalesModals
