@@ -3,8 +3,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sale } from "@/lib/types";
 import { formatCurrency, getTodayISO } from "@/lib/utils";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CircleDollarSign, Users } from "lucide-react";
+import { ArrowDown, ArrowUp, CircleDollarSign, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface DailyResultsCardProps {
@@ -18,6 +17,9 @@ interface DailySalesperson {
   salesAmount: number;
 }
 
+type SortColumn = 'name' | 'salesCount' | 'salesAmount';
+type SortDirection = 'asc' | 'desc';
+
 export function DailyResultsCard({
   salesData
 }: DailyResultsCardProps) {
@@ -25,6 +27,37 @@ export function DailyResultsCard({
   const [salespeople, setSalespeople] = useState<DailySalesperson[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState<string>("");
+  const [sortColumn, setSortColumn] = useState<SortColumn>('salesAmount');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  
+  // Function to handle sorting
+  const handleSort = (column: SortColumn) => {
+    // If clicking the same column, toggle direction
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // If clicking a new column, set it as the sort column and default to descending
+      setSortColumn(column);
+      setSortDirection('desc');
+    }
+  };
+  
+  // Function to sort salespeople data
+  const sortData = (data: DailySalesperson[]) => {
+    return [...data].sort((a, b) => {
+      if (sortColumn === 'name') {
+        return sortDirection === 'asc' 
+          ? a.name.localeCompare(b.name) 
+          : b.name.localeCompare(a.name);
+      } else {
+        const valueA = a[sortColumn];
+        const valueB = b[sortColumn];
+        return sortDirection === 'asc' 
+          ? (valueA as number) - (valueB as number) 
+          : (valueB as number) - (valueA as number);
+      }
+    });
+  };
   
   useEffect(() => {
     // Get today's date in ISO format (YYYY-MM-DD)
@@ -77,8 +110,8 @@ export function DailyResultsCard({
           }
         });
 
-        // Sort by sales amount (highest first)
-        setSalespeople(allSalespeople.sort((a, b) => b.salesAmount - a.salesAmount));
+        // Apply initial sort to the data
+        setSalespeople(sortData(allSalespeople));
       } catch (error) {
         console.error("Error processing salespeople data:", error);
       } finally {
@@ -87,10 +120,23 @@ export function DailyResultsCard({
     };
     fetchAllSalespeople();
   }, [salesData]);
+  
+  // Apply sorting whenever sort criteria changes
+  useEffect(() => {
+    setSalespeople(sortData(salespeople));
+  }, [sortColumn, sortDirection]);
 
   // Calculate totals
   const totalSalesCount = todaySales.length;
   const totalSalesAmount = todaySales.reduce((sum, sale) => sum + sale.gross_amount, 0);
+  
+  // Create sort indicator component
+  const SortIndicator = ({ column }: { column: SortColumn }) => {
+    if (sortColumn !== column) return null;
+    return sortDirection === 'asc' 
+      ? <ArrowUp className="h-3 w-3 inline ml-1" /> 
+      : <ArrowDown className="h-3 w-3 inline ml-1" />;
+  };
   
   return <Card className="transition-all duration-300 hover:shadow-md">
       <CardHeader className="pb-2 px-4 pt-4">
@@ -131,9 +177,21 @@ export function DailyResultsCard({
                 <table className="w-full text-xs">
                   <thead className="sticky top-0 bg-white z-10">
                     <tr className="border-b">
-                      <th className="text-left py-1 font-medium text-muted-foreground">Vendedor</th>
-                      <th className="text-center py-1 font-medium text-muted-foreground">Vendas</th>
-                      <th className="text-right py-1 font-medium text-muted-foreground">Total</th>
+                      <th className="text-left py-1 font-medium text-muted-foreground">
+                        Vendedor
+                      </th>
+                      <th 
+                        className="text-center py-1 font-medium text-muted-foreground cursor-pointer hover:bg-gray-50 transition-colors"
+                        onClick={() => handleSort('salesCount')}
+                      >
+                        Vendas <SortIndicator column="salesCount" />
+                      </th>
+                      <th 
+                        className="text-right py-1 font-medium text-muted-foreground cursor-pointer hover:bg-gray-50 transition-colors"
+                        onClick={() => handleSort('salesAmount')}
+                      >
+                        Total <SortIndicator column="salesAmount" />
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
