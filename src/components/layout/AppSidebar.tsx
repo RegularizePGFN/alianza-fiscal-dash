@@ -107,6 +107,7 @@ export function AppSidebar() {
           {/* Admin links */}
           {isAdmin && (
             <>
+              {/* Important: Fix the routes to match exactly what's in App.tsx */}
               <SidebarLink 
                 to="/usuarios" 
                 icon={<Users size={20} />} 
