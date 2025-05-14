@@ -1,4 +1,3 @@
-
 import * as XLSX from 'xlsx';
 import { Sale } from './types';
 
@@ -14,9 +13,14 @@ export function exportSalesToExcel(sales: Sale[], filename: string = 'sales-repo
         if (typeof sale.sale_date === 'string' && sale.sale_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
           const [year, month, day] = sale.sale_date.split('-');
           displayDate = `${day}/${month}/${year}`;
-        } else if (sale.sale_date && typeof sale.sale_date === 'object' && 'toLocaleDateString' in sale.sale_date) {
+        } else if (
+          typeof sale.sale_date === 'object' && 
+          sale.sale_date !== null && 
+          'toLocaleDateString' in sale.sale_date
+        ) {
           // Check if it's a date-like object with toLocaleDateString method
-          displayDate = (sale.sale_date as Date).toLocaleDateString('pt-BR');
+          const dateObject = sale.sale_date as Date;
+          displayDate = dateObject.toLocaleDateString('pt-BR');
         } else if (sale.sale_date) {
           // Fallback for other formats
           displayDate = String(sale.sale_date);
