@@ -1,4 +1,3 @@
-
 import * as XLSX from 'xlsx';
 import { Sale } from './types';
 
@@ -19,13 +18,14 @@ export function exportSalesToExcel(sales: Sale[], filename: string = 'sales-repo
           sale.sale_date !== null && 
           'toLocaleDateString' in sale.sale_date
         ) {
-          // Since we've already checked it's not null above and verified it has toLocaleDateString
+          // Explicitly cast to Date and use non-null assertion since we've already verified it's not null
           const dateObject = sale.sale_date as Date;
           displayDate = dateObject.toLocaleDateString('pt-BR');
         } else {
           // Fallback for other formats - ensuring we have a valid string
-          // At this point, we know sale.sale_date is not null due to the outer if condition
-          displayDate = String(sale.sale_date);
+          // We know sale.sale_date is not null here due to the outer if condition
+          const safeValue = String(sale.sale_date);
+          displayDate = safeValue;
         }
       }
       
