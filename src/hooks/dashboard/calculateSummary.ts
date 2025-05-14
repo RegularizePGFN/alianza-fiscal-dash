@@ -1,6 +1,7 @@
 
 import { Sale, SalesSummary } from "@/lib/types";
 import { DashboardTrends } from "./types";
+import { COMMISSION_TRIGGER_GOAL } from "@/lib/constants";
 
 /**
  * Calculates sales summary and trends based on sales data
@@ -11,8 +12,8 @@ export const calculateSalesSummary = (
 ): { summary: SalesSummary; trends: DashboardTrends } => {
   const totalAmount = sales.reduce((sum, sale) => sum + sale.gross_amount, 0);
 
-  // Commission rate depends on whether the goal was met
-  const commissionRate = totalAmount >= monthlyGoal ? 0.25 : 0.2;
+  // Commission rate depends on whether the FIXED COMMISSION TRIGGER goal was met
+  const commissionRate = totalAmount >= COMMISSION_TRIGGER_GOAL ? 0.25 : 0.2;
   const projectedCommission = totalAmount * commissionRate;
 
   // Calculate trend percentages
@@ -25,7 +26,7 @@ export const calculateSalesSummary = (
       total_gross: totalAmount,
       total_net: totalAmount, // Keeping this to avoid breaking changes
       projected_commission: projectedCommission,
-      goal_amount: monthlyGoal,
+      goal_amount: monthlyGoal, // This is the administrative goal
       goal_percentage: Math.min(totalAmount / monthlyGoal, 2),
     },
     trends: {

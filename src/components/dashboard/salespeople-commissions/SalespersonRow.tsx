@@ -1,67 +1,52 @@
 
+import { formatCurrency } from "@/lib/utils";
 import { SalespersonCommission } from "./types";
+import { COMMISSION_TRIGGER_GOAL } from "@/lib/constants";
 
-interface SalespersonRowProps {
-  person: SalespersonCommission;
-}
-
-export function SalespersonRow({ person }: SalespersonRowProps) {
-  const isAheadOfTarget = person.metaGap >= 0;
+export function SalespersonRow({ person }: { person: SalespersonCommission }) {
+  const {
+    name,
+    salesCount,
+    totalSales,
+    goalAmount,
+    goalPercentage,
+    metaGap,
+    remainingDailyTarget,
+    projectedCommission
+  } = person;
+  
+  // Check if commission trigger goal was achieved
+  const commissionGoalAchieved = totalSales >= COMMISSION_TRIGGER_GOAL;
+  const commissionRate = commissionGoalAchieved ? 0.25 : 0.2;
   
   return (
-    <tr className="border-b border-gray-100">
-      <td className="py-3 text-center">{person.name}</td>
-      <td className="text-center py-3">{person.salesCount}</td>
-      <td className="text-center py-3">
-        {person.totalSales.toLocaleString('pt-BR', {
-          style: 'currency',
-          currency: 'BRL'
-        })}
-      </td>
-      <td className="text-center py-3">
-        {person.goalAmount.toLocaleString('pt-BR', {
-          style: 'currency',
-          currency: 'BRL'
-        })}
-      </td>
-      <td className="text-center py-3">
-        <div className="flex items-center justify-center">
-          <div className="w-16 h-2 bg-gray-200 rounded-full mr-2">
-            <div
-              className={`h-2 rounded-full ${
-                isAheadOfTarget ? 'bg-blue-500' : 'bg-red-500'
-              }`}
-              style={{
-                width: `${Math.min(person.goalPercentage, 100)}%`
-              }}
-            />
-          </div>
-          <span>{person.goalPercentage.toFixed(0)}%</span>
+    <tr className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+      <td className="px-2 py-3 text-sm">
+        <div className="font-medium">{name}</div>
+        <div className="text-xs text-muted-foreground mt-0.5">
+          Taxa: {(commissionRate * 100).toFixed(0)}%
+          {commissionGoalAchieved ? 
+            " (Meta de comissão atingida)" : 
+            ` (Faltam ${formatCurrency(COMMISSION_TRIGGER_GOAL - totalSales)} para 25%)`
+          }
         </div>
       </td>
-      <td
-        className={`text-center py-3 ${
-          isAheadOfTarget ? 'text-green-600' : 'text-red-600'
-        } font-medium`}
-      >
-        {isAheadOfTarget
-          ? 'R$ ' + Math.abs(person.metaGap).toFixed(2).replace('.', ',') + '+'
-          : 'R$ ' + Math.abs(person.metaGap).toFixed(2).replace('.', ',') + '-'}
+      <td className="px-2 py-3 text-center">{salesCount}</td>
+      <td className="px-2 py-3 text-right font-medium">
+        {formatCurrency(totalSales)}
+        <div className="text-xs text-muted-foreground">
+          {Math.round(goalPercentage)}% da meta
+        </div>
       </td>
-      <td className="text-center py-3">
-        {person.remainingDailyTarget > 0
-          ? person.remainingDailyTarget.toLocaleString('pt-BR', {
-              style: 'currency',
-              currency: 'BRL'
-            })
-          : 'Meta alcançada'}
+      <td className="px-2 py-3 text-right">
+        <span className={metaGap >= 0 ? "text-af-green-500" : "text-red-500"}>
+          {formatCurrency(metaGap)}
+        </span>
       </td>
-      <td className="text-center py-3 font-medium">
-        {person.projectedCommission.toLocaleString('pt-BR', {
-          style: 'currency',
-          currency: 'BRL'
-        })}
+      <td className="px-2 py-3 text-right">
+        {remainingDailyTarget > 0 ? formatCurrency(remainingDailyTarget) : "Meta atingida!"}
       </td>
+      <td className="px-2 py-3 text-right">{formatCurrency(projectedCommission)}</td>
     </tr>
   );
 }

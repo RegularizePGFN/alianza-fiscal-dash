@@ -2,6 +2,9 @@
 // Default goal amount for salespeople
 export const DEFAULT_GOAL_AMOUNT = 10000;
 
+// Fixed commission trigger goal amount (for commission rate calculation)
+export const COMMISSION_TRIGGER_GOAL = 10000;
+
 // Commission rates
 export const COMMISSION_RATE_BELOW_GOAL = 0.2; // 20%
 export const COMMISSION_RATE_ABOVE_GOAL = 0.25; // 25%

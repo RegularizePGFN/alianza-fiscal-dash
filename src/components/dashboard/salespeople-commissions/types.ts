@@ -10,6 +10,7 @@ export type SalespersonCommission = {
   metaGap: number;
   expectedProgress: number;
   remainingDailyTarget: number;
+  commissionRate?: number; // Added commission rate
 };
 
 export type SortColumn = 

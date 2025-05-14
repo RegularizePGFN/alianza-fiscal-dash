@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { PaymentMethod } from "@/lib/types";
-import { PAYMENT_METHODS, INSTALLMENT_OPTIONS } from "@/lib/constants";
+import { PAYMENT_METHODS, INSTALLMENT_OPTIONS, COMMISSION_TRIGGER_GOAL } from "@/lib/constants";
 import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,7 +21,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { DEFAULT_GOAL_AMOUNT } from "@/lib/constants";
 
 export function CommissionCalculator() {
   const [grossAmount, setGrossAmount] = useState<number>(1000);
@@ -136,8 +136,8 @@ export function CommissionCalculator() {
     }
   };
   
-  // Check if goal is reached
-  const isGoalReached = (simulatedTotal + netAmount) >= DEFAULT_GOAL_AMOUNT;
+  // Check if goal is reached - Using the fixed COMMISSION_TRIGGER_GOAL
+  const isGoalReached = (simulatedTotal + netAmount) >= COMMISSION_TRIGGER_GOAL;
   
   return (
     <Card>
@@ -223,7 +223,7 @@ export function CommissionCalculator() {
             />
           </div>
           <div className="text-sm text-muted-foreground">
-            Meta: {formatCurrency(DEFAULT_GOAL_AMOUNT)}
+            <strong>Meta para comissão máxima:</strong> {formatCurrency(COMMISSION_TRIGGER_GOAL)}
           </div>
         </div>
         
@@ -282,6 +282,11 @@ export function CommissionCalculator() {
               </TableRow>
             </TableBody>
           </Table>
+        </div>
+        
+        <div className="text-sm text-muted-foreground bg-gray-50 p-3 rounded border">
+          <p><strong>Importante:</strong> A meta para gatilho de comissão máxima (25%) é fixa em {formatCurrency(COMMISSION_TRIGGER_GOAL)}, 
+          independente da meta administrativa individual do vendedor.</p>
         </div>
       </CardContent>
     </Card>
