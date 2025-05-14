@@ -24,7 +24,11 @@ export default function UsersPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   
   // User management handlers
-  const handleAddUser = useCallback(() => {
+  const handleAddUser = useCallback((e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setSelectedUser(null);
     setIsFormOpen(true);
   }, []);

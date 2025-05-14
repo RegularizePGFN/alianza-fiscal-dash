@@ -54,7 +54,11 @@ export function UsersTable({
     }
   };
 
-  const handleImpersonateUser = async (userToImpersonate: User) => {
+  const handleImpersonateUser = async (e: React.MouseEvent, userToImpersonate: User) => {
+    // Prevent default behavior to avoid page reload
+    e.preventDefault();
+    e.stopPropagation();
+    
     try {
       await impersonateUser(userToImpersonate.id);
       
@@ -126,7 +130,7 @@ export function UsersTable({
                       variant="ghost"
                       size="sm"
                       className="h-8 w-8 p-0"
-                      onClick={() => handleImpersonateUser(user)}
+                      onClick={(e) => handleImpersonateUser(e, user)}
                       title={`Entrar como ${user.name}`}
                     >
                       <UserRound className="h-4 w-4" />
@@ -138,18 +142,32 @@ export function UsersTable({
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
+                    <Button variant="ghost" className="h-8 w-8 p-0"
+                      onClick={(e) => {
+                        // Prevent dropdown from causing page reload
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                    >
                       <span className="sr-only">Abrir menu</span>
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onEditUser(user)}>
+                    <DropdownMenuItem onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onEditUser(user);
+                    }}>
                       Editar
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="text-destructive"
-                      onClick={() => onDeleteUser(user)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onDeleteUser(user);
+                      }}
                     >
                       Excluir
                     </DropdownMenuItem>

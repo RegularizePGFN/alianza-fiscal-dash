@@ -40,6 +40,7 @@ export function useUsers() {
       if (!profilesData || profilesData.length === 0) {
         setUsers([]);
         setIsLoading(false);
+        isFetchingRef.current = false; // Important: reset the flag before returning
         return;
       }
       
