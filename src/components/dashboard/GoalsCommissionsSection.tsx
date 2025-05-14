@@ -17,18 +17,17 @@ export function GoalsCommissionsSection({ summary, salesData }: GoalsCommissions
   const isAdmin = user?.role === UserRole.ADMIN;
   
   return (
-    <div className="h-full">
+    <div className="grid gap-4 md:grid-cols-2">
+      <GoalProgressCard
+        currentValue={summary.total_gross}
+        goalValue={summary.goal_amount}
+      />
       {isAdmin ? (
-        <GoalProgressCard
-          currentValue={summary.total_gross}
-          goalValue={summary.goal_amount}
-          className="h-full"
-        />
+        <DailyResultCard salesData={salesData} />
       ) : (
         <CommissionCard
           totalSales={summary.total_gross}
           goalAmount={summary.goal_amount}
-          className="h-full"
         />
       )}
     </div>

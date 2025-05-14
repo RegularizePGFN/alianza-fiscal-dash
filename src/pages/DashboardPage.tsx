@@ -25,23 +25,11 @@ export default function DashboardPage() {
           <LoadingSpinner />
         ) : (
           <div className="space-y-6 animate-fade-in">
-            {/* Cards in a single row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* DailyResultsCard - only visible to admin users */}
-              {isAdmin && (
-                <div className="md:col-span-1">
-                  <DailyResultsCard salesData={salesData} />
-                </div>
-              )}
-              
-              <div className="md:col-span-1">
-                <SalesSummarySection summary={summary} trends={trends} />
-              </div>
-              
-              <div className="md:col-span-1">
-                <GoalsCommissionsSection summary={summary} salesData={salesData} />
-              </div>
-            </div>
+            {/* DailyResultsCard - only visible to admin users */}
+            {isAdmin && <DailyResultsCard salesData={salesData} />}
+            
+            <SalesSummarySection summary={summary} trends={trends} />
+            <GoalsCommissionsSection summary={summary} salesData={salesData} />
             
             {/* Admin-only commission projections card */}
             {isAdmin && <SalespeopleCommissionsCard />}
