@@ -1,3 +1,4 @@
+
 import { getCurrentMonthDates } from "@/lib/utils";
 interface DashboardHeaderProps {
   isLoading: boolean;
@@ -12,8 +13,7 @@ export function DashboardHeader({
     month: 'long',
     year: 'numeric'
   });
-  return <div>
-      
+  return <div className="mb-4">
       <p className="text-muted-foreground">
         Visão geral de vendas e comissões para {monthLabel}
       </p>

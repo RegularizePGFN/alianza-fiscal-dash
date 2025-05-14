@@ -11,21 +11,14 @@ interface SalesSummarySectionProps {
 
 export function SalesSummarySection({ summary, trends }: SalesSummarySectionProps) {
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="h-full">
       <SalesSummaryCard
         title="Total de Vendas"
         numericValue={summary.total_sales}
         description={`${summary.total_sales === 1 ? 'venda' : 'vendas'} no período`}
         icon={<ShoppingCart className="h-4 w-4" />}
         trend={trends.totalSalesTrend}
-      />
-
-      <SalesSummaryCard
-        title="Média por Venda"
-        amount={summary.total_sales ? summary.total_gross / summary.total_sales : 0}
-        description="Valor médio por transação"
-        icon={<AreaChart className="h-4 w-4" />}
-        trend={trends.averageSaleTrend}
+        className="h-full"
       />
     </div>
   );
