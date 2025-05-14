@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { Separator } from "@/components/ui/separator";
+import { ArrowDown, ArrowUp } from "lucide-react";
 
 type SalespersonCommission = {
   id: string;
@@ -19,6 +20,17 @@ type SalespersonCommission = {
   expectedProgress: number;
   remainingDailyTarget: number;
 };
+
+type SortColumn = 
+  | 'name' 
+  | 'salesCount' 
+  | 'totalSales' 
+  | 'goalPercentage' 
+  | 'metaGap'
+  | 'remainingDailyTarget'
+  | 'projectedCommission';
+
+type SortDirection = 'asc' | 'desc';
 
 function getBusinessDaysInMonth(month: number, year: number): number {
   let count = 0;
@@ -48,6 +60,9 @@ function getBusinessDaysElapsedUntilToday(): number {
 export function SalespeopleCommissionsCard() {
   const [salespeople, setSalespeople] = useState<SalespersonCommission[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sortColumn, setSortColumn] = useState<SortColumn>('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  
   const { user } = useAuth();
   
   if (user?.role !== UserRole.ADMIN) {
@@ -131,11 +146,10 @@ export function SalespeopleCommissionsCard() {
           })
         );
         
-        const validCommissions = commissionData
-          .filter(Boolean)
-          .sort((a, b) => a!.name.localeCompare(b!.name));
-          
-        setSalespeople(validCommissions as SalespersonCommission[]);
+        const validCommissions = commissionData.filter(Boolean) as SalespersonCommission[];
+        
+        // Apply initial sort
+        sortSalespeople(validCommissions, sortColumn, sortDirection);
       } catch (error) {
         console.error("Error fetching salespeople commissions:", error);
       } finally {
@@ -145,6 +159,49 @@ export function SalespeopleCommissionsCard() {
     
     fetchSalespeopleCommissions();
   }, []);
+  
+  // Function to sort salespeople based on column and direction
+  const sortSalespeople = (
+    data: SalespersonCommission[], 
+    column: SortColumn, 
+    direction: SortDirection
+  ) => {
+    const sortedData = [...data].sort((a, b) => {
+      if (column === 'name') {
+        return direction === 'asc'
+          ? a.name.localeCompare(b.name)
+          : b.name.localeCompare(a.name);
+      }
+      
+      const aValue = a[column];
+      const bValue = b[column];
+      
+      if (direction === 'asc') {
+        return (aValue as number) - (bValue as number);
+      } else {
+        return (bValue as number) - (aValue as number);
+      }
+    });
+    
+    setSalespeople(sortedData);
+  };
+  
+  // Handle header click for sorting
+  const handleSort = (column: SortColumn) => {
+    const newDirection = sortColumn === column && sortDirection === 'asc' ? 'desc' : 'asc';
+    setSortColumn(column);
+    setSortDirection(newDirection);
+    sortSalespeople(salespeople, column, newDirection);
+  };
+  
+  // Render sort indicator
+  const renderSortIndicator = (column: SortColumn) => {
+    if (sortColumn !== column) return null;
+    
+    return sortDirection === 'asc' 
+      ? <ArrowUp className="inline-block ml-1 h-4 w-4" />
+      : <ArrowDown className="inline-block ml-1 h-4 w-4" />;
+  };
   
   // Calculate summary totals
   const summaryTotals = {
@@ -188,14 +245,49 @@ export function SalespeopleCommissionsCard() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200">
-                <th className="text-center py-2 font-medium">Vendedor</th>
-                <th className="text-center py-2 font-medium">Total Vendas</th>
-                <th className="text-center py-2 font-medium">Total R$</th>
+                <th 
+                  className="text-center py-2 font-medium cursor-pointer hover:bg-gray-50" 
+                  onClick={() => handleSort('name')}
+                >
+                  Vendedor {renderSortIndicator('name')}
+                </th>
+                <th 
+                  className="text-center py-2 font-medium cursor-pointer hover:bg-gray-50" 
+                  onClick={() => handleSort('salesCount')}
+                >
+                  Total Vendas {renderSortIndicator('salesCount')}
+                </th>
+                <th 
+                  className="text-center py-2 font-medium cursor-pointer hover:bg-gray-50" 
+                  onClick={() => handleSort('totalSales')}
+                >
+                  Total R$ {renderSortIndicator('totalSales')}
+                </th>
                 <th className="text-center py-2 font-medium">Meta</th>
-                <th className="text-center py-2 font-medium">% da Meta</th>
-                <th className="text-center py-2 font-medium">GAP Meta</th>
-                <th className="text-center py-2 font-medium">Meta Diária Restante</th>
-                <th className="text-center py-2 font-medium">Comissão Projetada</th>
+                <th 
+                  className="text-center py-2 font-medium cursor-pointer hover:bg-gray-50" 
+                  onClick={() => handleSort('goalPercentage')}
+                >
+                  % da Meta {renderSortIndicator('goalPercentage')}
+                </th>
+                <th 
+                  className="text-center py-2 font-medium cursor-pointer hover:bg-gray-50" 
+                  onClick={() => handleSort('metaGap')}
+                >
+                  GAP Meta {renderSortIndicator('metaGap')}
+                </th>
+                <th 
+                  className="text-center py-2 font-medium cursor-pointer hover:bg-gray-50" 
+                  onClick={() => handleSort('remainingDailyTarget')}
+                >
+                  Meta Diária Restante {renderSortIndicator('remainingDailyTarget')}
+                </th>
+                <th 
+                  className="text-center py-2 font-medium cursor-pointer hover:bg-gray-50" 
+                  onClick={() => handleSort('projectedCommission')}
+                >
+                  Comissão Projetada {renderSortIndicator('projectedCommission')}
+                </th>
               </tr>
             </thead>
             <tbody>
