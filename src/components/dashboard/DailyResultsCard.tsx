@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sale } from "@/lib/types";
@@ -91,64 +90,66 @@ export function DailyResultsCard({ salesData }: DailyResultsCardProps) {
   const totalSalesAmount = todaySales.reduce((sum, sale) => sum + sale.gross_amount, 0);
   
   return (
-    <Card className="mt-6 transition-all duration-300 hover:shadow-md">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-medium flex items-center gap-2">
+    <Card className="transition-all duration-300 hover:shadow-md">
+      <CardHeader className="pb-2 px-4 pt-4">
+        <CardTitle className="text-sm font-medium flex items-center gap-1">
           RESULTADO DO DIA
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-          {/* Summary section - 4 columns */}
-          <div className="md:col-span-4 space-y-4 border-r pr-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
-                <Users className="h-5 w-5 text-purple-700" />
+      <CardContent className="px-4 pb-4 pt-0">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-2">
+          {/* Summary section - 3 columns */}
+          <div className="md:col-span-3 space-y-2 border-r pr-2">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100">
+                <Users className="h-4 w-4 text-purple-700" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total de Vendas</p>
-                <h4 className="text-2xl font-bold">{totalSalesCount}</h4>
+                <p className="text-xs text-muted-foreground">Total de Vendas</p>
+                <h4 className="text-lg font-bold">{totalSalesCount}</h4>
               </div>
             </div>
             
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
-                <CircleDollarSign className="h-5 w-5 text-purple-700" />
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100">
+                <CircleDollarSign className="h-4 w-4 text-purple-700" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total em Valor</p>
-                <h4 className="text-2xl font-bold">{formatCurrency(totalSalesAmount)}</h4>
+                <p className="text-xs text-muted-foreground">Total em Valor</p>
+                <h4 className="text-lg font-bold">{formatCurrency(totalSalesAmount)}</h4>
               </div>
             </div>
           </div>
           
-          {/* Salespeople breakdown - 8 columns */}
-          <div className="md:col-span-8">
+          {/* Salespeople breakdown - 9 columns */}
+          <div className="md:col-span-9">
             {loading ? (
-              <div className="flex h-[120px] items-center justify-center">
-                <p className="text-sm text-muted-foreground">Carregando dados...</p>
+              <div className="flex h-[70px] items-center justify-center">
+                <p className="text-xs text-muted-foreground">Carregando dados...</p>
               </div>
             ) : salespeople.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[180px]">Vendedor</TableHead>
-                    <TableHead className="text-center">Vendas</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {salespeople.map((person) => (
-                    <TableRow key={person.id}>
-                      <TableCell className="font-medium">{person.name}</TableCell>
-                      <TableCell className="text-center">{person.salesCount}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(person.salesAmount)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <div className="max-h-[120px] overflow-y-auto pr-2">
+                <table className="w-full text-xs">
+                  <thead className="sticky top-0 bg-white z-10">
+                    <tr className="border-b">
+                      <th className="text-left py-1 font-medium text-muted-foreground">Vendedor</th>
+                      <th className="text-center py-1 font-medium text-muted-foreground">Vendas</th>
+                      <th className="text-right py-1 font-medium text-muted-foreground">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {salespeople.map((person) => (
+                      <tr key={person.id} className="border-b border-gray-50">
+                        <td className="py-1 text-left">{person.name}</td>
+                        <td className="text-center py-1">{person.salesCount}</td>
+                        <td className="text-right py-1">{formatCurrency(person.salesAmount)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             ) : (
-              <div className="flex h-[120px] items-center justify-center text-sm text-muted-foreground">
+              <div className="flex h-[70px] items-center justify-center text-xs text-muted-foreground">
                 Sem vendedores cadastrados
               </div>
             )}
