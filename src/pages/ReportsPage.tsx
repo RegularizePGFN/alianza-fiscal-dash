@@ -1,14 +1,19 @@
 
+import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ReportsHeader } from "@/components/reports/ReportsHeader";
+import { ReportsFilter } from "@/components/reports/ReportsFilter";
 import { ReportsCharts } from "@/components/reports/ReportsCharts";
-import { UserRole } from "@/lib/types";
+import { DateFilter, PaymentMethod, UserRole } from "@/lib/types";
 import { useReportsData } from "@/hooks/useReportsData";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 
 export default function ReportsPage() {
   const { user } = useAuth();
+  const [selectedSalesperson, setSelectedSalesperson] = useState<string | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
+  const [dateFilter, setDateFilter] = useState<DateFilter | null>(null);
 
   // Redirect if not admin
   if (user?.role !== UserRole.ADMIN) {
@@ -16,9 +21,9 @@ export default function ReportsPage() {
   }
 
   const { salesData, loading, error } = useReportsData({
-    salespersonId: null,
-    paymentMethod: null,
-    dateFilter: null
+    salespersonId: selectedSalesperson,
+    paymentMethod: selectedPaymentMethod,
+    dateFilter: dateFilter
   });
 
   return (
@@ -28,6 +33,14 @@ export default function ReportsPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden print:hidden transition-colors duration-300">
             <div className="p-4 sm:p-6">
               <ReportsHeader />
+            </div>
+            
+            <div className="border-t border-gray-100 dark:border-gray-700 p-4 sm:p-6">
+              <ReportsFilter 
+                onSalespersonChange={setSelectedSalesperson}
+                onPaymentMethodChange={setSelectedPaymentMethod}
+                onDateFilterChange={setDateFilter}
+              />
             </div>
           </div>
           
