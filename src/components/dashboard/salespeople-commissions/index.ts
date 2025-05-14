@@ -1,0 +1,2 @@
+
+export { SalespeopleCommissionsCard } from './SalespeopleCommissionsCard';
