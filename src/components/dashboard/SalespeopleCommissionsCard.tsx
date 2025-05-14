@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,12 +17,40 @@ type SalespersonCommission = {
   expectedProgress: number;
 };
 
+// Função para contar dias úteis do mês
+function getBusinessDaysInMonth(month: number, year: number): number {
+  let count = 0;
+  const daysInMonth = new Date(year, month, 0).getDate();
+  for (let i = 1; i <= daysInMonth; i++) {
+    const date = new Date(year, month - 1, i);
+    const day = date.getDay();
+    if (day !== 0 && day !== 6) count++;
+  }
+  return count;
+}
+
+// Função para contar dias úteis até hoje
+function getBusinessDaysElapsedUntilToday(): number {
+  const today = new Date();
+  const day = today.getDate();
+  const month = today.getMonth();
+  const year = today.getFullYear();
+  let count = 0;
+  for (let i = 1; i <= day; i++) {
+    const date = new Date(year, month, i);
+    const weekday = date.getDay();
+    if (weekday !== 0 && weekday !== 6) {
+      count++;
+    }
+  }
+  return count;
+}
+
 export function SalespeopleCommissionsCard() {
   const [salespeople, setSalespeople] = useState<SalespersonCommission[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
-  // Only admins should see this component
   if (user?.role !== UserRole.ADMIN) {
     return null;
   }
@@ -32,86 +59,64 @@ export function SalespeopleCommissionsCard() {
     const fetchSalespeopleCommissions = async () => {
       try {
         setLoading(true);
-        
-        // Get current month/year
+
         const today = new Date();
         const currentMonth = today.getMonth() + 1;
         const currentYear = today.getFullYear();
-        
-        // Calculate business days and progress
-        const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-        const totalBusinessDays = 22; // Simplification for business days in month
-        const currentDay = today.getDate();
-        
-        // Calculate business days that have passed so far (capped at totalBusinessDays)
-        const businessDaysElapsed = Math.min(currentDay, totalBusinessDays);
-        
-        // 1. Fetch all salespeople (users with role 'vendedor')
+
+        const totalBusinessDays = getBusinessDaysInMonth(currentMonth, currentYear);
+        const businessDaysElapsed = getBusinessDaysElapsedUntilToday();
+
         const { data: profilesData, error: profilesError } = await supabase
           .from("profiles")
           .select("*")
           .eq("role", "vendedor");
-        
+
         if (profilesError) {
           console.error("Error fetching salespeople:", profilesError);
           return;
         }
-        
-        // Process each salesperson
+
         const commissionData = await Promise.all(
           profilesData.map(async (profile) => {
-            // 2. Get their sales for current month
             const startDate = `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`;
             const endDate = new Date(currentYear, currentMonth, 0).toISOString().split('T')[0];
-            
+
             const { data: salesData, error: salesError } = await supabase
               .from("sales")
               .select("*")
               .eq("salesperson_id", profile.id)
               .gte("sale_date", startDate)
               .lte("sale_date", endDate);
-              
+
             if (salesError) {
               console.error(`Error fetching sales for ${profile.name}:`, salesError);
               return null;
             }
-            
-            // 3. Get their monthly goal
-            const { data: goalData, error: goalError } = await supabase
+
+            const { data: goalData } = await supabase
               .from("monthly_goals")
               .select("goal_amount")
               .eq("user_id", profile.id)
               .eq("month", currentMonth)
               .eq("year", currentYear)
               .maybeSingle();
-              
-            // Calculate total sales
+
             const totalSales = salesData?.reduce((sum, sale) => sum + Number(sale.gross_amount), 0) || 0;
-            
-            // Count number of sales
             const salesCount = salesData?.length || 0;
-            
-            // Get goal amount (default to 0 if not set)
             const goalAmount = goalData?.goal_amount ? Number(goalData.goal_amount) : 0;
-            
-            // Calculate the expected progress based on business days elapsed
+
             const dailyTarget = goalAmount / totalBusinessDays;
             const expectedProgress = dailyTarget * businessDaysElapsed;
-            
-            // Calculate the gap between actual and expected
-            // Positive gap means they are ahead of their expected progress
             const metaGap = totalSales - expectedProgress;
-            
-            // Calculate commission rate based on goal achievement
-            const commissionRate = totalSales >= goalAmount ? 0.25 : 0.2; // 25% if goal met, 20% otherwise
+
+            const commissionRate = totalSales >= goalAmount ? 0.25 : 0.2;
             const projectedCommission = totalSales * commissionRate;
-            
-            // Calculate goal percentage against EXPECTED progress (not total goal)
-            // This is the key fix - calculate percentage against expected progress through today
-            const goalPercentage = expectedProgress > 0 
-              ? Math.min((totalSales / expectedProgress) * 100, 200) 
+
+            const goalPercentage = expectedProgress > 0
+              ? (totalSales / expectedProgress) * 100
               : 0;
-            
+
             return {
               id: profile.id,
               name: profile.name || "Sem nome",
@@ -125,12 +130,11 @@ export function SalespeopleCommissionsCard() {
             };
           })
         );
-        
-        // Filter out any null values and sort by name
+
         const validCommissions = commissionData
           .filter(Boolean)
           .sort((a, b) => a!.name.localeCompare(b!.name));
-          
+
         setSalespeople(validCommissions as SalespersonCommission[]);
       } catch (error) {
         console.error("Error fetching salespeople commissions:", error);
@@ -138,7 +142,7 @@ export function SalespeopleCommissionsCard() {
         setLoading(false);
       }
     };
-    
+
     fetchSalespeopleCommissions();
   }, []);
 
@@ -183,43 +187,29 @@ export function SalespeopleCommissionsCard() {
                 </tr>
               ) : (
                 salespeople.map((person) => {
-                  // Determine if person is ahead or behind expected progress at this point in time
                   const isAheadOfTarget = person.metaGap >= 0;
-                  
+
                   return (
                     <tr key={person.id} className="border-b border-gray-100">
                       <td className="py-3 text-center">{person.name}</td>
-                      <td className="text-center py-3">
-                        {person.salesCount}
-                      </td>
-                      <td className="text-center py-3">
-                        {person.totalSales.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                      </td>
-                      <td className="text-center py-3">
-                        {person.goalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                      </td>
+                      <td className="text-center py-3">{person.salesCount}</td>
+                      <td className="text-center py-3">{person.totalSales.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                      <td className="text-center py-3">{person.goalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
                       <td className="text-center py-3">
                         <div className="flex items-center justify-center">
                           <div className="w-16 h-2 bg-gray-200 rounded-full mr-2">
                             <div
-                              className={`h-2 rounded-full ${
-                                // Use blue for ahead of expected target, red for behind
-                                isAheadOfTarget ? 'bg-blue-500' : 'bg-red-500'
-                              }`}
-                              style={{
-                                width: `${Math.min(person.goalPercentage, 100)}%`
-                              }}
+                              className={`h-2 rounded-full ${isAheadOfTarget ? 'bg-blue-500' : 'bg-red-500'}`}
+                              style={{ width: `${Math.min(person.goalPercentage, 100)}%` }}
                             />
                           </div>
                           <span>{person.goalPercentage.toFixed(0)}%</span>
                         </div>
                       </td>
                       <td className={`text-center py-3 ${isAheadOfTarget ? 'text-green-600' : 'text-red-600'} font-medium`}>
-                        {/* Format GAP display with correct sign and color */}
                         {isAheadOfTarget 
                           ? 'R$ ' + Math.abs(person.metaGap).toFixed(2).replace('.', ',') + '+' 
-                          : 'R$ ' + Math.abs(person.metaGap).toFixed(2).replace('.', ',') + '-'
-                        }
+                          : 'R$ ' + Math.abs(person.metaGap).toFixed(2).replace('.', ',') + '-'}
                       </td>
                       <td className="text-center py-3 font-medium">
                         {person.projectedCommission.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
