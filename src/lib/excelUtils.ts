@@ -1,6 +1,12 @@
-import { read, utils } from 'xlsx';
+
+import { read, utils, write } from 'xlsx';
 import { Sale } from './types';
 import { convertToPaymentMethod } from './utils';
+
+// Function to export sales data to Excel
+export const exportSalesToExcel = (salesData: Sale[]) => {
+  generateExcelFile(salesData, `vendas_${new Date().toISOString().split('T')[0]}`);
+};
 
 // Function to generate Excel file from sales data
 export const generateExcelFile = (salesData: Sale[], fileName: string) => {
@@ -29,11 +35,17 @@ export const generateExcelFile = (salesData: Sale[], fileName: string) => {
   utils.book_append_sheet(wb, ws, "Vendas");
 
   // Step 5: Generate the Excel file
-  const wopts = { bookType: 'xlsx', bookSST: false, type: 'array' };
-  const wbout = read(utils.encode(wb, wopts), { type: 'binary' });
+  const wbout = write(wb, { bookType: 'xlsx', bookSST: false, type: 'binary' });
+  
+  // Step 6: Convert the binary string to an array buffer
+  const buf = new ArrayBuffer(wbout.length);
+  const view = new Uint8Array(buf);
+  for (let i = 0; i < wbout.length; i++) {
+    view[i] = wbout.charCodeAt(i) & 0xFF;
+  }
 
-  // Step 6: Trigger the download
-  const blob = new Blob([new Uint8Array(wbout.content)], { type: 'application/octet-stream' });
+  // Step 7: Trigger the download
+  const blob = new Blob([buf], { type: 'application/octet-stream' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;

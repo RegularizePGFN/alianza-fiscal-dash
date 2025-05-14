@@ -1,12 +1,13 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
-import { Sale, UserRole } from "@/lib/types";
+import { Sale, UserRole, PaymentMethod } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
 import { DailySummaryCard } from "./DailySummaryCard";
 import { DailySalesTeamCard } from "./DailySalesTeamCard";
 import { DailyResultsProvider } from "./DailyResultsContext";
 import { formatDate, getTodayISO } from "@/lib/utils";
+import { convertToPaymentMethod } from "@/hooks/sales/saleUtils";
 
 interface DailyResultsProps {
   salesData: Sale[];
@@ -54,7 +55,7 @@ export function DailyResultsCard({ salesData }: DailyResultsProps) {
           salesperson_name: sale.salesperson_name || "Sem nome",
           gross_amount: Number(sale.gross_amount),
           net_amount: Number(sale.gross_amount),
-          payment_method: sale.payment_method,
+          payment_method: convertToPaymentMethod(sale.payment_method),
           installments: sale.installments || 1,
           sale_date: sale.sale_date,
           created_at: sale.created_at,
@@ -92,7 +93,6 @@ export function DailyResultsCard({ salesData }: DailyResultsProps) {
         <DailySalesTeamCard 
           todaySales={todaySales} 
           currentDate={currentDate} 
-          isLoading={isLoading} 
         />
       </div>
     </DailyResultsProvider>

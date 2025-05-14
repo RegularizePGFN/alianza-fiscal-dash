@@ -5,7 +5,6 @@ import { Sale } from "@/lib/types";
 import { DailySalesperson } from "./types";
 import { SalespeopleTable } from "./SalespeopleTable";
 import { useDailyResults } from "./DailyResultsContext";
-import { formatCurrency } from "@/lib/utils";
 
 interface DailyResultsContentProps {
   todaySales: Sale[];
