@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sale } from "@/lib/types";
@@ -5,24 +6,34 @@ import { formatCurrency, getTodayISO } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CircleDollarSign, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+
 interface DailyResultsCardProps {
   salesData: Sale[];
 }
+
 interface DailySalesperson {
   id: string;
   name: string;
   salesCount: number;
   salesAmount: number;
 }
+
 export function DailyResultsCard({
   salesData
 }: DailyResultsCardProps) {
   const [todaySales, setTodaySales] = useState<Sale[]>([]);
   const [salespeople, setSalespeople] = useState<DailySalesperson[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentDate, setCurrentDate] = useState<string>("");
+  
   useEffect(() => {
     // Get today's date in ISO format (YYYY-MM-DD)
     const todayStr = getTodayISO();
+    
+    // Format current date for display (dd/mm/yyyy in Portuguese format)
+    const today = new Date();
+    const formattedDate = new Intl.DateTimeFormat('pt-BR').format(today);
+    setCurrentDate(formattedDate);
 
     // Filter sales for today only
     const filteredSales = salesData.filter(sale => sale.sale_date === todayStr);
@@ -80,9 +91,12 @@ export function DailyResultsCard({
   // Calculate totals
   const totalSalesCount = todaySales.length;
   const totalSalesAmount = todaySales.reduce((sum, sale) => sum + sale.gross_amount, 0);
+  
   return <Card className="transition-all duration-300 hover:shadow-md">
       <CardHeader className="pb-2 px-4 pt-4">
-        <CardTitle className="text-sm font-medium flex items-center gap-1">Resultado do Dia</CardTitle>
+        <CardTitle className="text-sm font-medium flex items-center gap-1">
+          Resultado do Dia - {currentDate}
+        </CardTitle>
       </CardHeader>
       <CardContent className="px-4 pb-4 pt-0">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-2">
