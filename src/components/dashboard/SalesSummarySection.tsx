@@ -14,7 +14,8 @@ export function SalesSummarySection({ summary, trends }: SalesSummarySectionProp
     <div className="grid gap-4 md:grid-cols-2">
       <SalesSummaryCard
         title="Total de Vendas"
-        amount={summary.total_gross}
+        // Removed the amount prop to hide the monetary value
+        hideAmount={true}
         description={`${summary.total_sales} ${summary.total_sales === 1 ? 'venda' : 'vendas'} no período`}
         icon={<ShoppingCart className="h-4 w-4" />}
         trend={trends.totalSalesTrend}

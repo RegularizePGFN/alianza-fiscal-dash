@@ -11,7 +11,8 @@ import { cn } from '@/lib/utils';
 
 interface SalesSummaryCardProps {
   title: string;
-  amount: number;
+  amount?: number;
+  hideAmount?: boolean;
   description?: string;
   icon?: React.ReactNode;
   className?: string;
@@ -24,6 +25,7 @@ interface SalesSummaryCardProps {
 export function SalesSummaryCard({
   title,
   amount,
+  hideAmount = false,
   description,
   icon,
   className,
@@ -36,9 +38,11 @@ export function SalesSummaryCard({
           <CardTitle className="text-sm font-medium text-muted-foreground">
             {title}
           </CardTitle>
-          <CardDescription className="text-2xl font-bold">
-            {formatCurrency(amount)}
-          </CardDescription>
+          {!hideAmount && amount !== undefined && (
+            <CardDescription className="text-2xl font-bold">
+              {formatCurrency(amount)}
+            </CardDescription>
+          )}
         </div>
         {icon && (
           <div className="rounded-md bg-primary/10 p-2 text-primary">

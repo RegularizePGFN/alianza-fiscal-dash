@@ -1,8 +1,14 @@
 
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, FileUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { 
+  Tooltip, 
+  TooltipContent, 
+  TooltipProvider, 
+  TooltipTrigger 
+} from "@/components/ui/tooltip";
 
 interface SalesActionsProps {
   isAdmin: boolean;
@@ -33,22 +39,44 @@ export function SalesActions({ isAdmin, onAddSale, onImport }: SalesActionsProps
 
   return (
     <div className="flex gap-2">
-      <Button onClick={onAddSale}>
-        <PlusCircle className="mr-2 h-4 w-4" />
-        Nova Venda
-      </Button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button onClick={onAddSale} size="icon" aria-label="Nova Venda">
+              <PlusCircle className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Nova Venda</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       
       {isAdmin && onImport && (
-        <Button variant="outline" onClick={handleImportClick}>
-          <span className="mr-2">Importar</span>
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            className="hidden"
-            accept=".xlsx,.xls"
-            onChange={handleFileChange}
-          />
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={handleImportClick}
+                aria-label="Importar Vendas"
+              >
+                <FileUp className="h-4 w-4" />
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  className="hidden"
+                  accept=".xlsx,.xls"
+                  onChange={handleFileChange}
+                />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Importar Vendas</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       )}
     </div>
   );
