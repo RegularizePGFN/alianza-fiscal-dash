@@ -4,8 +4,6 @@ import { Sale } from "@/lib/types";
 import { PaginatedSalesTable } from "./PaginatedSalesTable";
 import { SalesFilter } from "./SalesFilter";
 import { SalesActions } from "./SalesActions";
-import { Card } from "@/components/ui/card";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface SalesContentProps {
   loading: boolean;
@@ -39,18 +37,15 @@ export function SalesContent({
   }, [sales, searchTerm]);
   
   return (
-    <div className="space-y-6">
-      <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 dark:from-gray-100 dark:to-gray-400 bg-clip-text text-transparent">Vendas</h2>
-        <p className="text-muted-foreground mt-1">
-          Gerencie vendas e comissões da sua equipe
-        </p>
-      </div>
-
+    <div className="space-y-4">
       {!loading && (
-        <Card className="shadow-sm border-0 p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 transition-colors">
           <div className="flex flex-col space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <h2 className="text-xl font-bold">Vendas</h2>
+            </div>
+            
+            <div className="flex flex-col md:flex-row justify-between gap-4">
               <div className="flex-1">
                 <SalesFilter 
                   sales={sales} 
@@ -67,13 +62,16 @@ export function SalesContent({
               </div>
             </div>
           </div>
-        </Card>
+        </div>
       )}
       
-      <Card className="shadow-sm border-0 overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden transition-colors">
         {loading ? (
           <div className="flex justify-center py-12">
-            <LoadingSpinner size="lg" />
+            <div className="flex flex-col items-center gap-4">
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+              <p className="text-sm text-muted-foreground">Carregando dados...</p>
+            </div>
           </div>
         ) : (
           <PaginatedSalesTable
@@ -83,7 +81,7 @@ export function SalesContent({
             onDelete={onDelete}
           />
         )}
-      </Card>
+      </div>
     </div>
   );
 }

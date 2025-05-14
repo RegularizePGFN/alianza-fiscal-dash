@@ -43,11 +43,7 @@ const SidebarLink = ({ to, icon, label, expanded, active, onClick }: SidebarLink
           }
         }}
       >
-        <div className={cn(
-          "transition-all duration-200", 
-          expanded ? "" : "text-xl",
-          active ? "text-sidebar-accent-foreground" : "text-sidebar-foreground/70"
-        )}>
+        <div className={cn("transition-all duration-200", active ? "text-sidebar-accent-foreground" : "text-sidebar-foreground/70")}>
           {icon}
         </div>
         {expanded && <span className="truncate">{label}</span>}
@@ -73,7 +69,7 @@ export function AppSidebar() {
   
   return (
     <div className={cn(
-      "bg-sidebar relative h-screen transition-all duration-300 flex flex-col z-10",
+      "bg-sidebar relative h-screen transition-all duration-300 flex flex-col",
       expanded ? "w-60" : "w-16"
     )}>
       <div className="flex items-center justify-between p-4 border-b border-sidebar-border/30">
@@ -111,6 +107,7 @@ export function AppSidebar() {
           {/* Admin links */}
           {isAdmin && (
             <>
+              {/* Important: Fix the routes to match exactly what's in App.tsx */}
               <SidebarLink 
                 to="/usuarios" 
                 icon={<Users size={20} />} 

@@ -21,20 +21,14 @@ export default function DashboardPage() {
         <DashboardHeader isLoading={loading} />
 
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <LoadingSpinner size="lg" />
-          </div>
+          <LoadingSpinner />
         ) : (
-          <div className="space-y-8 animate-fade-in">
+          <div className="space-y-6 animate-fade-in">
             <SalesSummarySection summary={summary} trends={trends} />
             <GoalsCommissionsSection summary={summary} salesData={salesData} />
             
             {/* Admin-only commission projections card */}
-            {isAdmin && (
-              <div className="mt-8">
-                <SalespeopleCommissionsCard />
-              </div>
-            )}
+            {isAdmin && <SalespeopleCommissionsCard />}
             
             <RecentSalesSection salesData={salesData} />
           </div>

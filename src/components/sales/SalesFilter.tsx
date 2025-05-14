@@ -167,36 +167,32 @@ export function SalesFilter({ sales, onFilter, onSearch }: SalesFilterProps) {
   };
   
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+    <div className="flex flex-col gap-4">
+      <div className="flex gap-2 items-center">
         {/* Search Input */}
-        <div className="w-full sm:max-w-xs">
-          <SearchInput 
-            searchTerm={searchTerm} 
-            onSearchChange={setSearchTerm} 
-          />
-        </div>
+        <SearchInput 
+          searchTerm={searchTerm} 
+          onSearchChange={setSearchTerm} 
+        />
         
-        <div className="flex gap-2 w-full sm:w-auto">
-          {/* Advanced Filter Popover */}
-          <FilterPopover
-            isFilterActive={isFilterActive}
-            salespersonFilter={salespersonFilter}
-            paymentMethodFilter={paymentMethodFilter}
-            dateRangeFilter={dateRangeFilter}
-            salespersons={salespersons}
-            paymentMethods={paymentMethods}
-            dateRangeOptions={dateRangeOptions}
-            onUpdateSalespersonFilter={setSalespersonFilter}
-            onUpdatePaymentMethodFilter={setPaymentMethodFilter}
-            onUpdateDateRangeFilter={setDateRangeFilter}
-            onApplyFilters={applyFilters}
-            onResetFilters={resetFilters}
-          />
-          
-          {/* Export Button */}
-          <ExportButton onExport={handleExport} />
-        </div>
+        {/* Advanced Filter Popover */}
+        <FilterPopover
+          isFilterActive={isFilterActive}
+          salespersonFilter={salespersonFilter}
+          paymentMethodFilter={paymentMethodFilter}
+          dateRangeFilter={dateRangeFilter}
+          salespersons={salespersons}
+          paymentMethods={paymentMethods}
+          dateRangeOptions={dateRangeOptions}
+          onUpdateSalespersonFilter={setSalespersonFilter}
+          onUpdatePaymentMethodFilter={setPaymentMethodFilter}
+          onUpdateDateRangeFilter={setDateRangeFilter}
+          onApplyFilters={applyFilters}
+          onResetFilters={resetFilters}
+        />
+        
+        {/* Export Button */}
+        <ExportButton onExport={handleExport} />
       </div>
       
       {/* Filter Indicators */}
