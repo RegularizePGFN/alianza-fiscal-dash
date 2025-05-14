@@ -197,7 +197,8 @@ export function SalesFilter({ sales, onFilter, onSearch }: SalesFilterProps) {
                     <SelectValue placeholder="Selecionar vendedor" />
                   </SelectTrigger>
                   <SelectContent>
-                    {salespersonFilter && <SelectItem value="">Todos</SelectItem>}
+                    {/* Fixed: Use a non-empty value for the "All" option */}
+                    <SelectItem value="all_salespersons">Todos</SelectItem>
                     {salespersons.map((name) => (
                       <SelectItem key={name} value={name}>
                         {name}
@@ -214,7 +215,8 @@ export function SalesFilter({ sales, onFilter, onSearch }: SalesFilterProps) {
                     <SelectValue placeholder="Selecionar método" />
                   </SelectTrigger>
                   <SelectContent>
-                    {paymentMethodFilter && <SelectItem value="">Todos</SelectItem>}
+                    {/* Fixed: Use a non-empty value for the "All" option */}
+                    <SelectItem value="all_payment_methods">Todos</SelectItem>
                     {paymentMethods.map((method) => (
                       <SelectItem key={method} value={method}>
                         {method}
@@ -231,7 +233,8 @@ export function SalesFilter({ sales, onFilter, onSearch }: SalesFilterProps) {
                     <SelectValue placeholder="Selecionar período" />
                   </SelectTrigger>
                   <SelectContent>
-                    {dateRangeFilter && <SelectItem value="">Todos</SelectItem>}
+                    {/* Fixed: Use a non-empty value for the "All" option */}
+                    <SelectItem value="all_dates">Todos</SelectItem>
                     {dateRangeOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
@@ -243,7 +246,13 @@ export function SalesFilter({ sales, onFilter, onSearch }: SalesFilterProps) {
 
               <div className="flex gap-2 pt-2">
                 <Button 
-                  onClick={applyFilters} 
+                  onClick={() => {
+                    // Handle "all" values specially when applying filters
+                    if (salespersonFilter === "all_salespersons") setSalespersonFilter("");
+                    if (paymentMethodFilter === "all_payment_methods") setPaymentMethodFilter("");
+                    if (dateRangeFilter === "all_dates") setDateRangeFilter("");
+                    applyFilters();
+                  }} 
                   className="flex-1"
                 >
                   Aplicar
@@ -276,7 +285,7 @@ export function SalesFilter({ sales, onFilter, onSearch }: SalesFilterProps) {
       {/* Filter Indicators - shows active filters */}
       {isFilterActive && (
         <div className="flex flex-wrap gap-2 text-xs">
-          {salespersonFilter && (
+          {salespersonFilter && salespersonFilter !== "all_salespersons" && (
             <div className="bg-muted rounded-full px-3 py-1 flex items-center gap-1">
               <span>Vendedor: {salespersonFilter}</span>
               <X 
@@ -288,7 +297,7 @@ export function SalesFilter({ sales, onFilter, onSearch }: SalesFilterProps) {
               />
             </div>
           )}
-          {paymentMethodFilter && (
+          {paymentMethodFilter && paymentMethodFilter !== "all_payment_methods" && (
             <div className="bg-muted rounded-full px-3 py-1 flex items-center gap-1">
               <span>Pagamento: {paymentMethodFilter}</span>
               <X 
@@ -300,7 +309,7 @@ export function SalesFilter({ sales, onFilter, onSearch }: SalesFilterProps) {
               />
             </div>
           )}
-          {dateRangeFilter && (
+          {dateRangeFilter && dateRangeFilter !== "all_dates" && (
             <div className="bg-muted rounded-full px-3 py-1 flex items-center gap-1">
               <span>Período: {dateRangeOptions.find(opt => opt.value === dateRangeFilter)?.label}</span>
               <X 
