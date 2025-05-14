@@ -107,7 +107,7 @@ export function SalespeopleCommissionsCard() {
             const projectedCommission = totalSales * commissionRate;
             
             // Calculate goal percentage against EXPECTED progress (not total goal)
-            // This is the key fix - we're calculating percentage against expected progress
+            // This is the key fix - calculate percentage against expected progress through today
             const goalPercentage = expectedProgress > 0 
               ? Math.min((totalSales / expectedProgress) * 100, 200) 
               : 0;
@@ -207,7 +207,7 @@ export function SalespeopleCommissionsCard() {
                                 isAheadOfTarget ? 'bg-blue-500' : 'bg-red-500'
                               }`}
                               style={{
-                                width: `${person.goalPercentage}%`
+                                width: `${Math.min(person.goalPercentage, 100)}%`
                               }}
                             />
                           </div>
