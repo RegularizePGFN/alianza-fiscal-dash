@@ -6,7 +6,7 @@ import { SalesSummarySection } from "@/components/dashboard/SalesSummarySection"
 import { GoalsCommissionsSection } from "@/components/dashboard/GoalsCommissionsSection";
 import { RecentSalesSection } from "@/components/dashboard/RecentSalesSection";
 import { SalespeopleCommissionsCard } from "@/components/dashboard/salespeople-commissions";
-import { DailyResultsCard } from "@/components/dashboard/DailyResultsCard";
+import { DailyResultsCard } from "@/components/dashboard/daily-results";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
