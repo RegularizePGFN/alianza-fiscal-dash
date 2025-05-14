@@ -68,8 +68,14 @@ export function DailyResultsCard({
     const formattedDate = new Intl.DateTimeFormat('pt-BR').format(today);
     setCurrentDate(formattedDate);
 
-    // Filter sales for today only
-    const filteredSales = salesData.filter(sale => sale.sale_date === todayStr);
+    // Filter sales for today by exact string match of the date (YYYY-MM-DD)
+    // This ensures we only count sales with the exact date match
+    const filteredSales = salesData.filter(sale => {
+      console.log(`Comparing sale date: "${sale.sale_date}" with today: "${todayStr}"`);
+      return sale.sale_date === todayStr;
+    });
+    
+    console.log(`Found ${filteredSales.length} sales for today (${todayStr})`);
     setTodaySales(filteredSales);
 
     // Fetch all salespeople first
@@ -94,6 +100,7 @@ export function DailyResultsCard({
         }));
 
         // Update counts for salespeople who made sales today
+        // Use exact string comparison to ensure we only count sales for the exact date
         filteredSales.forEach(sale => {
           const existingSalesperson = allSalespeople.find(sp => sp.id === sale.salesperson_id);
           if (existingSalesperson) {

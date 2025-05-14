@@ -84,10 +84,8 @@ export const useFetchSales = (user: User | null) => {
         
         // Map data and ensure all required fields are present
         const formattedSales: Sale[] = filteredData.map((sale) => {
-          // Log to debug date issues
-          console.log(`Sale ID: ${sale.id}, Sale date from DB:`, sale.sale_date, typeof sale.sale_date);
-          
-          // Preserve the exact date string from the database
+          // Preservar exatamente a string da data como está no banco de dados
+          // Isso é crucial para comparações posteriores
           return {
             id: sale.id,
             salesperson_id: sale.salesperson_id,

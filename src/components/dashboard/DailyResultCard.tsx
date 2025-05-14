@@ -17,43 +17,46 @@ export function DailyResultCard({ salesData }: DailyResultCardProps) {
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
     
-    // Filtrar vendas do mês atual
+    // Filtrar vendas do mês atual usando correspondência de string exata para data
     const currentMonthSales = salesData.filter(sale => {
-      // Parse the sale date properly
-      const saleDate = typeof sale.sale_date === 'string' && sale.sale_date.match(/^\d{4}-\d{2}-\d{2}$/)
-        ? parseISODateString(sale.sale_date)
-        : new Date(sale.sale_date);
-        
-      return saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear;
+      // Verifica se a sale_date está no formato YYYY-MM-DD e obtém o mês e ano
+      if (typeof sale.sale_date === 'string' && sale.sale_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const [year, month] = sale.sale_date.split('-').map(Number);
+        return month - 1 === currentMonth && year === currentYear;
+      }
+      return false;
     });
+    
+    console.log(`DailyResultCard: Filtradas ${currentMonthSales.length} vendas para o mês atual (${currentMonth + 1}/${currentYear})`);
     
     // Agrupar por dia
     const salesByDay: Record<string, { day: string, value: number, date: string }> = {};
     
     currentMonthSales.forEach(sale => {
-      // Parse the sale_date consistently
-      const saleDate = typeof sale.sale_date === 'string' && sale.sale_date.match(/^\d{4}-\d{2}-\d{2}$/)
-        ? parseISODateString(sale.sale_date)
-        : new Date(sale.sale_date);
+      // Garantir que estamos trabalhando com o formato correto de data (YYYY-MM-DD)
+      if (typeof sale.sale_date === 'string' && sale.sale_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const dayKey = sale.sale_date.split('-')[2]; // Extrai o dia da data ISO
+        const formattedDay = dayKey; // Já está no formato adequado (DD)
         
-      const dayKey = saleDate.getDate().toString();
-      const formattedDay = dayKey.padStart(2, '0');
-      
-      if (!salesByDay[dayKey]) {
-        salesByDay[dayKey] = {
-          day: formattedDay,
-          value: 0,
-          date: sale.sale_date
-        };
+        if (!salesByDay[dayKey]) {
+          salesByDay[dayKey] = {
+            day: formattedDay,
+            value: 0,
+            date: sale.sale_date
+          };
+        }
+        
+        salesByDay[dayKey].value += sale.gross_amount;
       }
-      
-      salesByDay[dayKey].value += sale.gross_amount;
     });
     
     // Converter para array e ordenar por dia
-    return Object.values(salesByDay).sort((a, b) => 
+    const result = Object.values(salesByDay).sort((a, b) => 
       parseInt(a.day) - parseInt(b.day)
     );
+    
+    console.log(`DailyResultCard: Dados agregados por dia: ${result.length} dias com vendas`);
+    return result;
   }, [salesData]);
   
   // Calcular o total de vendas

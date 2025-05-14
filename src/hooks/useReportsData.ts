@@ -41,35 +41,25 @@ export const useReportsData = ({
       
       // Filter by date range
       if (dateFilter?.startDate && dateFilter?.endDate) {
-        const start = new Date(dateFilter.startDate);
-        start.setHours(0, 0, 0, 0); // Start of day
+        // Format dates to YYYY-MM-DD strings for comparison
+        const startDate = dateFilter.startDate instanceof Date ? 
+          dateFilter.startDate.toISOString().split('T')[0] : 
+          (typeof dateFilter.startDate === 'string' ? dateFilter.startDate : '');
         
-        // Set end date to end of day to include all sales on the end date
-        const end = new Date(dateFilter.endDate);
-        end.setHours(23, 59, 59, 999);
+        const endDate = dateFilter.endDate instanceof Date ? 
+          dateFilter.endDate.toISOString().split('T')[0] : 
+          (typeof dateFilter.endDate === 'string' ? dateFilter.endDate : '');
         
-        console.log("Filtering by date range:", start, "to", end);
+        console.log("Filtering by date range:", startDate, "to", endDate);
         
         filtered = filtered.filter(sale => {
-          // Parse the sale date string from the database (YYYY-MM-DD)
-          const saleDate = typeof sale.sale_date === 'string' && sale.sale_date.match(/^\d{4}-\d{2}-\d{2}$/)
-            ? parseISODateString(sale.sale_date)
-            : new Date(sale.sale_date);
-          
-          // Make sure we're comparing dates only (no time component)
-          saleDate.setHours(12, 0, 0, 0); // Set to noon to avoid timezone issues
-          
-          const isInRange = saleDate >= start && saleDate <= end;
-          if (!isInRange) {
-            console.log("Sale outside date range:", {
-              sale_id: sale.id,
-              sale_date_raw: sale.sale_date,
-              sale_date_parsed: saleDate,
-              start_date: start,
-              end_date: end
-            });
+          // Ensure sale.sale_date is in YYYY-MM-DD format
+          if (typeof sale.sale_date !== 'string' || !sale.sale_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            return false;
           }
-          return isInRange;
+          
+          // Compare dates as strings in YYYY-MM-DD format for exact matching
+          return sale.sale_date >= startDate && sale.sale_date <= endDate;
         });
         
         console.log("After date filter:", filtered.length);
