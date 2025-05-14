@@ -1,4 +1,5 @@
 
+
 import { Button } from "@/components/ui/button";
 import { useRef } from "react";
 import { PlusCircle, FileUp, FileDown } from "lucide-react";
@@ -27,7 +28,7 @@ export function SalesHeader({ isAdmin, onAddSale, sales, onImport }: SalesHeader
     }
     
     const success = exportSalesToExcel(sales);
-    if (success) {
+    if (success === true) {
       toast({
         title: "Exportação concluída",
         description: "As vendas foram exportadas com sucesso.",

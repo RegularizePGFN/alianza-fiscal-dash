@@ -152,7 +152,7 @@ export function SalesFilter({ sales, onFilter, onSearch }: SalesFilterProps) {
     }
     
     const success = exportSalesToExcel(sales);
-    if (success) {
+    if (success === true) {
       toast({
         title: "Exportação concluída",
         description: "As vendas foram exportadas com sucesso.",
