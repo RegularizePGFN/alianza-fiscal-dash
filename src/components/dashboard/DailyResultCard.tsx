@@ -3,7 +3,7 @@ import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sale } from "@/lib/types";
 import { formatCurrency, parseISODateString } from "@/lib/utils";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
 import { ChartContainer } from "@/components/ui/chart";
 
 interface DailyResultCardProps {
@@ -30,7 +30,7 @@ export function DailyResultCard({ salesData }: DailyResultCardProps) {
     console.log(`DailyResultCard: Filtradas ${currentMonthSales.length} vendas para o mês atual (${currentMonth + 1}/${currentYear})`);
     
     // Agrupar por dia
-    const salesByDay: Record<string, { day: string, value: number, date: string }> = {};
+    const salesByDay: Record<string, { day: string, value: number, count: number, date: string }> = {};
     
     currentMonthSales.forEach(sale => {
       // Garantir que estamos trabalhando com o formato correto de data (YYYY-MM-DD)
@@ -42,11 +42,13 @@ export function DailyResultCard({ salesData }: DailyResultCardProps) {
           salesByDay[dayKey] = {
             day: formattedDay,
             value: 0,
+            count: 0,
             date: sale.sale_date
           };
         }
         
         salesByDay[dayKey].value += sale.gross_amount;
+        salesByDay[dayKey].count += 1; // Incrementa o contador de vendas
       }
     });
     
@@ -59,14 +61,19 @@ export function DailyResultCard({ salesData }: DailyResultCardProps) {
     return result;
   }, [salesData]);
   
-  // Calcular o total de vendas
-  const totalSales = useMemo(() => {
-    return dailyData.reduce((sum, item) => sum + item.value, 0);
+  // Calcular o total de vendas e quantidade
+  const totals = useMemo(() => {
+    const totalSales = dailyData.reduce((sum, item) => sum + item.value, 0);
+    const totalCount = dailyData.reduce((sum, item) => sum + item.count, 0);
+    return { totalSales, totalCount };
   }, [dailyData]);
 
   // Formatar dados para o tooltip
-  const formatTooltip = (value: number) => {
-    return formatCurrency(value);
+  const formatTooltip = (value: number, name: string) => {
+    if (name === "Vendas") {
+      return formatCurrency(value);
+    }
+    return value;
   };
 
   return (
@@ -78,9 +85,9 @@ export function DailyResultCard({ salesData }: DailyResultCardProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex justify-between items-end">
-          <span className="text-2xl font-bold">{formatCurrency(totalSales)}</span>
+          <span className="text-2xl font-bold">{formatCurrency(totals.totalSales)}</span>
           <span className="text-lg font-semibold text-muted-foreground">
-            {dailyData.length} dias com vendas
+            {totals.totalCount} contratos em {dailyData.length} dias
           </span>
         </div>
         
@@ -88,7 +95,10 @@ export function DailyResultCard({ salesData }: DailyResultCardProps) {
           <ChartContainer
             config={{
               sales: {
-                color: '#8B5CF6'  // Cor primária
+                color: '#8B5CF6'  // Cor primária para vendas (valor)
+              },
+              count: {
+                color: '#2DD4BF'  // Cor para quantidade de contratos
               }
             }}
             className="w-full h-full"
@@ -105,9 +115,17 @@ export function DailyResultCard({ salesData }: DailyResultCardProps) {
                   tickMargin={5}
                 />
                 <YAxis 
+                  yAxisId="left"
                   tickFormatter={(value) => `${value > 1000 ? `${(value/1000).toFixed(0)}k` : value}`}
                   tick={{ fontSize: 10 }}
                   width={30}
+                />
+                <YAxis 
+                  yAxisId="right"
+                  orientation="right"
+                  tick={{ fontSize: 10 }}
+                  width={20}
+                  domain={[0, 'dataMax + 1']}
                 />
                 <Tooltip
                   formatter={formatTooltip}
@@ -119,14 +137,27 @@ export function DailyResultCard({ salesData }: DailyResultCardProps) {
                     padding: "8px"
                   }}
                 />
+                <Legend />
                 <Line 
                   type="monotone" 
                   dataKey="value" 
                   name="Vendas"
+                  yAxisId="left"
                   stroke="#8B5CF6" 
                   strokeWidth={2}
                   dot={{ r: 2, fill: "#8B5CF6" }}
                   activeDot={{ r: 4, stroke: "#8B5CF6", strokeWidth: 1, fill: "#8B5CF6" }}
+                  isAnimationActive={false}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="count" 
+                  name="Contratos"
+                  yAxisId="right"
+                  stroke="#2DD4BF" 
+                  strokeWidth={2}
+                  dot={{ r: 2, fill: "#2DD4BF" }}
+                  activeDot={{ r: 4, stroke: "#2DD4BF", strokeWidth: 1, fill: "#2DD4BF" }}
                   isAnimationActive={false}
                 />
               </LineChart>

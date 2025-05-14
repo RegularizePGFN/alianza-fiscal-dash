@@ -1,110 +1,57 @@
+
 import * as XLSX from 'xlsx';
 import { Sale } from './types';
 
-export function exportSalesToExcel(sales: Sale[], filename: string = 'sales-report.xlsx'): boolean {
+export const exportSalesToExcel = (sales: Sale[], fileName: string = 'vendas.xlsx') => {
   try {
-    const workbook = XLSX.utils.book_new();
+    // Map sales to format suitable for Excel
     const data = sales.map(sale => {
-      // Format the date for display
-      let displayDate = "N/A";
+      // Handle the date display
+      let displayDate = 'Data não disponível';
       
-      // Enhanced null check for sale.sale_date
-      if (sale.sale_date != null) {
-        if (typeof sale.sale_date === 'string' && sale.sale_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-          const [year, month, day] = sale.sale_date.split('-');
-          displayDate = `${day}/${month}/${year}`;
-        } else if (
-          typeof sale.sale_date === 'object' && 
-          sale.sale_date !== null && 
-          'toLocaleDateString' in sale.sale_date
-        ) {
-          // Explicitly cast to Date and use non-null assertion since we've already verified it's not null
-          const dateObject = sale.sale_date as Date;
-          displayDate = dateObject.toLocaleDateString('pt-BR');
+      // First check if sale.sale_date is defined at all
+      if (sale.sale_date) {
+        // Check if it's a Date object by checking for toLocaleDateString method
+        if (sale.sale_date instanceof Date) {
+          displayDate = sale.sale_date.toLocaleDateString('pt-BR');
+        } else if (typeof sale.sale_date === 'string') {
+          // If it's a string, we can use it directly or try to parse it
+          if (sale.sale_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            // It's in ISO format (YYYY-MM-DD), convert for Brazilian format
+            const [year, month, day] = sale.sale_date.split('-');
+            displayDate = `${day}/${month}/${year}`;
+          } else {
+            // Just use the string as is
+            displayDate = sale.sale_date;
+          }
         } else {
-          // Fallback for other formats - ensuring we have a valid string
-          // We know sale.sale_date is not null here due to the outer if condition
-          const safeValue = String(sale.sale_date);
-          displayDate = safeValue;
+          // Fallback: convert to string whatever it is
+          displayDate = String(sale.sale_date);
         }
       }
       
       return {
-        ID: sale.id,
-        Vendedor: sale.salesperson_name || sale.salesperson_id,
-        ValorBruto: sale.gross_amount,
-        ValorLiquido: sale.net_amount,
-        MetodoPagamento: sale.payment_method,
-        Parcelas: sale.installments,
-        DataVenda: displayDate,
-        ClienteNome: sale.client_name,
-        ClienteTelefone: sale.client_phone,
-        ClienteDocumento: sale.client_document,
+        'Data': displayDate,
+        'Cliente': sale.client_name || 'Não informado',
+        'Documento': sale.client_document || 'Não informado',
+        'Telefone': sale.client_phone || 'Não informado',
+        'Valor Bruto': sale.gross_amount,
+        'Método de Pagamento': sale.payment_method,
+        'Parcelas': sale.installments,
+        'Vendedor': sale.salesperson_name || 'Não informado',
       };
     });
 
-    const worksheet = XLSX.utils.json_to_sheet(data);
+    // Create workbook and add worksheet
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Vendas');
 
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Sales');
-
-    XLSX.writeFile(workbook, filename);
+    // Generate & save the file
+    XLSX.writeFile(wb, fileName);
     return true;
   } catch (error) {
-    console.error("Error exporting sales to Excel:", error);
+    console.error('Erro ao exportar para Excel:', error);
     return false;
   }
-}
-
-// Add import function since it's referenced but not defined
-export function importSalesFromExcel(file: File): Promise<Partial<Sale>[]> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = e.target?.result;
-        if (!data) {
-          reject(new Error("Failed to read file"));
-          return;
-        }
-
-        const workbook = XLSX.read(data, { type: 'binary' });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-        
-        // Transform the Excel data to match our Sale structure
-        const salesData: Partial<Sale>[] = jsonData.map((row: any) => {
-          // Parse the date from DD/MM/YYYY to YYYY-MM-DD
-          let saleDate = row.DataVenda;
-          if (typeof saleDate === 'string' && saleDate.includes('/')) {
-            const [day, month, year] = saleDate.split('/');
-            saleDate = `${year}-${month}-${day}`;
-          }
-          
-          return {
-            salesperson_name: row.Vendedor,
-            gross_amount: Number(row.ValorBruto),
-            net_amount: Number(row.ValorLiquido || row.ValorBruto),
-            payment_method: row.MetodoPagamento,
-            installments: Number(row.Parcelas || 1),
-            sale_date: saleDate,
-            client_name: row.ClienteNome || 'Client',
-            client_phone: row.ClienteTelefone || '',
-            client_document: row.ClienteDocumento || '',
-          };
-        });
-
-        resolve(salesData);
-      } catch (error) {
-        console.error("Error importing Excel file:", error);
-        reject(error);
-      }
-    };
-    
-    reader.onerror = (error) => {
-      reject(error);
-    };
-    
-    reader.readAsBinaryString(file);
-  });
-}
+};
