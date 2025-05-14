@@ -94,11 +94,11 @@ export function SalespeopleCommissionsCard() {
             // Get goal amount (default to 0 if not set)
             const goalAmount = goalData?.goal_amount ? Number(goalData.goal_amount) : 0;
             
-            // CORRECTED: Calculate the expected progress based on business days elapsed
+            // Calculate the expected progress based on business days elapsed
             const dailyTarget = goalAmount / totalBusinessDays;
             const expectedProgress = dailyTarget * businessDaysElapsed;
             
-            // CORRECTED: Calculate the gap between actual and expected
+            // Calculate the gap between actual and expected
             // Positive gap means they are ahead of their expected progress
             const metaGap = totalSales - expectedProgress;
             
@@ -106,8 +106,11 @@ export function SalespeopleCommissionsCard() {
             const commissionRate = totalSales >= goalAmount ? 0.25 : 0.2; // 25% if goal met, 20% otherwise
             const projectedCommission = totalSales * commissionRate;
             
-            // Calculate goal percentage against total goal (cap at 200%)
-            const goalPercentage = goalAmount > 0 ? Math.min((totalSales / goalAmount) * 100, 200) : 0;
+            // Calculate goal percentage against EXPECTED progress (not total goal)
+            // This is the key fix - we're calculating percentage against expected progress
+            const goalPercentage = expectedProgress > 0 
+              ? Math.min((totalSales / expectedProgress) * 100, 200) 
+              : 0;
             
             return {
               id: profile.id,
@@ -180,7 +183,7 @@ export function SalespeopleCommissionsCard() {
                 </tr>
               ) : (
                 salespeople.map((person) => {
-                  // CORRECTED: Determine if person is ahead or behind expected progress at this point in time
+                  // Determine if person is ahead or behind expected progress at this point in time
                   const isAheadOfTarget = person.metaGap >= 0;
                   
                   return (
@@ -200,7 +203,7 @@ export function SalespeopleCommissionsCard() {
                           <div className="w-16 h-2 bg-gray-200 rounded-full mr-2">
                             <div
                               className={`h-2 rounded-full ${
-                                // CORRECTED: Use blue for ahead of expected target, red for behind
+                                // Use blue for ahead of expected target, red for behind
                                 isAheadOfTarget ? 'bg-blue-500' : 'bg-red-500'
                               }`}
                               style={{
@@ -212,7 +215,7 @@ export function SalespeopleCommissionsCard() {
                         </div>
                       </td>
                       <td className={`text-center py-3 ${isAheadOfTarget ? 'text-green-600' : 'text-red-600'} font-medium`}>
-                        {/* CORRECTED: Format GAP display */}
+                        {/* Format GAP display with correct sign and color */}
                         {isAheadOfTarget 
                           ? 'R$ ' + Math.abs(person.metaGap).toFixed(2).replace('.', ',') + '+' 
                           : 'R$ ' + Math.abs(person.metaGap).toFixed(2).replace('.', ',') + '-'
