@@ -4,7 +4,6 @@ import { Sale } from "@/lib/types";
 import { PaginatedSalesTable } from "./PaginatedSalesTable";
 import { SalesFilter } from "./SalesFilter";
 import { SalesActions } from "./SalesActions";
-import { ExportButton } from "./filters/ExportButton";
 import { exportSalesToExcel } from "@/lib/excelUtils";
 
 interface SalesContentProps {
@@ -51,9 +50,6 @@ export function SalesContent({
           <div className="flex flex-col space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <h2 className="text-xl font-bold">Vendas</h2>
-              <div>
-                <ExportButton sales={filteredSales} />
-              </div>
             </div>
             
             <div className="flex flex-col md:flex-row justify-between gap-4">

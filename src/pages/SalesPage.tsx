@@ -1,6 +1,7 @@
+
 import { useState, useCallback } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { Sale, UserRole } from "@/lib/types";
+import { Sale, UserRole, PaymentMethod } from "@/lib/types";
 import { useAuth } from "@/contexts/auth";
 import { useSales } from "@/hooks/sales";
 import { useToast } from "@/hooks/use-toast";
@@ -115,7 +116,7 @@ export default function SalesPage() {
             salesperson_name: partialSale.salesperson_name || user?.name || 'Unknown',
             gross_amount: partialSale.gross_amount || 0,
             net_amount: partialSale.net_amount || partialSale.gross_amount || 0,
-            payment_method: partialSale.payment_method || 'Pix',
+            payment_method: (partialSale.payment_method as PaymentMethod) || PaymentMethod.PIX,
             installments: partialSale.installments || 1,
             sale_date: partialSale.sale_date || new Date().toISOString().split('T')[0],
             client_name: partialSale.client_name || 'Client',

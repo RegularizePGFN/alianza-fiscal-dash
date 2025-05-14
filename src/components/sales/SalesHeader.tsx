@@ -1,9 +1,7 @@
 
-
 import { Button } from "@/components/ui/button";
 import { useRef } from "react";
-import { PlusCircle, FileUp, FileDown } from "lucide-react";
-import { exportSalesToExcel } from "@/lib/excelUtils";
+import { PlusCircle, FileUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface SalesHeaderProps {
@@ -16,31 +14,6 @@ interface SalesHeaderProps {
 export function SalesHeader({ isAdmin, onAddSale, sales, onImport }: SalesHeaderProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleExport = () => {
-    if (sales.length === 0) {
-      toast({
-        title: "Nenhuma venda para exportar",
-        description: "Não há dados de vendas disponíveis para exportar.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    const success = exportSalesToExcel(sales);
-    if (success === true) {
-      toast({
-        title: "Exportação concluída",
-        description: "As vendas foram exportadas com sucesso.",
-      });
-    } else {
-      toast({
-        title: "Erro na exportação",
-        description: "Houve um erro ao exportar as vendas.",
-        variant: "destructive"
-      });
-    }
-  };
 
   const handleImportClick = () => {
     if (fileInputRef.current) {
@@ -75,23 +48,17 @@ export function SalesHeader({ isAdmin, onAddSale, sales, onImport }: SalesHeader
         </Button>
         
         {isAdmin && (
-          <>
-            <Button variant="outline" onClick={handleImportClick}>
-              <FileUp className="mr-2 h-4 w-4" />
-              Importar
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                className="hidden"
-                accept=".xlsx,.xls"
-                onChange={handleFileChange}
-              />
-            </Button>
-            <Button variant="outline" onClick={handleExport}>
-              <FileDown className="mr-2 h-4 w-4" />
-              Exportar
-            </Button>
-          </>
+          <Button variant="outline" onClick={handleImportClick}>
+            <FileUp className="mr-2 h-4 w-4" />
+            Importar
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden"
+              accept=".xlsx,.xls"
+              onChange={handleFileChange}
+            />
+          </Button>
         )}
       </div>
     </div>

@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { Sale, PaymentMethod, UserRole } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { exportSalesToExcel } from "@/lib/excelUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth";
 
@@ -10,8 +9,7 @@ import { useAuth } from "@/contexts/auth";
 import { 
   SearchInput, 
   FilterPopover, 
-  FilterIndicator, 
-  ExportButton 
+  FilterIndicator 
 } from "./filters";
 
 interface SalesFilterProps {
@@ -140,32 +138,6 @@ export function SalesFilter({ sales, onFilter, onSearch }: SalesFilterProps) {
     }
   }, [searchTerm]);
   
-  // Export current filtered data to Excel
-  const handleExport = () => {
-    if (sales.length === 0) {
-      toast({
-        title: "Nenhuma venda para exportar",
-        description: "Não há dados de vendas disponíveis para exportar.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    const success = exportSalesToExcel(sales);
-    if (success === true) {
-      toast({
-        title: "Exportação concluída",
-        description: "As vendas foram exportadas com sucesso.",
-      });
-    } else {
-      toast({
-        title: "Erro na exportação",
-        description: "Houve um erro ao exportar as vendas.",
-        variant: "destructive"
-      });
-    }
-  };
-  
   return (
     <div className="flex flex-col gap-4">
       <div className="flex gap-2 items-center">
@@ -190,9 +162,6 @@ export function SalesFilter({ sales, onFilter, onSearch }: SalesFilterProps) {
           onApplyFilters={applyFilters}
           onResetFilters={resetFilters}
         />
-        
-        {/* Export Button */}
-        <ExportButton onExport={handleExport} />
       </div>
       
       {/* Filter Indicators */}
