@@ -32,13 +32,13 @@ export function SalespeopleCommissionsTable({ salespeople }: SalespeopleCommissi
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-200">
-            <th className="text-left py-2 font-medium">Vendedor</th>
-            <th className="text-right py-2 font-medium">Total de Vendas</th>
-            <th className="text-right py-2 font-medium">Total R$</th>
-            <th className="text-right py-2 font-medium">Meta</th>
-            <th className="text-right py-2 font-medium">% da Meta</th>
-            <th className="text-right py-2 font-medium">GAP Meta</th>
-            <th className="text-right py-2 font-medium">Comissão Projetada</th>
+            <th className="text-center py-2 font-medium">Vendedor</th>
+            <th className="text-center py-2 font-medium">Total de Vendas</th>
+            <th className="text-center py-2 font-medium">Total R$</th>
+            <th className="text-center py-2 font-medium">Meta</th>
+            <th className="text-center py-2 font-medium">% da Meta</th>
+            <th className="text-center py-2 font-medium">GAP Meta</th>
+            <th className="text-center py-2 font-medium">Comissão Projetada</th>
           </tr>
         </thead>
         <tbody>
@@ -57,25 +57,25 @@ export function SalespeopleCommissionsTable({ salespeople }: SalespeopleCommissi
               
               return (
                 <tr key={person.id} className="border-b border-gray-100">
-                  <td className="py-3">{person.name}</td>
+                  <td className="py-3 text-center">{person.name}</td>
                   
                   {/* New column: Sales count */}
-                  <td className="text-right py-3">
+                  <td className="text-center py-3">
                     {person.salesCount}
                   </td>
                   
                   {/* Changed column name: Total R$ */}
-                  <td className="text-right py-3">
+                  <td className="text-center py-3">
                     {formatCurrency(person.totalSales)}
                   </td>
                   
-                  <td className="text-right py-3">
+                  <td className="text-center py-3">
                     {formatCurrency(person.goalAmount)}
                   </td>
                   
                   {/* Modified % column with colored progress bar */}
-                  <td className="text-right py-3">
-                    <div className="flex items-center justify-end">
+                  <td className="text-center py-3">
+                    <div className="flex items-center justify-center">
                       <div className="w-16 h-2 bg-gray-200 rounded-full mr-2">
                         <div
                           className={`h-2 rounded-full ${
@@ -91,14 +91,14 @@ export function SalespeopleCommissionsTable({ salespeople }: SalespeopleCommissi
                   </td>
                   
                   {/* New GAP Meta column */}
-                  <td className="text-right py-3">
+                  <td className="text-center py-3">
                     <span className={isAheadOfGoal ? "text-green-500 font-medium" : "text-red-500 font-medium"}>
                       {formatCurrency(Math.abs(goalGap))}
                       {isAheadOfGoal ? '+' : '-'}
                     </span>
                   </td>
                   
-                  <td className="text-right py-3 font-medium">
+                  <td className="text-center py-3 font-medium">
                     {formatCurrency(person.projectedCommission)}
                   </td>
                 </tr>

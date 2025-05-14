@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -66,14 +67,14 @@ export const useDashboardData = () => {
       // Calculate summary and trends
       if (formattedSales.length > 0) {
         // Use the current sales data, previous month data and goal to calculate summary
-        const { summary: calculatedSummary, trends: calculatedTrends } = calculateSalesSummary(formattedSales, monthlyGoal);
+        const result = await calculateSalesSummary(formattedSales, monthlyGoal);
         
         // Update states with calculated data
         setSalesData(formattedSales);
-        setSummary(calculatedSummary);
-        setTrends(calculatedTrends);
+        setSummary(result.summary);
+        setTrends(result.trends);
         
-        console.log("Resumo calculado:", calculatedSummary);
+        console.log("Resumo calculado:", result.summary);
       } else {
         console.log("Nenhuma venda encontrada");
         // Set empty data

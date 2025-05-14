@@ -1,139 +1,114 @@
 
-import { useAuth } from "@/contexts/auth";
-import { cn } from "@/lib/utils";
-import { UserRole } from "@/lib/types";
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
 import { 
+  LayoutDashboard, 
+  DollarSign, 
   BarChart3, 
-  Home, 
-  Menu, 
-  ShoppingCart, 
+  Settings, 
+  Calculator, 
   Users, 
-  LogOut,
-  ChevronLeft,
-  Settings
+  Menu, 
+  X
 } from "lucide-react";
-
-interface SidebarLinkProps {
-  to: string;
-  icon: React.ReactNode;
-  label: string;
-  expanded: boolean;
-  active?: boolean;
-  onClick?: () => void;
-}
-
-const SidebarLink = ({ to, icon, label, expanded, active, onClick }: SidebarLinkProps) => {
-  return (
-    <li>
-      <Link 
-        to={to}
-        className={cn(
-          "flex items-center gap-3 rounded-lg px-3 py-2 transition-all duration-200",
-          expanded ? "justify-start" : "justify-center px-2",
-          active 
-            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium shadow-sm" 
-            : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-        )}
-        onClick={onClick}
-      >
-        <div className={cn("transition-all duration-200", active ? "text-sidebar-accent-foreground" : "text-sidebar-foreground/70")}>
-          {icon}
-        </div>
-        {expanded && <span className="truncate">{label}</span>}
-      </Link>
-    </li>
-  );
-};
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { useLocation, Link } from "react-router-dom";
+import { useAuth } from "@/contexts/auth";
+import { UserRole } from "@/lib/types";
+import { Separator } from "@/components/ui/separator";
 
 export function AppSidebar() {
-  const { user, logout } = useAuth();
-  const [expanded, setExpanded] = useState(true);
-  const location = useLocation();
+  const { pathname } = useLocation();
+  const { user } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
   
-  const toggleSidebar = () => setExpanded(!expanded);
-  
-  // Check if user has admin privileges
   const isAdmin = user?.role === UserRole.ADMIN;
+
+  const toggle = () => setIsOpen(!isOpen);
+  const close = () => setIsOpen(false);
+  
+  const navItems = [
+    {
+      title: "Dashboard",
+      icon: <LayoutDashboard className="h-5 w-5" />,
+      href: "/dashboard",
+      showTo: "all"
+    },
+    {
+      title: "Vendas",
+      icon: <DollarSign className="h-5 w-5" />,
+      href: "/vendas",
+      showTo: "all"
+    },
+    {
+      title: "Relatórios",
+      icon: <BarChart3 className="h-5 w-5" />,
+      href: "/relatorios",
+      showTo: isAdmin ? "all" : "none"
+    },
+    {
+      title: "Calculadora",
+      icon: <Calculator className="h-5 w-5" />,
+      href: "/calculadora",
+      showTo: "all"
+    },
+    {
+      title: "Usuários",
+      icon: <Users className="h-5 w-5" />,
+      href: "/usuarios",
+      showTo: isAdmin ? "all" : "none"
+    },
+    {
+      title: "Configurações",
+      icon: <Settings className="h-5 w-5" />,
+      href: "/configuracoes",
+      showTo: "all"
+    }
+  ];
   
   return (
-    <div className={cn(
-      "bg-sidebar relative h-screen transition-all duration-300 flex flex-col",
-      expanded ? "w-60" : "w-16"
-    )}>
-      <div className="flex items-center justify-between p-4 border-b border-sidebar-border/30">
-        {expanded && (
-          <h1 className="text-sidebar-foreground font-bold text-xl overflow-hidden truncate">
-            Aliança<span className="text-af-green-400">Fiscal</span>
-          </h1>
-        )}
-        <button 
-          onClick={toggleSidebar}
-          className="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground transition-colors duration-200"
-        >
-          {expanded ? <ChevronLeft size={20} /> : <Menu size={20} />}
-        </button>
+    <>
+      <div className="lg:hidden p-4 flex items-center justify-between border-b">
+        <span className="font-bold text-lg">Menu</span>
+        <Button variant="outline" size="icon" onClick={toggle}>
+          <Menu className="h-5 w-5" />
+        </Button>
       </div>
       
-      <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-2">
-        <ul className="space-y-1">
-          <SidebarLink 
-            to="/dashboard" 
-            icon={<Home size={20} />} 
-            label="Dashboard" 
-            expanded={expanded}
-            active={location.pathname === "/dashboard"}
-          />
-          
-          <SidebarLink 
-            to="/vendas" 
-            icon={<ShoppingCart size={20} />} 
-            label="Vendas" 
-            expanded={expanded}
-            active={location.pathname === "/vendas"}
-          />
-          
-          {/* Admin links */}
-          {isAdmin && (
-            <>
-              <SidebarLink 
-                to="/usuarios" 
-                icon={<Users size={20} />} 
-                label="Usuários" 
-                expanded={expanded}
-                active={location.pathname === "/usuarios"}
-              />
-              <SidebarLink 
-                to="/relatorios" 
-                icon={<BarChart3 size={20} />} 
-                label="Relatórios" 
-                expanded={expanded}
-                active={location.pathname === "/relatorios"}
-              />
-              <SidebarLink 
-                to="/configuracoes" 
-                icon={<Settings size={20} />} 
-                label="Configurações" 
-                expanded={expanded}
-                active={location.pathname === "/configuracoes"}
-              />
-            </>
-          )}
-        </ul>
-      </nav>
-      
-      <div className="mt-auto border-t border-sidebar-border/30 p-2">
-        <ul className="space-y-1">
-          <SidebarLink 
-            to="#" 
-            icon={<LogOut size={20} />} 
-            label="Sair" 
-            expanded={expanded} 
-            onClick={logout}
-          />
-        </ul>
+      <div className={cn(
+        "fixed inset-0 z-50 bg-background lg:relative lg:flex flex-col p-4 lg:gap-0",
+        {"hidden": !isOpen, "flex": isOpen}
+      )}>
+        <div className="lg:hidden flex justify-between items-center mb-4">
+          <span className="font-bold text-lg">Menu</span>
+          <Button variant="outline" size="icon" onClick={close}>
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+        
+        <Separator />
+        
+        <nav className="grid items-start mt-4 mb-4 gap-2">
+          {navItems
+            .filter(item => item.showTo === "all")
+            .map((item, index) => (
+              <Link 
+                key={index}
+                to={item.href}
+                onClick={close}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-accent transition-colors",
+                  pathname === item.href && "bg-accent"
+                )}
+              >
+                {item.icon}
+                {item.title}
+              </Link>
+            ))}
+        </nav>
+        
+        {isOpen && <div className="lg:hidden h-px bg-border my-4" />}
       </div>
-    </div>
+    </>
   );
 }

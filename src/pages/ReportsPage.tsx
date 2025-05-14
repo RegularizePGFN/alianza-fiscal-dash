@@ -1,6 +1,5 @@
 
 import { AppLayout } from "@/components/layout/AppLayout";
-import { ReportsHeader } from "@/components/reports/ReportsHeader";
 import { ReportsCharts } from "@/components/reports/ReportsCharts";
 import { UserRole } from "@/lib/types";
 import { useReportsData } from "@/hooks/useReportsData";
@@ -25,12 +24,6 @@ export default function ReportsPage() {
     <AppLayout>
       <div className="max-w-7xl mx-auto print:m-4">
         <div className="space-y-6 p-0">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden print:hidden transition-colors duration-300">
-            <div className="p-4 sm:p-6">
-              <ReportsHeader />
-            </div>
-          </div>
-          
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 print:break-inside-avoid print:mb-10 transition-colors duration-300">
             <ReportsCharts 
               salesData={salesData} 
