@@ -57,7 +57,6 @@ export function DailyResultsContent({ todaySales, currentDate }: DailyResultsCon
         }));
 
         // Update counts for salespeople who made sales today
-        // Use exact string comparison to ensure we only count sales for the exact date
         todaySales.forEach(sale => {
           const existingSalesperson = allSalespeople.find(sp => sp.id === sale.salesperson_id);
           if (existingSalesperson) {
