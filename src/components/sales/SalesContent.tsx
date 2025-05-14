@@ -39,15 +39,21 @@ export function SalesContent({
   return (
     <div className="space-y-4">
       {!loading && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-4 transition-colors">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 transition-colors">
           <div className="flex flex-col space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <h2 className="text-xl font-bold">Vendas</h2>
+            </div>
+            
             <div className="flex flex-col md:flex-row justify-between gap-4">
-              <SalesFilter 
-                sales={sales} 
-                onFilter={setFilteredSales}
-                onSearch={setSearchTerm}
-              />
-              <div className="flex gap-2 md:self-start">
+              <div className="flex-1">
+                <SalesFilter 
+                  sales={sales} 
+                  onFilter={setFilteredSales}
+                  onSearch={setSearchTerm}
+                />
+              </div>
+              <div className="flex justify-end">
                 <SalesActions 
                   isAdmin={isAdmin} 
                   onAddSale={onAddSale} 

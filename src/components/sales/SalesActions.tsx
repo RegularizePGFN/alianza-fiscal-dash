@@ -1,5 +1,5 @@
 
-import { useState, useRef } from "react";
+import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, FileUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -39,11 +39,17 @@ export function SalesActions({ isAdmin, onAddSale, onImport }: SalesActionsProps
 
   return (
     <div className="flex gap-2">
+      {/* Add Sale Button */}
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button onClick={onAddSale} size="icon" aria-label="Nova Venda">
+            <Button 
+              onClick={onAddSale} 
+              className="gap-1"
+              size="sm"
+            >
               <PlusCircle className="h-4 w-4" />
+              <span className="hidden md:inline">Nova Venda</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent>
@@ -52,17 +58,19 @@ export function SalesActions({ isAdmin, onAddSale, onImport }: SalesActionsProps
         </Tooltip>
       </TooltipProvider>
       
+      {/* Import Button (Admin Only) */}
       {isAdmin && onImport && (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button 
                 variant="outline" 
-                size="icon" 
+                size="sm"
                 onClick={handleImportClick}
-                aria-label="Importar Vendas"
+                className="gap-1"
               >
                 <FileUp className="h-4 w-4" />
+                <span className="hidden md:inline">Importar</span>
                 <input 
                   type="file" 
                   ref={fileInputRef} 

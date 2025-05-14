@@ -10,10 +10,15 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, FileDown } from "lucide-react";
+import { Search, Filter, FileDown, X } from "lucide-react";
 import { exportSalesToExcel } from "@/lib/excelUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface SalesFilterProps {
   sales: Sale[];
@@ -30,6 +35,7 @@ export function SalesFilter({ sales, onFilter, onSearch }: SalesFilterProps) {
   const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>("");
   const [dateRangeFilter, setDateRangeFilter] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [isFilterActive, setIsFilterActive] = useState<boolean>(false);
   
   // Get unique salespersons from sales data
   const salespersons = [...new Set(sales.map(sale => sale.salesperson_name))];
@@ -90,6 +96,7 @@ export function SalesFilter({ sales, onFilter, onSearch }: SalesFilterProps) {
       });
     }
     
+    setIsFilterActive(!!salespersonFilter || !!paymentMethodFilter || !!dateRangeFilter);
     onFilter(filteredSales);
   };
   
@@ -97,6 +104,7 @@ export function SalesFilter({ sales, onFilter, onSearch }: SalesFilterProps) {
     setSalespersonFilter("");
     setPaymentMethodFilter("");
     setDateRangeFilter("");
+    setIsFilterActive(false);
     onFilter(sales);
   };
   
@@ -122,7 +130,6 @@ export function SalesFilter({ sales, onFilter, onSearch }: SalesFilterProps) {
   
   // Export current filtered data to Excel
   const handleExport = () => {
-    // Get the current filtered data from parent component
     if (sales.length === 0) {
       toast({
         title: "Nenhuma venda para exportar",
@@ -148,11 +155,11 @@ export function SalesFilter({ sales, onFilter, onSearch }: SalesFilterProps) {
   };
   
   return (
-    <div className="bg-background border rounded-md p-4 mb-4 space-y-4">
-      <div className="flex flex-col md:flex-row gap-4">
+    <div className="flex flex-col gap-4">
+      <div className="flex gap-2 items-center">
         {/* Search Input */}
         <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Pesquisar vendas..."
             value={searchTerm}
@@ -161,88 +168,160 @@ export function SalesFilter({ sales, onFilter, onSearch }: SalesFilterProps) {
           />
         </div>
         
-        <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-          <Button
-            onClick={handleExport}
-            variant="outline"
-            className="whitespace-nowrap flex items-center"
-          >
-            <FileDown className="mr-2 h-4 w-4" />
-            Exportar
-          </Button>
-        </div>
+        {/* Advanced Filter Popover */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button 
+              variant={isFilterActive ? "default" : "outline"} 
+              size="icon" 
+              className="relative"
+              aria-label="Filtros Avançados"
+            >
+              <Filter className="h-4 w-4" />
+              {isFilterActive && (
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                </span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-4" align="end">
+            <div className="space-y-4">
+              <h4 className="font-medium leading-none mb-3">Filtros Avançados</h4>
+              
+              <div className="space-y-2">
+                <p className="text-sm">Vendedor</p>
+                <Select value={salespersonFilter} onValueChange={setSalespersonFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar vendedor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {salespersonFilter && <SelectItem value="">Todos</SelectItem>}
+                    {salespersons.map((name) => (
+                      <SelectItem key={name} value={name}>
+                        {name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm">Método de pagamento</p>
+                <Select value={paymentMethodFilter} onValueChange={setPaymentMethodFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar método" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {paymentMethodFilter && <SelectItem value="">Todos</SelectItem>}
+                    {paymentMethods.map((method) => (
+                      <SelectItem key={method} value={method}>
+                        {method}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm">Período</p>
+                <Select value={dateRangeFilter} onValueChange={setDateRangeFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar período" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dateRangeFilter && <SelectItem value="">Todos</SelectItem>}
+                    {dateRangeOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button 
+                  onClick={applyFilters} 
+                  className="flex-1"
+                >
+                  Aplicar
+                </Button>
+                <Button 
+                  onClick={resetFilters} 
+                  variant="outline"
+                  className="flex items-center"
+                >
+                  <X className="mr-1 h-4 w-4" />
+                  Limpar
+                </Button>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+        
+        {/* Export Button */}
+        <Button
+          onClick={handleExport}
+          variant="outline"
+          size="icon"
+          className="hidden md:flex"
+          aria-label="Exportar"
+        >
+          <FileDown className="h-4 w-4" />
+        </Button>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div>
-          <p className="text-sm font-medium mb-1.5">Vendedor</p>
-          <Select value={salespersonFilter} onValueChange={setSalespersonFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecionar vendedor" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              {salespersons.map((name) => (
-                <SelectItem key={name} value={name}>
-                  {name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div>
-          <p className="text-sm font-medium mb-1.5">Método de pagamento</p>
-          <Select value={paymentMethodFilter} onValueChange={setPaymentMethodFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecionar método" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              {paymentMethods.map((method) => (
-                <SelectItem key={method} value={method}>
-                  {method}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div>
-          <p className="text-sm font-medium mb-1.5">Período</p>
-          <Select value={dateRangeFilter} onValueChange={setDateRangeFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecionar período" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              {dateRangeOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div className="flex items-end gap-2">
+      {/* Filter Indicators - shows active filters */}
+      {isFilterActive && (
+        <div className="flex flex-wrap gap-2 text-xs">
+          {salespersonFilter && (
+            <div className="bg-muted rounded-full px-3 py-1 flex items-center gap-1">
+              <span>Vendedor: {salespersonFilter}</span>
+              <X 
+                className="h-3 w-3 cursor-pointer" 
+                onClick={() => {
+                  setSalespersonFilter("");
+                  applyFilters();
+                }}
+              />
+            </div>
+          )}
+          {paymentMethodFilter && (
+            <div className="bg-muted rounded-full px-3 py-1 flex items-center gap-1">
+              <span>Pagamento: {paymentMethodFilter}</span>
+              <X 
+                className="h-3 w-3 cursor-pointer" 
+                onClick={() => {
+                  setPaymentMethodFilter("");
+                  applyFilters();
+                }}
+              />
+            </div>
+          )}
+          {dateRangeFilter && (
+            <div className="bg-muted rounded-full px-3 py-1 flex items-center gap-1">
+              <span>Período: {dateRangeOptions.find(opt => opt.value === dateRangeFilter)?.label}</span>
+              <X 
+                className="h-3 w-3 cursor-pointer" 
+                onClick={() => {
+                  setDateRangeFilter("");
+                  applyFilters();
+                }}
+              />
+            </div>
+          )}
           <Button 
-            onClick={applyFilters} 
-            variant="default" 
-            className="flex-1 flex items-center"
+            variant="ghost" 
+            size="sm" 
+            className="h-6 text-xs px-2"
+            onClick={resetFilters}
           >
-            <Filter className="mr-2 h-4 w-4" />
-            Filtrar
-          </Button>
-          <Button 
-            onClick={resetFilters} 
-            variant="outline"
-            className="flex-1"
-          >
-            Limpar
+            Limpar todos
           </Button>
         </div>
-      </div>
+      )}
     </div>
   );
 }
