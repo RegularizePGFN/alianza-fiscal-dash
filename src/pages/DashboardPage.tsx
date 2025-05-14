@@ -1,11 +1,10 @@
-
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { SalesSummarySection } from "@/components/dashboard/SalesSummarySection";
 import { GoalsCommissionsSection } from "@/components/dashboard/GoalsCommissionsSection";
 import { RecentSalesSection } from "@/components/dashboard/RecentSalesSection";
-import { SalespeopleCommissionsCard } from "@/components/dashboard/SalespeopleCommissionsCard";
+import { SalespeopleCommissionsCard } from "@/components/dashboard/salespeople-commissions";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
