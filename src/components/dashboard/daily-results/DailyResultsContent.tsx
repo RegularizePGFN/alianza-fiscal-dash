@@ -95,11 +95,6 @@ export function DailyResultsContent({ todaySales, currentDate }: DailyResultsCon
   const totalSalesCount = todaySales.length;
   const totalSalesAmount = todaySales.reduce((sum, sale) => sum + sale.gross_amount, 0);
   
-  // Get top 3 salespeople for today
-  const topSalespeople = [...salespeople]
-    .sort((a, b) => b.salesAmount - a.salesAmount)
-    .slice(0, 3);
-  
   return (
     <div className="grid grid-cols-1 gap-3">
       {/* Summary cards with better spacing */}
@@ -129,37 +124,17 @@ export function DailyResultsContent({ todaySales, currentDate }: DailyResultsCon
       <div className="bg-white rounded-md p-2">
         <h3 className="text-xs font-medium text-muted-foreground mb-1">Vendedores Hoje:</h3>
         {loading ? (
-          <div className="flex h-[80px] items-center justify-center">
+          <div className="flex h-[150px] items-center justify-center">
             <p className="text-xs text-muted-foreground">Carregando dados...</p>
           </div>
         ) : salespeople.length > 0 ? (
-          <div className="max-h-[110px] overflow-y-auto pr-2">
-            <SalespeopleTable salespeople={salespeople} />
-          </div>
+          <SalespeopleTable salespeople={salespeople} />
         ) : (
-          <div className="flex h-[80px] items-center justify-center text-xs text-muted-foreground">
+          <div className="flex h-[150px] items-center justify-center text-xs text-muted-foreground">
             Sem vendedores cadastrados
           </div>
         )}
       </div>
-      
-      {/* Top performers section - new addition */}
-      {topSalespeople.length > 0 && (
-        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-md p-2">
-          <h3 className="text-xs font-medium text-muted-foreground mb-1">Destaques do Dia:</h3>
-          <div className="space-y-1.5">
-            {topSalespeople.map((person, index) => (
-              <div key={person.id} className="flex justify-between items-center">
-                <div className="flex items-center">
-                  <span className="text-sm font-medium mr-2">#{index + 1}</span>
-                  <span className="text-sm truncate max-w-[120px]">{person.name}</span>
-                </div>
-                <span className="text-sm font-semibold">{formatCurrency(person.salesAmount)}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

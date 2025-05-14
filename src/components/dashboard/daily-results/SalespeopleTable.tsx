@@ -2,6 +2,7 @@
 import { TableHeader } from "./TableHeader";
 import { SalespersonRow } from "./SalespersonRow";
 import { DailySalesperson } from "./types";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface SalespeopleTableProps {
   salespeople: DailySalesperson[];
@@ -9,7 +10,7 @@ interface SalespeopleTableProps {
 
 export function SalespeopleTable({ salespeople }: SalespeopleTableProps) {
   return (
-    <div className="max-h-[120px] overflow-y-auto pr-2">
+    <ScrollArea className="h-[150px]">
       <table className="w-full text-xs">
         <TableHeader />
         <tbody>
@@ -18,6 +19,6 @@ export function SalespeopleTable({ salespeople }: SalespeopleTableProps) {
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollArea>
   );
 }

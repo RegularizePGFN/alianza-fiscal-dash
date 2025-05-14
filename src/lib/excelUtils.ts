@@ -138,8 +138,10 @@ const parseExcelDate = (dateValue: any): string => {
       return date.toISOString().split('T')[0];
     }
 
-    if (typeof dateValue === 'object' && dateValue instanceof Date) {
-      return dateValue.toISOString().split('T')[0];
+    if (typeof dateValue === 'object' && dateValue !== null) {
+      if (dateValue instanceof Date) {
+        return dateValue.toISOString().split('T')[0];
+      }
     }
 
     return new Date().toISOString().split('T')[0];
