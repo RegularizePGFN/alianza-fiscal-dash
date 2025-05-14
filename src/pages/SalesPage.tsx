@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Sale, UserRole } from "@/lib/types";
@@ -157,20 +156,12 @@ export default function SalesPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 transition-colors duration-300">
-          <div className="flex justify-between items-start">
-            <div>
-              <h2 className="text-3xl font-bold tracking-tight dark:text-white">Vendas</h2>
-              <p className="text-muted-foreground dark:text-gray-300">
-                Gerencie as vendas e comissões da equipe.
-              </p>
-            </div>
-            <SalesActions
-              isAdmin={isAdmin}
-              onAddSale={handleAddSale}
-              onImport={handleImport}
-            />
-          </div>
+        <div className="flex justify-end">
+          <SalesActions
+            isAdmin={isAdmin}
+            onAddSale={handleAddSale}
+            onImport={handleImport}
+          />
         </div>
 
         <SalesContent

@@ -11,9 +11,8 @@ export function DashboardHeader({ isLoading }: DashboardHeaderProps) {
 
   return (
     <div>
-      <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
       <p className="text-muted-foreground">
-        Visão geral de vendas e comissões para {monthLabel}
+        Visão geral para {monthLabel}
       </p>
     </div>
   );
