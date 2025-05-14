@@ -95,11 +95,15 @@ export const fetchMonthlyGoal = async (
       console.log("Fetching total goals for admin user");
       
       // Get all goals for the current month/year
+      // Convert month and year to strings for the query
+      const monthString = currentMonth.toString();
+      const yearString = currentYear.toString();
+      
       const { data: goalsData, error: goalsError } = await supabase
         .from("monthly_goals")
         .select("goal_amount, user_id")
-        .eq("month", currentMonth)
-        .eq("year", currentYear);
+        .eq("month", monthString)
+        .eq("year", yearString);
         
       if (goalsError) {
         console.error("Erro ao buscar metas:", goalsError);
@@ -159,11 +163,15 @@ export const fetchMonthlyGoal = async (
     else {
       console.log(`Buscando meta para vendedor (user_id: ${user.id})`);
       
+      // Convert month and year to strings for the query
+      const monthString = currentMonth.toString();
+      const yearString = currentYear.toString();
+      
       const { data: goalData, error: goalError } = await supabase
         .from("monthly_goals")
         .select("goal_amount")
-        .eq("month", currentMonth)
-        .eq("year", currentYear)
+        .eq("month", monthString)
+        .eq("year", yearString)
         .eq("user_id", user.id)
         .maybeSingle();
 
