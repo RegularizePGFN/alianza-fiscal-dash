@@ -21,7 +21,7 @@ interface SidebarLinkProps {
   label: string;
   expanded: boolean;
   active?: boolean;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
 const SidebarLink = ({ to, icon, label, expanded, active, onClick }: SidebarLinkProps) => {
@@ -36,7 +36,12 @@ const SidebarLink = ({ to, icon, label, expanded, active, onClick }: SidebarLink
             ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium shadow-sm" 
             : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
         )}
-        onClick={onClick}
+        onClick={(e) => {
+          if (onClick) {
+            e.preventDefault();
+            onClick(e);
+          }
+        }}
       >
         <div className={cn("transition-all duration-200", active ? "text-sidebar-accent-foreground" : "text-sidebar-foreground/70")}>
           {icon}
@@ -53,6 +58,11 @@ export function AppSidebar() {
   const location = useLocation();
   
   const toggleSidebar = () => setExpanded(!expanded);
+  
+  const handleLogout = (e: React.MouseEvent) => {
+    e.preventDefault();
+    logout();
+  };
   
   // Check if user has admin privileges
   const isAdmin = user?.role === UserRole.ADMIN;
@@ -130,7 +140,7 @@ export function AppSidebar() {
             icon={<LogOut size={20} />} 
             label="Sair" 
             expanded={expanded} 
-            onClick={logout}
+            onClick={handleLogout}
           />
         </ul>
       </div>
