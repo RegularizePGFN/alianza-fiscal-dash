@@ -34,8 +34,10 @@ export function SalesSummaryCard({
   trend
 }: SalesSummaryCardProps) {
   return (
-    <Card className={cn("h-full", className)}>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
+    <Card className={cn("h-full overflow-hidden relative group transition-all duration-300 hover:shadow-md", className)}>
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-50/50 to-gray-100/50 dark:from-gray-800/50 dark:to-gray-900/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      
+      <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
         <div>
           <CardTitle className="text-sm font-medium text-muted-foreground">
             {title}
@@ -57,7 +59,7 @@ export function SalesSummaryCard({
           </div>
         )}
       </CardHeader>
-      <CardContent>
+      <CardContent className="relative">
         {description && <p className="text-xs text-muted-foreground">{description}</p>}
         {trend && trend.value > 0 && (
           <div className={cn(

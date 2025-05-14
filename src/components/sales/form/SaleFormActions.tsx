@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
-import { Loader2 } from "lucide-react";
+import { Loader2, Save, X } from "lucide-react";
 import { Sale } from "@/lib/types";
 
 interface SaleFormActionsProps {
@@ -16,25 +16,28 @@ export function SaleFormActions({
   onCancel 
 }: SaleFormActionsProps) {
   return (
-    <DialogFooter className="gap-2 sm:gap-0 mt-5">
+    <DialogFooter className="gap-2 sm:gap-0 mt-6 pt-4 border-t">
       <Button
         type="button"
         variant="outline"
         onClick={onCancel}
         disabled={isSubmitting}
+        className="gap-2"
       >
+        <X className="h-4 w-4" />
         Cancelar
       </Button>
-      <Button type="submit" disabled={isSubmitting}>
+      <Button type="submit" disabled={isSubmitting} className="gap-2">
         {isSubmitting ? (
           <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin" />
             Salvando...
           </>
-        ) : initialData ? (
-          'Atualizar'
         ) : (
-          'Salvar'
+          <>
+            <Save className="h-4 w-4" />
+            {initialData ? 'Atualizar' : 'Salvar'}
+          </>
         )}
       </Button>
     </DialogFooter>

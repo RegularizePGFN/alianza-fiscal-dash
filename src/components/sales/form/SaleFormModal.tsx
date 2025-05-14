@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -166,9 +167,11 @@ export function SaleFormModal({
   return (
     <Dialog open={open} onOpenChange={(open) => !open && !isSubmitting && onCancel()}>
       <DialogContent className="max-w-2xl sm:max-w-lg overflow-y-auto max-h-[90vh]">
-        <h2 className="text-xl font-semibold mb-4">
-          {isEditing ? "Editar Venda" : "Nova Venda"}
-        </h2>
+        <div className="pb-4 mb-4 border-b">
+          <h2 className="text-xl font-semibold">
+            {isEditing ? "Editar Venda" : "Nova Venda"}
+          </h2>
+        </div>
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">

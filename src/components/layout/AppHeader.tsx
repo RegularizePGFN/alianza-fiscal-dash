@@ -36,14 +36,14 @@ export function AppHeader() {
   };
 
   return (
-    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 h-16">
-      <div className="flex items-center justify-between px-4 h-full">
+    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 h-16 shadow-sm">
+      <div className="flex items-center justify-between px-4 h-full max-w-[1600px] mx-auto">
         <div className="flex items-center">
           <Link
             to="/dashboard"
             className="font-semibold text-xl flex items-center space-x-2"
           >
-            {/* Removed Aliança Fiscal text as requested */}
+            {/* Logo removed as requested */}
           </Link>
           
           <div className="ml-8 text-base">
@@ -72,7 +72,7 @@ export function AppHeader() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="relative h-8 w-8 rounded-full"
+                className="relative h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 <Avatar className="h-8 w-8">
                   <AvatarFallback className="bg-primary/10 text-primary text-xs">

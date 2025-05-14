@@ -83,15 +83,15 @@ export default function UsersPage() {
         <UsersHeader onAddUser={handleAddUser} />
         
         <Card className="overflow-hidden border-0 shadow-md bg-white/80 backdrop-blur-sm dark:bg-gray-800/90 dark:border-gray-700 transition-all duration-300">
-          <CardHeader className="dark:border-gray-700">
-            <CardTitle className="dark:text-white">Todos os Usuários</CardTitle>
+          <CardHeader className="dark:border-gray-700 border-b">
+            <CardTitle className="dark:text-white text-xl">Todos os Usuários</CardTitle>
             <CardDescription className="dark:text-gray-300">
               {isLoading 
                 ? "Carregando usuários..." 
                 : `Total de ${users.length} usuários ativos no sistema.`}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             <UsersTable
               users={users}
               isLoading={isLoading}
