@@ -1,4 +1,3 @@
-
 import * as XLSX from 'xlsx';
 import { Sale, PaymentMethod } from './types';
 
@@ -132,9 +131,10 @@ const parseExcelDate = (dateValue: any): string => {
     }
 
     if (typeof dateValue === 'number') {
+      // Excel stores dates as number of days since 1900-01-01
+      // Convert to JavaScript date - Excel's date system has a bug where it treats 1900 as a leap year
       const excelEpoch = new Date(1899, 11, 30);
-      const date = new Date(excelEpoch);
-      date.setDate(excelEpoch.getDate() + dateValue);
+      const date = new Date(excelEpoch.getTime() + dateValue * 24 * 60 * 60 * 1000);
       return date.toISOString().split('T')[0];
     }
 
@@ -161,4 +161,47 @@ const convertPaymentMethod = (method: string): PaymentMethod => {
   if (lower.includes('cred'))   return PaymentMethod.CREDIT;
   if (lower.includes('deb'))    return PaymentMethod.DEBIT;
   return PaymentMethod.CREDIT;
+};
+
+/**
+ * Formata uma data para o formato ISO YYYY-MM-DD.
+ */
+export const formatDate = (dateValue: string | Date | number | null): string => {
+  try {
+    if (!dateValue) {
+      return new Date().toISOString().split('T')[0];
+    }
+
+    // If it's already a formatted date string like "YYYY-MM-DD"
+    if (typeof dateValue === 'string') {
+      if (dateValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return dateValue;
+      }
+
+      // Try to parse the string as a date
+      const date = new Date(dateValue);
+      if (!isNaN(date.getTime())) {
+        return date.toISOString().split('T')[0];
+      }
+    }
+
+    // If it's an Excel date number
+    if (typeof dateValue === 'number') {
+      // Excel stores dates as number of days since 1900-01-01
+      // Convert to JavaScript date - Excel's date system has a bug where it treats 1900 as a leap year
+      const excelEpoch = new Date(1899, 11, 30);
+      const date = new Date(excelEpoch.getTime() + dateValue * 24 * 60 * 60 * 1000);
+      return date.toISOString().split('T')[0];
+    }
+
+    // If it's a Date object
+    if (dateValue instanceof Date) {
+      return dateValue.toISOString().split('T')[0];
+    }
+
+    return new Date().toISOString().split('T')[0];
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return new Date().toISOString().split('T')[0];
+  }
 };

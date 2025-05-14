@@ -3,10 +3,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Sale } from "@/lib/types";
 import { DailySalesperson } from "./types";
-import { SummarySection } from "./SummarySection";
 import { SalespeopleTable } from "./SalespeopleTable";
 import { useDailyResults } from "./DailyResultsContext";
-import { CircleDollarSign, Users } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
 interface DailyResultsContentProps {
@@ -90,51 +88,21 @@ export function DailyResultsContent({ todaySales, currentDate }: DailyResultsCon
   useEffect(() => {
     setSalespeople(sortData(salespeople));
   }, [sortColumn, sortDirection]);
-
-  // Calculate totals
-  const totalSalesCount = todaySales.length;
-  const totalSalesAmount = todaySales.reduce((sum, sale) => sum + sale.gross_amount, 0);
   
   return (
-    <div className="grid grid-cols-1 gap-3">
-      {/* Summary cards with better spacing */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="bg-purple-50 rounded-md p-2 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
-            <Users className="h-5 w-5 text-purple-700" />
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Total de Vendas</p>
-            <h4 className="text-xl font-bold">{totalSalesCount}</h4>
-          </div>
+    <div className="bg-white rounded-md p-2">
+      <h3 className="text-xs font-medium text-muted-foreground mb-1">Vendedores Hoje:</h3>
+      {loading ? (
+        <div className="flex h-[150px] items-center justify-center">
+          <p className="text-xs text-muted-foreground">Carregando dados...</p>
         </div>
-        
-        <div className="bg-purple-50 rounded-md p-2 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
-            <CircleDollarSign className="h-5 w-5 text-purple-700" />
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Total em Valor</p>
-            <h4 className="text-xl font-bold">{formatCurrency(totalSalesAmount)}</h4>
-          </div>
+      ) : salespeople.length > 0 ? (
+        <SalespeopleTable salespeople={salespeople} />
+      ) : (
+        <div className="flex h-[150px] items-center justify-center text-xs text-muted-foreground">
+          Sem vendedores cadastrados
         </div>
-      </div>
-      
-      {/* Salespeople table with better height management */}
-      <div className="bg-white rounded-md p-2">
-        <h3 className="text-xs font-medium text-muted-foreground mb-1">Vendedores Hoje:</h3>
-        {loading ? (
-          <div className="flex h-[150px] items-center justify-center">
-            <p className="text-xs text-muted-foreground">Carregando dados...</p>
-          </div>
-        ) : salespeople.length > 0 ? (
-          <SalespeopleTable salespeople={salespeople} />
-        ) : (
-          <div className="flex h-[150px] items-center justify-center text-xs text-muted-foreground">
-            Sem vendedores cadastrados
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }

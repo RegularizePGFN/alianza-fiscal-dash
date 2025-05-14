@@ -1,12 +1,10 @@
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sale } from "@/lib/types";
 import { getTodayISO } from "@/lib/utils";
-import { DailyResultsContent } from "./DailyResultsContent";
-import { DailyResultsProvider } from "./DailyResultsContext";
 import { DailyResultsProps } from "./types";
-import { CalendarDays } from "lucide-react";
+import { DailySummaryCard } from "./DailySummaryCard";
+import { DailySalesTeamCard } from "./DailySalesTeamCard";
 
 export function DailyResultsCard({ salesData }: DailyResultsProps) {
   const [todaySales, setTodaySales] = useState<Sale[]>([]);
@@ -32,25 +30,11 @@ export function DailyResultsCard({ salesData }: DailyResultsProps) {
     setTodaySales(filteredSales);
   }, [salesData]);
 
+  // We're going to return a div with two cards side-by-side
   return (
-    <Card className="transition-all duration-300 hover:shadow-md">
-      <CardHeader className="pb-2 px-4 pt-3">
-        <CardTitle className="text-sm font-medium flex items-center gap-1">
-          <CalendarDays className="h-4 w-4 text-purple-600" />
-          <span>Resultado do Dia</span>
-          <span className="text-xs ml-2 bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
-            {currentDate}
-          </span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="px-4 pb-3 pt-0">
-        <DailyResultsProvider>
-          <DailyResultsContent 
-            todaySales={todaySales}
-            currentDate={currentDate}
-          />
-        </DailyResultsProvider>
-      </CardContent>
-    </Card>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <DailySummaryCard todaySales={todaySales} currentDate={currentDate} />
+      <DailySalesTeamCard todaySales={todaySales} currentDate={currentDate} />
+    </div>
   );
 }
