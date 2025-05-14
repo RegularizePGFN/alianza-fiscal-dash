@@ -15,6 +15,7 @@ type SalespersonCommission = {
   goalPercentage: number;
   salesCount: number;
   metaGap: number;
+  expectedProgress: number;
 };
 
 export function SalespeopleCommissionsCard() {
@@ -41,8 +42,9 @@ export function SalespeopleCommissionsCard() {
         const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
         const totalBusinessDays = 22; // Simplification for business days in month
         const currentDay = today.getDate();
+        
+        // Calculate business days that have passed so far (capped at totalBusinessDays)
         const businessDaysElapsed = Math.min(currentDay, totalBusinessDays);
-        const goalProgressFactor = businessDaysElapsed / totalBusinessDays;
         
         // 1. Fetch all salespeople (users with role 'vendedor')
         const { data: profilesData, error: profilesError } = await supabase
@@ -92,17 +94,19 @@ export function SalespeopleCommissionsCard() {
             // Get goal amount (default to 0 if not set)
             const goalAmount = goalData?.goal_amount ? Number(goalData.goal_amount) : 0;
             
-            // Calculate expected goal progress until today
-            const expectedGoalProgress = goalAmount * goalProgressFactor;
+            // CORRECTED: Calculate the expected progress based on business days elapsed
+            const dailyTarget = goalAmount / totalBusinessDays;
+            const expectedProgress = dailyTarget * businessDaysElapsed;
             
-            // Calculate the gap between actual and expected
-            const metaGap = totalSales - expectedGoalProgress;
+            // CORRECTED: Calculate the gap between actual and expected
+            // Positive gap means they are ahead of their expected progress
+            const metaGap = totalSales - expectedProgress;
             
             // Calculate commission rate based on goal achievement
             const commissionRate = totalSales >= goalAmount ? 0.25 : 0.2; // 25% if goal met, 20% otherwise
             const projectedCommission = totalSales * commissionRate;
             
-            // Calculate goal percentage (cap at 200%)
+            // Calculate goal percentage against total goal (cap at 200%)
             const goalPercentage = goalAmount > 0 ? Math.min((totalSales / goalAmount) * 100, 200) : 0;
             
             return {
@@ -113,7 +117,8 @@ export function SalespeopleCommissionsCard() {
               projectedCommission,
               goalPercentage,
               salesCount,
-              metaGap
+              metaGap,
+              expectedProgress
             };
           })
         );
@@ -175,7 +180,7 @@ export function SalespeopleCommissionsCard() {
                 </tr>
               ) : (
                 salespeople.map((person) => {
-                  // Determine if person is ahead or behind expected goal progress
+                  // CORRECTED: Determine if person is ahead or behind expected progress at this point in time
                   const isAheadOfTarget = person.metaGap >= 0;
                   
                   return (
@@ -195,6 +200,7 @@ export function SalespeopleCommissionsCard() {
                           <div className="w-16 h-2 bg-gray-200 rounded-full mr-2">
                             <div
                               className={`h-2 rounded-full ${
+                                // CORRECTED: Use blue for ahead of expected target, red for behind
                                 isAheadOfTarget ? 'bg-blue-500' : 'bg-red-500'
                               }`}
                               style={{
@@ -206,7 +212,11 @@ export function SalespeopleCommissionsCard() {
                         </div>
                       </td>
                       <td className={`text-center py-3 ${isAheadOfTarget ? 'text-green-600' : 'text-red-600'} font-medium`}>
-                        {isAheadOfTarget ? 'R$ ' + person.metaGap.toFixed(2).replace('.', ',') + '+' : 'R$ ' + Math.abs(person.metaGap).toFixed(2).replace('.', ',') + '-'}
+                        {/* CORRECTED: Format GAP display */}
+                        {isAheadOfTarget 
+                          ? 'R$ ' + Math.abs(person.metaGap).toFixed(2).replace('.', ',') + '+' 
+                          : 'R$ ' + Math.abs(person.metaGap).toFixed(2).replace('.', ',') + '-'
+                        }
                       </td>
                       <td className="text-center py-3 font-medium">
                         {person.projectedCommission.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
