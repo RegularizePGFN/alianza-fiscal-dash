@@ -1,0 +1,2 @@
+
+export { DailyResultsCard } from './DailyResultsCard';
