@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Sale, UserRole } from "@/lib/types";
@@ -109,7 +108,21 @@ export default function SalesPage() {
         let successCount = 0;
         
         // Process each sale
-        for (const sale of salesData) {
+        for (const partialSale of salesData) {
+          // Ensure required fields are present and provide defaults for missing ones
+          const sale: Omit<Sale, "id"> = {
+            salesperson_id: partialSale.salesperson_id || user?.id || '', // Use current user if not specified
+            salesperson_name: partialSale.salesperson_name || user?.name || 'Unknown',
+            gross_amount: partialSale.gross_amount || 0,
+            net_amount: partialSale.net_amount || partialSale.gross_amount || 0,
+            payment_method: partialSale.payment_method || 'Pix',
+            installments: partialSale.installments || 1,
+            sale_date: partialSale.sale_date || new Date().toISOString().split('T')[0],
+            client_name: partialSale.client_name || 'Client',
+            client_phone: partialSale.client_phone || '',
+            client_document: partialSale.client_document || '',
+          };
+          
           const success = await handleSaveSale(sale);
           if (success) successCount++;
         }
@@ -147,7 +160,7 @@ export default function SalesPage() {
     } finally {
       setIsProcessingAction(false);
     }
-  }, [handleSaveSale, fetchSales, toast]);
+  }, [handleSaveSale, fetchSales, toast, user]);
 
   /* ---------------------- render ---------------------- */
   const isAdmin = user?.role === UserRole.ADMIN;
