@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Sale } from "@/lib/types";
 import { PaginatedSalesTable } from "./PaginatedSalesTable";
 import { SalesFilter } from "./SalesFilter";
+import { SalesActions } from "./SalesActions";
 
 interface SalesContentProps {
   loading: boolean;
@@ -10,6 +11,9 @@ interface SalesContentProps {
   isSalesperson: boolean;
   onEdit: (sale: Sale) => void;
   onDelete: (saleId: string) => void;
+  onAddSale: () => void;
+  onImport?: (file: File) => void;
+  isAdmin: boolean;
 }
 
 export function SalesContent({ 
@@ -17,7 +21,10 @@ export function SalesContent({
   sales, 
   isSalesperson, 
   onEdit, 
-  onDelete 
+  onDelete,
+  onAddSale,
+  onImport,
+  isAdmin
 }: SalesContentProps) {
   const [filteredSales, setFilteredSales] = useState<Sale[]>(sales);
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -32,11 +39,24 @@ export function SalesContent({
   return (
     <div className="space-y-4">
       {!loading && (
-        <SalesFilter 
-          sales={sales} 
-          onFilter={setFilteredSales}
-          onSearch={setSearchTerm}
-        />
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-4 transition-colors">
+          <div className="flex flex-col space-y-4">
+            <div className="flex flex-col md:flex-row justify-between gap-4">
+              <SalesFilter 
+                sales={sales} 
+                onFilter={setFilteredSales}
+                onSearch={setSearchTerm}
+              />
+              <div className="flex gap-2 md:self-start">
+                <SalesActions 
+                  isAdmin={isAdmin} 
+                  onAddSale={onAddSale} 
+                  onImport={onImport}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       )}
       
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden transition-colors">

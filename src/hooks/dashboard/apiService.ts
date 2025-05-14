@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Sale, SalesSummary, UserRole } from "@/lib/types";
 import { DEFAULT_GOAL_AMOUNT } from "@/lib/constants";
@@ -79,7 +78,23 @@ export const fetchPreviousMonthSales = async (
     console.log("Dados filtrados para vendedor (mês anterior):", filteredPrevData.length, "registros");
   }
 
-  return filteredPrevData;
+  // Map data properly to include net_amount
+  const formattedSales: Sale[] = filteredPrevData.map((sale) => ({
+    id: sale.id,
+    salesperson_id: sale.salesperson_id,
+    salesperson_name: sale.salesperson_name || "Sem nome",
+    gross_amount: sale.gross_amount,
+    net_amount: sale.gross_amount, // Using gross_amount as net_amount
+    payment_method: convertToPaymentMethod(sale.payment_method),
+    installments: sale.installments || 1,
+    sale_date: sale.sale_date,
+    created_at: sale.created_at,
+    client_name: sale.client_name || "Cliente não identificado",
+    client_phone: sale.client_phone || "",
+    client_document: sale.client_document || "",
+  }));
+
+  return formattedSales;
 };
 
 export const fetchMonthlyGoal = async (

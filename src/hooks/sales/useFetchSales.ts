@@ -41,6 +41,8 @@ export const useFetchSales = (user: User | null) => {
       
       if (!user) {
         console.log("No authenticated user found");
+        setLoading(false);
+        isFetchingRef.current = false;
         return;
       }
       
@@ -58,7 +60,12 @@ export const useFetchSales = (user: User | null) => {
         throw error;
       }
       
-      if (data && isMountedRef.current) {
+      if (!isMountedRef.current) {
+        console.log("Component unmounted during fetch, aborting data processing");
+        return;
+      }
+      
+      if (data) {
         console.log("Sales data retrieved:", data.length, "records");
         if (data.length > 0) {
           // Log sample dates for debugging
@@ -98,8 +105,10 @@ export const useFetchSales = (user: User | null) => {
           };
         });
         
-        setSales(formattedSales);
-        console.log("Sales data after mapping:", formattedSales.length, "records");
+        if (isMountedRef.current) {
+          setSales(formattedSales);
+          console.log("Sales data after mapping:", formattedSales.length, "records");
+        }
       }
     } catch (error: any) {
       console.error('Error fetching sales:', error);
@@ -133,11 +142,15 @@ export const useFetchSales = (user: User | null) => {
 
   // Fetch sales when user changes
   useEffect(() => {
+    // Reset mounted state when component mounts
+    isMountedRef.current = true;
+    
     if (user) {
       console.log("Authenticated user, fetching sales");
       fetchSales();
     } else {
       console.log("No authenticated user, skipping sales fetch");
+      setLoading(false);
     }
     
     // Reset mount status on unmount
@@ -145,14 +158,6 @@ export const useFetchSales = (user: User | null) => {
       isMountedRef.current = false;
     };
   }, [user]);
-  
-  // Reset mount status when component mounts
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
   
   return {
     sales,

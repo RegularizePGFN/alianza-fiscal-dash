@@ -38,12 +38,18 @@ export function AppHeader() {
   return (
     <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 h-16">
       <div className="flex items-center justify-between px-4 h-full">
-        <Link
-          to="/dashboard"
-          className="font-semibold text-xl flex items-center space-x-2"
-        >
-          {/* Removed Aliança Fiscal text as requested */}
-        </Link>
+        <div className="flex items-center">
+          <Link
+            to="/dashboard"
+            className="font-semibold text-xl flex items-center space-x-2"
+          >
+            {/* Removed Aliança Fiscal text as requested */}
+          </Link>
+          
+          <div className="ml-8 text-base">
+            Olá, <span className="font-medium">{user.name}</span>!
+          </div>
+        </div>
 
         <div className="flex items-center space-x-4">
           {isImpersonating && (
