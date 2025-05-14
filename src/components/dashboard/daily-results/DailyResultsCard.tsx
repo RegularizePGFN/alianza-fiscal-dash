@@ -6,6 +6,7 @@ import { getTodayISO } from "@/lib/utils";
 import { DailyResultsContent } from "./DailyResultsContent";
 import { DailyResultsProvider } from "./DailyResultsContext";
 import { DailyResultsProps } from "./types";
+import { CalendarDays } from "lucide-react";
 
 export function DailyResultsCard({ salesData }: DailyResultsProps) {
   const [todaySales, setTodaySales] = useState<Sale[]>([]);
@@ -33,12 +34,16 @@ export function DailyResultsCard({ salesData }: DailyResultsProps) {
 
   return (
     <Card className="transition-all duration-300 hover:shadow-md">
-      <CardHeader className="pb-2 px-4 pt-4">
+      <CardHeader className="pb-2 px-4 pt-3">
         <CardTitle className="text-sm font-medium flex items-center gap-1">
-          Resultado do Dia - {currentDate}
+          <CalendarDays className="h-4 w-4 text-purple-600" />
+          <span>Resultado do Dia</span>
+          <span className="text-xs ml-2 bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+            {currentDate}
+          </span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="px-4 pb-4 pt-0">
+      <CardContent className="px-4 pb-3 pt-0">
         <DailyResultsProvider>
           <DailyResultsContent 
             todaySales={todaySales}

@@ -9,8 +9,8 @@ interface SummarySectionProps {
 
 export function SummarySection({ salesCount, salesAmount }: SummarySectionProps) {
   return (
-    <div className="md:col-span-3 space-y-2 border-r pr-2">
-      <div className="flex items-center gap-2">
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2 bg-purple-50 p-2 rounded-md">
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100">
           <Users className="h-4 w-4 text-purple-700" />
         </div>
@@ -20,7 +20,7 @@ export function SummarySection({ salesCount, salesAmount }: SummarySectionProps)
         </div>
       </div>
       
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 bg-purple-50 p-2 rounded-md">
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100">
           <CircleDollarSign className="h-4 w-4 text-purple-700" />
         </div>

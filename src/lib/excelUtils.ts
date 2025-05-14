@@ -1,3 +1,4 @@
+
 import * as XLSX from 'xlsx';
 import { Sale, PaymentMethod } from './types';
 
@@ -17,7 +18,8 @@ export const exportSalesToExcel = (
       let displayDate = 'Data não disponível';
 
       if (saleDate != null) {
-        if (saleDate instanceof Date) {
+        // Properly check for Date objects
+        if (typeof saleDate === 'object' && saleDate instanceof Date) {
           displayDate = saleDate.toLocaleDateString('pt-BR');
         } else if (typeof saleDate === 'string') {
           if (/^\d{4}-\d{2}-\d{2}$/.test(saleDate)) {
@@ -136,7 +138,7 @@ const parseExcelDate = (dateValue: any): string => {
       return date.toISOString().split('T')[0];
     }
 
-    if (dateValue instanceof Date) {
+    if (typeof dateValue === 'object' && dateValue instanceof Date) {
       return dateValue.toISOString().split('T')[0];
     }
 
