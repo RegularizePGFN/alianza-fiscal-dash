@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { MonthlyGoalsForm } from "@/components/settings/MonthlyGoalsForm";
 import { UserRole } from "@/lib/types";
 import { ADMIN_EMAILS } from "@/contexts/auth/utils";
+import { COMMISSION_GOAL_AMOUNT } from "@/lib/constants";
 
 interface UserWithGoal {
   id: string;
@@ -144,18 +145,28 @@ export function MonthlyGoalsSettings() {
             <div className="space-y-2">
               {users.length > 0 ? (
                 users.map((user) => (
-                  <div key={user.id} className="flex justify-between items-center p-3 border rounded-md hover:bg-accent/10 transition-colors">
-                    <div>
-                      <div className="font-medium">{user.name}</div>
-                      <div className="text-sm text-muted-foreground">{user.email}</div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium">
-                        {user.goal_amount ? `R$ ${user.goal_amount.toLocaleString('pt-BR')}` : 'Sem meta definida'}
-                      </span>
+                  <div key={user.id} className="flex flex-col p-3 border rounded-md hover:bg-accent/10 transition-colors">
+                    <div className="flex justify-between items-center mb-2">
+                      <div>
+                        <div className="font-medium">{user.name}</div>
+                        <div className="text-sm text-muted-foreground">{user.email}</div>
+                      </div>
                       <Button size="sm" onClick={() => handleEditClick(user)}>
                         Editar
                       </Button>
+                    </div>
+                    <div className="flex flex-col sm:flex-row text-sm gap-y-1 gap-x-4 mt-1">
+                      <div className="flex gap-2 items-center">
+                        <span className="text-muted-foreground">→ Meta Pessoal:</span>
+                        <span className="font-medium">
+                          {user.goal_amount ? `R$ ${user.goal_amount.toLocaleString('pt-BR')}` : 'Não definida'}
+                        </span>
+                      </div>
+                      <div className="flex gap-2 items-center">
+                        <span className="text-muted-foreground">→ Meta Comissão:</span>
+                        <span className="font-medium">R$ {COMMISSION_GOAL_AMOUNT.toLocaleString('pt-BR')}</span>
+                        <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">Fixa</span>
+                      </div>
                     </div>
                   </div>
                 ))

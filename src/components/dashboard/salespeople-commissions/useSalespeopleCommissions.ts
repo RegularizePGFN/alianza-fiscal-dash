@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { SalespersonCommission, SortColumn, SortDirection, SummaryTotals } from "./types";
 import { getBusinessDaysInMonth, getBusinessDaysElapsedUntilToday } from "./utils";
+import { COMMISSION_GOAL_AMOUNT, COMMISSION_RATE_ABOVE_GOAL, COMMISSION_RATE_BELOW_GOAL } from "@/lib/constants";
 
 export function useSalespeopleCommissions() {
   const [salespeople, setSalespeople] = useState<SalespersonCommission[]>([]);
@@ -101,13 +102,18 @@ export function useSalespeopleCommissions() {
             const salesCount = salesData?.length || 0;
             const goalAmount = goalData?.goal_amount ? Number(goalData.goal_amount) : 0;
             
+            // For commission calculation, we use the FIXED COMMISSION GOAL AMOUNT
+            const commissionRate = totalSales >= COMMISSION_GOAL_AMOUNT 
+              ? COMMISSION_RATE_ABOVE_GOAL 
+              : COMMISSION_RATE_BELOW_GOAL;
+              
+            const projectedCommission = totalSales * commissionRate;
+            
             const dailyTarget = goalAmount / totalBusinessDays;
             const expectedProgress = dailyTarget * businessDaysElapsed;
             const metaGap = totalSales - expectedProgress;
             
-            const commissionRate = totalSales >= goalAmount ? 0.25 : 0.2;
-            const projectedCommission = totalSales * commissionRate;
-            
+            // Goal percentage is calculated based on the personal goal, not commission goal
             const goalPercentage = expectedProgress > 0 ? (totalSales / expectedProgress) * 100 : 0;
             
             const remainingAmount = goalAmount - totalSales;
@@ -118,6 +124,7 @@ export function useSalespeopleCommissions() {
               name: profile.name || "Sem nome",
               totalSales,
               goalAmount,
+              commissionGoalAmount: COMMISSION_GOAL_AMOUNT, // Fixed commission goal
               projectedCommission,
               goalPercentage,
               salesCount,
@@ -152,6 +159,7 @@ export function useSalespeopleCommissions() {
     salesCount: salespeople.reduce((sum, person) => sum + person.salesCount, 0),
     totalSales: salespeople.reduce((sum, person) => sum + person.totalSales, 0),
     goalAmount: salespeople.reduce((sum, person) => sum + person.goalAmount, 0),
+    commissionGoalAmount: salespeople.reduce((sum, person) => sum + person.commissionGoalAmount, 0),
     goalPercentage: salespeople.length > 0 
       ? salespeople.reduce((sum, person) => sum + person.goalPercentage, 0) / salespeople.length 
       : 0,

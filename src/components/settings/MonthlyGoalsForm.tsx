@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth";
+import { COMMISSION_GOAL_AMOUNT } from "@/lib/constants";
 
 interface User {
   id: string;
@@ -101,7 +102,7 @@ export function MonthlyGoalsForm({ user, month, year, onClose }: MonthlyGoalsFor
 
       toast({
         title: "Meta atualizada com sucesso",
-        description: `A meta de ${user.name} foi atualizada.`,
+        description: `A meta pessoal de ${user.name} foi atualizada.`,
       });
 
       onClose();
@@ -122,18 +123,28 @@ export function MonthlyGoalsForm({ user, month, year, onClose }: MonthlyGoalsFor
       <CardHeader>
         <CardTitle>Editar Meta Mensal</CardTitle>
         <CardDescription>
-          Definir meta para {user.name} referente ao mês {month}/{year}
+          Definir meta pessoal para {user.name} referente ao mês {month}/{year}
         </CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
+            <div className="bg-blue-50 p-4 rounded-md mb-4 text-sm">
+              <p className="font-medium mb-1 text-blue-700">Informação sobre metas</p>
+              <p className="text-blue-700">
+                A meta pessoal define os objetivos administrativos do vendedor e é usada nos cálculos de progresso e dashboards.
+              </p>
+              <p className="text-blue-700 mt-2">
+                A meta de comissão é fixa em R$ {COMMISSION_GOAL_AMOUNT.toLocaleString('pt-BR')} para todos os vendedores.
+              </p>
+            </div>
+            
             <FormField
               control={form.control}
               name="goal_amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Valor da Meta (R$)</FormLabel>
+                  <FormLabel>Valor da Meta Pessoal (R$)</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="Digite o valor da meta"
@@ -146,7 +157,7 @@ export function MonthlyGoalsForm({ user, month, year, onClose }: MonthlyGoalsFor
                     />
                   </FormControl>
                   <FormDescription>
-                    Defina a meta de vendas em reais.
+                    Defina a meta pessoal de vendas em reais.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

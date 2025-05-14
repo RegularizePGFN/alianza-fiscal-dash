@@ -1,6 +1,7 @@
 
 import { Sale, SalesSummary } from "@/lib/types";
 import { DashboardTrends } from "./types";
+import { COMMISSION_GOAL_AMOUNT, COMMISSION_RATE_ABOVE_GOAL, COMMISSION_RATE_BELOW_GOAL } from "@/lib/constants";
 
 /**
  * Calculates sales summary and trends based on sales data
@@ -11,9 +12,15 @@ export const calculateSalesSummary = (
 ): { summary: SalesSummary; trends: DashboardTrends } => {
   const totalAmount = sales.reduce((sum, sale) => sum + sale.gross_amount, 0);
 
-  // Commission rate depends on whether the goal was met
-  const commissionRate = totalAmount >= monthlyGoal ? 0.25 : 0.2;
+  // Commission rate depends on meeting the FIXED commission goal (not the personal goal)
+  const commissionRate = totalAmount >= COMMISSION_GOAL_AMOUNT 
+    ? COMMISSION_RATE_ABOVE_GOAL 
+    : COMMISSION_RATE_BELOW_GOAL;
+    
   const projectedCommission = totalAmount * commissionRate;
+
+  // Goal percentage is based on personal goal, not commission goal
+  const goalPercentage = monthlyGoal > 0 ? Math.min(totalAmount / monthlyGoal, 2) : 0;
 
   // Calculate trend percentages
   let totalSalesTrend = { value: 0, isPositive: true };
@@ -26,7 +33,7 @@ export const calculateSalesSummary = (
       total_net: totalAmount, // Keeping this to avoid breaking changes
       projected_commission: projectedCommission,
       goal_amount: monthlyGoal,
-      goal_percentage: Math.min(totalAmount / monthlyGoal, 2),
+      goal_percentage: goalPercentage,
     },
     trends: {
       totalSalesTrend,

@@ -4,6 +4,7 @@ export type SalespersonCommission = {
   name: string;
   totalSales: number;
   goalAmount: number;
+  commissionGoalAmount: number; // New field for commission goal
   projectedCommission: number;
   goalPercentage: number;
   salesCount: number;
@@ -27,6 +28,7 @@ export type SummaryTotals = {
   salesCount: number;
   totalSales: number;
   goalAmount: number;
+  commissionGoalAmount: number; // New field for commission goal
   goalPercentage: number;
   metaGap: number;
   remainingDailyTarget: number;
