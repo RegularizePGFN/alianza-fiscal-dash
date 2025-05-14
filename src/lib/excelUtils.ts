@@ -19,11 +19,12 @@ export function exportSalesToExcel(sales: Sale[], filename: string = 'sales-repo
           sale.sale_date !== null && 
           'toLocaleDateString' in sale.sale_date
         ) {
-          // Using non-null assertion operator since we've already checked it's not null above
+          // Since we've already checked it's not null above and verified it has toLocaleDateString
           const dateObject = sale.sale_date as Date;
           displayDate = dateObject.toLocaleDateString('pt-BR');
         } else {
           // Fallback for other formats - ensuring we have a valid string
+          // At this point, we know sale.sale_date is not null due to the outer if condition
           displayDate = String(sale.sale_date);
         }
       }
