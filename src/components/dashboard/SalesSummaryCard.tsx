@@ -13,6 +13,7 @@ interface SalesSummaryCardProps {
   title: string;
   amount?: number;
   hideAmount?: boolean;
+  numericValue?: number;
   description?: string;
   icon?: React.ReactNode;
   className?: string;
@@ -26,6 +27,7 @@ export function SalesSummaryCard({
   title,
   amount,
   hideAmount = false,
+  numericValue,
   description,
   icon,
   className,
@@ -41,6 +43,11 @@ export function SalesSummaryCard({
           {!hideAmount && amount !== undefined && (
             <CardDescription className="text-2xl font-bold">
               {formatCurrency(amount)}
+            </CardDescription>
+          )}
+          {numericValue !== undefined && (
+            <CardDescription className="text-2xl font-bold">
+              {numericValue}
             </CardDescription>
           )}
         </div>
