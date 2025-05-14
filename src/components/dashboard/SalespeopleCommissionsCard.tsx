@@ -67,13 +67,13 @@ export function SalespeopleCommissionsCard() {
             }
             
             // 3. Get their monthly goal
-            // Convert month and year to strings for the query since that's what the database expects
+            // Convert month and year to strings for the query
             const { data: goalData, error: goalError } = await supabase
               .from("monthly_goals")
               .select("goal_amount")
               .eq("user_id", profile.id)
-              .eq("month", currentMonth.toString()) // Convert to string for the query
-              .eq("year", currentYear.toString()) // Convert to string for the query
+              .eq("month", currentMonth.toString())
+              .eq("year", currentYear.toString())
               .maybeSingle();
               
             // Calculate total sales
