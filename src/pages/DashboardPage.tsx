@@ -2,7 +2,6 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
-import { SalesSummarySection } from "@/components/dashboard/SalesSummarySection";
 import { GoalsCommissionsSection } from "@/components/dashboard/GoalsCommissionsSection";
 import { RecentSalesSection } from "@/components/dashboard/RecentSalesSection";
 import { SalespeopleCommissionsCard } from "@/components/dashboard/salespeople-commissions";
@@ -28,7 +27,6 @@ export default function DashboardPage() {
             {/* DailyResultsCard - only visible to admin users */}
             {isAdmin && <DailyResultsCard salesData={salesData} />}
             
-            <SalesSummarySection summary={summary} trends={trends} />
             <GoalsCommissionsSection summary={summary} salesData={salesData} />
             
             {/* Admin-only commission projections card */}

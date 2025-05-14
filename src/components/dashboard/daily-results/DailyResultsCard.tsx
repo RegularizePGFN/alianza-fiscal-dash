@@ -1,40 +1,100 @@
 
-import { useEffect, useState } from "react";
-import { Sale } from "@/lib/types";
-import { getTodayISO } from "@/lib/utils";
-import { DailyResultsProps } from "./types";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/auth";
+import { Sale, UserRole } from "@/lib/types";
+import { supabase } from "@/integrations/supabase/client";
 import { DailySummaryCard } from "./DailySummaryCard";
 import { DailySalesTeamCard } from "./DailySalesTeamCard";
+import { DailyResultsProvider } from "./DailyResultsContext";
+import { formatDate, getTodayISO } from "@/lib/utils";
+
+interface DailyResultsProps {
+  salesData: Sale[];
+}
 
 export function DailyResultsCard({ salesData }: DailyResultsProps) {
+  const { user } = useAuth();
   const [todaySales, setTodaySales] = useState<Sale[]>([]);
+  const [previousDaySales, setPreviousDaySales] = useState<Sale[]>([]);
   const [currentDate, setCurrentDate] = useState<string>("");
-  
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
-    // Get today's date in ISO format (YYYY-MM-DD)
-    const todayStr = getTodayISO();
+    const fetchDailyData = async () => {
+      if (!user) return;
+      
+      setIsLoading(true);
+      try {
+        // Get today's date in ISO format
+        const today = getTodayISO();
+        
+        // Calculate yesterday's date
+        const yesterdayDate = new Date();
+        yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+        const yesterday = yesterdayDate.toISOString().split('T')[0];
+        
+        // Filter today's sales
+        const todaySalesArr = salesData.filter(sale => 
+          sale.sale_date === today
+        );
+        
+        // Fetch yesterday's sales
+        const { data: yesterdaySales, error } = await supabase
+          .from("sales")
+          .select("*")
+          .eq("sale_date", yesterday);
+        
+        if (error) {
+          console.error("Error fetching yesterday's sales:", error);
+        }
+        
+        const formattedYesterdaySales: Sale[] = (yesterdaySales || []).map(sale => ({
+          id: sale.id,
+          salesperson_id: sale.salesperson_id,
+          salesperson_name: sale.salesperson_name || "Sem nome",
+          gross_amount: Number(sale.gross_amount),
+          net_amount: Number(sale.gross_amount),
+          payment_method: sale.payment_method,
+          installments: sale.installments || 1,
+          sale_date: sale.sale_date,
+          created_at: sale.created_at,
+          client_name: sale.client_name || "Cliente não identificado",
+          client_phone: sale.client_phone || "",
+          client_document: sale.client_document || "",
+        }));
+        
+        setTodaySales(todaySalesArr);
+        setPreviousDaySales(formattedYesterdaySales);
+        setCurrentDate(formatDate(new Date()));
+      } catch (error) {
+        console.error("Error in daily data processing:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
     
-    // Format current date for display (dd/mm/yyyy in Portuguese format)
-    const today = new Date();
-    const formattedDate = new Intl.DateTimeFormat('pt-BR').format(today);
-    setCurrentDate(formattedDate);
-
-    // Filter sales for today by exact string match of the date (YYYY-MM-DD)
-    // This ensures we only count sales with the exact date match
-    const filteredSales = salesData.filter(sale => {
-      console.log(`Comparing sale date: "${sale.sale_date}" with today: "${todayStr}"`);
-      return sale.sale_date === todayStr;
-    });
-    
-    console.log(`Found ${filteredSales.length} sales for today (${todayStr})`);
-    setTodaySales(filteredSales);
-  }, [salesData]);
-
-  // We're going to return a div with two cards side-by-side
+    fetchDailyData();
+  }, [salesData, user]);
+  
+  // Only admin users can see this card
+  if (user?.role !== UserRole.ADMIN) {
+    return null;
+  }
+  
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <DailySummaryCard todaySales={todaySales} currentDate={currentDate} />
-      <DailySalesTeamCard todaySales={todaySales} currentDate={currentDate} />
-    </div>
+    <DailyResultsProvider>
+      <div className="grid gap-4 md:grid-cols-2">
+        <DailySummaryCard 
+          todaySales={todaySales} 
+          previousDaySales={previousDaySales}
+          currentDate={currentDate} 
+        />
+        <DailySalesTeamCard 
+          todaySales={todaySales} 
+          currentDate={currentDate} 
+          isLoading={isLoading} 
+        />
+      </div>
+    </DailyResultsProvider>
   );
 }

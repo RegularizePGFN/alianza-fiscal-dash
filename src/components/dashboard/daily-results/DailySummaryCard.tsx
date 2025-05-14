@@ -1,18 +1,67 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sale } from "@/lib/types";
+import { Sale, PaymentMethod } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
-import { CircleDollarSign, Users, CalendarDays } from "lucide-react";
+import { CircleDollarSign, Users, CalendarDays, ArrowDown, ArrowUp } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useMemo } from "react";
 
 interface DailySummaryCardProps {
   todaySales: Sale[];
   currentDate: string;
+  previousDaySales?: Sale[];
 }
 
-export function DailySummaryCard({ todaySales, currentDate }: DailySummaryCardProps) {
+export function DailySummaryCard({ todaySales, currentDate, previousDaySales = [] }: DailySummaryCardProps) {
   // Calculate totals
   const totalSalesCount = todaySales.length;
   const totalSalesAmount = todaySales.reduce((sum, sale) => sum + sale.gross_amount, 0);
+
+  // Calculate previous day metrics for comparison
+  const prevDaySalesCount = previousDaySales.length;
+  const prevDaySalesAmount = previousDaySales.reduce((sum, sale) => sum + sale.gross_amount, 0);
+
+  // Calculate trends
+  const salesCountTrend = prevDaySalesCount > 0 
+    ? ((totalSalesCount - prevDaySalesCount) / prevDaySalesCount) * 100
+    : 0;
+  const salesAmountTrend = prevDaySalesAmount > 0 
+    ? ((totalSalesAmount - prevDaySalesAmount) / prevDaySalesAmount) * 100
+    : 0;
+  
+  // Payment Method Breakdown
+  const paymentMethodBreakdown = useMemo(() => {
+    const breakdown = {
+      [PaymentMethod.PIX]: { count: 0, amount: 0 },
+      [PaymentMethod.BOLETO]: { count: 0, amount: 0 },
+      [PaymentMethod.CREDIT]: { count: 0, amount: 0 },
+      [PaymentMethod.DEBIT]: { count: 0, amount: 0 }
+    };
+    
+    todaySales.forEach(sale => {
+      if (breakdown[sale.payment_method]) {
+        breakdown[sale.payment_method].count++;
+        breakdown[sale.payment_method].amount += sale.gross_amount;
+      }
+    });
+    
+    // Calculate percentages
+    const total = todaySales.length;
+    return Object.keys(breakdown).map(method => ({
+      method: method as PaymentMethod,
+      count: breakdown[method as PaymentMethod].count,
+      amount: breakdown[method as PaymentMethod].amount,
+      percentage: total > 0 ? (breakdown[method as PaymentMethod].count / total) * 100 : 0
+    })).filter(item => item.count > 0);
+  }, [todaySales]);
+
+  // Colors for payment methods
+  const paymentMethodColors = {
+    [PaymentMethod.PIX]: "bg-emerald-500",
+    [PaymentMethod.BOLETO]: "bg-amber-500",
+    [PaymentMethod.CREDIT]: "bg-violet-500",
+    [PaymentMethod.DEBIT]: "bg-blue-500"
+  };
   
   return (
     <Card className="transition-all duration-300 hover:shadow-md">
@@ -27,26 +76,75 @@ export function DailySummaryCard({ todaySales, currentDate }: DailySummaryCardPr
       </CardHeader>
       <CardContent className="px-4 pb-3 pt-0">
         <div className="grid grid-cols-2 gap-3">
+          {/* Total sales count with trend */}
           <div className="bg-purple-50 rounded-md p-2 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
               <Users className="h-5 w-5 text-purple-700" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Total de Vendas</p>
-              <h4 className="text-xl font-bold">{totalSalesCount}</h4>
+              <div className="flex items-center gap-2">
+                <h4 className="text-xl font-bold">{totalSalesCount}</h4>
+                {prevDaySalesCount > 0 && (
+                  <div className={`flex items-center text-xs px-1.5 py-0.5 rounded ${salesCountTrend >= 0 ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100'}`}>
+                    {salesCountTrend >= 0 ? (
+                      <ArrowUp className="h-3 w-3 mr-0.5" />
+                    ) : (
+                      <ArrowDown className="h-3 w-3 mr-0.5" />
+                    )}
+                    {Math.abs(salesCountTrend).toFixed(1)}%
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           
+          {/* Total sales amount with trend */}
           <div className="bg-purple-50 rounded-md p-2 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
               <CircleDollarSign className="h-5 w-5 text-purple-700" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Total em Valor</p>
-              <h4 className="text-xl font-bold">{formatCurrency(totalSalesAmount)}</h4>
+              <div className="flex items-center gap-2">
+                <h4 className="text-xl font-bold">{formatCurrency(totalSalesAmount)}</h4>
+                {prevDaySalesAmount > 0 && (
+                  <div className={`flex items-center text-xs px-1.5 py-0.5 rounded ${salesAmountTrend >= 0 ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100'}`}>
+                    {salesAmountTrend >= 0 ? (
+                      <ArrowUp className="h-3 w-3 mr-0.5" />
+                    ) : (
+                      <ArrowDown className="h-3 w-3 mr-0.5" />
+                    )}
+                    {Math.abs(salesAmountTrend).toFixed(1)}%
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
+        
+        {/* Payment Methods Breakdown */}
+        {paymentMethodBreakdown.length > 0 && (
+          <div className="mt-3">
+            <p className="text-xs text-muted-foreground mb-2">Formas de Pagamento</p>
+            <div className="space-y-2">
+              {paymentMethodBreakdown.map((item) => (
+                <div key={item.method} className="flex items-center gap-2">
+                  <div className="text-xs w-16">{item.method}</div>
+                  <div className="flex-1 h-2 bg-gray-100 rounded overflow-hidden">
+                    <div 
+                      className={`h-full ${paymentMethodColors[item.method]}`} 
+                      style={{ width: `${item.percentage}%` }}
+                    ></div>
+                  </div>
+                  <Badge variant="outline" className="ml-2">
+                    {item.count}x ({item.percentage.toFixed(0)}%)
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
