@@ -2,7 +2,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { PaymentMethod } from "./types"
-import { COMMISSION_TRIGGER_GOAL } from "./constants"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -82,16 +81,15 @@ export function parseISODateString(dateString: string): Date {
   return new Date(year, month - 1, day);
 }
 
-// Calculate commission amount based on performance against FIXED COMMISSION TRIGGER goal
+// Calculate commission amount based on performance against goal - SIMPLIFIED
 export function calculateCommission(totalSales: number, goalAmount: number): {
   rate: number;
   amount: number;
 } {
-  // Commission rate depends on whether the FIXED commission trigger goal was met
-  // Note: We use COMMISSION_TRIGGER_GOAL instead of the goalAmount parameter
-  const rate = totalSales >= COMMISSION_TRIGGER_GOAL ? 0.25 : 0.2;
+  // Commission rate depends on whether the goal was met
+  const rate = totalSales >= goalAmount ? 0.25 : 0.2;
   
-  // Commission is calculated directly on the sales amount
+  // Commission is calculated directly on the sales amount (which is now the final amount)
   const amount = totalSales * rate;
   
   return {
@@ -100,7 +98,7 @@ export function calculateCommission(totalSales: number, goalAmount: number): {
   };
 }
 
-// Calculate goal completion percentage against administrative goal
+// Calculate goal completion percentage
 export function calculateGoalPercentage(totalSales: number, goalAmount: number): number {
   return Math.min(totalSales / goalAmount, 2); // Cap at 200%
 }

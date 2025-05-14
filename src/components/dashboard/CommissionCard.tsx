@@ -3,7 +3,6 @@ import { formatCurrency, formatPercentage, calculateCommission } from '@/lib/uti
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/auth';
 import { UserRole } from '@/lib/types';
-import { COMMISSION_TRIGGER_GOAL } from '@/lib/constants';
 
 interface CommissionCardProps {
   totalSales: number;
@@ -34,9 +33,9 @@ export function CommissionCard({ totalSales, goalAmount }: CommissionCardProps) 
     );
   }
   
-  // Para vendedores, mantém o comportamento original mas usando o COMMISSION_TRIGGER_GOAL
+  // Para vendedores, mantém o comportamento original
   const { rate: commissionRate, amount: commissionAmount } = calculateCommission(totalSales, goalAmount);
-  const isGoalMet = totalSales >= COMMISSION_TRIGGER_GOAL;
+  const isGoalMet = totalSales >= goalAmount;
   
   return (
     <Card className="h-full">
@@ -56,24 +55,15 @@ export function CommissionCard({ totalSales, goalAmount }: CommissionCardProps) 
         <div className="text-sm text-muted-foreground">
           {isGoalMet ? (
             <p>
-              Parabéns! Você atingiu a meta de comissão de {formatCurrency(COMMISSION_TRIGGER_GOAL)} e está recebendo a taxa mais alta de {formatPercentage(commissionRate)}.
+              Parabéns! Você atingiu sua meta e está recebendo a taxa de comissão mais alta de {formatPercentage(commissionRate)}.
             </p>
           ) : (
             <p>
               Taxa atual: {formatPercentage(commissionRate)}. 
-              Atinja {formatCurrency(COMMISSION_TRIGGER_GOAL)} em vendas para aumentar para 25%.
+              Atinja R$ {goalAmount.toLocaleString('pt-BR')} em vendas para aumentar para 25%.
             </p>
           )}
         </div>
-        
-        {goalAmount !== COMMISSION_TRIGGER_GOAL && (
-          <div className="mt-2 text-xs text-muted-foreground border-t pt-2">
-            <p>
-              <strong>Nota:</strong> A meta administrativa é de {formatCurrency(goalAmount)}, 
-              mas a meta para aumento da taxa de comissão é fixa em {formatCurrency(COMMISSION_TRIGGER_GOAL)}.
-            </p>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

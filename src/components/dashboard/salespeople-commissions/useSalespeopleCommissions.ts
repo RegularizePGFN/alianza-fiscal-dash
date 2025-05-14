@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { SalespersonCommission, SortColumn, SortDirection, SummaryTotals } from "./types";
 import { getBusinessDaysInMonth, getBusinessDaysElapsedUntilToday } from "./utils";
-import { COMMISSION_TRIGGER_GOAL } from "@/lib/constants";
 
 export function useSalespeopleCommissions() {
   const [salespeople, setSalespeople] = useState<SalespersonCommission[]>([]);
@@ -106,8 +105,7 @@ export function useSalespeopleCommissions() {
             const expectedProgress = dailyTarget * businessDaysElapsed;
             const metaGap = totalSales - expectedProgress;
             
-            // Use the fixed COMMISSION_TRIGGER_GOAL for commission rate calculation
-            const commissionRate = totalSales >= COMMISSION_TRIGGER_GOAL ? 0.25 : 0.2;
+            const commissionRate = totalSales >= goalAmount ? 0.25 : 0.2;
             const projectedCommission = totalSales * commissionRate;
             
             const goalPercentage = expectedProgress > 0 ? (totalSales / expectedProgress) * 100 : 0;
@@ -119,14 +117,13 @@ export function useSalespeopleCommissions() {
               id: profile.id,
               name: profile.name || "Sem nome",
               totalSales,
-              goalAmount, // Administrative goal
+              goalAmount,
               projectedCommission,
               goalPercentage,
               salesCount,
               metaGap,
               expectedProgress,
               remainingDailyTarget,
-              commissionRate, // Added commission rate for clarity
             };
           })
         );
