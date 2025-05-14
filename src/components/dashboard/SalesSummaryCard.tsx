@@ -19,7 +19,6 @@ interface SalesSummaryCardProps {
     value: number;
     isPositive: boolean;
   };
-  isCount?: boolean; // Add flag to indicate if this is a count (not currency)
 }
 
 export function SalesSummaryCard({
@@ -28,8 +27,7 @@ export function SalesSummaryCard({
   description,
   icon,
   className,
-  trend,
-  isCount = false
+  trend
 }: SalesSummaryCardProps) {
   return (
     <Card className={cn("h-full", className)}>
@@ -39,7 +37,7 @@ export function SalesSummaryCard({
             {title}
           </CardTitle>
           <CardDescription className="text-2xl font-bold">
-            {isCount ? Math.round(amount) : formatCurrency(amount)}
+            {formatCurrency(amount)}
           </CardDescription>
         </div>
         {icon && (

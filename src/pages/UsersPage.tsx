@@ -4,33 +4,24 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from '@/contexts/auth';
 import { User, UserRole } from "@/lib/types";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { UsersTable } from "@/components/users/UsersTable";
 import { UsersHeader } from "@/components/users/UsersHeader";
 import { useUsers } from "@/hooks/useUsers";
 import { DeleteUserDialog } from "@/components/users/DeleteUserDialog";
 import { UserFormModal } from "@/components/users/UserFormModal";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
 
 export default function UsersPage() {
   const { user } = useAuth();
   const { users, isLoading, error, fetchUsers } = useUsers();
   const { toast } = useToast();
-  const navigate = useNavigate();
   
   // Modal state
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  
-  // Check for user role
-  useEffect(() => {
-    if (user && user.role !== UserRole.ADMIN) {
-      navigate("/dashboard", { replace: true });
-    }
-  }, [user, navigate]);
   
   // User management handlers
   const handleAddUser = useCallback(() => {
@@ -77,14 +68,9 @@ export default function UsersPage() {
     }, 500);
   }, [fetchUsers, toast]);
   
-  // If user isn't loaded yet or is loading, show nothing
-  if (!user) {
-    return null;
-  }
-  
-  // Check for user role without using Navigate component
-  if (user.role !== UserRole.ADMIN) {
-    return null; // We'll navigate using the useEffect
+  // Check for user role - IMPORTANT: We're not using early return as it would break hooks
+  if (user?.role !== UserRole.ADMIN) {
+    return <Navigate to="/" />;
   }
   
   return (

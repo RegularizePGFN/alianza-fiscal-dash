@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { importSalesFromExcel } from "@/lib/excelUtils";
 import { SalesContent } from "@/components/sales/SalesContent";
 import { SalesModals } from "@/components/sales/SalesModals";
+import { SalesActions } from "@/components/sales/SalesActions";
 
 export default function SalesPage() {
   const { user } = useAuth();
@@ -149,14 +150,6 @@ export default function SalesPage() {
     }
   }, [handleSaveSale, fetchSales, toast]);
 
-  // Fix the infinite loading issue
-  useEffect(() => {
-    // Make sure fetchSales is only called once when the component mounts
-    if (user) {
-      fetchSales();
-    }
-  }, [user, fetchSales]);
-
   /* ---------------------- render ---------------------- */
   const isAdmin = user?.role === UserRole.ADMIN;
   const isSalesperson = user?.role === UserRole.SALESPERSON;
@@ -164,14 +157,28 @@ export default function SalesPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 transition-colors duration-300">
+          <div className="flex justify-between items-start">
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight dark:text-white">Vendas</h2>
+              <p className="text-muted-foreground dark:text-gray-300">
+                Gerencie as vendas e comissões da equipe.
+              </p>
+            </div>
+            <SalesActions
+              isAdmin={isAdmin}
+              onAddSale={handleAddSale}
+              onImport={handleImport}
+            />
+          </div>
+        </div>
+
         <SalesContent
           loading={loading}
           sales={sales}
           isSalesperson={isSalesperson}
           onEdit={handleEdit}
           onDelete={handleDeleteConfirm}
-          onAddSale={handleAddSale}
-          onImport={handleImport}
         />
 
         <SalesModals

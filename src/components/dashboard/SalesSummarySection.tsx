@@ -14,11 +14,10 @@ export function SalesSummarySection({ summary, trends }: SalesSummarySectionProp
     <div className="grid gap-4 md:grid-cols-2">
       <SalesSummaryCard
         title="Total de Vendas"
-        amount={summary.total_sales} // Show count instead of amount
+        amount={summary.total_gross}
         description={`${summary.total_sales} ${summary.total_sales === 1 ? 'venda' : 'vendas'} no período`}
         icon={<ShoppingCart className="h-4 w-4" />}
         trend={trends.totalSalesTrend}
-        isCount={true} // Add a flag to indicate this is a count, not currency
       />
 
       <SalesSummaryCard

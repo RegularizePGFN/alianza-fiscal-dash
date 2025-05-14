@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Sale } from "@/lib/types";
 import { useSales } from "@/hooks/sales";
 
@@ -17,22 +17,17 @@ export const useReportsData = ({
   const { sales, loading } = useSales();
   const [filteredSales, setFilteredSales] = useState<Sale[]>([]);
   const [error, setError] = useState<Error | null>(null);
-  // Add a reference to track whether initial filtering has been done
-  const initialProcessingDoneRef = useRef(false);
 
   useEffect(() => {
-    if (!loading && sales.length > 0 && !initialProcessingDoneRef.current) {
-      try {
-        console.log("Total sales for reports:", sales.length);
-        // No filters, we use all sales data
-        setFilteredSales(sales);
-        initialProcessingDoneRef.current = true;
-      } catch (err) {
-        console.error("Error processing sales data:", err);
-        setError(err instanceof Error ? err : new Error("Unknown error processing data"));
-      }
+    try {
+      console.log("Total sales for reports:", sales.length);
+      // Sem filtros, usamos todos os dados de vendas
+      setFilteredSales(sales);
+    } catch (err) {
+      console.error("Error processing sales data:", err);
+      setError(err instanceof Error ? err : new Error("Unknown error processing data"));
     }
-  }, [sales, loading]);
+  }, [sales]);
 
   return {
     salesData: filteredSales,

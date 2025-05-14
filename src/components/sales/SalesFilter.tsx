@@ -1,15 +1,6 @@
 
-import { useState, useEffect, useCallback } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Sale } from "@/lib/types";
-import { Search, FileText, PlusCircle } from "lucide-react";
-import { 
-  Popover,
-  PopoverTrigger,
-  PopoverContent
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import { useState, useEffect } from "react";
+import { Sale, PaymentMethod, UserRole } from "@/lib/types";
 import { 
   Select,
   SelectContent,
@@ -17,173 +8,241 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatCurrency } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search, Filter, FileDown } from "lucide-react";
+import { exportSalesToExcel } from "@/lib/excelUtils";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/auth";
 
 interface SalesFilterProps {
   sales: Sale[];
-  onFilter: (filteredSales: Sale[]) => void;
+  onFilter: (filtered: Sale[]) => void;
   onSearch: (searchTerm: string) => void;
-  onAddSale?: () => void;
-  onImport?: (file: File) => void;
-  isAdmin?: boolean;
-  hideButtons?: boolean;
 }
 
-export function SalesFilter({ 
-  sales, 
-  onFilter, 
-  onSearch,
-  onAddSale,
-  onImport,
-  isAdmin = false,
-  hideButtons = false
-}: SalesFilterProps) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [paymentMethod, setPaymentMethod] = useState<string | undefined>(undefined);
+export function SalesFilter({ sales, onFilter, onSearch }: SalesFilterProps) {
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const isAdmin = user?.role === UserRole.ADMIN;
+
+  const [salespersonFilter, setSalespersonFilter] = useState<string>("");
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>("");
+  const [dateRangeFilter, setDateRangeFilter] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>("");
   
-  const uniquePaymentMethods = Array.from(
-    new Set(sales.map((sale) => sale.payment_method))
-  ).filter(Boolean).sort();
+  // Get unique salespersons from sales data
+  const salespersons = [...new Set(sales.map(sale => sale.salesperson_name))];
   
-  const applyFilters = useCallback(() => {
-    let filtered = [...sales];
+  // Get payment methods from enum
+  const paymentMethods = Object.values(PaymentMethod);
+
+  // Date range options
+  const dateRangeOptions = [
+    { value: "7days", label: "Últimos 7 dias" },
+    { value: "30days", label: "Últimos 30 dias" },
+    { value: "current_month", label: "Mês atual" },
+    { value: "last_month", label: "Mês anterior" },
+  ];
+  
+  const applyFilters = () => {
+    let filteredSales = [...sales];
     
-    // Filter by search term
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (sale) =>
-          sale.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          sale.client_document.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          sale.salesperson_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          formatCurrency(parseFloat(sale.gross_amount.toString())).includes(searchTerm)
+    // Apply salesperson filter
+    if (salespersonFilter) {
+      filteredSales = filteredSales.filter(sale => 
+        sale.salesperson_name === salespersonFilter
       );
     }
     
-    // Filter by date
-    if (selectedDate) {
-      const selectedDateStr = selectedDate.toISOString().split('T')[0];
-      filtered = filtered.filter(sale => 
-        sale.sale_date === selectedDateStr
+    // Apply payment method filter
+    if (paymentMethodFilter) {
+      filteredSales = filteredSales.filter(sale => 
+        sale.payment_method.toString() === paymentMethodFilter
       );
     }
     
-    // Filter by payment method
-    if (paymentMethod) {
-      filtered = filtered.filter(sale => 
-        sale.payment_method === paymentMethod
-      );
+    // Apply date filter
+    if (dateRangeFilter) {
+      const today = new Date();
+      let startDate = new Date();
+      
+      switch (dateRangeFilter) {
+        case "7days":
+          startDate.setDate(today.getDate() - 7);
+          break;
+        case "30days":
+          startDate.setDate(today.getDate() - 30);
+          break;
+        case "current_month":
+          startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+          break;
+        case "last_month":
+          startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+          const endDate = new Date(today.getFullYear(), today.getMonth(), 0);
+          today.setTime(endDate.getTime());
+          break;
+      }
+      
+      filteredSales = filteredSales.filter(sale => {
+        const saleDate = new Date(sale.sale_date);
+        return saleDate >= startDate && saleDate <= today;
+      });
     }
     
-    onFilter(filtered);
-  }, [sales, searchTerm, selectedDate, paymentMethod, onFilter]);
+    onFilter(filteredSales);
+  };
   
-  // Apply filters whenever filter criteria change
-  useEffect(() => {
-    applyFilters();
-  }, [applyFilters]);
-  
-  // Update the parent search term
-  useEffect(() => {
-    onSearch(searchTerm);
-  }, [searchTerm, onSearch]);
-  
-  const handleReset = () => {
-    setSearchTerm("");
-    setSelectedDate(undefined);
-    setPaymentMethod(undefined);
+  const resetFilters = () => {
+    setSalespersonFilter("");
+    setPaymentMethodFilter("");
+    setDateRangeFilter("");
     onFilter(sales);
   };
-
+  
+  // Handle search
+  useEffect(() => {
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
+      
+      const filteredSales = sales.filter(sale => 
+        sale.client_name.toLowerCase().includes(searchLower) ||
+        sale.client_document?.toLowerCase().includes(searchLower) ||
+        sale.salesperson_name?.toLowerCase().includes(searchLower)
+      );
+      
+      onSearch(searchTerm);
+      onFilter(filteredSales);
+    } else if (searchTerm === "") {
+      // If search term is cleared, reset to current filters
+      applyFilters();
+      onSearch("");
+    }
+  }, [searchTerm]);
+  
+  // Export current filtered data to Excel
+  const handleExport = () => {
+    // Get the current filtered data from parent component
+    if (sales.length === 0) {
+      toast({
+        title: "Nenhuma venda para exportar",
+        description: "Não há dados de vendas disponíveis para exportar.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const success = exportSalesToExcel(sales);
+    if (success) {
+      toast({
+        title: "Exportação concluída",
+        description: "As vendas foram exportadas com sucesso.",
+      });
+    } else {
+      toast({
+        title: "Erro na exportação",
+        description: "Houve um erro ao exportar as vendas.",
+        variant: "destructive"
+      });
+    }
+  };
+  
   return (
-    <div className="space-y-2">
-      <div className="flex flex-col sm:flex-row gap-2 justify-between w-full">
-        <div className="relative flex-grow">
+    <div className="bg-background border rounded-md p-4 mb-4 space-y-4">
+      <div className="flex flex-col md:flex-row gap-4">
+        {/* Search Input */}
+        <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            type="search"
-            placeholder="Buscar vendas..."
+            placeholder="Pesquisar vendas..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8 w-full"
+            className="pl-9"
           />
         </div>
         
-        <div className="flex gap-2">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className={selectedDate ? "border-primary" : ""}>
-                {selectedDate ? (
-                  <span>{selectedDate.toLocaleDateString()}</span>
-                ) : (
-                  <span>Data</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-          
-          <Select
-            value={paymentMethod}
-            onValueChange={setPaymentMethod}
+        <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+          <Button
+            onClick={handleExport}
+            variant="outline"
+            className="whitespace-nowrap flex items-center"
           >
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Forma de pagamento" />
+            <FileDown className="mr-2 h-4 w-4" />
+            Exportar
+          </Button>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+          <p className="text-sm font-medium mb-1.5">Vendedor</p>
+          <Select value={salespersonFilter} onValueChange={setSalespersonFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecionar vendedor" />
             </SelectTrigger>
             <SelectContent>
-              {uniquePaymentMethods.map(method => (
+              <SelectItem value="all">Todos</SelectItem>
+              {salespersons.map((name) => (
+                <SelectItem key={name} value={name}>
+                  {name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div>
+          <p className="text-sm font-medium mb-1.5">Método de pagamento</p>
+          <Select value={paymentMethodFilter} onValueChange={setPaymentMethodFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecionar método" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              {paymentMethods.map((method) => (
                 <SelectItem key={method} value={method}>
                   {method}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          
-          <Button variant="ghost" size="sm" onClick={handleReset}>
+        </div>
+        
+        <div>
+          <p className="text-sm font-medium mb-1.5">Período</p>
+          <Select value={dateRangeFilter} onValueChange={setDateRangeFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecionar período" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              {dateRangeOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="flex items-end gap-2">
+          <Button 
+            onClick={applyFilters} 
+            variant="default" 
+            className="flex-1 flex items-center"
+          >
+            <Filter className="mr-2 h-4 w-4" />
+            Filtrar
+          </Button>
+          <Button 
+            onClick={resetFilters} 
+            variant="outline"
+            className="flex-1"
+          >
             Limpar
           </Button>
         </div>
       </div>
-      
-      {!hideButtons && (
-        <div className="flex gap-2">
-          {onAddSale && (
-            <Button onClick={onAddSale} className="w-full sm:w-auto">
-              <PlusCircle className="h-4 w-4 mr-2" />
-              Nova Venda
-            </Button>
-          )}
-          
-          {isAdmin && onImport && (
-            <Button 
-              variant="outline"
-              className="w-full sm:w-auto"
-              onClick={() => {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = '.xlsx,.xls';
-                input.onchange = (e) => {
-                  const target = e.target as HTMLInputElement;
-                  if (target.files && target.files[0]) {
-                    onImport(target.files[0]);
-                  }
-                };
-                input.click();
-              }}
-            >
-              <FileText className="h-4 w-4 mr-2" />
-              Importar
-            </Button>
-          )}
-        </div>
-      )}
     </div>
   );
 }

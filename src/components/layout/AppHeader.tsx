@@ -1,73 +1,128 @@
 
-import { useAuth } from "@/contexts/auth";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { Link } from "react-router-dom";
 import { NotificationsPopover } from "@/components/notifications/NotificationsPopover";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { useAuth } from "@/contexts/auth";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { UserRole } from "@/lib/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { UserRole } from "@/lib/types";
+import { LogOut, User, Settings } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export function AppHeader() {
-  const { user, signOut } = useAuth();
-  
-  if (!user) return null;
-  
+  const { user, logout, isImpersonating, stopImpersonating } = useAuth();
+
+  if (!user) {
+    return null;
+  }
+
   const isAdmin = user.role === UserRole.ADMIN;
-  
-  // Função para determinar a saudação com base na hora do dia
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Bom dia";
-    if (hour < 18) return "Boa tarde";
-    return "Boa noite";
+  const userInitials = user.name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .substring(0, 2);
+
+  const handleLogout = () => {
+    logout();
   };
-  
-  // Nome do usuário formatado
-  const userName = user.name?.split(" ")[0] || user.email?.split("@")[0] || "Usuário";
 
   return (
-    <header className="border-b bg-background h-14 flex items-center px-4 md:px-6">
-      <div className="flex-1">
-        <h2 className="text-sm font-medium">
-          {getGreeting()}, {userName}
-        </h2>
-      </div>
-      <div className="flex items-center gap-2">
-        <ThemeToggle />
-        <NotificationsPopover />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-              <Avatar>
-                <AvatarImage src="" />
-                <AvatarFallback className={isAdmin ? "bg-amber-100" : "bg-blue-100"}>
-                  {userName.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 h-16">
+      <div className="flex items-center justify-between px-4 h-full">
+        <Link
+          to="/dashboard"
+          className="font-semibold text-xl flex items-center space-x-2"
+        >
+          {/* Removed Aliança Fiscal text as requested */}
+        </Link>
+
+        <div className="flex items-center space-x-4">
+          {isImpersonating && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={stopImpersonating}
+              className="text-xs px-3 py-1 h-auto"
+            >
+              Voltar à sua conta
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end" forceMount>
-            <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{user.name}</p>
-                <p className="text-xs leading-none text-muted-foreground">
-                  {user.email}
-                </p>
+          )}
+
+          <NotificationsPopover />
+
+          <ThemeToggle />
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="relative h-8 w-8 rounded-full"
+              >
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                    {userInitials}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <div className="flex items-center justify-start gap-2 p-2">
+                <div className="flex flex-col space-y-1 leading-none">
+                  <p className="font-medium">{user.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {user.email}
+                  </p>
+                  {isAdmin && (
+                    <Badge variant="outline" className="mt-1 text-xs w-fit">
+                      Administrador
+                    </Badge>
+                  )}
+                  {isImpersonating && (
+                    <Badge variant="destructive" className="mt-1 text-xs w-fit">
+                      Modo visualização
+                    </Badge>
+                  )}
+                </div>
               </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => signOut()}>
-              Sair
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link
+                  to="/perfil"
+                  className="flex w-full items-center cursor-pointer"
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  Meu Perfil
+                </Link>
+              </DropdownMenuItem>
+              {isAdmin && (
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/configuracoes"
+                    className="flex w-full items-center cursor-pointer"
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    Configurações
+                  </Link>
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                {isImpersonating ? "Voltar à sua conta" : "Sair"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </header>
   );
