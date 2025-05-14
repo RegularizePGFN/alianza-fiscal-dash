@@ -4,6 +4,8 @@ import { Sale } from "@/lib/types";
 import { PaginatedSalesTable } from "./PaginatedSalesTable";
 import { SalesFilter } from "./SalesFilter";
 import { SalesActions } from "./SalesActions";
+import { ExportButton } from "./filters/ExportButton";
+import { exportSalesToExcel } from "@/lib/excelUtils";
 
 interface SalesContentProps {
   loading: boolean;
@@ -35,6 +37,12 @@ export function SalesContent({
       setFilteredSales(sales);
     }
   }, [sales, searchTerm]);
+
+  // Handle export of filtered sales data
+  const handleExport = () => {
+    console.log(`Exporting ${filteredSales.length} sales records`);
+    exportSalesToExcel(filteredSales);
+  };
   
   return (
     <div className="space-y-4">
@@ -43,6 +51,9 @@ export function SalesContent({
           <div className="flex flex-col space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <h2 className="text-xl font-bold">Vendas</h2>
+              <div>
+                <ExportButton sales={filteredSales} />
+              </div>
             </div>
             
             <div className="flex flex-col md:flex-row justify-between gap-4">
@@ -58,6 +69,7 @@ export function SalesContent({
                   isAdmin={isAdmin} 
                   onAddSale={onAddSale} 
                   onImport={onImport}
+                  onExport={handleExport}
                 />
               </div>
             </div>

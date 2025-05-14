@@ -6,19 +6,36 @@ import { convertToPaymentMethod } from '@/lib/utils';
 // Function to export sales data to Excel
 export const exportSalesToExcel = (sales: Sale[], fileName = 'vendas.xlsx') => {
   try {
+    console.log(`Preparing to export ${sales.length} sales records to Excel`);
+    
     // Format sales data for Excel
     const workbook = XLSX.utils.book_new();
-    const worksheetData = sales.map((sale) => ({
-      'ID': sale.id,
-      'Data da Venda': new Date(sale.sale_date).toLocaleDateString('pt-BR'),
-      'Cliente': sale.client_name,
-      'Documento': sale.client_document,
-      'Telefone': sale.client_phone,
-      'Valor': sale.gross_amount,
-      'Método de Pagamento': sale.payment_method.toString(),
-      'Parcelas': sale.installments,
-      'Vendedor': sale.salesperson_name,
-    }));
+    const worksheetData = sales.map((sale) => {
+      // Format date string properly for display (DD/MM/YYYY)
+      let displayDate = '';
+      if (typeof sale.sale_date === 'string' && sale.sale_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const [year, month, day] = sale.sale_date.split('-');
+        displayDate = `${day}/${month}/${year}`;
+      } else if (sale.sale_date instanceof Date) {
+        displayDate = sale.sale_date.toLocaleDateString('pt-BR');
+      } else {
+        displayDate = String(sale.sale_date);
+      }
+      
+      return {
+        'ID': sale.id,
+        'Data da Venda': displayDate,
+        'Cliente': sale.client_name,
+        'Documento': sale.client_document,
+        'Telefone': sale.client_phone,
+        'Valor': sale.gross_amount,
+        'Método de Pagamento': sale.payment_method.toString(),
+        'Parcelas': sale.installments,
+        'Vendedor': sale.salesperson_name,
+      };
+    });
+
+    console.log(`Formatted ${worksheetData.length} rows for Excel export`);
 
     // Create worksheet
     const worksheet = XLSX.utils.json_to_sheet(worksheetData);
@@ -43,6 +60,7 @@ export const exportSalesToExcel = (sales: Sale[], fileName = 'vendas.xlsx') => {
 
     // Generate Excel file and trigger download
     XLSX.writeFile(workbook, fileName);
+    console.log("Excel file generated and download triggered");
     return true;
   } catch (error) {
     console.error('Error exporting sales to Excel:', error);
@@ -61,6 +79,8 @@ export const importSalesFromExcel = async (file: File): Promise<Omit<Sale, 'id'>
         const workbook = XLSX.read(data, { type: 'binary' });
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        console.log(`Imported ${jsonData.length} rows from Excel`);
 
         // Process and validate the data
         const salesData = jsonData.map((row: any) => {
@@ -97,6 +117,7 @@ export const importSalesFromExcel = async (file: File): Promise<Omit<Sale, 'id'>
           };
         });
 
+        console.log(`Processed ${salesData.length} sales records for import`);
         resolve(salesData);
       } catch (error) {
         console.error('Error parsing Excel file:', error);
