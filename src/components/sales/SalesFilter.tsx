@@ -1,24 +1,18 @@
 
 import { useState, useEffect } from "react";
 import { Sale, PaymentMethod, UserRole } from "@/lib/types";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, Filter, FileDown, X } from "lucide-react";
 import { exportSalesToExcel } from "@/lib/excelUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+
+// Import our new components
+import { 
+  SearchInput, 
+  FilterPopover, 
+  FilterIndicator, 
+  ExportButton 
+} from "./filters";
 
 interface SalesFilterProps {
   sales: Sale[];
@@ -55,21 +49,21 @@ export function SalesFilter({ sales, onFilter, onSearch }: SalesFilterProps) {
     let filteredSales = [...sales];
     
     // Apply salesperson filter
-    if (salespersonFilter) {
+    if (salespersonFilter && salespersonFilter !== "all_salespersons") {
       filteredSales = filteredSales.filter(sale => 
         sale.salesperson_name === salespersonFilter
       );
     }
     
     // Apply payment method filter
-    if (paymentMethodFilter) {
+    if (paymentMethodFilter && paymentMethodFilter !== "all_payment_methods") {
       filteredSales = filteredSales.filter(sale => 
         sale.payment_method.toString() === paymentMethodFilter
       );
     }
     
     // Apply date filter
-    if (dateRangeFilter) {
+    if (dateRangeFilter && dateRangeFilter !== "all_dates") {
       const today = new Date();
       let startDate = new Date();
       
@@ -106,6 +100,24 @@ export function SalesFilter({ sales, onFilter, onSearch }: SalesFilterProps) {
     setDateRangeFilter("");
     setIsFilterActive(false);
     onFilter(sales);
+  };
+  
+  // Handler for clearing individual filters
+  const handleClearFilter = (filterType: 'salesperson' | 'paymentMethod' | 'dateRange') => {
+    switch (filterType) {
+      case 'salesperson':
+        setSalespersonFilter("");
+        break;
+      case 'paymentMethod':
+        setPaymentMethodFilter("");
+        break;
+      case 'dateRange':
+        setDateRangeFilter("");
+        break;
+    }
+    
+    // Apply filters after clearing
+    setTimeout(applyFilters, 0);
   };
   
   // Handle search
@@ -158,179 +170,42 @@ export function SalesFilter({ sales, onFilter, onSearch }: SalesFilterProps) {
     <div className="flex flex-col gap-4">
       <div className="flex gap-2 items-center">
         {/* Search Input */}
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Pesquisar vendas..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
-          />
-        </div>
+        <SearchInput 
+          searchTerm={searchTerm} 
+          onSearchChange={setSearchTerm} 
+        />
         
         {/* Advanced Filter Popover */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button 
-              variant={isFilterActive ? "default" : "outline"} 
-              size="icon" 
-              className="relative"
-              aria-label="Filtros Avançados"
-            >
-              <Filter className="h-4 w-4" />
-              {isFilterActive && (
-                <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
-                </span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-80 p-4" align="end">
-            <div className="space-y-4">
-              <h4 className="font-medium leading-none mb-3">Filtros Avançados</h4>
-              
-              <div className="space-y-2">
-                <p className="text-sm">Vendedor</p>
-                <Select value={salespersonFilter} onValueChange={setSalespersonFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar vendedor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {/* Fixed: Use a non-empty value for the "All" option */}
-                    <SelectItem value="all_salespersons">Todos</SelectItem>
-                    {salespersons.map((name) => (
-                      <SelectItem key={name} value={name}>
-                        {name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm">Método de pagamento</p>
-                <Select value={paymentMethodFilter} onValueChange={setPaymentMethodFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar método" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {/* Fixed: Use a non-empty value for the "All" option */}
-                    <SelectItem value="all_payment_methods">Todos</SelectItem>
-                    {paymentMethods.map((method) => (
-                      <SelectItem key={method} value={method}>
-                        {method}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm">Período</p>
-                <Select value={dateRangeFilter} onValueChange={setDateRangeFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar período" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {/* Fixed: Use a non-empty value for the "All" option */}
-                    <SelectItem value="all_dates">Todos</SelectItem>
-                    {dateRangeOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex gap-2 pt-2">
-                <Button 
-                  onClick={() => {
-                    // Handle "all" values specially when applying filters
-                    if (salespersonFilter === "all_salespersons") setSalespersonFilter("");
-                    if (paymentMethodFilter === "all_payment_methods") setPaymentMethodFilter("");
-                    if (dateRangeFilter === "all_dates") setDateRangeFilter("");
-                    applyFilters();
-                  }} 
-                  className="flex-1"
-                >
-                  Aplicar
-                </Button>
-                <Button 
-                  onClick={resetFilters} 
-                  variant="outline"
-                  className="flex items-center"
-                >
-                  <X className="mr-1 h-4 w-4" />
-                  Limpar
-                </Button>
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
+        <FilterPopover
+          isFilterActive={isFilterActive}
+          salespersonFilter={salespersonFilter}
+          paymentMethodFilter={paymentMethodFilter}
+          dateRangeFilter={dateRangeFilter}
+          salespersons={salespersons}
+          paymentMethods={paymentMethods}
+          dateRangeOptions={dateRangeOptions}
+          onUpdateSalespersonFilter={setSalespersonFilter}
+          onUpdatePaymentMethodFilter={setPaymentMethodFilter}
+          onUpdateDateRangeFilter={setDateRangeFilter}
+          onApplyFilters={applyFilters}
+          onResetFilters={resetFilters}
+        />
         
         {/* Export Button */}
-        <Button
-          onClick={handleExport}
-          variant="outline"
-          size="icon"
-          className="hidden md:flex"
-          aria-label="Exportar"
-        >
-          <FileDown className="h-4 w-4" />
-        </Button>
+        <ExportButton onExport={handleExport} />
       </div>
       
-      {/* Filter Indicators - shows active filters */}
-      {isFilterActive && (
-        <div className="flex flex-wrap gap-2 text-xs">
-          {salespersonFilter && salespersonFilter !== "all_salespersons" && (
-            <div className="bg-muted rounded-full px-3 py-1 flex items-center gap-1">
-              <span>Vendedor: {salespersonFilter}</span>
-              <X 
-                className="h-3 w-3 cursor-pointer" 
-                onClick={() => {
-                  setSalespersonFilter("");
-                  applyFilters();
-                }}
-              />
-            </div>
-          )}
-          {paymentMethodFilter && paymentMethodFilter !== "all_payment_methods" && (
-            <div className="bg-muted rounded-full px-3 py-1 flex items-center gap-1">
-              <span>Pagamento: {paymentMethodFilter}</span>
-              <X 
-                className="h-3 w-3 cursor-pointer" 
-                onClick={() => {
-                  setPaymentMethodFilter("");
-                  applyFilters();
-                }}
-              />
-            </div>
-          )}
-          {dateRangeFilter && dateRangeFilter !== "all_dates" && (
-            <div className="bg-muted rounded-full px-3 py-1 flex items-center gap-1">
-              <span>Período: {dateRangeOptions.find(opt => opt.value === dateRangeFilter)?.label}</span>
-              <X 
-                className="h-3 w-3 cursor-pointer" 
-                onClick={() => {
-                  setDateRangeFilter("");
-                  applyFilters();
-                }}
-              />
-            </div>
-          )}
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-6 text-xs px-2"
-            onClick={resetFilters}
-          >
-            Limpar todos
-          </Button>
-        </div>
-      )}
+      {/* Filter Indicators */}
+      <FilterIndicator 
+        filters={{
+          salespersonFilter,
+          paymentMethodFilter,
+          dateRangeFilter
+        }}
+        dateRangeOptions={dateRangeOptions}
+        onClearFilter={handleClearFilter}
+        onClearAll={resetFilters}
+      />
     </div>
   );
 }
