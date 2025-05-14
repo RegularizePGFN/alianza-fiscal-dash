@@ -5,7 +5,7 @@ import { Sale, UserRole, PaymentMethod } from "@/lib/types";
 import { useAuth } from "@/contexts/auth";
 import { useSales } from "@/hooks/sales";
 import { useToast } from "@/hooks/use-toast";
-import { importSalesFromExcel } from "@/lib/excelUtils";
+import { exportSalesToExcel, importSalesFromExcel } from "@/lib/excelUtils";
 import { SalesContent } from "@/components/sales/SalesContent";
 import { SalesModals } from "@/components/sales/SalesModals";
 
