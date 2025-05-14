@@ -1,3 +1,4 @@
+
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
@@ -5,6 +6,7 @@ import { SalesSummarySection } from "@/components/dashboard/SalesSummarySection"
 import { GoalsCommissionsSection } from "@/components/dashboard/GoalsCommissionsSection";
 import { RecentSalesSection } from "@/components/dashboard/RecentSalesSection";
 import { SalespeopleCommissionsCard } from "@/components/dashboard/salespeople-commissions";
+import { DailyResultsCard } from "@/components/dashboard/DailyResultsCard";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
@@ -25,6 +27,9 @@ export default function DashboardPage() {
           <div className="space-y-6 animate-fade-in">
             <SalesSummarySection summary={summary} trends={trends} />
             <GoalsCommissionsSection summary={summary} salesData={salesData} />
+            
+            {/* Daily Results Card - visible for all users */}
+            <DailyResultsCard salesData={salesData} />
             
             {/* Admin-only commission projections card */}
             {isAdmin && <SalespeopleCommissionsCard />}
