@@ -12,8 +12,10 @@ export const exportSalesToExcel = (sales: Sale[], fileName: string = 'vendas.xls
       // First check if sale.sale_date is defined at all
       if (sale.sale_date) {
         // Check if it's a Date object by checking for toLocaleDateString method
-        if (typeof sale.sale_date === 'object' && sale.sale_date instanceof Date) {
-          displayDate = sale.sale_date.toLocaleDateString('pt-BR');
+        if (typeof sale.sale_date === 'object' && 
+            sale.sale_date !== null && 
+            'toLocaleDateString' in sale.sale_date) {
+          displayDate = (sale.sale_date as Date).toLocaleDateString('pt-BR');
         } else if (typeof sale.sale_date === 'string') {
           // If it's a string, we can use it directly or try to parse it
           if (sale.sale_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
