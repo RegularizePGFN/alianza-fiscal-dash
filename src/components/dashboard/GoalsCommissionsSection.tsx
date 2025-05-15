@@ -1,37 +1,35 @@
 
-import { SummaryTrends } from "@/hooks/dashboard/types";
-import { Sale, SalesSummary, UserRole } from "@/lib/types";
-import { CommissionCard } from "./CommissionCard";
-import { GoalProgressCard } from "./GoalProgressCard";
+import { GoalProgressCard } from "@/components/dashboard/GoalProgressCard";
+import { CommissionCard } from "@/components/dashboard/CommissionCard";
+import { DailyResultCard } from "@/components/dashboard/DailyResultCard";
+import { SalesSummary } from "@/lib/types";
+import { UserRole } from "@/lib/types";
 import { useAuth } from "@/contexts/auth";
+import { Sale } from "@/lib/types";
 
 interface GoalsCommissionsSectionProps {
   summary: SalesSummary;
   salesData: Sale[];
-  trends?: SummaryTrends;
 }
 
-export function GoalsCommissionsSection({
-  summary,
-  salesData,
-  trends
-}: GoalsCommissionsSectionProps) {
+export function GoalsCommissionsSection({ summary, salesData }: GoalsCommissionsSectionProps) {
   const { user } = useAuth();
   const isAdmin = user?.role === UserRole.ADMIN;
   
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
-      <GoalProgressCard 
-        totalSales={summary.total_sales} 
-        goalAmount={summary.goal_amount} 
-        goalPercentage={summary.goal_percentage}
-        trends={trends}
+    <div className="grid gap-4 md:grid-cols-2">
+      <GoalProgressCard
+        currentValue={summary.total_gross}
+        goalValue={summary.goal_amount}
       />
-      <CommissionCard 
-        totalSales={summary.total_sales} 
-        goalAmount={summary.goal_amount} 
-        salesData={salesData}
-      />
+      {isAdmin ? (
+        <DailyResultCard salesData={salesData} />
+      ) : (
+        <CommissionCard
+          totalSales={summary.total_gross}
+          goalAmount={summary.goal_amount}
+        />
+      )}
     </div>
   );
 }
