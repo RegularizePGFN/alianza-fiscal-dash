@@ -12,12 +12,12 @@ interface DailySalesTeamCardProps {
 
 export function DailySalesTeamCard({ todaySales, currentDate }: DailySalesTeamCardProps) {
   return (
-    <Card className="transition-all duration-300 hover:shadow-md">
+    <Card className="transition-all duration-300 hover:shadow-md dark:border-gray-700">
       <CardHeader className="pb-2 px-4 pt-3">
         <CardTitle className="text-sm font-medium flex items-center gap-1">
-          <Users className="h-4 w-4 text-purple-600" />
+          <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />
           <span>Vendedores do Dia</span>
-          <span className="text-xs ml-2 bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+          <span className="text-xs ml-2 bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 px-2 py-0.5 rounded-full">
             {currentDate}
           </span>
         </CardTitle>
