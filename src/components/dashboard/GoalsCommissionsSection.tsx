@@ -28,6 +28,7 @@ export function GoalsCommissionsSection({ summary, salesData }: GoalsCommissions
         <CommissionCard
           totalSales={summary.total_gross}
           goalAmount={summary.goal_amount}
+          salesData={salesData}
         />
       )}
     </div>
