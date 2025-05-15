@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sale } from "@/lib/types";
@@ -66,7 +67,9 @@ export function DailyResultCard({ salesData }: DailyResultCardProps) {
     const totalCount = dailyData.reduce((sum, item) => sum + item.count, 0);
     // Calculate average sales amount
     const averageSalesAmount = totalCount > 0 ? totalSales / totalCount : 0;
-    return { totalSales, totalCount, averageSalesAmount };
+    // Calculate average contracts per day
+    const averageContractsPerDay = dailyData.length > 0 ? totalCount / dailyData.length : 0;
+    return { totalSales, totalCount, averageSalesAmount, averageContractsPerDay, daysWithSales: dailyData.length };
   }, [dailyData]);
 
   // Formatar dados para o tooltip
@@ -92,9 +95,14 @@ export function DailyResultCard({ salesData }: DailyResultCardProps) {
               Média: {formatCurrency(totals.averageSalesAmount)}/venda
             </span>
           </div>
-          <span className="text-lg font-semibold text-muted-foreground">
-            {totals.totalCount} contratos em {dailyData.length} dias
-          </span>
+          <div className="flex flex-col items-end">
+            <span className="text-lg font-semibold text-muted-foreground">
+              {totals.totalCount} contratos em {totals.daysWithSales} dias
+            </span>
+            <span className="text-sm text-muted-foreground">
+              Média: {totals.averageContractsPerDay.toFixed(1)} contratos/dia
+            </span>
+          </div>
         </div>
         
         <div className="w-full h-40 overflow-hidden">
