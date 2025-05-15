@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sale } from "@/lib/types";
@@ -65,7 +64,9 @@ export function DailyResultCard({ salesData }: DailyResultCardProps) {
   const totals = useMemo(() => {
     const totalSales = dailyData.reduce((sum, item) => sum + item.value, 0);
     const totalCount = dailyData.reduce((sum, item) => sum + item.count, 0);
-    return { totalSales, totalCount };
+    // Calculate average sales amount
+    const averageSalesAmount = totalCount > 0 ? totalSales / totalCount : 0;
+    return { totalSales, totalCount, averageSalesAmount };
   }, [dailyData]);
 
   // Formatar dados para o tooltip
@@ -85,7 +86,12 @@ export function DailyResultCard({ salesData }: DailyResultCardProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex justify-between items-end">
-          <span className="text-2xl font-bold">{formatCurrency(totals.totalSales)}</span>
+          <div className="flex flex-col">
+            <span className="text-2xl font-bold">{formatCurrency(totals.totalSales)}</span>
+            <span className="text-sm text-muted-foreground">
+              Média: {formatCurrency(totals.averageSalesAmount)}/venda
+            </span>
+          </div>
           <span className="text-lg font-semibold text-muted-foreground">
             {totals.totalCount} contratos em {dailyData.length} dias
           </span>
