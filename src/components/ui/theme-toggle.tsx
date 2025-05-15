@@ -37,7 +37,7 @@ export function ThemeToggle() {
       variant="outline" 
       size="icon" 
       onClick={toggleTheme}
-      className="rounded-full w-9 h-9 transition-all duration-300 hover:scale-110 bg-transparent border-gray-300 dark:border-gray-700"
+      className="rounded-full w-9 h-9 transition-all duration-300 hover:scale-110 bg-transparent border-gray-300 dark:border-gray-700 dark:text-white dark:hover:bg-gray-800"
     >
       {theme === "light" ? (
         <Moon className="h-5 w-5 transition-all duration-500 rotate-0" />
