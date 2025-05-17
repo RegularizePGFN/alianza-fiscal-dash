@@ -4,7 +4,6 @@
  */
 import { ExtractedData } from '@/lib/types/proposals';
 
-const API_ENDPOINT = 'https://api.openai.com/v1/chat/completions';
 const MODEL = 'gpt-4o'; // Atualizando para gpt-4o que tem capacidade de visão
 
 /**
@@ -137,14 +136,18 @@ export const analyzeImageWithAI = async (
         throw new Error(`Erro na análise: ${errorText}`);
       }
       
-      // Verificar se a resposta tem conteúdo
-      const text = await response.text();
-      if (!text || text.trim() === '') {
-        throw new Error('A resposta está vazia');
-      }
+      // Tratar a resposta usando clone para evitar "body already read" error
+      const responseClone = response.clone();
+      let data;
       
-      // Converter texto para JSON
-      const data = JSON.parse(text);
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        console.error('Erro ao processar JSON da resposta:', jsonError);
+        const text = await responseClone.text();
+        console.log('Resposta como texto:', text);
+        throw new Error('A resposta não está no formato JSON esperado');
+      }
       
       if (!data.jsonContent) {
         console.error('Resposta sem JSON:', data);

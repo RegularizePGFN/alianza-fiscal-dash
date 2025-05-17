@@ -68,24 +68,9 @@ serve(async (req) => {
           console.error('Resposta de erro não-JSON da OpenAI:', errorText);
         }
         
-        // Detailed error messages based on OpenAI error types
-        let errorMessage = 'Falha ao processar a imagem';
-        
-        if (errorData?.error) {
-          if (errorData.error.type === 'invalid_request_error') {
-            errorMessage = 'Requisição inválida para a IA (verifique o formato da imagem)';
-          } else if (errorData.error.type === 'authentication_error') {
-            errorMessage = 'Erro de autenticação com a API da IA';
-          } else if (errorData.error.code === 'content_policy_violation') {
-            errorMessage = 'A imagem não parece ser uma proposta PGFN válida';
-          } else if (errorText) {
-            errorMessage = `Erro da OpenAI: ${errorText}`;
-          }
-        }
-        
         return new Response(
-          JSON.stringify({ error: errorMessage }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ error: errorText }),
+          { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
