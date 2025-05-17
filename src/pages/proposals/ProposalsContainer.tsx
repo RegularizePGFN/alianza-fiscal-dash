@@ -37,32 +37,46 @@ const ProposalsContainer = () => {
     }
   }, [user]);
 
-  // Auto fetch CNPJ data when extracted
+  // Automatically fetch CNPJ data whenever formData.cnpj changes
   useEffect(() => {
     const fetchCompanyData = async () => {
-      if (formData.cnpj && activeTab === "data") {
-        const data = await fetchCnpjData(formData.cnpj);
-        if (data) {
-          setCompanyData(data);
+      if (formData.cnpj) {
+        setProcessingStatus("Consultando dados do CNPJ...");
+        
+        try {
+          const data = await fetchCnpjData(formData.cnpj);
           
-          // Update form with company information
-          setFormData(prev => ({
-            ...prev,
-            clientName: data.company?.name || prev.clientName || '',
-            clientEmail: data.emails?.[0]?.address || prev.clientEmail || '',
-            clientPhone: data.phones?.[0] ? `${data.phones[0].area}${data.phones[0].number}` : prev.clientPhone || '',
-            businessActivity: data.sideActivities?.[0] 
-              ? `${data.sideActivities[0].id} | ${data.sideActivities[0].text}`
-              : data.mainActivity 
-                ? `${data.mainActivity.id} | ${data.mainActivity.text}` 
-                : prev.businessActivity || '',
-          }));
+          if (data) {
+            setCompanyData(data);
+            
+            // Update form with company information
+            setFormData(prev => ({
+              ...prev,
+              clientName: data.company?.name || prev.clientName || '',
+              clientEmail: data.emails?.[0]?.address || prev.clientEmail || '',
+              clientPhone: data.phones?.[0] ? `${data.phones[0].area}${data.phones[0].number}` : prev.clientPhone || '',
+              businessActivity: data.sideActivities?.[0] 
+                ? `${data.sideActivities[0].id} | ${data.sideActivities[0].text}`
+                : data.mainActivity 
+                  ? `${data.mainActivity.id} | ${data.mainActivity.text}` 
+                  : prev.businessActivity || '',
+            }));
+            
+            toast({
+              title: "Dados da empresa obtidos",
+              description: `Informações de ${data.company?.name} preenchidas automaticamente.`
+            });
+          }
+        } catch (error) {
+          console.error("Erro ao buscar dados do CNPJ:", error);
+        } finally {
+          setProcessingStatus("");
         }
       }
     };
     
     fetchCompanyData();
-  }, [formData.cnpj, activeTab]);
+  }, [formData.cnpj]);
 
   const handleProcessComplete = (data: Partial<ExtractedData>, preview: string) => {
     setFormData(prev => ({

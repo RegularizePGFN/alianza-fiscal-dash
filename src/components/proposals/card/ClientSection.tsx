@@ -21,8 +21,7 @@ interface ClientSectionProps {
   businessActivity?: string;
   companyInfo?: CompanyInfo;
   companyData?: CompanyData | null;
-  onSearchCnpj: () => void;
-  isSearching: boolean;
+  isSearching?: boolean;
 }
 
 const ClientSection = ({ 

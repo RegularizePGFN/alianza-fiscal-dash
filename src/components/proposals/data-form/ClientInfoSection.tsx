@@ -2,8 +2,6 @@
 import React from 'react';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Loader2, Search } from "lucide-react";
 import { ExtractedData } from '@/lib/types/proposals';
 
 interface ClientInfoSectionProps {
@@ -18,35 +16,20 @@ const ClientInfoSection = ({
   formData, 
   onInputChange, 
   isSearchingCnpj, 
-  handleSearchCnpj,
   companyData 
 }: ClientInfoSectionProps) => {
   return (
     <>
       <div className="grid gap-2">
         <Label htmlFor="cnpj">CNPJ</Label>
-        <div className="flex gap-2">
-          <Input 
-            id="cnpj" 
-            name="cnpj"
-            value={formData.cnpj || ''}
-            onChange={onInputChange}
-            placeholder="00.000.000/0000-00"
-            className="flex-1"
-          />
-          <Button 
-            type="button" 
-            variant="outline" 
-            disabled={!formData.cnpj || isSearchingCnpj}
-            onClick={handleSearchCnpj}
-          >
-            {isSearchingCnpj ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Search className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
+        <Input 
+          id="cnpj" 
+          name="cnpj"
+          value={formData.cnpj || ''}
+          onChange={onInputChange}
+          placeholder="00.000.000/0000-00"
+          className="flex-1"
+        />
       </div>
       
       <div className="grid gap-2">

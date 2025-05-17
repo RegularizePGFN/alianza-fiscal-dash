@@ -1,21 +1,15 @@
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
-import { Search } from 'lucide-react';
 
 interface ClientBasicInfoProps {
   cnpj: string;
   debtNumber: string;
-  onSearchCnpj: () => void;
-  isSearching: boolean;
   hasCompanyData: boolean;
 }
 
 const ClientBasicInfo = ({ 
   cnpj, 
   debtNumber, 
-  onSearchCnpj, 
-  isSearching,
   hasCompanyData
 }: ClientBasicInfoProps) => {
   return (
@@ -26,21 +20,6 @@ const ClientBasicInfo = ({
             <span className="font-medium text-af-blue-700">CNPJ:</span>
             <p className="text-lg">{cnpj || '-'}</p>
           </div>
-          {!hasCompanyData && (
-            <Button 
-              size="sm" 
-              variant="outline" 
-              onClick={onSearchCnpj} 
-              disabled={isSearching || !cnpj}
-              className="h-8 gap-1 print:hidden"
-            >
-              {isSearching ? 
-                <div className="animate-spin h-4 w-4 border-2 border-af-blue-700 border-t-transparent rounded-full"></div> : 
-                <Search className="h-4 w-4" />
-              }
-              Buscar
-            </Button>
-          )}
         </div>
       </div>
       

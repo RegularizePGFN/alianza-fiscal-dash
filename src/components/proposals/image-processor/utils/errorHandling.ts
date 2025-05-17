@@ -96,3 +96,16 @@ export const getProcessingStatus = (progress: number): string => {
     return 'Finalizando análise...';
   }
 };
+
+/**
+ * Handle error message formatting for consistent error display
+ */
+export const handleErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === 'string') {
+    return error;
+  }
+  return 'Erro desconhecido no processamento da imagem';
+};

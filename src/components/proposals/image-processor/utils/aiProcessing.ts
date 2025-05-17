@@ -37,16 +37,14 @@ export const useAiProcessing = () => {
         const cnpjData = await fetchCnpjData(extractedData.cnpj);
         
         if (cnpjData) {
-          // Atualiza campos apenas se não foram extraídos da imagem
-          if (!extractedData.clientName && cnpjData.company?.name) {
-            extractedData.clientName = cnpjData.company.name;
-          }
+          // Atualiza campos com dados do CNPJ
+          extractedData.clientName = cnpjData.company?.name || extractedData.clientName;
           
-          if (!extractedData.clientEmail && cnpjData.emails && cnpjData.emails.length > 0) {
+          if (cnpjData.emails && cnpjData.emails.length > 0) {
             extractedData.clientEmail = cnpjData.emails[0].address;
           }
           
-          if (!extractedData.clientPhone && cnpjData.phones && cnpjData.phones.length > 0) {
+          if (cnpjData.phones && cnpjData.phones.length > 0) {
             const phone = cnpjData.phones[0];
             extractedData.clientPhone = `${phone.area}${phone.number}`;
           }
