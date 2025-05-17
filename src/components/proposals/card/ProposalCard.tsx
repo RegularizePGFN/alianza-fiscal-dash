@@ -81,8 +81,6 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
           debtNumber={data.debtNumber || ''}
           businessActivity={data.businessActivity}
           companyData={companyData}
-          onSearchCnpj={handleSearchCnpj}
-          isSearching={isSearchingCnpj}
         />
 
         <DebtConsequencesAlert />
