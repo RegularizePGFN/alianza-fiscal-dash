@@ -1,0 +1,201 @@
+
+import { ChangeEvent } from "react";
+import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
+import { fetchCnpjData } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
+
+interface UseProposalHandlersProps {
+  formData: Partial<ExtractedData>;
+  setFormData: (formData: Partial<ExtractedData> | ((prev: Partial<ExtractedData>) => Partial<ExtractedData>)) => void;
+  imagePreview: string | null;
+  setImagePreview: (preview: string | null) => void;
+  setGeneratedProposal: (generated: boolean) => void;
+  selectedProposal: Proposal | null;
+  setSelectedProposal: (proposal: Proposal | null) => void;
+  setActiveTab: (tab: string) => void;
+  setCompanyData: (data: CompanyData | null) => void;
+  saveProposal: (data: ExtractedData, imageUrl?: string | undefined) => Promise<Proposal | null>;
+  fetchProposals: () => Promise<void>;
+  deleteProposal: (id: string) => Promise<boolean>;
+  user: any;
+}
+
+export const useProposalHandlers = ({
+  formData,
+  setFormData,
+  imagePreview,
+  setImagePreview,
+  setGeneratedProposal,
+  selectedProposal,
+  setSelectedProposal,
+  setActiveTab,
+  setCompanyData,
+  saveProposal,
+  fetchProposals,
+  deleteProposal,
+  user,
+}: UseProposalHandlersProps) => {
+  const { toast } = useToast();
+
+  const handleProcessComplete = (data: Partial<ExtractedData>, preview: string) => {
+    // Calculate creation date and validity date
+    const now = new Date();
+    setFormData(prev => {
+      // Calculate fees if possible
+      let feesValue = data.feesValue;
+      if (data.totalDebt && data.discountedValue && !feesValue) {
+        try {
+          const totalDebtValue = parseFloat(data.totalDebt.replace(/\./g, '').replace(',', '.'));
+          const discountedValue = parseFloat(data.discountedValue.replace(/\./g, '').replace(',', '.'));
+          const economyValue = totalDebtValue - discountedValue;
+          // Format with exactly 2 decimal places
+          feesValue = (economyValue * 0.2).toLocaleString('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          });
+        } catch (e) {
+          console.error("Error calculating fees:", e);
+        }
+      }
+      
+      return {
+        ...prev,
+        ...data,
+        feesValue: feesValue || prev.feesValue || '0,00',
+        // Make sure entryInstallments is set, defaulting to '1' if not provided
+        entryInstallments: data.entryInstallments || prev.entryInstallments || '1',
+        // Garantir que os dados do usuário atual sejam mantidos
+        clientName: data.clientName || user?.name || prev.clientName || '',
+        clientEmail: data.clientEmail || user?.email || prev.clientEmail || ''
+      };
+    });
+    
+    // If we have CNPJ, fetch company data
+    if (data.cnpj) {
+      fetchCnpjData(data.cnpj).then(companyData => {
+        if (companyData) {
+          setCompanyData(companyData);
+          setFormData(prev => ({
+            ...prev,
+            clientName: companyData.company?.name || prev.clientName || '',
+            clientEmail: companyData.emails?.[0]?.address || prev.clientEmail || '',
+            clientPhone: companyData.phones?.[0] ? `${companyData.phones[0].area}${companyData.phones[0].number}` : prev.clientPhone || '',
+            businessActivity: companyData.sideActivities?.[0] ? `${companyData.sideActivities[0].id} | ${companyData.sideActivities[0].text}` : companyData.mainActivity ? `${companyData.mainActivity.id} | ${companyData.mainActivity.text}` : prev.businessActivity || ''
+          }));
+        }
+      }).catch(err => console.error("Error fetching company data:", err));
+    }
+    
+    setImagePreview(preview);
+    setActiveTab("data");
+  };
+  
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  const handleGenerateProposal = async () => {
+    setGeneratedProposal(true);
+
+    // Ensure fees and other values have proper formatting
+    const processedData = { ...formData };
+    
+    // Format currency values to have exactly 2 decimal places
+    ['feesValue', 'totalDebt', 'discountedValue', 'entryValue', 'installmentValue'].forEach(field => {
+      if (processedData[field as keyof ExtractedData]) {
+        try {
+          const value = processedData[field as keyof ExtractedData] as string;
+          const numValue = parseFloat(value.replace(/\./g, '').replace(',', '.'));
+          
+          if (!isNaN(numValue)) {
+            const formatted = numValue.toLocaleString('pt-BR', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            });
+            
+            processedData[field as keyof ExtractedData] = formatted as any;
+          }
+        } catch (e) {
+          console.error(`Error formatting ${field}:`, e);
+        }
+      }
+    });
+
+    // Salvar a proposta no Supabase
+    if (processedData) {
+      const proposal = await saveProposal(processedData as ExtractedData, imagePreview || undefined);
+      if (proposal) {
+        // Em caso de sucesso, atualize a lista de propostas
+        fetchProposals();
+        setSelectedProposal(proposal);
+        toast({
+          title: "Proposta gerada",
+          description: "Sua proposta foi gerada e armazenada com sucesso!"
+        });
+      }
+    }
+    setActiveTab("proposal");
+  };
+  
+  const handleViewProposal = (proposal: Proposal) => {
+    setSelectedProposal(proposal);
+    setFormData({
+      ...proposal.data,
+      creationDate: proposal.data.creationDate || proposal.creationDate,
+      validityDate: proposal.data.validityDate || proposal.validityDate
+    });
+    setImagePreview(proposal.imageUrl);
+    setGeneratedProposal(true);
+    setActiveTab("proposal");
+
+    // Fetch company data for this proposal
+    if (proposal.data.cnpj) {
+      fetchCnpjData(proposal.data.cnpj).then(data => {
+        if (data) {
+          setCompanyData(data);
+        }
+      }).catch(err => console.error("Error fetching company data:", err));
+    }
+  };
+  
+  const handleDeleteProposal = async (id: string) => {
+    const success = await deleteProposal(id);
+
+    // Se a proposta excluída era a selecionada, limpar o state
+    if (success && selectedProposal?.id === id) {
+      setSelectedProposal(null);
+      setGeneratedProposal(false);
+      setFormData({});
+      setImagePreview(null);
+      setCompanyData(null);
+      setActiveTab("upload");
+    }
+    return success;
+  };
+  
+  const handleReset = () => {
+    setFormData({
+      clientName: user?.name || '',
+      clientEmail: user?.email || '',
+      clientPhone: ''
+    });
+    setImagePreview(null);
+    setGeneratedProposal(false);
+    setSelectedProposal(null);
+    setCompanyData(null);
+    setActiveTab("upload");
+  };
+
+  return {
+    handleProcessComplete,
+    handleInputChange,
+    handleGenerateProposal,
+    handleViewProposal,
+    handleDeleteProposal,
+    handleReset
+  };
+};
