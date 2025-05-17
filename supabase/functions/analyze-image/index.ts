@@ -17,6 +17,7 @@ serve(async (req) => {
 
   try {
     if (!openAIApiKey) {
+      console.error('OpenAI API Key não encontrada nas variáveis de ambiente');
       throw new Error('OpenAI API Key não configurada no servidor');
     }
     
@@ -116,7 +117,7 @@ serve(async (req) => {
       
       try {
         // Extrai apenas o objeto JSON da resposta da IA (que pode conter texto adicional)
-        const jsonMatch = contentText.match(/\{[\s\S]*\}/);
+        const jsonMatch = contentText.match(/\{[^]*\}/);
         if (!jsonMatch) {
           throw new Error('Não foi possível extrair JSON da resposta');
         }
