@@ -12,7 +12,7 @@ interface ProposalHistoryProps {
   proposals: Proposal[];
   isLoading?: boolean;
   onViewProposal: (proposal: Proposal) => void;
-  onDeleteProposal: (id: string) => void;
+  onDeleteProposal: (id: string) => Promise<boolean>;
 }
 
 const ProposalHistory = ({ proposals, isLoading = false, onViewProposal, onDeleteProposal }: ProposalHistoryProps) => {
