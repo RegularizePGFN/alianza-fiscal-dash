@@ -12,7 +12,8 @@ import {
   Users, 
   LogOut,
   ChevronLeft,
-  Settings
+  Settings,
+  FileText // Added new icon for Proposals
 } from "lucide-react";
 
 interface SidebarLinkProps {
@@ -104,10 +105,17 @@ export function AppSidebar() {
             active={location.pathname === "/vendas"}
           />
           
+          <SidebarLink 
+            to="/propostas" 
+            icon={<FileText size={20} />} 
+            label="Propostas" 
+            expanded={expanded}
+            active={location.pathname === "/propostas"}
+          />
+          
           {/* Admin links */}
           {isAdmin && (
             <>
-              {/* Important: Fix the routes to match exactly what's in App.tsx */}
               <SidebarLink 
                 to="/usuarios" 
                 icon={<Users size={20} />} 

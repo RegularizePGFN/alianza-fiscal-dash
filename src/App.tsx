@@ -13,6 +13,7 @@ import SalesPage from "./pages/SalesPage";
 import UsersPage from "./pages/UsersPage";
 import ReportsPage from "./pages/ReportsPage";
 import SettingsPage from "./pages/SettingsPage";
+import ProposalsPage from "./pages/ProposalsPage"; // Added new import
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/usuarios" element={<UsersPage />} />
             <Route path="/relatorios" element={<ReportsPage />} />
             <Route path="/configuracoes" element={<SettingsPage />} />
+            <Route path="/propostas" element={<ProposalsPage />} /> {/* Added new route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
