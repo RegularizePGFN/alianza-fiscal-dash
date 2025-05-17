@@ -29,7 +29,12 @@ const PaymentOptionsSection = ({
         <div className="border border-af-blue-100 rounded p-3 hover:bg-af-blue-50 transition-colors">
           <p className="font-medium text-af-blue-700 text-sm">Parcelado</p>
           <p className="text-base font-bold">{installments || '0'}x de R$ {installmentValue || '0,00'}</p>
-          <p className="text-xs text-gray-500">Entrada: R$ {entryValue || '0,00'} (parcelada)</p>
+          <div className="mt-1">
+            <p className="text-xs text-gray-500 flex items-start">
+              <span className="inline-block w-[5px] h-[5px] rounded-full bg-gray-400 mr-1.5 mt-1.5 flex-shrink-0"></span>
+              <span>Entrada de R$ {entryValue || '0,00'} (parcelada)</span>
+            </p>
+          </div>
         </div>
       </div>
     </div>
