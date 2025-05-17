@@ -2,8 +2,8 @@
 import { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { ExtractedData } from '@/lib/types/proposals';
-import { extractDataFromImage } from '@/lib/services/ocr';
 import { fetchCnpjData } from '@/lib/api';
+import { analyzeImageWithAI } from '@/lib/services/vision';
 
 interface UseImageProcessorProps {
   onProcessComplete: (data: Partial<ExtractedData>, preview: string) => void;
@@ -21,39 +21,39 @@ export const useImageProcessor = ({
   const [processingStatus, setProcessingStatus] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
-  const processWithOCR = async (imageUrl: string) => {
+  const processWithAI = async (imageUrl: string) => {
     setProcessing(true);
     setProgressPercent(0);
-    setProcessingStatus('Inicializando OCR...');
+    setProcessingStatus('Inicializando análise de IA...');
     setError(null);
     
     try {
-      // Extract data using OCR
-      setProcessingStatus('Analisando imagem com OCR...');
-      const extractedData = await extractDataFromImage(imageUrl, (progress) => {
+      // Analisa a imagem usando o modelo de visão da OpenAI
+      setProcessingStatus('Analisando imagem com IA...');
+      const extractedData = await analyzeImageWithAI(imageUrl, (progress) => {
         setProgressPercent(progress);
         
         if (progress < 30) {
-          setProcessingStatus('Preparando imagem...');
+          setProcessingStatus('Preparando imagem para análise...');
         } else if (progress < 60) {
-          setProcessingStatus('Reconhecendo texto...');
+          setProcessingStatus('Processando com IA avançada...');
         } else if (progress < 90) {
-          setProcessingStatus('Extraindo dados...');
+          setProcessingStatus('Extraindo dados estruturados...');
         } else {
-          setProcessingStatus('Finalizando...');
+          setProcessingStatus('Finalizando análise...');
         }
       });
       
       console.log('Dados extraídos da imagem:', extractedData);
       
-      // Automatically fetch CNPJ data if available
+      // Automaticamente busca dados do CNPJ se disponível
       if (extractedData.cnpj) {
         try {
           setProcessingStatus('Buscando dados do CNPJ...');
           const cnpjData = await fetchCnpjData(extractedData.cnpj);
           
           if (cnpjData) {
-            // Only update fields if they were not extracted from the image
+            // Atualiza campos apenas se não foram extraídos da imagem
             if (!extractedData.clientName && cnpjData.company?.name) {
               extractedData.clientName = cnpjData.company.name;
             }
@@ -83,35 +83,35 @@ export const useImageProcessor = ({
           }
         } catch (error) {
           console.error('Erro ao buscar dados do CNPJ:', error);
-          // Continue without CNPJ data if there's an error
+          // Continua sem dados do CNPJ se houver um erro
         }
       }
       
-      // If we couldn't extract some required fields, use fallbacks
+      // Se não conseguirmos extrair alguns campos obrigatórios, use valores padrão
       if (!extractedData.totalDebt || !extractedData.discountedValue) {
-        // Fill in reasonable fallback values for demo purposes
-        if (!extractedData.totalDebt) extractedData.totalDebt = "10.000,00";
-        if (!extractedData.discountedValue) extractedData.discountedValue = "8.000,00";
-        if (!extractedData.discountPercentage) extractedData.discountPercentage = "20,00";
-        if (!extractedData.installments) extractedData.installments = "60";
-        if (!extractedData.installmentValue) extractedData.installmentValue = "133,33";
-        if (!extractedData.entryValue) extractedData.entryValue = "800,00";
+        // Preenche com valores padrão para fins de demonstração
+        if (!extractedData.totalDebt) extractedData.totalDebt = "0,00";
+        if (!extractedData.discountedValue) extractedData.discountedValue = "0,00";
+        if (!extractedData.discountPercentage) extractedData.discountPercentage = "0,00";
+        if (!extractedData.installments) extractedData.installments = "0";
+        if (!extractedData.installmentValue) extractedData.installmentValue = "0,00";
+        if (!extractedData.entryValue) extractedData.entryValue = "0,00";
         if (!extractedData.entryInstallments) extractedData.entryInstallments = "1";
-        if (!extractedData.feesValue) extractedData.feesValue = "800,00";
+        if (!extractedData.feesValue) extractedData.feesValue = "0,00";
         
         toast({
           title: "Extração parcial",
-          description: "Alguns campos não foram reconhecidos. Valores aproximados foram inseridos.",
+          description: "Alguns campos não foram reconhecidos. Por favor, verifique e complete os dados.",
           variant: "destructive",
         });
       }
       
-      // Pass the extracted data and preview back to the parent component
+      // Passa os dados extraídos e a prévia de volta para o componente pai
       onProcessComplete(extractedData, imageUrl);
       
       toast({
         title: "Processamento concluído",
-        description: "Dados extraídos com sucesso! Verifique e ajuste conforme necessário.",
+        description: "Dados extraídos com sucesso usando IA avançada!",
       });
     } catch (error) {
       console.error('Erro na extração por IA:', error);
@@ -119,13 +119,13 @@ export const useImageProcessor = ({
       
       toast({
         title: "Erro no processamento",
-        description: "Não foi possível processar a imagem. Por favor, insira os dados manualmente.",
+        description: "Não foi possível processar a imagem com IA. Por favor, insira os dados manualmente.",
         variant: "destructive",
       });
       
-      // Still allow the user to proceed with manual entry
+      // Ainda permite que o usuário continue com entrada manual
       onProcessComplete({
-        // Provide empty default values
+        // Fornece valores padrão vazios
         totalDebt: "0,00",
         discountedValue: "0,00",
         discountPercentage: "0,00",
@@ -145,14 +145,14 @@ export const useImageProcessor = ({
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       
-      // Create a preview URL
+      // Cria uma URL de prévia
       const reader = new FileReader();
       reader.onloadend = () => {
         const imageUrl = reader.result as string;
         setImagePreview(imageUrl);
         
-        // Process with OCR
-        processWithOCR(imageUrl);
+        // Processa com IA
+        processWithAI(imageUrl);
       };
       reader.readAsDataURL(file);
     }

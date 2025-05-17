@@ -11,10 +11,10 @@ const ErrorAlert = ({ error }: ErrorAlertProps) => {
   if (!error) return null;
   
   return (
-    <Alert variant="destructive" className="mb-4">
-      <AlertCircle className="h-4 w-4" />
-      <AlertTitle>Erro no processamento</AlertTitle>
-      <AlertDescription>
+    <Alert variant="destructive" className="mb-6 border-red-300 bg-red-50">
+      <AlertCircle className="h-5 w-5" />
+      <AlertTitle className="text-red-800 font-medium">Erro na Análise com IA</AlertTitle>
+      <AlertDescription className="text-red-700">
         {error}. Você pode continuar com a entrada manual de dados.
       </AlertDescription>
     </Alert>

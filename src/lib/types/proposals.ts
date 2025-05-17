@@ -1,4 +1,3 @@
-
 export interface ExtractedData {
   cnpj: string;
   totalDebt: string;
@@ -79,5 +78,23 @@ export interface CompanyData {
   mainActivity?: {
     id: number;
     text: string;
+  };
+}
+
+// Adicionando um novo tipo para a resposta da API de visão da OpenAI
+export interface AIVisionResponse {
+  cnpj: string;
+  numero_processo: string;
+  valor_total_sem_reducao: string;
+  valor_total_com_reducao: string;
+  percentual_de_reducao: string;
+  valor_da_entrada_total: string;
+  entrada_parcelada: {
+    quantidade_parcelas: number;
+    valor_parcela: string;
+  };
+  parcelamento_principal: {
+    quantidade_parcelas: number;
+    valor_parcela: string;
   };
 }
