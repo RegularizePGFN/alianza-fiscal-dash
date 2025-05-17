@@ -75,7 +75,7 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
     <Card ref={proposalRef} className="border max-w-4xl mx-auto shadow-lg bg-white print:shadow-none print:border-none">
       <ProposalHeader discountedValue={data.discountedValue || '0,00'} />
 
-      <CardContent className="pt-6 space-y-8 px-8 pb-8">
+      <CardContent className="pt-4 space-y-4 px-6 pb-6">
         <ClientSection 
           cnpj={data.cnpj || ''} 
           debtNumber={data.debtNumber || ''}
@@ -92,6 +92,7 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
           discountedValue={data.discountedValue || '0,00'}
           discountPercentage={data.discountPercentage || '0'}
           entryValue={data.entryValue || '0,00'}
+          entryInstallments={data.entryInstallments || '1'}
           installments={data.installments || '0'}
           installmentValue={data.installmentValue || '0,00'}
         />
@@ -108,11 +109,10 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
           installments={data.installments || '0'}
           installmentValue={data.installmentValue || '0,00'}
           entryValue={data.entryValue || '0,00'}
+          entryInstallments={data.entryInstallments || '1'}
         />
 
-        <Separator className="my-6" />
-
-        <div className="text-xs text-gray-500 italic mt-8 pt-2 border-t border-gray-200">
+        <div className="text-xs text-gray-500 italic mt-4 pt-1 border-t border-gray-200">
           Embora a dívida tenha prazo de prescrição, esse prazo é suspenso ou interrompido com o ajuizamento, mantendo o débito em aberto por tempo indeterminado.
         </div>
 
