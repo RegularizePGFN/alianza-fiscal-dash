@@ -1,8 +1,7 @@
 
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { ExtractedData } from './types/proposals';
-import { formatCurrency } from './utils';
 
 // Função auxiliar para formatar valores antes de exibir no PDF
 const formatValue = (value: string | undefined): string => {
