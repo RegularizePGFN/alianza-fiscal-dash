@@ -1,6 +1,4 @@
 
-import { createCanvas, Canvas } from 'canvas';
-
 /**
  * Preprocesses an image for better OCR results by converting to grayscale and increasing contrast
  */
