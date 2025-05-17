@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import AIImageProcessor from "@/components/proposals/AIImageProcessor";
 import DataForm from "@/components/proposals/DataForm";
-import ProposalCard from "@/components/proposals/ProposalCard";
+import { ProposalCard } from "@/components/proposals/card"; // Updated import
 import ProposalHistory from "@/components/proposals/ProposalHistory";
 import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 import { useToast } from "@/hooks/use-toast";
