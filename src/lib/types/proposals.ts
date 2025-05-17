@@ -5,7 +5,7 @@ export interface ExtractedData {
   discountedValue: string;
   discountPercentage: string;
   entryValue: string;
-  entryInstallments: string; // Added field for entry installments
+  entryInstallments: string;
   installments: string;
   installmentValue: string;
   debtNumber: string;

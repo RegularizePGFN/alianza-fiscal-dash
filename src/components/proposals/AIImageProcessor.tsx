@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -109,6 +108,7 @@ const AIImageProcessor = ({
       discountedValue: '1.656,16',
       discountPercentage: '47,50',
       entryValue: '31,54',
+      entryInstallments: '5', // Setting this explicitly to 5 for the demo data
       installments: '55',
       installmentValue: '27,24',
       debtNumber: '41 4 22 017179-92',

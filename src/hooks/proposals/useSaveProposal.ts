@@ -32,7 +32,8 @@ export const useSaveProposal = () => {
         discounted_value: parseFloat(data.discountedValue.replace('.', '').replace(',', '.')),
         discount_percentage: parseFloat(data.discountPercentage.replace(',', '.')),
         entry_value: parseFloat(data.entryValue.replace('.', '').replace(',', '.')),
-        entry_installments: parseInt(data.entryInstallments || '1'), // Added field
+        // For now, we'll handle entry_installments in the frontend only
+        // The column needs to be added to the database schema
         installments: parseInt(data.installments),
         installment_value: parseFloat(data.installmentValue.replace('.', '').replace(',', '.')),
         fees_value: data.feesValue ? parseFloat(data.feesValue.replace('.', '').replace(',', '.')) : null,
@@ -68,7 +69,7 @@ export const useSaveProposal = () => {
           discountedValue: data.discountedValue,
           discountPercentage: data.discountPercentage,
           entryValue: data.entryValue,
-          entryInstallments: data.entryInstallments || '1', // Added field
+          entryInstallments: data.entryInstallments || '1',
           installments: data.installments,
           installmentValue: data.installmentValue,
           debtNumber: data.debtNumber,
