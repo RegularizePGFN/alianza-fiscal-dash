@@ -13,6 +13,8 @@ export interface ExtractedData {
   clientEmail?: string;
   clientPhone?: string;
   businessActivity?: string;
+  creationDate?: string;
+  validityDate?: string;
 }
 
 export interface Proposal {
@@ -22,6 +24,8 @@ export interface Proposal {
   createdAt: string;
   data: ExtractedData;
   imageUrl: string;
+  creationDate?: string;
+  validityDate?: string;
 }
 
 export interface CompanyData {

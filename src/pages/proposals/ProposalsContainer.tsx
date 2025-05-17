@@ -5,6 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 import { useSaveProposal, useFetchProposals } from "@/hooks/proposals";
 import { fetchCnpjData } from "@/lib/api";
+import { RefreshCcw, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 import ProposalsHeader from "./components/ProposalsHeader";
 import ProposalsTabs from "./components/ProposalsTabs";
@@ -24,6 +26,11 @@ const ProposalsContainer = () => {
   const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
   const [companyData, setCompanyData] = useState<CompanyData | null>(null);
   const [processingStatus, setProcessingStatus] = useState<string>("");
+
+  // Fetch proposals when component mounts
+  useEffect(() => {
+    fetchProposals();
+  }, []);
 
   // Preencher dados do usuário no formulário
   useEffect(() => {
@@ -78,16 +85,58 @@ const ProposalsContainer = () => {
     fetchCompanyData();
   }, [formData.cnpj]);
 
+  // Calculate fees whenever totalDebt or discountedValue changes
+  useEffect(() => {
+    if (formData.totalDebt && formData.discountedValue) {
+      try {
+        const totalDebtValue = parseFloat(formData.totalDebt.replace(/\./g, '').replace(',', '.'));
+        const discountedValue = parseFloat(formData.discountedValue.replace(/\./g, '').replace(',', '.'));
+        
+        if (!isNaN(totalDebtValue) && !isNaN(discountedValue)) {
+          const economyValue = totalDebtValue - discountedValue;
+          const feesValue = economyValue * 0.2; // 20% of the savings
+          
+          setFormData(prev => ({
+            ...prev,
+            feesValue: feesValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+          }));
+        }
+      } catch (error) {
+        console.error("Error calculating fees:", error);
+      }
+    }
+  }, [formData.totalDebt, formData.discountedValue]);
+
   const handleProcessComplete = (data: Partial<ExtractedData>, preview: string) => {
-    setFormData(prev => ({
-      ...prev,
-      ...data,
-      // Make sure entryInstallments is set, defaulting to '1' if not provided
-      entryInstallments: data.entryInstallments || prev.entryInstallments || '1',
-      // Garantir que os dados do usuário atual sejam mantidos
-      clientName: data.clientName || user?.name || prev.clientName || '',
-      clientEmail: data.clientEmail || user?.email || prev.clientEmail || '',
-    }));
+    // Calculate creation date and validity date
+    const now = new Date();
+    
+    setFormData(prev => {
+      // Calculate fees if possible
+      let feesValue = data.feesValue;
+      if (data.totalDebt && data.discountedValue && !feesValue) {
+        try {
+          const totalDebtValue = parseFloat(data.totalDebt.replace(/\./g, '').replace(',', '.'));
+          const discountedValue = parseFloat(data.discountedValue.replace(/\./g, '').replace(',', '.'));
+          const economyValue = totalDebtValue - discountedValue;
+          feesValue = (economyValue * 0.2).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+        } catch (e) {
+          console.error("Error calculating fees:", e);
+        }
+      }
+      
+      return {
+        ...prev,
+        ...data,
+        feesValue: feesValue || prev.feesValue || '0,00',
+        // Make sure entryInstallments is set, defaulting to '1' if not provided
+        entryInstallments: data.entryInstallments || prev.entryInstallments || '1',
+        // Garantir que os dados do usuário atual sejam mantidos
+        clientName: data.clientName || user?.name || prev.clientName || '',
+        clientEmail: data.clientEmail || user?.email || prev.clientEmail || '',
+      };
+    });
+    
     setImagePreview(preview);
     setActiveTab("data");
   };
@@ -120,7 +169,11 @@ const ProposalsContainer = () => {
 
   const handleViewProposal = (proposal: Proposal) => {
     setSelectedProposal(proposal);
-    setFormData(proposal.data);
+    setFormData({
+      ...proposal.data,
+      creationDate: proposal.data.creationDate || proposal.creationDate,
+      validityDate: proposal.data.validityDate || proposal.validityDate
+    });
     setImagePreview(proposal.imageUrl);
     setGeneratedProposal(true);
     setActiveTab("proposal");
@@ -168,7 +221,18 @@ const ProposalsContainer = () => {
 
   return (
     <div className="container py-6">
-      <ProposalsHeader />
+      <div className="flex justify-between items-center mb-6">
+        <ProposalsHeader />
+        
+        <Button 
+          variant="outline" 
+          onClick={handleReset}
+          className="flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" /> 
+          Nova Proposta
+        </Button>
+      </div>
       
       <ProposalsTabs 
         activeTab={activeTab}

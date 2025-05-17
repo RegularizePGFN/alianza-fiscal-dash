@@ -4,11 +4,34 @@ import { supabase } from '@/integrations/supabase/client';
 import { ExtractedData, Proposal } from '@/lib/types/proposals';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 export const useSaveProposal = () => {
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  
+  const formatDateBR = (date: Date) => {
+    return format(date, 'dd/MM/yyyy HH:mm', { locale: ptBR });
+  };
+  
+  const calculateFees = (totalDebt: string, discountedValue: string): number => {
+    try {
+      const totalDebtValue = parseFloat(totalDebt.replace(/\./g, '').replace(',', '.'));
+      const discountedValueNum = parseFloat(discountedValue.replace(/\./g, '').replace(',', '.'));
+      
+      if (isNaN(totalDebtValue) || isNaN(discountedValueNum)) {
+        return 0;
+      }
+      
+      const economyValue = totalDebtValue - discountedValueNum;
+      return economyValue * 0.2; // 20% of the savings
+    } catch (e) {
+      console.error('Error calculating fees:', e);
+      return 0;
+    }
+  };
   
   const saveProposal = async (data: ExtractedData, imageUrl?: string): Promise<Proposal | null> => {
     if (!user) {
@@ -23,33 +46,43 @@ export const useSaveProposal = () => {
     setIsSaving(true);
     
     try {
+      // Calculate fees if not provided
+      let feesValue = data.feesValue ? parseFloat(data.feesValue.replace(/\./g, '').replace(',', '.')) : null;
+      
+      if (!feesValue && data.totalDebt && data.discountedValue) {
+        feesValue = calculateFees(data.totalDebt, data.discountedValue);
+      }
+      
+      const now = new Date();
+      
       // Prepare proposal data
       const proposalData = {
         user_id: user.id,
         cnpj: data.cnpj,
         debt_number: data.debtNumber,
-        total_debt: parseFloat(data.totalDebt.replace('.', '').replace(',', '.')),
-        discounted_value: parseFloat(data.discountedValue.replace('.', '').replace(',', '.')),
+        total_debt: parseFloat(data.totalDebt.replace(/\./g, '').replace(',', '.')),
+        discounted_value: parseFloat(data.discountedValue.replace(/\./g, '').replace(',', '.')),
         discount_percentage: parseFloat(data.discountPercentage.replace(',', '.')),
-        entry_value: parseFloat(data.entryValue.replace('.', '').replace(',', '.')),
-        // For now, we'll handle entry_installments in the frontend only
-        // The column needs to be added to the database schema
+        entry_value: parseFloat(data.entryValue.replace(/\./g, '').replace(',', '.')),
+        entry_installments: parseInt(data.entryInstallments || "1"),
         installments: parseInt(data.installments),
-        installment_value: parseFloat(data.installmentValue.replace('.', '').replace(',', '.')),
-        fees_value: data.feesValue ? parseFloat(data.feesValue.replace('.', '').replace(',', '.')) : null,
+        installment_value: parseFloat(data.installmentValue.replace(/\./g, '').replace(',', '.')),
+        fees_value: feesValue,
         client_name: data.clientName || user.name || '',
         client_email: data.clientEmail || user.email || '',
         client_phone: data.clientPhone || '',
         business_activity: data.businessActivity || '',
         image_url: imageUrl || null,
-        status: 'active'
+        status: 'active',
+        creation_date: now.toISOString()
+        // validity_date will be set by the trigger
       };
       
       // Insert into Supabase
       const { data: savedProposal, error } = await supabase
         .from('proposals')
         .insert(proposalData)
-        .select()
+        .select('*, creation_date, validity_date')
         .single();
       
       if (error) {
@@ -63,6 +96,8 @@ export const useSaveProposal = () => {
         userId: savedProposal.user_id,
         userName: user.name || 'Unknown User',
         createdAt: savedProposal.created_at,
+        creationDate: savedProposal.creation_date,
+        validityDate: savedProposal.validity_date,
         data: {
           cnpj: data.cnpj,
           totalDebt: data.totalDebt,
@@ -73,11 +108,13 @@ export const useSaveProposal = () => {
           installments: data.installments,
           installmentValue: data.installmentValue,
           debtNumber: data.debtNumber,
-          feesValue: data.feesValue || '0,00',
+          feesValue: feesValue?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00',
           clientName: data.clientName,
           clientEmail: data.clientEmail,
           clientPhone: data.clientPhone,
           businessActivity: data.businessActivity,
+          creationDate: savedProposal.creation_date ? formatDateBR(new Date(savedProposal.creation_date)) : undefined,
+          validityDate: savedProposal.validity_date ? formatDateBR(new Date(savedProposal.validity_date)) : undefined,
         },
         imageUrl: savedProposal.image_url || '',
       };

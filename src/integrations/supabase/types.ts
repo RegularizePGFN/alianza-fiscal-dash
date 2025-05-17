@@ -98,6 +98,7 @@ export type Database = {
           client_phone: string | null
           cnpj: string | null
           created_at: string
+          creation_date: string | null
           debt_number: string | null
           discount_percentage: number | null
           discounted_value: number | null
@@ -111,6 +112,7 @@ export type Database = {
           total_debt: number | null
           updated_at: string
           user_id: string
+          validity_date: string | null
         }
         Insert: {
           business_activity?: string | null
@@ -119,6 +121,7 @@ export type Database = {
           client_phone?: string | null
           cnpj?: string | null
           created_at?: string
+          creation_date?: string | null
           debt_number?: string | null
           discount_percentage?: number | null
           discounted_value?: number | null
@@ -132,6 +135,7 @@ export type Database = {
           total_debt?: number | null
           updated_at?: string
           user_id: string
+          validity_date?: string | null
         }
         Update: {
           business_activity?: string | null
@@ -140,6 +144,7 @@ export type Database = {
           client_phone?: string | null
           cnpj?: string | null
           created_at?: string
+          creation_date?: string | null
           debt_number?: string | null
           discount_percentage?: number | null
           discounted_value?: number | null
@@ -153,6 +158,7 @@ export type Database = {
           total_debt?: number | null
           updated_at?: string
           user_id?: string
+          validity_date?: string | null
         }
         Relationships: []
       }

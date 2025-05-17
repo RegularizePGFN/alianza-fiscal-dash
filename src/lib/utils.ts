@@ -1,6 +1,7 @@
-
-import { clsx, type ClassValue } from "clsx"
+import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { PaymentMethod } from "./types"
 import { COMMISSION_RATE_BELOW_GOAL, COMMISSION_RATE_ABOVE_GOAL, COMMISSION_GOAL_AMOUNT } from './constants';
 
@@ -9,42 +10,30 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 // Format currency values to BRL
-export function formatCurrency(value: number): string {
+export function formatCurrency(value: string | number): string {
+  if (typeof value === 'string') {
+    // Remove non-numeric characters except for decimal point and handle thousands separators
+    value = parseFloat(value.replace(/\./g, '').replace(',', '.'));
+  }
+  
+  if (isNaN(value as number)) {
+    return 'R$ 0,00';
+  }
+  
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL'
-  }).format(value);
+  }).format(value as number);
 }
 
 // Enhanced format date function to handle different date formats consistently
-export function formatDate(date: Date | string): string {
-  if (!date) return '';
-  
+export function formatDate(date: string | Date): string {
   try {
-    // For debugging
-    console.log("formatDate input:", date, typeof date);
-    
-    // Handle YYYY-MM-DD format (from database)
-    if (typeof date === 'string') {
-      // Check if it's in YYYY-MM-DD format
-      if (date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        const [year, month, day] = date.split('-').map(Number);
-        // Create date using local timezone explicitly
-        const localDate = new Date(year, month - 1, day);
-        console.log("YYYY-MM-DD string parsed to local date:", localDate);
-        return new Intl.DateTimeFormat('pt-BR').format(localDate);
-      }
-    }
-    
-    // Handle Date objects or other date string formats
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
-    const result = new Intl.DateTimeFormat('pt-BR').format(dateObj);
-    console.log("Formatted date result:", result);
-    return result;
-    
-  } catch (error) {
-    console.error("Error formatting date:", error, date);
-    return String(date);
+    const dateObj = typeof date === 'string' ? parseISO(date) : date;
+    return format(dateObj, 'dd/MM/yyyy HH:mm', { locale: ptBR });
+  } catch (e) {
+    console.error('Error formatting date:', e);
+    return typeof date === 'string' ? date : date.toISOString();
   }
 }
 

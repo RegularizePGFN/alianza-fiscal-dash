@@ -2,6 +2,7 @@
 import { ExtractedData, Proposal } from "@/lib/types/proposals";
 import AIImageProcessor from "@/components/proposals/AIImageProcessor";
 import ProposalHistory from "@/components/proposals/ProposalHistory";
+import { Separator } from "@/components/ui/separator";
 
 interface UploadTabContentProps {
   processing: boolean;
@@ -29,8 +30,8 @@ const UploadTabContent = ({
   setProcessingStatus
 }: UploadTabContentProps) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div className="md:col-span-2">
+    <div className="space-y-6">
+      <div className="w-full">
         <AIImageProcessor
           onProcessComplete={onProcessComplete}
           processing={processing}
@@ -41,14 +42,14 @@ const UploadTabContent = ({
         />
       </div>
       
-      <div className="md:col-span-1">
-        <ProposalHistory
-          proposals={proposals}
-          isLoading={loadingProposals}
-          onViewProposal={onViewProposal}
-          onDeleteProposal={onDeleteProposal}
-        />
-      </div>
+      <Separator className="my-8" />
+      
+      <ProposalHistory
+        proposals={proposals}
+        isLoading={loadingProposals}
+        onViewProposal={onViewProposal}
+        onDeleteProposal={onDeleteProposal}
+      />
     </div>
   );
 };
