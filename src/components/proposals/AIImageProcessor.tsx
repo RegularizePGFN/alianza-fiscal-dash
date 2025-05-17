@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExtractedData } from '@/lib/types/proposals';
 import { fetchCnpjData } from '@/lib/api';
-import { extractDataFromImage } from '@/lib/services/ocrService';
+import { extractDataFromImage } from '@/lib/services/ocr'; // Updated import
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface AIImageProcessorProps {

@@ -1,0 +1,2 @@
+
+export { extractDataFromImage } from './ocrService';
