@@ -1,30 +1,6 @@
 
 import { toast } from 'sonner';
-
-interface CompanyData {
-  taxId: string;
-  company: {
-    name: string;
-  };
-  phones?: {
-    area: string;
-    number: string;
-    type?: string;
-  }[];
-  emails?: {
-    address: string;
-    ownership?: string;
-    domain?: string;
-  }[];
-  sideActivities?: {
-    id: number;
-    text: string;
-  }[];
-  mainActivity?: {
-    id: number;
-    text: string;
-  };
-}
+import { CompanyData } from './types/proposals';
 
 export const fetchCnpjData = async (cnpj: string): Promise<CompanyData | null> => {
   if (!cnpj || cnpj.length < 8) {

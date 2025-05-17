@@ -23,3 +23,28 @@ export interface Proposal {
   data: ExtractedData;
   imageUrl: string;
 }
+
+export interface CompanyData {
+  taxId: string;
+  company: {
+    name: string;
+  };
+  phones?: {
+    area: string;
+    number: string;
+    type?: string;
+  }[];
+  emails?: {
+    address: string;
+    ownership?: string;
+    domain?: string;
+  }[];
+  sideActivities?: {
+    id: number;
+    text: string;
+  }[];
+  mainActivity?: {
+    id: number;
+    text: string;
+  };
+}

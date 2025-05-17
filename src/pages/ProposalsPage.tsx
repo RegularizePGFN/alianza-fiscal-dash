@@ -43,8 +43,8 @@ const ProposalsPage = () => {
       ...prev,
       ...data,
       // Garantir que os dados do usuário atual sejam mantidos
-      clientName: user?.name || prev.clientName || '',
-      clientEmail: user?.email || prev.clientEmail || '',
+      clientName: data.clientName || user?.name || prev.clientName || '',
+      clientEmail: data.clientEmail || user?.email || prev.clientEmail || '',
     }));
     setImagePreview(preview);
     setActiveTab("data");
