@@ -15,7 +15,7 @@ const DebtConsequencesAlert = () => {
       
       <div className="space-y-2 text-sm pl-2">
         <div className="flex items-start">
-          <div className="w-2 h-2 bg-amber-500 rounded-full mt-1.5 mr-2 flex-shrink-0"></div>
+          <span className="w-2 h-2 bg-amber-500 rounded-full mt-1.5 mr-2 flex-shrink-0 inline-block"></span>
           <div>
             <p className="font-medium text-amber-800">Protesto em Cartório</p>
             <p className="text-amber-700 text-sm">
@@ -25,7 +25,7 @@ const DebtConsequencesAlert = () => {
         </div>
         
         <div className="flex items-start">
-          <div className="w-2 h-2 bg-amber-500 rounded-full mt-1.5 mr-2 flex-shrink-0"></div>
+          <span className="w-2 h-2 bg-amber-500 rounded-full mt-1.5 mr-2 flex-shrink-0 inline-block"></span>
           <div>
             <p className="font-medium text-amber-800">Execução Fiscal</p>
             <p className="text-amber-700 text-sm">
@@ -35,7 +35,7 @@ const DebtConsequencesAlert = () => {
         </div>
         
         <div className="flex items-start">
-          <div className="w-2 h-2 bg-amber-500 rounded-full mt-1.5 mr-2 flex-shrink-0"></div>
+          <span className="w-2 h-2 bg-amber-500 rounded-full mt-1.5 mr-2 flex-shrink-0 inline-block"></span>
           <div>
             <p className="font-medium text-amber-800">Bloqueio de Contas e Bens</p>
             <p className="text-amber-700 text-sm">

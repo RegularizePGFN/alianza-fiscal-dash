@@ -16,7 +16,6 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
         vertical-align: middle !important; 
         display: inline-block !important;
         position: relative !important;
-        top: -1px !important;
       }
       .mr-1 { margin-right: 4px !important; }
       .mr-2 { margin-right: 8px !important; }
@@ -27,6 +26,24 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       .items-center { align-items: center !important; }
       .items-start { align-items: flex-start !important; }
       .flex { display: flex !important; }
+      
+      /* Estilos específicos para garantir alinhamento */
+      h2 .flex, div .flex {
+        display: flex !important;
+        align-items: center !important;
+      }
+      .rounded-full {
+        display: inline-block !important;
+        width: 8px !important;
+        height: 8px !important;
+        margin-right: 8px !important;
+        margin-top: 6px !important;
+        flex-shrink: 0 !important;
+        vertical-align: middle !important;
+      }
+      .flex.items-start .rounded-full {
+        margin-top: 6px !important;
+      }
     `;
     
     clonedElement.appendChild(styleElement);
@@ -48,12 +65,26 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
         // Ajustes adicionais no clone antes da captura
         const elementsToPdf = clonedDoc.querySelector('[ref="proposalElement"]') as HTMLElement;
         if (elementsToPdf) {
+          // Substituir divs por spans para melhorar renderização
           const icons = elementsToPdf.querySelectorAll('svg');
           icons.forEach(icon => {
             icon.style.verticalAlign = 'middle';
             icon.style.display = 'inline-block';
             icon.style.position = 'relative';
-            icon.style.top = '-1px';
+            icon.style.marginRight = '8px';
+            icon.style.flexShrink = '0';
+          });
+          
+          // Garantir que os bullets sejam renderizados corretamente
+          const bullets = elementsToPdf.querySelectorAll('.bg-amber-500.rounded-full');
+          bullets.forEach(bullet => {
+            (bullet as HTMLElement).style.display = 'inline-block';
+            (bullet as HTMLElement).style.width = '8px';
+            (bullet as HTMLElement).style.height = '8px';
+            (bullet as HTMLElement).style.marginRight = '8px';
+            (bullet as HTMLElement).style.marginTop = '6px';
+            (bullet as HTMLElement).style.flexShrink = '0';
+            (bullet as HTMLElement).style.verticalAlign = 'middle';
           });
           
           // Garantir que os contêineres flex sejam renderizados corretamente
@@ -71,12 +102,6 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
           const itemsStart = elementsToPdf.querySelectorAll('.items-start');
           itemsStart.forEach(item => {
             (item as HTMLElement).style.alignItems = 'flex-start';
-          });
-          
-          // Ajustar tamanho dos marcadores no alerta
-          const bullets = elementsToPdf.querySelectorAll('.bg-amber-500.rounded-full');
-          bullets.forEach(bullet => {
-            (bullet as HTMLElement).style.flexShrink = '0';
           });
           
           const roundedElements = elementsToPdf.querySelectorAll('.rounded, .rounded-lg, .rounded-md');

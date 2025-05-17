@@ -18,8 +18,8 @@ const ProposalHeader = ({ discountedValue }: ProposalHeaderProps) => {
             className="h-14 w-auto"
           />
           <h2 className="text-2xl font-bold text-white">
-            <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5 flex-shrink-0" />
+            <div className="flex items-center">
+              <FileText className="h-5 w-5 mr-2 flex-shrink-0" />
               Proposta de Parcelamento PGFN
             </div>
           </h2>
