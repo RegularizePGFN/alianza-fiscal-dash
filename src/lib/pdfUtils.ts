@@ -17,8 +17,7 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
         display: inline-block !important;
         position: relative !important;
       }
-      .mr-1 { margin-right: 4px !important; }
-      .mr-2 { margin-right: 8px !important; }
+      .mr-1, .mr-2 { margin-right: 8px !important; }
       .print\\:hidden { display: none !important; }
       .text-xs { font-size: 10px !important; }
       .text-sm { font-size: 12px !important; }
@@ -28,21 +27,40 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       .flex { display: flex !important; }
       
       /* Estilos específicos para garantir alinhamento */
-      h2 .flex, div .flex {
+      h2 .flex, h3 .flex, div .flex {
         display: flex !important;
         align-items: center !important;
       }
-      .rounded-full {
-        display: inline-block !important;
+      
+      /* Garantir alinhamento dos bullets */
+      .bg-amber-500.rounded-full {
+        display: block !important;
         width: 8px !important;
         height: 8px !important;
         margin-right: 8px !important;
-        margin-top: 6px !important;
+        margin-top: 5px !important;
+        flex-shrink: 0 !important;
+      }
+      
+      /* Espaçamentos mais compactos para o PDF */
+      .space-y-4 { margin-top: 12px !important; margin-bottom: 12px !important; }
+      .p-4, .p-5, .p-6 { padding: 12px !important; }
+      .py-1\.5, .px-3 { padding: 4px 8px !important; }
+      .mt-1, .mt-2, .my-6 { margin-top: 6px !important; }
+      .mb-1, .mb-2, .mb-3, .mb-4 { margin-bottom: 6px !important; }
+      .gap-4, .gap-6 { gap: 8px !important; }
+      
+      /* Tamanho dos textos mais compactos */
+      .text-lg { font-size: 14px !important; }
+      .text-2xl { font-size: 18px !important; }
+      .text-3xl { font-size: 20px !important; }
+      
+      /* Ajustes para ícones inline */
+      .flex.items-center svg,
+      .flex.items-start svg {
+        margin-right: 6px !important;
         flex-shrink: 0 !important;
         vertical-align: middle !important;
-      }
-      .flex.items-start .rounded-full {
-        margin-top: 6px !important;
       }
     `;
     
@@ -78,13 +96,12 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
           // Garantir que os bullets sejam renderizados corretamente
           const bullets = elementsToPdf.querySelectorAll('.bg-amber-500.rounded-full');
           bullets.forEach(bullet => {
-            (bullet as HTMLElement).style.display = 'inline-block';
+            (bullet as HTMLElement).style.display = 'block';
             (bullet as HTMLElement).style.width = '8px';
             (bullet as HTMLElement).style.height = '8px';
             (bullet as HTMLElement).style.marginRight = '8px';
-            (bullet as HTMLElement).style.marginTop = '6px';
+            (bullet as HTMLElement).style.marginTop = '5px';
             (bullet as HTMLElement).style.flexShrink = '0';
-            (bullet as HTMLElement).style.verticalAlign = 'middle';
           });
           
           // Garantir que os contêineres flex sejam renderizados corretamente
@@ -104,6 +121,25 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
             (item as HTMLElement).style.alignItems = 'flex-start';
           });
           
+          // Substituir spans por divs para melhorar renderização de bullets
+          const bulletPoints = elementsToPdf.querySelectorAll('.flex.items-start .rounded-full');
+          bulletPoints.forEach(bullet => {
+            const parent = bullet.parentElement;
+            if (parent) {
+              const div = document.createElement('div');
+              div.style.width = '8px';
+              div.style.height = '8px';
+              div.style.backgroundColor = '#f59e0b';
+              div.style.borderRadius = '9999px';
+              div.style.marginTop = '5px';
+              div.style.marginRight = '8px';
+              div.style.flexShrink = '0';
+              div.style.display = 'block';
+              parent.replaceChild(div, bullet);
+            }
+          });
+          
+          // Remover classes que podem afetar o layout
           const roundedElements = elementsToPdf.querySelectorAll('.rounded, .rounded-lg, .rounded-md');
           roundedElements.forEach(el => {
             (el as HTMLElement).style.borderRadius = '0';
