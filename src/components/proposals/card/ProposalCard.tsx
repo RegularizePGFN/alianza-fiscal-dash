@@ -1,10 +1,11 @@
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ExtractedData } from "@/lib/types/proposals";
+import { ExtractedData, CompanyData } from "@/lib/types/proposals";
 import { fetchCnpjData } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { AlertTriangle } from 'lucide-react';
 import ProposalHeader from './ProposalHeader';
 import ClientSection from './ClientSection';
 import NegotiationSection from './NegotiationSection';
@@ -18,18 +19,18 @@ interface ProposalCardProps {
   imageUrl?: string;
 }
 
-interface CompanyInfo {
-  name?: string;
-  phones?: string[];
-  emails?: string[];
-  businessActivity?: string;
-}
-
 const ProposalCard = ({ data }: ProposalCardProps) => {
   const { toast } = useToast();
   const proposalRef = useRef<HTMLDivElement>(null);
   const [isSearchingCnpj, setIsSearchingCnpj] = useState<boolean>(false);
-  const [companyInfo, setCompanyInfo] = useState<CompanyInfo | undefined>();
+  const [companyData, setCompanyData] = useState<CompanyData | null>(null);
+  
+  // Auto-search CNPJ when component mounts
+  useEffect(() => {
+    if (data.cnpj && !companyData) {
+      handleSearchCnpj();
+    }
+  }, [data.cnpj]);
   
   const printProposal = () => {
     window.print();
@@ -51,25 +52,7 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
       const result = await fetchCnpjData(data.cnpj);
       
       if (result) {
-        const formattedPhones = result.phones ? 
-          result.phones.map(phone => `(${phone.area}) ${phone.number}`) : 
-          [];
-          
-        let businessActivity = '';
-        if (result.sideActivities && result.sideActivities.length > 0) {
-          const activity = result.sideActivities[0];
-          businessActivity = `${activity.id} | ${activity.text}`;
-        } else if (result.mainActivity) {
-          businessActivity = `${result.mainActivity.id} | ${result.mainActivity.text}`;
-        }
-        
-        setCompanyInfo({
-          name: result.company.name,
-          phones: formattedPhones,
-          emails: result.emails?.map(email => email.address),
-          businessActivity: businessActivity
-        });
-        
+        setCompanyData(result);
         toast({
           title: "Dados obtidos com sucesso",
           description: `Informações de ${result.company.name} carregadas.`
@@ -96,10 +79,44 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
           cnpj={data.cnpj || ''} 
           debtNumber={data.debtNumber || ''}
           businessActivity={data.businessActivity}
-          companyInfo={companyInfo}
+          companyData={companyData}
           onSearchCnpj={handleSearchCnpj}
           isSearching={isSearchingCnpj}
         />
+
+        {/* Alerta sobre consequências de não regularizar a dívida */}
+        <div className="bg-amber-50 border border-amber-200 p-4">
+          <div className="flex items-center mb-2">
+            <AlertTriangle className="text-amber-500 h-5 w-5 mr-2" />
+            <h3 className="font-semibold text-amber-800">Consequências da Dívida Ativa</h3>
+          </div>
+          <p className="text-sm text-amber-700 mb-3">
+            Negociar sua dívida ativa evita complicações jurídicas e financeiras sérias. Ao deixar um débito sem regularização, sua empresa pode sofrer as seguintes penalidades:
+          </p>
+          
+          <div className="space-y-2 text-sm pl-2">
+            <div>
+              <p className="font-medium text-amber-800">Protesto em Cartório</p>
+              <p className="text-amber-700 text-sm">
+                O CNPJ é negativado, dificultando crédito, financiamentos e participação em licitações.
+              </p>
+            </div>
+            
+            <div>
+              <p className="font-medium text-amber-800">Execução Fiscal</p>
+              <p className="text-amber-700 text-sm">
+                A PGFN pode cobrar judicialmente a dívida, com acréscimos legais e risco de penhora.
+              </p>
+            </div>
+            
+            <div>
+              <p className="font-medium text-amber-800">Bloqueio de Contas e Bens</p>
+              <p className="text-amber-700 text-sm">
+                A Justiça pode bloquear valores bancários e bens em nome do devedor (via Sisbajud).
+              </p>
+            </div>
+          </div>
+        </div>
 
         <NegotiationSection 
           totalDebt={data.totalDebt || '0,00'}
@@ -125,6 +142,10 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
         />
 
         <Separator className="my-6" />
+
+        <div className="text-xs text-gray-500 italic mt-8 pt-2 border-t border-gray-200">
+          Embora a dívida tenha prazo de prescrição, esse prazo é suspenso ou interrompido com o ajuizamento, mantendo o débito em aberto por tempo indeterminado.
+        </div>
 
         <ActionButtons 
           onPrint={printProposal} 

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { CardHeader, CardTitle } from "@/components/ui/card";
+import { CardHeader } from "@/components/ui/card";
 import { FileText, Percent } from "lucide-react";
 
 interface ProposalHeaderProps {
@@ -17,12 +17,12 @@ const ProposalHeader = ({ discountedValue }: ProposalHeaderProps) => {
             alt="Logo" 
             className="h-14 w-auto"
           />
-          <CardTitle className="text-2xl font-bold text-white">
+          <h2 className="text-2xl font-bold text-white">
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
               Proposta de Parcelamento PGFN
             </div>
-          </CardTitle>
+          </h2>
         </div>
         <div className="bg-af-green-500 text-white text-sm py-1.5 px-3">
           <Percent className="inline-block mr-2 align-text-bottom h-4 w-4" /> 

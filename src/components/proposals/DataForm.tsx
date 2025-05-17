@@ -1,12 +1,13 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Loader2, Search } from "lucide-react";
-import { ExtractedData } from '@/lib/types/proposals';
+import { FileText, Loader2, Search, AlertTriangle } from "lucide-react";
+import { ExtractedData, CompanyData } from '@/lib/types/proposals';
 import { fetchCnpjData } from '@/lib/api';
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 interface DataFormProps {
   formData: Partial<ExtractedData>;
@@ -17,6 +18,14 @@ interface DataFormProps {
 
 const DataForm = ({ formData, processing, onInputChange, onGenerateProposal }: DataFormProps) => {
   const [isSearchingCnpj, setIsSearchingCnpj] = useState<boolean>(false);
+  const [companyData, setCompanyData] = useState<CompanyData | null>(null);
+  
+  // Auto-search CNPJ when the component loads and CNPJ is available
+  useEffect(() => {
+    if (formData.cnpj && !companyData && !isSearchingCnpj) {
+      handleSearchCnpj();
+    }
+  }, [formData.cnpj]);
   
   const handleSearchCnpj = async () => {
     if (!formData.cnpj) return;
@@ -27,6 +36,8 @@ const DataForm = ({ formData, processing, onInputChange, onGenerateProposal }: D
       const result = await fetchCnpjData(formData.cnpj);
       
       if (result) {
+        setCompanyData(result);
+        
         // Update form data with company information
         if (result.company?.name) {
           const event = {
@@ -35,7 +46,6 @@ const DataForm = ({ formData, processing, onInputChange, onGenerateProposal }: D
               value: result.company.name
             }
           } as React.ChangeEvent<HTMLInputElement>;
-          
           onInputChange(event);
         }
         
@@ -47,7 +57,6 @@ const DataForm = ({ formData, processing, onInputChange, onGenerateProposal }: D
               value: result.emails[0].address
             }
           } as React.ChangeEvent<HTMLInputElement>;
-          
           onInputChange(emailEvent);
         }
         
@@ -60,7 +69,6 @@ const DataForm = ({ formData, processing, onInputChange, onGenerateProposal }: D
               value: `${phone.area}${phone.number}`
             }
           } as React.ChangeEvent<HTMLInputElement>;
-          
           onInputChange(phoneEvent);
         }
         
@@ -73,7 +81,6 @@ const DataForm = ({ formData, processing, onInputChange, onGenerateProposal }: D
               value: `${activity.id} | ${activity.text}`
             }
           } as React.ChangeEvent<HTMLInputElement>;
-          
           onInputChange(activityEvent);
         } else if (result.mainActivity) {
           const activityEvent = {
@@ -82,7 +89,6 @@ const DataForm = ({ formData, processing, onInputChange, onGenerateProposal }: D
               value: `${result.mainActivity.id} | ${result.mainActivity.text}`
             }
           } as React.ChangeEvent<HTMLInputElement>;
-          
           onInputChange(activityEvent);
         }
       }
@@ -91,6 +97,21 @@ const DataForm = ({ formData, processing, onInputChange, onGenerateProposal }: D
     } finally {
       setIsSearchingCnpj(false);
     }
+  };
+  
+  const formatAddress = (address?: CompanyData['address']): string => {
+    if (!address) return "";
+    
+    const parts = [
+      address.street,
+      address.number ? `Nº ${address.number}` : "",
+      address.details || "",
+      address.district ? `${address.district}` : "",
+      address.city && address.state ? `${address.city}/${address.state}` : "",
+      address.zip ? `CEP: ${address.zip}` : ""
+    ];
+    
+    return parts.filter(part => part).join(", ");
   };
   
   return (
@@ -108,6 +129,107 @@ const DataForm = ({ formData, processing, onInputChange, onGenerateProposal }: D
           </div>
         ) : (
           <div className="grid gap-6">
+            {companyData && (
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded">
+                <h3 className="font-medium text-base mb-3 text-af-blue-800 border-b pb-2">Dados do CNPJ</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="font-medium text-af-blue-700">CNPJ:</p>
+                    <p>{companyData.taxId}</p>
+                  </div>
+                  
+                  <div>
+                    <p className="font-medium text-af-blue-700">Nome/Razão Social:</p>
+                    <p>{companyData.company?.name}</p>
+                  </div>
+                  
+                  {companyData.status && (
+                    <div>
+                      <p className="font-medium text-af-blue-700">Situação:</p>
+                      <p className={`${companyData.status.text === "Ativa" ? "text-green-600 font-medium" : "text-red-600"}`}>
+                        {companyData.status.text}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {companyData.founded && (
+                    <div>
+                      <p className="font-medium text-af-blue-700">Data de Abertura:</p>
+                      <p>{new Date(companyData.founded).toLocaleDateString('pt-BR')}</p>
+                    </div>
+                  )}
+                  
+                  {companyData.company?.nature && (
+                    <div>
+                      <p className="font-medium text-af-blue-700">Natureza Jurídica:</p>
+                      <p>{companyData.company.nature.text}</p>
+                    </div>
+                  )}
+                  
+                  {companyData.company?.size && (
+                    <div>
+                      <p className="font-medium text-af-blue-700">Porte:</p>
+                      <p>{companyData.company.size.text} ({companyData.company.size.acronym})</p>
+                    </div>
+                  )}
+                  
+                  {companyData.company?.equity !== undefined && (
+                    <div>
+                      <p className="font-medium text-af-blue-700">Capital Social:</p>
+                      <p>R$ {companyData.company.equity.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                    </div>
+                  )}
+                  
+                  {companyData.address && (
+                    <div className="col-span-2">
+                      <p className="font-medium text-af-blue-700">Endereço:</p>
+                      <p>{formatAddress(companyData.address)}</p>
+                    </div>
+                  )}
+                  
+                  {companyData.phones && companyData.phones.length > 0 && (
+                    <div>
+                      <p className="font-medium text-af-blue-700">Telefones:</p>
+                      <ul>
+                        {companyData.phones.map((phone, idx) => (
+                          <li key={idx}>({phone.area}) {phone.number} {phone.type ? `(${phone.type})` : ''}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {companyData.emails && companyData.emails.length > 0 && (
+                    <div>
+                      <p className="font-medium text-af-blue-700">Emails:</p>
+                      <ul>
+                        {companyData.emails.map((email, idx) => (
+                          <li key={idx}>{email.address}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {companyData.mainActivity && (
+                    <div className="col-span-2">
+                      <p className="font-medium text-af-blue-700">Atividade Principal:</p>
+                      <p>{companyData.mainActivity.id} | {companyData.mainActivity.text}</p>
+                    </div>
+                  )}
+                  
+                  {companyData.sideActivities && companyData.sideActivities.length > 0 && (
+                    <div className="col-span-2">
+                      <p className="font-medium text-af-blue-700">Atividades Secundárias:</p>
+                      <ul className="list-disc pl-5">
+                        {companyData.sideActivities.map((activity, idx) => (
+                          <li key={idx}>{activity.id} | {activity.text}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="grid gap-2">
                 <Label htmlFor="cnpj">CNPJ</Label>
@@ -154,6 +276,8 @@ const DataForm = ({ formData, processing, onInputChange, onGenerateProposal }: D
                   value={formData.clientName || ''}
                   onChange={onInputChange}
                   placeholder="Nome da Empresa"
+                  className={companyData ? "bg-slate-50" : ""}
+                  readOnly={!!companyData}
                 />
               </div>
               
@@ -165,6 +289,8 @@ const DataForm = ({ formData, processing, onInputChange, onGenerateProposal }: D
                   value={formData.businessActivity || ''}
                   onChange={onInputChange}
                   placeholder="Código | Descrição da Atividade"
+                  className={companyData ? "bg-slate-50" : ""}
+                  readOnly={!!companyData}
                 />
               </div>
               
@@ -176,6 +302,8 @@ const DataForm = ({ formData, processing, onInputChange, onGenerateProposal }: D
                   value={formData.clientPhone || ''}
                   onChange={onInputChange}
                   placeholder="(00) 00000-0000"
+                  className={companyData?.phones?.length ? "bg-slate-50" : ""}
+                  readOnly={!!companyData?.phones?.length}
                 />
               </div>
               
@@ -187,6 +315,8 @@ const DataForm = ({ formData, processing, onInputChange, onGenerateProposal }: D
                   value={formData.clientEmail || ''}
                   onChange={onInputChange}
                   placeholder="email@exemplo.com"
+                  className={companyData?.emails?.length ? "bg-slate-50" : ""}
+                  readOnly={!!companyData?.emails?.length}
                 />
               </div>
               

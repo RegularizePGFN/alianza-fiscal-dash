@@ -28,6 +28,38 @@ export interface CompanyData {
   taxId: string;
   company: {
     name: string;
+    equity?: number;
+    nature?: {
+      id: number;
+      text: string;
+    };
+    size?: {
+      id: number;
+      acronym: string;
+      text: string;
+    };
+  };
+  alias?: string | null;
+  founded?: string;
+  head?: boolean;
+  statusDate?: string;
+  status?: {
+    id: number;
+    text: string;
+  };
+  address?: {
+    municipality?: number;
+    street?: string;
+    number?: string;
+    details?: string | null;
+    district?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    country?: {
+      id: number;
+      name: string;
+    };
   };
   phones?: {
     area: string;

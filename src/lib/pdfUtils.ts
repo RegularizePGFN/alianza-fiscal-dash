@@ -3,52 +3,62 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { ExtractedData } from './types/proposals';
 
-// Função auxiliar para formatar valores antes de exibir no PDF
-const formatValue = (value: string | undefined): string => {
-  if (!value || value === '0' || value === '0,00') return '-';
-  return value.includes('R$') ? value : `R$ ${value}`;
-};
-
 export async function generateProposalPdf(proposalElement: HTMLElement, data: Partial<ExtractedData>): Promise<void> {
   try {
-    // Aplicar estilos temporários para melhorar PDF
-    const elementsWithBorderRadius = proposalElement.querySelectorAll('.rounded-lg, .rounded-md');
-    const originalStyles: { element: Element; borderRadius: string }[] = [];
+    // Criar uma cópia do elemento para manipular sem afetar a UI original
+    const clonedElement = proposalElement.cloneNode(true) as HTMLElement;
     
-    // Remover bordas arredondadas temporariamente
-    elementsWithBorderRadius.forEach(element => {
-      const computedStyle = window.getComputedStyle(element);
-      originalStyles.push({
-        element,
-        borderRadius: computedStyle.borderRadius
-      });
-      (element as HTMLElement).style.borderRadius = '0';
-    });
+    // Aplicar estilos para impressão no clone
+    const styleElement = document.createElement('style');
+    styleElement.textContent = `
+      .rounded-lg, .rounded-md, .rounded { border-radius: 0 !important; }
+      svg { vertical-align: middle !important; display: inline-block !important; }
+      .mr-1, .mr-2 { margin-right: 6px !important; }
+      .print\\:hidden { display: none !important; }
+      .text-xs { font-size: 10px !important; }
+      .text-sm { font-size: 12px !important; }
+    `;
     
-    // Ajustar alinhamento de ícones temporariamente
-    const iconElements = proposalElement.querySelectorAll('.mr-1, .mr-2');
-    const iconOriginalStyles: { element: Element; marginRight: string; verticalAlign: string }[] = [];
+    clonedElement.appendChild(styleElement);
     
-    iconElements.forEach(element => {
-      const computedStyle = window.getComputedStyle(element);
-      iconOriginalStyles.push({
-        element,
-        marginRight: computedStyle.marginRight,
-        verticalAlign: computedStyle.verticalAlign
-      });
-      (element as HTMLElement).style.marginRight = '8px';
-      (element as HTMLElement).style.verticalAlign = 'middle';
-      (element as HTMLElement).style.display = 'inline-block';
-    });
+    // Adicionar ao DOM temporariamente, mas invisível
+    clonedElement.style.position = 'absolute';
+    clonedElement.style.left = '-9999px';
+    clonedElement.style.top = '-9999px';
+    document.body.appendChild(clonedElement);
     
-    // Capturar o elemento como imagem com melhor qualidade
-    const canvas = await html2canvas(proposalElement, {
-      scale: 3, // Maior qualidade
-      useCORS: true, // Permite imagens cross-origin
-      logging: false, // Desativa logs de debug
+    // Agora que o elemento está no DOM, podemos capturá-lo
+    const canvas = await html2canvas(clonedElement, {
+      scale: 2, // Balancear qualidade e tamanho do arquivo
+      useCORS: true,
       allowTaint: true,
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      logging: false,
+      onclone: (clonedDoc) => {
+        // Ajustes adicionais no clone antes da captura
+        const elementsToPdf = clonedDoc.querySelector('[ref="proposalElement"]') as HTMLElement;
+        if (elementsToPdf) {
+          const icons = elementsToPdf.querySelectorAll('svg');
+          icons.forEach(icon => {
+            icon.style.verticalAlign = 'middle';
+            icon.style.display = 'inline-block';
+          });
+          
+          const roundedElements = elementsToPdf.querySelectorAll('.rounded, .rounded-lg, .rounded-md');
+          roundedElements.forEach(el => {
+            (el as HTMLElement).style.borderRadius = '0';
+          });
+          
+          const printHidden = elementsToPdf.querySelectorAll('.print\\:hidden');
+          printHidden.forEach(el => {
+            (el as HTMLElement).style.display = 'none';
+          });
+        }
+      }
     });
+    
+    // Remover o clone após a captura
+    document.body.removeChild(clonedElement);
     
     const imgData = canvas.toDataURL('image/png');
     
@@ -85,16 +95,6 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     
     // Fazer o download do PDF
     pdf.save(fileName);
-    
-    // Restaurar estilos originais
-    originalStyles.forEach(item => {
-      (item.element as HTMLElement).style.borderRadius = item.borderRadius;
-    });
-    
-    iconOriginalStyles.forEach(item => {
-      (item.element as HTMLElement).style.marginRight = item.marginRight;
-      (item.element as HTMLElement).style.verticalAlign = item.verticalAlign;
-    });
     
     return Promise.resolve();
   } catch (error) {

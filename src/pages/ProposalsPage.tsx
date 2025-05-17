@@ -7,10 +7,11 @@ import AIImageProcessor from "@/components/proposals/AIImageProcessor";
 import DataForm from "@/components/proposals/DataForm";
 import ProposalCard from "@/components/proposals/ProposalCard";
 import ProposalHistory from "@/components/proposals/ProposalHistory";
-import { ExtractedData, Proposal } from "@/lib/types/proposals";
+import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth";
 import { useSaveProposal, useFetchProposals } from "@/hooks/proposals";
+import { fetchCnpjData } from "@/lib/api";
 
 const ProposalsPage = () => {
   const { toast } = useToast();
@@ -25,6 +26,7 @@ const ProposalsPage = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [generatedProposal, setGeneratedProposal] = useState<boolean>(false);
   const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
+  const [companyData, setCompanyData] = useState<CompanyData | null>(null);
 
   // Preencher dados do usuário no formulário
   useEffect(() => {
@@ -37,6 +39,33 @@ const ProposalsPage = () => {
       }));
     }
   }, [user]);
+
+  // Auto fetch CNPJ data when extracted
+  useEffect(() => {
+    const fetchCompanyData = async () => {
+      if (formData.cnpj && activeTab === "data") {
+        const data = await fetchCnpjData(formData.cnpj);
+        if (data) {
+          setCompanyData(data);
+          
+          // Update form with company information
+          setFormData(prev => ({
+            ...prev,
+            clientName: data.company?.name || prev.clientName || '',
+            clientEmail: data.emails?.[0]?.address || prev.clientEmail || '',
+            clientPhone: data.phones?.[0] ? `${data.phones[0].area}${data.phones[0].number}` : prev.clientPhone || '',
+            businessActivity: data.sideActivities?.[0] 
+              ? `${data.sideActivities[0].id} | ${data.sideActivities[0].text}`
+              : data.mainActivity 
+                ? `${data.mainActivity.id} | ${data.mainActivity.text}` 
+                : prev.businessActivity || '',
+          }));
+        }
+      }
+    };
+    
+    fetchCompanyData();
+  }, [formData.cnpj, activeTab]);
 
   const handleProcessComplete = (data: Partial<ExtractedData>, preview: string) => {
     setFormData(prev => ({
@@ -82,6 +111,17 @@ const ProposalsPage = () => {
     setImagePreview(proposal.imageUrl);
     setGeneratedProposal(true);
     setActiveTab("proposal");
+    
+    // Fetch company data for this proposal
+    if (proposal.data.cnpj) {
+      fetchCnpjData(proposal.data.cnpj)
+        .then(data => {
+          if (data) {
+            setCompanyData(data);
+          }
+        })
+        .catch(err => console.error("Error fetching company data:", err));
+    }
   };
 
   const handleDeleteProposal = async (id: string) => {
@@ -93,6 +133,7 @@ const ProposalsPage = () => {
       setGeneratedProposal(false);
       setFormData({});
       setImagePreview(null);
+      setCompanyData(null);
       setActiveTab("upload");
     }
     
@@ -108,6 +149,7 @@ const ProposalsPage = () => {
     setImagePreview(null);
     setGeneratedProposal(false);
     setSelectedProposal(null);
+    setCompanyData(null);
     setActiveTab("upload");
   };
 
