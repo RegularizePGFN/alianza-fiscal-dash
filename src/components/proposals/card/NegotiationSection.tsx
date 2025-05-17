@@ -28,15 +28,15 @@ const NegotiationSection = ({
         Dados da Negociação
       </h3>
       
-      <div className="grid grid-cols-3 gap-1">
-        <div className="bg-white p-1.5 rounded border border-af-blue-100">
+      <div className="grid grid-cols-4 gap-1">
+        <div className="bg-white p-1.5 rounded border border-af-blue-100 col-span-2">
           <span className="font-medium text-af-blue-700 flex items-center text-xs">
             <DollarSign className="mr-0.5 h-3 w-3 flex-shrink-0 text-af-blue-600" />
             Valor Consolidado:
           </span>
           <p className="text-xs">R$ {totalDebt || '-'}</p>
         </div>
-        <div className="bg-white p-1.5 rounded border border-af-blue-100 bg-gradient-to-br from-af-green-50 to-white">
+        <div className="bg-white p-1.5 rounded border border-af-blue-100 col-span-2 bg-gradient-to-br from-af-green-50 to-white">
           <span className="font-medium text-af-green-700 flex items-center text-xs">
             <DollarSign className="mr-0.5 h-3 w-3 flex-shrink-0 text-af-green-600" />
             Valor com Reduções:
@@ -46,35 +46,35 @@ const NegotiationSection = ({
         <div className="bg-white p-1.5 rounded border border-af-blue-100">
           <span className="font-medium text-af-blue-700 flex items-center text-xs">
             <Percent className="mr-0.5 h-3 w-3 flex-shrink-0 text-af-blue-600" />
-            Percentual de Desconto:
+            Desconto:
           </span>
           <p className="text-xs">{discountPercentage || '-'}%</p>
         </div>
         <div className="bg-white p-1.5 rounded border border-af-blue-100">
           <span className="font-medium text-af-blue-700 flex items-center text-xs">
             <Calendar className="mr-0.5 h-3 w-3 flex-shrink-0 text-af-blue-600" />
-            Parcelas da Entrada:
+            Entrada:
           </span>
           <p className="text-xs">{entryInstallments || '1'}x</p>
         </div>
         <div className="bg-white p-1.5 rounded border border-af-blue-100">
           <span className="font-medium text-af-blue-700 flex items-center text-xs">
             <DollarSign className="mr-0.5 h-3 w-3 flex-shrink-0 text-af-blue-600" />
-            Valor da Entrada:
+            Parcelas Entrada:
           </span>
           <p className="text-xs">R$ {entryValue || '-'}</p>
         </div>
         <div className="bg-white p-1.5 rounded border border-af-blue-100">
           <span className="font-medium text-af-blue-700 flex items-center text-xs">
             <Calendar className="mr-0.5 h-3 w-3 flex-shrink-0 text-af-blue-600" />
-            Número de Parcelas:
+            Parcelas:
           </span>
           <p className="text-xs">{installments || '-'}x</p>
         </div>
-        <div className="bg-white p-1.5 rounded border border-af-blue-100">
+        <div className="bg-white p-1.5 rounded border border-af-blue-100 col-span-2">
           <span className="font-medium text-af-blue-700 flex items-center text-xs">
             <DollarSign className="mr-0.5 h-3 w-3 flex-shrink-0 text-af-blue-600" />
-            Valor das Parcelas:
+            Valor Parcelas:
           </span>
           <p className="text-xs">R$ {installmentValue || '-'}</p>
         </div>
