@@ -25,7 +25,7 @@ export const useAiProcessing = () => {
     updateStatus('Enviando imagem para GPT-4o via Supabase...');
     const extractedData = await analyzeImageWithAI(imageUrl, (progress) => {
       updateProgress(progress);
-    });
+    }, updateStatus);
     
     sonnerToast.dismiss();
     console.log('Dados extraídos da imagem:', extractedData);
