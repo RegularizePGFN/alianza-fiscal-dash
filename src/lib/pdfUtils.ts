@@ -12,11 +12,21 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     const styleElement = document.createElement('style');
     styleElement.textContent = `
       .rounded-lg, .rounded-md, .rounded { border-radius: 0 !important; }
-      svg { vertical-align: middle !important; display: inline-block !important; }
-      .mr-1, .mr-2 { margin-right: 6px !important; }
+      svg { 
+        vertical-align: middle !important; 
+        display: inline-block !important;
+        position: relative !important;
+        top: -1px !important;
+      }
+      .mr-1 { margin-right: 4px !important; }
+      .mr-2 { margin-right: 8px !important; }
       .print\\:hidden { display: none !important; }
       .text-xs { font-size: 10px !important; }
       .text-sm { font-size: 12px !important; }
+      .flex-shrink-0 { flex-shrink: 0 !important; }
+      .items-center { align-items: center !important; }
+      .items-start { align-items: flex-start !important; }
+      .flex { display: flex !important; }
     `;
     
     clonedElement.appendChild(styleElement);
@@ -42,6 +52,31 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
           icons.forEach(icon => {
             icon.style.verticalAlign = 'middle';
             icon.style.display = 'inline-block';
+            icon.style.position = 'relative';
+            icon.style.top = '-1px';
+          });
+          
+          // Garantir que os contêineres flex sejam renderizados corretamente
+          const flexContainers = elementsToPdf.querySelectorAll('.flex');
+          flexContainers.forEach(container => {
+            (container as HTMLElement).style.display = 'flex';
+          });
+          
+          // Garantir alinhamento correto
+          const itemsCenter = elementsToPdf.querySelectorAll('.items-center');
+          itemsCenter.forEach(item => {
+            (item as HTMLElement).style.alignItems = 'center';
+          });
+          
+          const itemsStart = elementsToPdf.querySelectorAll('.items-start');
+          itemsStart.forEach(item => {
+            (item as HTMLElement).style.alignItems = 'flex-start';
+          });
+          
+          // Ajustar tamanho dos marcadores no alerta
+          const bullets = elementsToPdf.querySelectorAll('.bg-amber-500.rounded-full');
+          bullets.forEach(bullet => {
+            (bullet as HTMLElement).style.flexShrink = '0';
           });
           
           const roundedElements = elementsToPdf.querySelectorAll('.rounded, .rounded-lg, .rounded-md');
