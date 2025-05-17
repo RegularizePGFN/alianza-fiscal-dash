@@ -1,10 +1,13 @@
 
+import React, { useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Download, Printer, ArrowRight, FileText, DollarSign, Percent, CreditCard, Calendar, CheckSquare, BriefcaseIcon, Info } from "lucide-react";
 import { ExtractedData } from "@/lib/types/proposals";
+import { generateProposalPdf } from "@/lib/pdfUtils";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProposalCardProps {
   data: Partial<ExtractedData>;
@@ -12,9 +15,39 @@ interface ProposalCardProps {
 }
 
 const ProposalCard = ({ data }: ProposalCardProps) => {
-  const generatePdf = () => {
-    // This would normally call a PDF generation library
-    alert("PDF generation functionality would go here");
+  const proposalRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+  
+  const generatePdf = async () => {
+    if (!proposalRef.current) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar o PDF. Tente novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    toast({
+      title: "Processando",
+      description: "Gerando PDF, aguarde um momento...",
+    });
+    
+    try {
+      await generateProposalPdf(proposalRef.current, data);
+      
+      toast({
+        title: "Sucesso",
+        description: "PDF gerado com sucesso!",
+      });
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar o PDF. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   const printProposal = () => {
@@ -22,7 +55,7 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
   };
 
   return (
-    <Card className="border-border max-w-4xl mx-auto shadow-lg bg-gradient-to-br from-af-blue-50 to-white overflow-hidden">
+    <Card ref={proposalRef} className="border-border max-w-4xl mx-auto shadow-lg bg-gradient-to-br from-af-blue-50 to-white overflow-hidden">
       {/* Header with Logo */}
       <CardHeader className="bg-gradient-to-r from-af-blue-600 to-af-blue-800 text-white pb-8">
         <div className="flex justify-between items-start">

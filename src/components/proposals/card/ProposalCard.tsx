@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ExtractedData } from "@/lib/types/proposals";
@@ -17,17 +17,14 @@ interface ProposalCardProps {
 }
 
 const ProposalCard = ({ data }: ProposalCardProps) => {
-  const generatePdf = () => {
-    // This would normally call a PDF generation library
-    alert("PDF generation functionality would go here");
-  };
-
+  const proposalRef = useRef<HTMLDivElement>(null);
+  
   const printProposal = () => {
     window.print();
   };
 
   return (
-    <Card className="border-border max-w-4xl mx-auto shadow-lg bg-gradient-to-br from-af-blue-50 to-white overflow-hidden">
+    <Card ref={proposalRef} className="border-border max-w-4xl mx-auto shadow-lg bg-gradient-to-br from-af-blue-50 to-white overflow-hidden">
       <ProposalHeader discountedValue={data.discountedValue || '0,00'} />
 
       <CardContent className="pt-6 space-y-8 px-8 pb-8">
@@ -67,7 +64,11 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
         <Separator className="my-6" />
 
         {/* Action Buttons */}
-        <ActionButtons onPrint={printProposal} onGeneratePdf={generatePdf} />
+        <ActionButtons 
+          onPrint={printProposal} 
+          proposalData={data}
+          proposalRef={proposalRef}
+        />
       </CardContent>
     </Card>
   );
