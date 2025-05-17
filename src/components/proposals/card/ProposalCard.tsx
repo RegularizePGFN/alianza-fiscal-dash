@@ -108,7 +108,6 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
           installments={data.installments || '0'}
           installmentValue={data.installmentValue || '0,00'}
           entryValue={data.entryValue || '0,00'}
-          entryInstallments={data.entryInstallments || '1'}
         />
 
         <Separator className="my-6" />

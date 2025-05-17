@@ -4,9 +4,10 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Loader2, Search } from "lucide-react";
+import { FileText, Loader2, Search, AlertTriangle } from "lucide-react";
 import { ExtractedData, CompanyData } from '@/lib/types/proposals';
 import { fetchCnpjData } from '@/lib/api';
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 interface DataFormProps {
   formData: Partial<ExtractedData>;
@@ -360,17 +361,6 @@ const DataForm = ({ formData, processing, onInputChange, onGenerateProposal }: D
                   value={formData.entryValue || ''}
                   onChange={onInputChange}
                   placeholder="0,00"
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="entryInstallments">Número de Parcelas da Entrada</Label>
-                <Input 
-                  id="entryInstallments" 
-                  name="entryInstallments"
-                  value={formData.entryInstallments || '1'}
-                  onChange={onInputChange}
-                  placeholder="1"
                 />
               </div>
               
