@@ -3,12 +3,13 @@ import { useState } from 'react';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, ImageIcon } from "lucide-react";
+import { Loader2, ImageIcon, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExtractedData } from '@/lib/types/proposals';
 import { fetchCnpjData } from '@/lib/api';
 import { extractDataFromImage } from '@/lib/services/ocrService';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface AIImageProcessorProps {
   onProcessComplete: (data: Partial<ExtractedData>, preview: string) => void;
@@ -28,11 +29,13 @@ const AIImageProcessor = ({
   const { toast } = useToast();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [processingStatus, setProcessingStatus] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
 
   const processWithOCR = async (imageUrl: string) => {
     setProcessing(true);
     setProgressPercent(0);
     setProcessingStatus('Inicializando OCR...');
+    setError(null);
     
     try {
       // Extract data using OCR
@@ -109,7 +112,6 @@ const AIImageProcessor = ({
         toast({
           title: "Extração parcial",
           description: "Alguns campos não foram reconhecidos. Valores aproximados foram inseridos.",
-          // Change from "warning" to "destructive" since "warning" is not a valid variant
           variant: "destructive",
         });
       }
@@ -123,11 +125,26 @@ const AIImageProcessor = ({
       });
     } catch (error) {
       console.error('Erro na extração por IA:', error);
+      setError(error instanceof Error ? error.message : 'Erro desconhecido no processamento da imagem');
+      
       toast({
         title: "Erro no processamento",
         description: "Não foi possível processar a imagem. Por favor, insira os dados manualmente.",
         variant: "destructive",
       });
+      
+      // Still allow the user to proceed with manual entry
+      onProcessComplete({
+        // Provide empty default values
+        totalDebt: "0,00",
+        discountedValue: "0,00",
+        discountPercentage: "0,00",
+        installments: "0",
+        installmentValue: "0,00",
+        entryValue: "0,00",
+        entryInstallments: "1",
+        feesValue: "0,00"
+      }, imageUrl);
     } finally {
       setProcessing(false);
       setProgressPercent(100);
@@ -171,6 +188,16 @@ const AIImageProcessor = ({
               Faça upload de uma imagem da simulação do parcelamento PGFN (PNG ou JPG).
             </p>
           </div>
+          
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Erro no processamento</AlertTitle>
+              <AlertDescription>
+                {error}. Você pode continuar com a entrada manual de dados.
+              </AlertDescription>
+            </Alert>
+          )}
           
           {processing && (
             <div className="space-y-2">
