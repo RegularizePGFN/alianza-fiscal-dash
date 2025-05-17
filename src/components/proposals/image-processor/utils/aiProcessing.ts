@@ -21,8 +21,8 @@ export const useAiProcessing = () => {
   ): Promise<Partial<ExtractedData>> => {
     sonnerToast.loading('Verificando configurações e preparando análise...');
     
-    // Analisa a imagem usando o modelo de visão da OpenAI
-    updateStatus('Analisando imagem com IA...');
+    // Analisa a imagem usando o modelo de visão da OpenAI via Edge Function
+    updateStatus('Enviando imagem para GPT-4o via Supabase...');
     const extractedData = await analyzeImageWithAI(imageUrl, (progress) => {
       updateProgress(progress);
     });

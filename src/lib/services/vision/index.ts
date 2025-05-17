@@ -71,7 +71,8 @@ const getEdgeFunctionUrl = (): string => {
   }
   
   // Se estivermos em produção (Supabase Cloud)
-  return '/functions/analyze-image';
+  // Usando URL com ID do projeto Supabase
+  return 'https://sbxltdbnqixucjoognfj.functions.supabase.co/analyze-image';
 };
 
 /**
@@ -93,7 +94,7 @@ export const analyzeImageWithAI = async (
       throw new Error('Formato de imagem inválido');
     }
     
-    // Prepara o payload para a API da OpenAI
+    // Prepara o payload para a API da OpenAI conforme especificado
     const payload = {
       model: MODEL,
       messages: [
