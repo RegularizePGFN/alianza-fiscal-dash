@@ -76,6 +76,10 @@ export const analyzeImageWithAI = async (
     progressCallback(10);
     const base64Image = imageBase64.split(',')[1];
     
+    if (!base64Image) {
+      throw new Error('Formato de imagem inválido');
+    }
+    
     // Prepara o payload para a API da OpenAI
     const payload = {
       model: MODEL,
@@ -98,23 +102,41 @@ export const analyzeImageWithAI = async (
 
     progressCallback(30);
     
-    // Faz a requisição para a edge function (que será criada)
+    // Faz a requisição para a edge function
     const response = await fetch('/api/analyze-image', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),
+      // Adiciona timeout para a requisição
+      signal: AbortSignal.timeout(60000), // 60 segundos de timeout
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Erro ao analisar imagem');
+      let errorMessage = 'Erro ao analisar imagem';
+      
+      try {
+        const errorData = await response.json();
+        if (errorData && errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (e) {
+        // Se não conseguir parsear o JSON, usa a mensagem padrão
+        console.error('Erro ao parsear resposta de erro:', e);
+      }
+      
+      throw new Error(errorMessage);
     }
 
     progressCallback(70);
     
     const data = await response.json();
+    
+    if (!data.jsonContent) {
+      throw new Error('A IA não retornou dados estruturados');
+    }
+    
     const aiResponse: AIAnalysisResponse = JSON.parse(data.jsonContent);
     
     // Mapeia o resultado da IA para o formato esperado pelo aplicativo

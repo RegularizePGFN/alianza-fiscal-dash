@@ -20,6 +20,8 @@ export const useImageProcessor = ({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [processingStatus, setProcessingStatus] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState<number>(0);
+  const MAX_RETRIES = 1;
 
   const processWithAI = async (imageUrl: string) => {
     setProcessing(true);
@@ -115,12 +117,33 @@ export const useImageProcessor = ({
       });
     } catch (error) {
       console.error('Erro na extração por IA:', error);
-      setError(error instanceof Error ? error.message : 'Erro desconhecido no processamento da imagem');
       
+      // Mensagens de erro mais descritivas
+      let errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Erro desconhecido no processamento da imagem';
+      
+      // Adiciona sugestão em caso de erro
+      if (errorMessage.includes('API da IA') || errorMessage.includes('OpenAI')) {
+        errorMessage = `${errorMessage}. Verifique a chave da API configurada`;
+      } else if (errorMessage.includes('imagem') || errorMessage.includes('format')) {
+        errorMessage = `${errorMessage}. Tente com outra imagem mais clara`;
+      }
+      
+      setError(errorMessage);
+      
+      // Botão de recuo mais claro
       toast({
         title: "Erro no processamento",
         description: "Não foi possível processar a imagem com IA. Por favor, insira os dados manualmente.",
         variant: "destructive",
+        action: retryCount < MAX_RETRIES ? {
+          label: "Tentar novamente",
+          onClick: () => {
+            setRetryCount(prev => prev + 1);
+            processWithAI(imageUrl);
+          }
+        } : undefined
       });
       
       // Ainda permite que o usuário continue com entrada manual
@@ -145,11 +168,24 @@ export const useImageProcessor = ({
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       
+      // Verifica o tamanho do arquivo (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: "Arquivo muito grande",
+          description: "O tamanho máximo permitido é 10MB. Por favor, selecione um arquivo menor.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       // Cria uma URL de prévia
       const reader = new FileReader();
       reader.onloadend = () => {
         const imageUrl = reader.result as string;
         setImagePreview(imageUrl);
+        
+        // Reseta contagem de tentativas
+        setRetryCount(0);
         
         // Processa com IA
         processWithAI(imageUrl);
