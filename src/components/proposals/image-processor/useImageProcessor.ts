@@ -1,5 +1,7 @@
+
 import { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
+import { toast as sonnerToast } from "sonner";
 import { ExtractedData } from '@/lib/types/proposals';
 import { fetchCnpjData } from '@/lib/api';
 import { analyzeImageWithAI } from '@/lib/services/vision';
@@ -22,7 +24,7 @@ export const useImageProcessor = ({
   const [processingStatus, setProcessingStatus] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState<number>(0);
-  const MAX_RETRIES = 1;
+  const MAX_RETRIES = 2;
 
   const processWithAI = async (imageUrl: string) => {
     setProcessing(true);
@@ -31,6 +33,9 @@ export const useImageProcessor = ({
     setError(null);
     
     try {
+      // Verificar se a chave de API está configurada
+      sonnerToast.loading('Verificando configurações e preparando análise...');
+      
       // Analisa a imagem usando o modelo de visão da OpenAI
       setProcessingStatus('Analisando imagem com IA...');
       const extractedData = await analyzeImageWithAI(imageUrl, (progress) => {
@@ -47,6 +52,7 @@ export const useImageProcessor = ({
         }
       });
       
+      sonnerToast.dismiss();
       console.log('Dados extraídos da imagem:', extractedData);
       
       // Automaticamente busca dados do CNPJ se disponível
@@ -117,6 +123,7 @@ export const useImageProcessor = ({
         description: "Dados extraídos com sucesso usando IA avançada!",
       });
     } catch (error) {
+      sonnerToast.dismiss();
       console.error('Erro na extração por IA:', error);
       
       // Mensagens de erro mais descritivas
@@ -125,10 +132,13 @@ export const useImageProcessor = ({
         : 'Erro desconhecido no processamento da imagem';
       
       // Adiciona sugestão em caso de erro
-      if (errorMessage.includes('API da IA') || errorMessage.includes('OpenAI')) {
+      if (errorMessage.includes('API da IA') || errorMessage.includes('OpenAI') || errorMessage.includes('configurada')) {
         errorMessage = `${errorMessage}. Verifique a chave da API configurada`;
+        sonnerToast.error('É necessário configurar a chave da API da OpenAI');
       } else if (errorMessage.includes('imagem') || errorMessage.includes('format')) {
         errorMessage = `${errorMessage}. Tente com outra imagem mais clara`;
+      } else if (errorMessage.includes('timeout') || errorMessage.includes('demorou')) {
+        errorMessage = `A análise da imagem demorou muito tempo. Tente novamente com uma imagem menor ou mais simples.`;
       }
       
       setError(errorMessage);

@@ -102,59 +102,88 @@ export const analyzeImageWithAI = async (
 
     progressCallback(30);
     
-    // Faz a requisição para a edge function
-    const response = await fetch('/api/analyze-image', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-      // Adiciona timeout para a requisição
-      signal: AbortSignal.timeout(60000), // 60 segundos de timeout
-    });
-
-    if (!response.ok) {
-      let errorMessage = 'Erro ao analisar imagem';
+    // Melhor tratamento de erros na requisição
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 segundos timeout
+    
+    console.log('Enviando imagem para análise...');
+    
+    try {
+      const response = await fetch('/api/analyze-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
       
-      try {
-        const errorData = await response.json();
-        if (errorData && errorData.error) {
-          errorMessage = errorData.error;
+      clearTimeout(timeoutId);
+      
+      // Verificar e logar detalhes da resposta
+      console.log('Status da resposta:', response.status);
+      
+      if (!response.ok) {
+        let errorText = '';
+        try {
+          const errorData = await response.json();
+          errorText = errorData.error || 'Erro desconhecido no servidor';
+          console.error('Detalhes do erro:', errorData);
+        } catch (e) {
+          errorText = await response.text() || `Erro do servidor: ${response.status}`;
+          console.error('Resposta bruta de erro:', errorText);
         }
-      } catch (e) {
-        // Se não conseguir parsear o JSON, usa a mensagem padrão
-        console.error('Erro ao parsear resposta de erro:', e);
+        
+        throw new Error(`Erro na análise: ${errorText}`);
       }
       
-      throw new Error(errorMessage);
-    }
+      // Verificar se a resposta tem conteúdo
+      const text = await response.text();
+      if (!text || text.trim() === '') {
+        throw new Error('A resposta está vazia');
+      }
+      
+      // Converter texto para JSON
+      const data = JSON.parse(text);
+      
+      if (!data.jsonContent) {
+        console.error('Resposta sem JSON:', data);
+        throw new Error('A resposta não contém dados estruturados');
+      }
+      
+      progressCallback(70);
+      
+      const aiResponse: AIAnalysisResponse = JSON.parse(data.jsonContent);
+      console.log('Resposta da AI processada com sucesso:', aiResponse);
+      
+      // Mapeia o resultado da IA para o formato esperado pelo aplicativo
+      const extractedData: Partial<ExtractedData> = {
+        cnpj: aiResponse.cnpj || '',
+        debtNumber: aiResponse.numero_processo || '',
+        totalDebt: aiResponse.valor_total_sem_reducao?.replace('R$', '').trim() || '0,00',
+        discountedValue: aiResponse.valor_total_com_reducao?.replace('R$', '').trim() || '0,00',
+        discountPercentage: aiResponse.percentual_de_reducao?.replace('%', '').trim() || '0',
+        entryValue: aiResponse.valor_da_entrada_total?.replace('R$', '').trim() || '0,00',
+        entryInstallments: String(aiResponse.entrada_parcelada?.quantidade_parcelas || 1),
+        installments: String(aiResponse.parcelamento_principal?.quantidade_parcelas || 0),
+        installmentValue: aiResponse.parcelamento_principal?.valor_parcela?.replace('R$', '').trim() || '0,00',
+        feesValue: '0,00' // Não existe no modelo da IA, deixamos valor padrão
+      };
 
-    progressCallback(70);
-    
-    const data = await response.json();
-    
-    if (!data.jsonContent) {
-      throw new Error('A IA não retornou dados estruturados');
+      progressCallback(100);
+      return extractedData;
+      
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      console.error('Erro na requisição para a API:', fetchError);
+      
+      if (fetchError.name === 'AbortError') {
+        throw new Error('A análise da imagem demorou muito tempo e foi cancelada');
+      }
+      
+      throw fetchError;
     }
     
-    const aiResponse: AIAnalysisResponse = JSON.parse(data.jsonContent);
-    
-    // Mapeia o resultado da IA para o formato esperado pelo aplicativo
-    const extractedData: Partial<ExtractedData> = {
-      cnpj: aiResponse.cnpj || '',
-      debtNumber: aiResponse.numero_processo || '',
-      totalDebt: aiResponse.valor_total_sem_reducao?.replace('R$', '').trim() || '0,00',
-      discountedValue: aiResponse.valor_total_com_reducao?.replace('R$', '').trim() || '0,00',
-      discountPercentage: aiResponse.percentual_de_reducao?.replace('%', '').trim() || '0',
-      entryValue: aiResponse.valor_da_entrada_total?.replace('R$', '').trim() || '0,00',
-      entryInstallments: String(aiResponse.entrada_parcelada?.quantidade_parcelas || 1),
-      installments: String(aiResponse.parcelamento_principal?.quantidade_parcelas || 0),
-      installmentValue: aiResponse.parcelamento_principal?.valor_parcela?.replace('R$', '').trim() || '0,00',
-      feesValue: '0,00' // Não existe no modelo da IA, deixamos valor padrão
-    };
-
-    progressCallback(100);
-    return extractedData;
   } catch (error) {
     console.error('Erro na análise da imagem com IA:', error);
     throw error;
