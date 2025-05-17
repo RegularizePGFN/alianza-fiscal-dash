@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -8,22 +9,18 @@ import { RefreshCcw, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProposalsHeader from "./components/ProposalsHeader";
 import ProposalsTabs from "./components/ProposalsTabs";
+
 const ProposalsContainer = () => {
-  const {
-    toast
-  } = useToast();
-  const {
-    user
-  } = useAuth();
-  const {
-    saveProposal
-  } = useSaveProposal();
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const { saveProposal } = useSaveProposal();
   const {
     proposals,
     isLoading: loadingProposals,
     fetchProposals,
     deleteProposal
   } = useFetchProposals();
+  
   const [activeTab, setActiveTab] = useState("upload");
   const [processing, setProcessing] = useState(false);
   const [progressPercent, setProgressPercent] = useState(0);
@@ -54,7 +51,7 @@ const ProposalsContainer = () => {
   // Automatically fetch CNPJ data whenever formData.cnpj changes
   useEffect(() => {
     const fetchCompanyData = async () => {
-      if (formData.cnpj) {
+      if (formData.cnpj && formData.cnpj.length >= 14) {
         setProcessingStatus("Consultando dados do CNPJ...");
         try {
           const data = await fetchCnpjData(formData.cnpj);
@@ -94,11 +91,15 @@ const ProposalsContainer = () => {
           const economyValue = totalDebtValue - discountedValue;
           const feesValue = economyValue * 0.2; // 20% of the savings
 
+          // Format with exactly 2 decimal places
+          const formattedValue = feesValue.toLocaleString('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          });
+
           setFormData(prev => ({
             ...prev,
-            feesValue: feesValue.toLocaleString('pt-BR', {
-              minimumFractionDigits: 2
-            })
+            feesValue: formattedValue
           }));
         }
       } catch (error) {
@@ -106,6 +107,7 @@ const ProposalsContainer = () => {
       }
     }
   }, [formData.totalDebt, formData.discountedValue]);
+  
   const handleProcessComplete = (data: Partial<ExtractedData>, preview: string) => {
     // Calculate creation date and validity date
     const now = new Date();
@@ -117,13 +119,16 @@ const ProposalsContainer = () => {
           const totalDebtValue = parseFloat(data.totalDebt.replace(/\./g, '').replace(',', '.'));
           const discountedValue = parseFloat(data.discountedValue.replace(/\./g, '').replace(',', '.'));
           const economyValue = totalDebtValue - discountedValue;
+          // Format with exactly 2 decimal places
           feesValue = (economyValue * 0.2).toLocaleString('pt-BR', {
-            minimumFractionDigits: 2
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
           });
         } catch (e) {
           console.error("Error calculating fees:", e);
         }
       }
+      
       return {
         ...prev,
         ...data,
@@ -135,25 +140,65 @@ const ProposalsContainer = () => {
         clientEmail: data.clientEmail || user?.email || prev.clientEmail || ''
       };
     });
+    
+    // If we have CNPJ, fetch company data
+    if (data.cnpj) {
+      fetchCnpjData(data.cnpj).then(companyData => {
+        if (companyData) {
+          setCompanyData(companyData);
+          setFormData(prev => ({
+            ...prev,
+            clientName: companyData.company?.name || prev.clientName || '',
+            clientEmail: companyData.emails?.[0]?.address || prev.clientEmail || '',
+            clientPhone: companyData.phones?.[0] ? `${companyData.phones[0].area}${companyData.phones[0].number}` : prev.clientPhone || '',
+            businessActivity: companyData.sideActivities?.[0] ? `${companyData.sideActivities[0].id} | ${companyData.sideActivities[0].text}` : companyData.mainActivity ? `${companyData.mainActivity.id} | ${companyData.mainActivity.text}` : prev.businessActivity || ''
+          }));
+        }
+      }).catch(err => console.error("Error fetching company data:", err));
+    }
+    
     setImagePreview(preview);
     setActiveTab("data");
   };
+  
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const {
-      name,
-      value
-    } = e.target;
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
   };
+  
   const handleGenerateProposal = async () => {
     setGeneratedProposal(true);
 
+    // Ensure fees and other values have proper formatting
+    const processedData = { ...formData };
+    
+    // Format currency values to have exactly 2 decimal places
+    ['feesValue', 'totalDebt', 'discountedValue', 'entryValue', 'installmentValue'].forEach(field => {
+      if (processedData[field as keyof ExtractedData]) {
+        try {
+          const value = processedData[field as keyof ExtractedData] as string;
+          const numValue = parseFloat(value.replace(/\./g, '').replace(',', '.'));
+          
+          if (!isNaN(numValue)) {
+            const formatted = numValue.toLocaleString('pt-BR', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            });
+            
+            processedData[field as keyof ExtractedData] = formatted as any;
+          }
+        } catch (e) {
+          console.error(`Error formatting ${field}:`, e);
+        }
+      }
+    });
+
     // Salvar a proposta no Supabase
-    if (formData) {
-      const proposal = await saveProposal(formData as ExtractedData, imagePreview || undefined);
+    if (processedData) {
+      const proposal = await saveProposal(processedData as ExtractedData, imagePreview || undefined);
       if (proposal) {
         // Em caso de sucesso, atualize a lista de propostas
         fetchProposals();
@@ -166,6 +211,7 @@ const ProposalsContainer = () => {
     }
     setActiveTab("proposal");
   };
+  
   const handleViewProposal = (proposal: Proposal) => {
     setSelectedProposal(proposal);
     setFormData({
@@ -186,6 +232,7 @@ const ProposalsContainer = () => {
       }).catch(err => console.error("Error fetching company data:", err));
     }
   };
+  
   const handleDeleteProposal = async (id: string) => {
     const success = await deleteProposal(id);
 
@@ -200,6 +247,7 @@ const ProposalsContainer = () => {
     }
     return success;
   };
+  
   const handleReset = () => {
     setFormData({
       clientName: user?.name || '',
@@ -212,14 +260,53 @@ const ProposalsContainer = () => {
     setCompanyData(null);
     setActiveTab("upload");
   };
+  
   return <div className="container py-6">
       <div className="flex justify-between items-center mb-6">
         <ProposalsHeader />
-        
-        
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => fetchProposals()}
+            disabled={loadingProposals}
+            className="flex items-center gap-2"
+          >
+            <RefreshCcw className="h-4 w-4" />
+            Atualizar
+          </Button>
+          <Button 
+            onClick={handleReset}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Nova Proposta
+          </Button>
+        </div>
       </div>
       
-      <ProposalsTabs activeTab={activeTab} setActiveTab={setActiveTab} formData={formData} generatedProposal={generatedProposal} processing={processing} setProcessing={setProcessing} progressPercent={progressPercent} setProgressPercent={setProgressPercent} companyData={companyData} imagePreview={imagePreview} selectedProposal={selectedProposal} proposals={proposals} loadingProposals={loadingProposals} onInputChange={handleInputChange} onGenerateProposal={handleGenerateProposal} onViewProposal={handleViewProposal} onDeleteProposal={handleDeleteProposal} onProcessComplete={handleProcessComplete} onReset={handleReset} setProcessingStatus={setProcessingStatus} />
+      <ProposalsTabs 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        formData={formData} 
+        generatedProposal={generatedProposal} 
+        processing={processing} 
+        setProcessing={setProcessing} 
+        progressPercent={progressPercent} 
+        setProgressPercent={setProgressPercent} 
+        companyData={companyData} 
+        imagePreview={imagePreview} 
+        selectedProposal={selectedProposal} 
+        proposals={proposals} 
+        loadingProposals={loadingProposals} 
+        onInputChange={handleInputChange} 
+        onGenerateProposal={handleGenerateProposal} 
+        onViewProposal={handleViewProposal} 
+        onDeleteProposal={handleDeleteProposal} 
+        onProcessComplete={handleProcessComplete} 
+        onReset={handleReset}
+        setProcessingStatus={setProcessingStatus}
+      />
     </div>;
 };
+
 export default ProposalsContainer;

@@ -1,15 +1,43 @@
 
-import type { Config } from "tailwindcss";
+import { fontFamily } from "tailwindcss/defaultTheme";
+import { type Config } from "tailwindcss";
+
+// Colors
+const colors = {
+  "af-blue": {
+    "50": "#f0f5fd",
+    "100": "#e3ecfa",
+    "200": "#c1d7f7",
+    "300": "#9bc1f2",
+    "400": "#6ea2eb",
+    "500": "#4b84e5",
+    "600": "#3567d8",
+    "700": "#2a54c7",
+    "800": "#274697",
+    "900": "#253e78",
+  },
+  "af-green": {
+    "50": "#effdf5",
+    "100": "#d7fadf",
+    "200": "#b0f4c6",
+    "300": "#77e9a3",
+    "400": "#3ad67b",
+    "500": "#13bd5a",
+    "600": "#0c9847",
+    "700": "#0e773c",
+    "800": "#115e32",
+    "900": "#104c2b",
+  },
+};
 
 const config: Config = {
   darkMode: ["class"],
   content: [
-    "./pages/**/*.{ts,tsx}",
-    "./components/**/*.{ts,tsx}",
-    "./app/**/*.{ts,tsx}",
-    "./src/**/*.{ts,tsx}",
-  ],
-  prefix: "",
+    './pages/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
+    './app/**/*.{ts,tsx}',
+    './src/**/*.{ts,tsx}',
+	],
   theme: {
     container: {
       center: true,
@@ -20,6 +48,7 @@ const config: Config = {
     },
     extend: {
       fontFamily: {
+        sans: ["var(--font-sans)", ...fontFamily.sans],
         nunito: ['Nunito', 'sans-serif'],
         inter: ['Inter', 'sans-serif'],
       },
@@ -57,31 +86,7 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Aliança Fiscal colors
-        "af-blue": {
-          50: "#f0f3ff",
-          100: "#e2e8ff",
-          200: "#c9d4fe",
-          300: "#a7b6fc",
-          400: "#8090f8",
-          500: "#6b74f1",
-          600: "#5466DD", // Main blue
-          700: "#3f43c8",
-          800: "#3639a3",
-          900: "#303381",
-        },
-        "af-green": {
-          50: "#ebfef4",
-          100: "#d0fce5",
-          200: "#a5f8ce",
-          300: "#70efb0",
-          400: "#36e089",
-          500: "#00CC88", // Main green
-          600: "#0da56b",
-          700: "#108254",
-          800: "#146544",
-          900: "#13533a",
-        }
+        ...colors,
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -97,58 +102,14 @@ const config: Config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
-        "progress-fill": {
-          from: { width: "0%" },
-          to: { width: "var(--progress-value)" },
-        },
-        "fade-in": {
-          from: { opacity: "0" },
-          to: { opacity: "1" },
-        },
-        "slide-up": {
-          from: { 
-            transform: "translateY(10px)",
-            opacity: "0"
-          },
-          to: { 
-            transform: "translateY(0)",
-            opacity: "1"
-          }
-        },
-        "pulse": {
-          "0%, 100%": { 
-            opacity: "1" 
-          },
-          "50%": { 
-            opacity: "0.7" 
-          }
-        },
-        "scale-in": {
-          from: { 
-            transform: "scale(0.95)",
-            opacity: "0"
-          },
-          to: { 
-            transform: "scale(1)",
-            opacity: "1"
-          }
-        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "progress-fill": "progress-fill 1s ease-in-out forwards",
-        "fade-in": "fade-in 0.5s ease-out forwards",
-        "slide-up": "slide-up 0.5s ease-out forwards",
-        "pulse": "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        "scale-in": "scale-in 0.3s ease-out forwards",
       },
-      boxShadow: {
-        "soft": "0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)"
-      }
     },
   },
   plugins: [require("tailwindcss-animate")],
-};
+}
 
-export default config;
+export default config

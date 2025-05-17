@@ -107,23 +107,7 @@ const FinancialInfoSection = ({
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="space-y-2">
           <label className="text-sm font-medium">
-            Valor da Entrada
-          </label>
-          <div className="relative">
-            <span className="absolute left-3 top-2.5 text-gray-500">R$</span>
-            <Input
-              placeholder="0,00"
-              className="pl-8"
-              name="entryValue"
-              value={formData.entryValue || ""}
-              onChange={onInputChange}
-              disabled={disabled}
-            />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">
-            Entrada Parcelada Em
+            Número de Parcelas (Entrada)
           </label>
           <div className="relative">
             <Input
@@ -137,6 +121,22 @@ const FinancialInfoSection = ({
               min="1"
             />
             <span className="absolute right-3 top-2.5 text-gray-500">x</span>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium">
+            Valor das Parcelas (Entrada)
+          </label>
+          <div className="relative">
+            <span className="absolute left-3 top-2.5 text-gray-500">R$</span>
+            <Input
+              placeholder="0,00"
+              className="pl-8"
+              name="entryValue"
+              value={formData.entryValue || ""}
+              onChange={onInputChange}
+              disabled={disabled}
+            />
           </div>
         </div>
         <div className="space-y-2">

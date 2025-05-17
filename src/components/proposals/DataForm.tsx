@@ -2,27 +2,76 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Clock, Calendar } from 'lucide-react';
+import { Loader2, Clock, Calendar, Search } from 'lucide-react';
 import { ExtractedData } from "@/lib/types/proposals";
 import ProcessingIndicator from './data-form/ProcessingIndicator';
 import FinancialInfoSection from './data-form/FinancialInfoSection';
 import ClientInfoSection from './data-form/ClientInfoSection';
 import { Input } from '@/components/ui/input';
+import { useCnpjSearch } from './data-form/useCnpjSearch';
 
 interface DataFormProps {
   formData: Partial<ExtractedData>;
   processing: boolean;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onGenerateProposal: () => void;
+  setProcessingStatus: (status: string) => void;
 }
 
 const DataForm = ({ 
   formData, 
   processing, 
   onInputChange, 
-  onGenerateProposal 
+  onGenerateProposal,
+  setProcessingStatus
 }: DataFormProps) => {
   
+  const {
+    isSearchingCnpj,
+    companyData,
+    handleSearchCnpj,
+    setCompanyData
+  } = useCnpjSearch({ 
+    formData, 
+    onInputChange,
+    setProcessingStatus
+  });
+  
+  // Format currency when user inputs values
+  const handleCurrencyInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    
+    // Only process currency fields
+    if (['totalDebt', 'discountedValue', 'entryValue', 'installmentValue', 'feesValue'].includes(name)) {
+      // Remove everything except digits and comma
+      const cleaned = value.replace(/[^\d,]/g, '');
+      
+      // Split by comma to get the decimal part
+      const parts = cleaned.split(',');
+      
+      if (parts.length > 1) {
+        // Ensure maximum of 2 decimal digits
+        const decimals = parts[1].substring(0, 2);
+        const formattedValue = `${parts[0]},${decimals}`;
+        
+        // Create a synthetic event
+        const syntheticEvent = {
+          target: {
+            name,
+            value: formattedValue
+          }
+        } as React.ChangeEvent<HTMLInputElement>;
+        
+        onInputChange(syntheticEvent);
+      } else {
+        onInputChange(e);
+      }
+    } else {
+      // For non-currency fields, just pass through
+      onInputChange(e);
+    }
+  };
+
   return (
     <Card className="shadow-md rounded-xl">
       <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b">
@@ -65,15 +114,15 @@ const DataForm = ({
         
         <ClientInfoSection
           formData={formData}
-          onInputChange={onInputChange}
-          isSearchingCnpj={false}
-          handleSearchCnpj={() => {}}
-          companyData={null}
+          onInputChange={handleCurrencyInput}
+          isSearchingCnpj={isSearchingCnpj}
+          handleSearchCnpj={handleSearchCnpj}
+          companyData={companyData}
         />
         
         <FinancialInfoSection
           formData={formData}
-          onInputChange={onInputChange}
+          onInputChange={handleCurrencyInput}
           disabled={processing}
         />
       </CardContent>

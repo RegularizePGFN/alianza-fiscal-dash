@@ -2,20 +2,37 @@
 import { useState } from 'react';
 import { ExtractedData, CompanyData } from '@/lib/types/proposals';
 import { fetchCnpjData } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 interface UseCnpjSearchProps {
   formData: Partial<ExtractedData>;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  setProcessingStatus?: (status: string) => void; 
 }
 
-export const useCnpjSearch = ({ formData, onInputChange }: UseCnpjSearchProps) => {
+export const useCnpjSearch = ({ 
+  formData, 
+  onInputChange,
+  setProcessingStatus 
+}: UseCnpjSearchProps) => {
   const [isSearchingCnpj, setIsSearchingCnpj] = useState<boolean>(false);
   const [companyData, setCompanyData] = useState<CompanyData | null>(null);
+  const { toast } = useToast();
   
   const handleSearchCnpj = async () => {
-    if (!formData.cnpj) return;
+    if (!formData.cnpj) {
+      toast({
+        title: "CNPJ não informado",
+        description: "Por favor, digite um CNPJ válido para consulta",
+        variant: "destructive"
+      });
+      return;
+    }
     
     setIsSearchingCnpj(true);
+    if (setProcessingStatus) {
+      setProcessingStatus("Consultando dados do CNPJ...");
+    }
     
     try {
       const result = await fetchCnpjData(formData.cnpj);
@@ -76,11 +93,30 @@ export const useCnpjSearch = ({ formData, onInputChange }: UseCnpjSearchProps) =
           } as React.ChangeEvent<HTMLInputElement>;
           onInputChange(activityEvent);
         }
+        
+        toast({
+          title: "Dados obtidos com sucesso",
+          description: `Informações de ${result.company?.name || 'empresa'} preenchidas automaticamente`,
+        });
+      } else {
+        toast({
+          title: "CNPJ não encontrado",
+          description: "Não foi possível encontrar informações para este CNPJ",
+          variant: "destructive"
+        });
       }
     } catch (error) {
       console.error("Erro ao buscar dados do CNPJ:", error);
+      toast({
+        title: "Erro na consulta",
+        description: "Ocorreu um erro ao consultar os dados do CNPJ",
+        variant: "destructive"
+      });
     } finally {
       setIsSearchingCnpj(false);
+      if (setProcessingStatus) {
+        setProcessingStatus("");
+      }
     }
   };
 

@@ -102,6 +102,7 @@ export type Database = {
           debt_number: string | null
           discount_percentage: number | null
           discounted_value: number | null
+          entry_installments: number | null
           entry_value: number | null
           fees_value: number | null
           id: string
@@ -125,6 +126,7 @@ export type Database = {
           debt_number?: string | null
           discount_percentage?: number | null
           discounted_value?: number | null
+          entry_installments?: number | null
           entry_value?: number | null
           fees_value?: number | null
           id?: string
@@ -148,6 +150,7 @@ export type Database = {
           debt_number?: string | null
           discount_percentage?: number | null
           discounted_value?: number | null
+          entry_installments?: number | null
           entry_value?: number | null
           fees_value?: number | null
           id?: string
