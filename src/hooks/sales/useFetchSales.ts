@@ -3,8 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { Sale, UserRole } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { convertToPaymentMethod } from "./saleUtils";
-import { showErrorToast } from "./saleUtils";
+import { convertToPaymentMethod, showErrorToast } from "./saleUtils";
 
 type User = {
   id: string;

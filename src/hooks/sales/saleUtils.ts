@@ -1,6 +1,5 @@
 
 import { PaymentMethod } from "@/lib/types";
-import { toast } from "@/hooks/use-toast";
 
 // Helper function to convert string to PaymentMethod enum
 export const convertToPaymentMethod = (method: string): PaymentMethod => {
