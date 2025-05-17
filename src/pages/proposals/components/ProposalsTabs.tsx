@@ -1,6 +1,5 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 
 import UploadTabContent from "./tabs/UploadTabContent";
@@ -85,6 +84,7 @@ const ProposalsTabs = ({
           processing={processing}
           onInputChange={onInputChange}
           onGenerateProposal={onGenerateProposal}
+          setProcessingStatus={setProcessingStatus}
         />
       </TabsContent>
       

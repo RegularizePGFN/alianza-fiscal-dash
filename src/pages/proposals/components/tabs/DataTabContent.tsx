@@ -7,13 +7,15 @@ interface DataTabContentProps {
   processing: boolean;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onGenerateProposal: () => void;
+  setProcessingStatus: (status: string) => void;
 }
 
 const DataTabContent = ({
   formData,
   processing,
   onInputChange,
-  onGenerateProposal
+  onGenerateProposal,
+  setProcessingStatus
 }: DataTabContentProps) => {
   return (
     <DataForm
@@ -21,6 +23,7 @@ const DataTabContent = ({
       processing={processing}
       onInputChange={onInputChange}
       onGenerateProposal={onGenerateProposal}
+      setProcessingStatus={setProcessingStatus}
     />
   );
 };
