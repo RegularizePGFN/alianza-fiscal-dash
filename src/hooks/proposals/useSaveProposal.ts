@@ -34,6 +34,7 @@ export const useSaveProposal = () => {
         entry_value: parseFloat(data.entryValue.replace('.', '').replace(',', '.')),
         installments: parseInt(data.installments),
         installment_value: parseFloat(data.installmentValue.replace('.', '').replace(',', '.')),
+        entry_installments: parseInt(data.entryInstallments || '1'), // New field
         fees_value: data.feesValue ? parseFloat(data.feesValue.replace('.', '').replace(',', '.')) : null,
         client_name: data.clientName || user.name || '',
         client_email: data.clientEmail || user.email || '',
@@ -69,6 +70,7 @@ export const useSaveProposal = () => {
           entryValue: data.entryValue,
           installments: data.installments,
           installmentValue: data.installmentValue,
+          entryInstallments: data.entryInstallments || '1', // New field
           debtNumber: data.debtNumber,
           feesValue: data.feesValue || '0,00',
           clientName: data.clientName,

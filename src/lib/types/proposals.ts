@@ -9,6 +9,7 @@ export interface ExtractedData {
   installmentValue: string;
   debtNumber: string;
   feesValue: string;
+  entryInstallments: string; // New field for entry payment installments
   clientName?: string;
   clientEmail?: string;
   clientPhone?: string;

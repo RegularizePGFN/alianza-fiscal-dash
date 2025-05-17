@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -214,7 +213,10 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
             <div className="border border-af-blue-100 rounded p-4 hover:bg-af-blue-50 transition-colors">
               <p className="font-medium text-af-blue-700">Parcelado</p>
               <p className="text-lg font-bold">{data.installments || '0'}x de R$ {data.installmentValue || '0,00'}</p>
-              <p className="text-xs text-gray-500">Entrada de R$ {data.entryValue || '0,00'}</p>
+              <p className="text-xs text-gray-500 mt-1 flex items-start">
+                <span className="inline-block w-[5px] h-[5px] rounded-full bg-gray-400 mr-1.5 mt-1.5 flex-shrink-0"></span>
+                <span>Entrada de R$ {data.entryValue || '0,00'} {data.entryInstallments && data.entryInstallments !== '1' ? `(${data.entryInstallments}x)` : ''}</span>
+              </p>
             </div>
           </div>
         </div>
