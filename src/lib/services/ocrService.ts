@@ -179,7 +179,8 @@ export const extractDataFromImage = async (imageUrl: string,
   updateProgress: (progress: number) => void): Promise<Partial<ExtractedData>> => {
   try {
     // Initialize Tesseract worker with Portuguese language
-    const worker = await createWorker('por', 1, {
+    // Fix: Update createWorker call to match the expected parameters
+    const worker = await createWorker({
       logger: (m) => {
         if (m.status === 'recognizing text') {
           updateProgress(Math.floor(m.progress * 100));
@@ -187,6 +188,10 @@ export const extractDataFromImage = async (imageUrl: string,
         console.log(m);
       },
     });
+    
+    // Load Portuguese language data
+    await worker.loadLanguage('por');
+    await worker.initialize('por');
     
     // Preprocess the image for better OCR results
     updateProgress(10);

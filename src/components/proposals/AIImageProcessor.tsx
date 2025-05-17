@@ -109,7 +109,8 @@ const AIImageProcessor = ({
         toast({
           title: "Extração parcial",
           description: "Alguns campos não foram reconhecidos. Valores aproximados foram inseridos.",
-          variant: "warning",
+          // Change from "warning" to "destructive" since "warning" is not a valid variant
+          variant: "destructive",
         });
       }
       
