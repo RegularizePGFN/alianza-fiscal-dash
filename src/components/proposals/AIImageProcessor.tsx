@@ -15,6 +15,7 @@ interface AIImageProcessorProps {
   setProcessing: (isProcessing: boolean) => void;
   progressPercent: number;
   setProgressPercent: (percent: number) => void;
+  updateStatus: (status: string) => void;
 }
 
 const AIImageProcessor = ({
@@ -22,7 +23,8 @@ const AIImageProcessor = ({
   processing,
   setProcessing,
   progressPercent,
-  setProgressPercent
+  setProgressPercent,
+  updateStatus
 }: AIImageProcessorProps) => {
   const {
     imagePreview,
@@ -32,7 +34,8 @@ const AIImageProcessor = ({
   } = useImageProcessor({
     onProcessComplete,
     setProcessing,
-    setProgressPercent
+    setProgressPercent,
+    updateStatus
   });
 
   return (

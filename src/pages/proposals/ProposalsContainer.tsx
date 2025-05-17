@@ -1,19 +1,15 @@
 
 import { useState, useEffect } from "react";
-import { AppLayout } from "@/components/layout/AppLayout";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import AIImageProcessor from "@/components/proposals/AIImageProcessor";
-import DataForm from "@/components/proposals/DataForm";
-import { ProposalCard } from "@/components/proposals/card"; // Updated import
-import ProposalHistory from "@/components/proposals/ProposalHistory";
-import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
-import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth";
+import { useToast } from "@/hooks/use-toast";
+import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 import { useSaveProposal, useFetchProposals } from "@/hooks/proposals";
 import { fetchCnpjData } from "@/lib/api";
 
-const ProposalsPage = () => {
+import ProposalsHeader from "./components/ProposalsHeader";
+import ProposalsTabs from "./components/ProposalsTabs";
+
+const ProposalsContainer = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const { saveProposal } = useSaveProposal();
@@ -27,6 +23,7 @@ const ProposalsPage = () => {
   const [generatedProposal, setGeneratedProposal] = useState<boolean>(false);
   const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
   const [companyData, setCompanyData] = useState<CompanyData | null>(null);
+  const [processingStatus, setProcessingStatus] = useState<string>("");
 
   // Preencher dados do usuário no formulário
   useEffect(() => {
@@ -156,71 +153,33 @@ const ProposalsPage = () => {
   };
 
   return (
-    <AppLayout>
-      <div className="container py-6">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Propostas PGFN</h1>
-            <p className="text-muted-foreground">
-              Crie, gerencie e exporte propostas de parcelamento PGFN.
-            </p>
-          </div>
-        </div>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="upload">Upload de Imagem</TabsTrigger>
-            <TabsTrigger value="data" disabled={!formData.cnpj && !generatedProposal}>Dados Extraídos</TabsTrigger>
-            <TabsTrigger value="proposal" disabled={!generatedProposal}>Proposta Gerada</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="upload" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="md:col-span-2">
-                <AIImageProcessor
-                  onProcessComplete={handleProcessComplete}
-                  processing={processing}
-                  setProcessing={setProcessing}
-                  progressPercent={progressPercent}
-                  setProgressPercent={setProgressPercent}
-                />
-              </div>
-              
-              <div className="md:col-span-1">
-                <ProposalHistory
-                  proposals={proposals}
-                  isLoading={loadingProposals}
-                  onViewProposal={handleViewProposal}
-                  onDeleteProposal={handleDeleteProposal}
-                />
-              </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="data" className="space-y-6">
-            <DataForm
-              formData={formData}
-              processing={processing}
-              onInputChange={handleInputChange}
-              onGenerateProposal={handleGenerateProposal}
-            />
-          </TabsContent>
-          
-          <TabsContent value="proposal" className="space-y-6">
-            <div className="flex justify-end mb-4">
-              <Button variant="outline" onClick={handleReset}>
-                Criar Nova Proposta
-              </Button>
-            </div>
-            <ProposalCard
-              data={formData}
-              imageUrl={imagePreview || undefined}
-            />
-          </TabsContent>
-        </Tabs>
-      </div>
-    </AppLayout>
+    <div className="container py-6">
+      <ProposalsHeader />
+      
+      <ProposalsTabs 
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        formData={formData}
+        generatedProposal={generatedProposal}
+        processing={processing}
+        setProcessing={setProcessing}
+        progressPercent={progressPercent}
+        setProgressPercent={setProgressPercent}
+        companyData={companyData}
+        imagePreview={imagePreview}
+        selectedProposal={selectedProposal}
+        proposals={proposals}
+        loadingProposals={loadingProposals}
+        onInputChange={handleInputChange}
+        onGenerateProposal={handleGenerateProposal}
+        onViewProposal={handleViewProposal}
+        onDeleteProposal={handleDeleteProposal}
+        onProcessComplete={handleProcessComplete}
+        onReset={handleReset}
+        setProcessingStatus={setProcessingStatus}
+      />
+    </div>
   );
 };
 
-export default ProposalsPage;
+export default ProposalsContainer;
