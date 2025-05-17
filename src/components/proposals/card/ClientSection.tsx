@@ -3,9 +3,10 @@ import React from 'react';
 import { BriefcaseIcon } from 'lucide-react';
 import { CompanyData } from "@/lib/types/proposals";
 import {
-  CompanyDataDetails,
+  ClientBasicInfo,
   ClientSimpleInfo,
   ClientManualInfo,
+  CompanyDataDetails,
 } from './client';
 
 interface CompanyInfo {
@@ -26,16 +27,28 @@ interface ClientSectionProps {
 }
 
 const ClientSection = ({ 
+  cnpj, 
+  debtNumber,
   businessActivity,
   companyInfo, 
   companyData,
+  onSearchCnpj,
+  isSearching
 }: ClientSectionProps) => {
   return (
-    <div className="space-y-2">
-      <h3 className="font-semibold text-base border-b border-af-blue-200 pb-1 text-af-blue-800 flex items-center">
-        <BriefcaseIcon className="mr-2 h-4 w-4 flex-shrink-0 text-af-blue-600" />
+    <div className="space-y-4">
+      <h3 className="font-semibold text-lg border-b border-af-blue-200 pb-2 text-af-blue-800 flex items-center">
+        <BriefcaseIcon className="mr-2 h-5 w-5 text-af-blue-600" />
         Dados do Contribuinte
       </h3>
+      
+      <ClientBasicInfo
+        cnpj={cnpj}
+        debtNumber={debtNumber}
+        onSearchCnpj={onSearchCnpj}
+        isSearching={isSearching}
+        hasCompanyData={!!companyData}
+      />
       
       {companyData && <CompanyDataDetails companyData={companyData} />}
       

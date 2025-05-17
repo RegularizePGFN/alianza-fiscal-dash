@@ -71,8 +71,6 @@ const ProposalsPage = () => {
     setFormData(prev => ({
       ...prev,
       ...data,
-      // Make sure entryInstallments is set, defaulting to '1' if not provided
-      entryInstallments: data.entryInstallments || prev.entryInstallments || '1',
       // Garantir que os dados do usuário atual sejam mantidos
       clientName: data.clientName || user?.name || prev.clientName || '',
       clientEmail: data.clientEmail || user?.email || prev.clientEmail || '',

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -360,17 +361,6 @@ const DataForm = ({ formData, processing, onInputChange, onGenerateProposal }: D
                   value={formData.entryValue || ''}
                   onChange={onInputChange}
                   placeholder="0,00"
-                />
-              </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="entryInstallments">Parcelas da Entrada</Label>
-                <Input 
-                  id="entryInstallments" 
-                  name="entryInstallments"
-                  value={formData.entryInstallments || '1'}
-                  onChange={onInputChange}
-                  placeholder="1"
                 />
               </div>
               

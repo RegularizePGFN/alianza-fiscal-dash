@@ -38,53 +38,34 @@ const AIImageProcessor = ({
         await new Promise(resolve => setTimeout(resolve, 200));
       }
       
-      // Using the image from the upload - this is a simulation
-      // In a real implementation, this would use an actual OCR/AI model
-      const sampleData: Partial<ExtractedData> = {
-        cnpj: "23.561.149/0001-45",
-        totalDebt: "3.154,60",
-        discountedValue: "1.656,16",
-        discountPercentage: "47,50",
-        entryValue: "31,54",
-        entryInstallments: "5",
-        installments: "55",
-        installmentValue: "27,24",
-        debtNumber: "41 4 22 017179-92",
-        feesValue: "165,61",
-        clientName: "23.561.149 JOSEMARY DIAS MONTEIRO",
-        clientEmail: "imperiofashion27@gmail.com",
-        clientPhone: "8488999446",
-        businessActivity: "4781400 | Comércio varejista de artigos do vestuário e acessórios"
-      };
-      
-      console.log('Using data from uploaded image:', sampleData);
+      // Generate sample data (in a real app, this would be AI-processed)
+      const sampleData = generateSampleData();
       
       // Automatically fetch CNPJ data if available
       if (sampleData.cnpj) {
         try {
           const cnpjData = await fetchCnpjData(sampleData.cnpj);
           if (cnpjData) {
-            // Only update fields if they were not extracted from the image
-            if (!sampleData.clientName && cnpjData.company?.name) {
+            // Update client information with CNPJ data
+            if (cnpjData.company && cnpjData.company.name) {
               sampleData.clientName = cnpjData.company.name;
             }
             
-            if (!sampleData.clientEmail && cnpjData.emails && cnpjData.emails.length > 0) {
+            if (cnpjData.emails && cnpjData.emails.length > 0) {
               sampleData.clientEmail = cnpjData.emails[0].address;
             }
             
-            if (!sampleData.clientPhone && cnpjData.phones && cnpjData.phones.length > 0) {
+            if (cnpjData.phones && cnpjData.phones.length > 0) {
               const phone = cnpjData.phones[0];
               sampleData.clientPhone = `${phone.area}${phone.number}`;
             }
             
-            if (!sampleData.businessActivity) {
-              if (cnpjData.sideActivities && cnpjData.sideActivities.length > 0) {
-                const activity = cnpjData.sideActivities[0];
-                sampleData.businessActivity = `${activity.id} | ${activity.text}`;
-              } else if (cnpjData.mainActivity) {
-                sampleData.businessActivity = `${cnpjData.mainActivity.id} | ${cnpjData.mainActivity.text}`;
-              }
+            // Add business activity information
+            if (cnpjData.sideActivities && cnpjData.sideActivities.length > 0) {
+              const activity = cnpjData.sideActivities[0];
+              sampleData.businessActivity = `${activity.id} | ${activity.text}`;
+            } else if (cnpjData.mainActivity) {
+              sampleData.businessActivity = `${cnpjData.mainActivity.id} | ${cnpjData.mainActivity.text}`;
             }
 
             toast({
@@ -97,6 +78,8 @@ const AIImageProcessor = ({
           // Continue without CNPJ data if there's an error
         }
       }
+      
+      console.log('AI-generated data:', sampleData);
       
       // Pass the extracted data and preview back to the parent component
       onProcessComplete(sampleData, imageUrl);
@@ -116,6 +99,21 @@ const AIImageProcessor = ({
       setProcessing(false);
       setProgressPercent(100);
     }
+  };
+
+  // Function to generate sample data for demonstration
+  const generateSampleData = (): Partial<ExtractedData> => {
+    return {
+      cnpj: '23.561.149/0001-45',
+      totalDebt: '3.154,60',
+      discountedValue: '1.656,16',
+      discountPercentage: '47,50',
+      entryValue: '31,54',
+      installments: '55',
+      installmentValue: '27,24',
+      debtNumber: '41 4 22 017179-92',
+      feesValue: '165,61',
+    };
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {

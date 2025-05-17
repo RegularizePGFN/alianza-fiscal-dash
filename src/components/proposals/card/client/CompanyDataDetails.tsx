@@ -26,20 +26,20 @@ const CompanyDataDetails = ({ companyData }: CompanyDataDetailsProps) => {
   };
 
   return (
-    <div className="space-y-2">
-      <div className="bg-slate-50 border border-af-blue-100 p-3 space-y-1">
-        <div className="mb-1">
-          <h4 className="font-medium text-af-blue-700 text-sm">
+    <div className="space-y-4">
+      <div className="bg-slate-50 border border-af-blue-100 p-4 space-y-1">
+        <div className="mb-2">
+          <h4 className="font-medium text-af-blue-700">
             {companyData.company.name}
           </h4>
           {companyData.alias && (
-            <p className="text-xs text-gray-600">
+            <p className="text-sm text-gray-600">
               Nome Fantasia: {companyData.alias}
             </p>
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
           {companyData.founded && (
             <div>
               <span className="text-gray-600">Data de abertura:</span>
@@ -55,7 +55,7 @@ const CompanyDataDetails = ({ companyData }: CompanyDataDetailsProps) => {
           )}
           
           {companyData.address && (
-            <div className="col-span-2 mt-1">
+            <div className="col-span-2 mt-2">
               <span className="text-gray-600">Endereço:</span>
               <p>
                 {[
@@ -76,30 +76,40 @@ const CompanyDataDetails = ({ companyData }: CompanyDataDetailsProps) => {
           )}
           
           {companyData.phones && companyData.phones.length > 0 && (
-            <div className="mt-1">
+            <div className="mt-2">
               <span className="text-gray-600">Telefones:</span>
-              <p>
-                {companyData.phones.map((phone, index) => 
-                  `(${phone.area}) ${phone.number}`
-                ).join(', ')}
-              </p>
+              <ul>
+                {companyData.phones.map((phone, index) => (
+                  <li key={index}>
+                    ({phone.area}) {phone.number}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
           
           {companyData.emails && companyData.emails.length > 0 && (
-            <div className="mt-1">
+            <div className="mt-2">
               <span className="text-gray-600">E-mails:</span>
-              <p>{companyData.emails.map(email => email.address).join(', ')}</p>
+              <ul>
+                {companyData.emails.map((email, index) => (
+                  <li key={index}>{email.address}</li>
+                ))}
+              </ul>
             </div>
           )}
         </div>
         
         {companyData.mainActivity && (
-          <div className="mt-2">
-            <span className="font-medium text-af-blue-700 text-xs">Atividade Principal:</span>
-            <p className="text-xs mt-0.5">
+          <div className="mt-4">
+            <span className="font-medium text-af-blue-700">Atividade Principal:</span>
+            <p className="text-sm mt-1">
               {companyData.mainActivity.id} | {companyData.mainActivity.text}
             </p>
+            
+            {companyData.sideActivities && companyData.sideActivities.length > 0 && (
+              <CompanySideActivities sideActivities={companyData.sideActivities} />
+            )}
           </div>
         )}
       </div>
