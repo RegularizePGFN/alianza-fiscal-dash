@@ -3,6 +3,7 @@ import { ExtractedData, Proposal } from "@/lib/types/proposals";
 import AIImageProcessor from "@/components/proposals/AIImageProcessor";
 import ProposalHistory from "@/components/proposals/ProposalHistory";
 import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface UploadTabContentProps {
   processing: boolean;
@@ -44,12 +45,19 @@ const UploadTabContent = ({
       
       <Separator className="my-8" />
       
-      <ProposalHistory
-        proposals={proposals}
-        isLoading={loadingProposals}
-        onViewProposal={onViewProposal}
-        onDeleteProposal={onDeleteProposal}
-      />
+      <Card className="border-af-blue-200 shadow-md rounded-xl bg-white">
+        <CardHeader className="border-b border-af-blue-100 bg-gradient-to-r from-gray-50 to-white">
+          <CardTitle className="text-lg font-semibold">Histórico de Propostas</CardTitle>
+        </CardHeader>
+        <CardContent className="p-4">
+          <ProposalHistory
+            proposals={proposals}
+            isLoading={loadingProposals}
+            onViewProposal={onViewProposal}
+            onDeleteProposal={onDeleteProposal}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 };

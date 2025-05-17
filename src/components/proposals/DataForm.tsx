@@ -30,7 +30,7 @@ const DataForm = ({
       </CardHeader>
       
       <CardContent className="space-y-6 pt-6">
-        {processing && <ProcessingIndicator />}
+        {processing && <ProcessingIndicator processing={processing} />}
         
         {/* Dates Section */}
         {!processing && (
@@ -66,7 +66,9 @@ const DataForm = ({
         <ClientInfoSection
           formData={formData}
           onInputChange={onInputChange}
-          disabled={processing}
+          isSearchingCnpj={false}
+          handleSearchCnpj={() => {}}
+          companyData={null}
         />
         
         <FinancialInfoSection
