@@ -108,7 +108,8 @@ export const analyzeImageWithAI = async (
     console.log('Enviando imagem para análise...');
     
     try {
-      const response = await fetch('/api/analyze-image', {
+      // Importante: Chama diretamente a função Supabase em vez de usar /api/
+      const response = await fetch('/functions/analyze-image', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -136,18 +137,8 @@ export const analyzeImageWithAI = async (
         throw new Error(`Erro na análise: ${errorText}`);
       }
       
-      // Tratar a resposta usando clone para evitar "body already read" error
-      const responseClone = response.clone();
-      let data;
-      
-      try {
-        data = await response.json();
-      } catch (jsonError) {
-        console.error('Erro ao processar JSON da resposta:', jsonError);
-        const text = await responseClone.text();
-        console.log('Resposta como texto:', text);
-        throw new Error('A resposta não está no formato JSON esperado');
-      }
+      // Importante: Usar o método json() diretamente, sem clone para evitar erros de stream
+      const data = await response.json();
       
       if (!data.jsonContent) {
         console.error('Resposta sem JSON:', data);
