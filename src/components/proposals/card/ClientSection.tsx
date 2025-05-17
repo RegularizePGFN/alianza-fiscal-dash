@@ -26,6 +26,8 @@ interface ClientSectionProps {
 }
 
 const ClientSection = ({ 
+  cnpj,
+  debtNumber,
   businessActivity,
   companyInfo, 
   companyData,
@@ -36,6 +38,18 @@ const ClientSection = ({
         <BriefcaseIcon className="mr-2 h-4 w-4 flex-shrink-0 text-af-blue-600" />
         Dados do Contribuinte
       </h3>
+      
+      <div className="grid grid-cols-2 gap-2 mb-2">
+        <div className="bg-white p-2 rounded-md border border-af-blue-100">
+          <span className="text-xs font-medium text-af-blue-700">CNPJ:</span>
+          <p className="text-sm">{cnpj || '-'}</p>
+        </div>
+        
+        <div className="bg-white p-2 rounded-md border border-af-blue-100">
+          <span className="text-xs font-medium text-af-blue-700">Número do Débito:</span>
+          <p className="text-sm">{debtNumber || '-'}</p>
+        </div>
+      </div>
       
       {companyData && <CompanyDataDetails companyData={companyData} />}
       
