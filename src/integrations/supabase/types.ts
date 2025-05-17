@@ -92,6 +92,7 @@ export type Database = {
       }
       proposals: {
         Row: {
+          business_activity: string | null
           client_email: string | null
           client_name: string | null
           client_phone: string | null
@@ -112,6 +113,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          business_activity?: string | null
           client_email?: string | null
           client_name?: string | null
           client_phone?: string | null
@@ -132,6 +134,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          business_activity?: string | null
           client_email?: string | null
           client_name?: string | null
           client_phone?: string | null
