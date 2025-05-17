@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ExtractedData } from '@/lib/types/proposals';
 import { fetchCnpjData } from '@/lib/api';
 import { analyzeImageWithAI } from '@/lib/services/vision';
+import { Button } from "@/components/ui/button";
 
 interface UseImageProcessorProps {
   onProcessComplete: (data: Partial<ExtractedData>, preview: string) => void;
@@ -132,18 +133,23 @@ export const useImageProcessor = ({
       
       setError(errorMessage);
       
-      // Botão de recuo mais claro
+      // Corrige a estrutura do action - removendo a propriedade 'label' e passando o conteúdo como children
       toast({
         title: "Erro no processamento",
         description: "Não foi possível processar a imagem com IA. Por favor, insira os dados manualmente.",
         variant: "destructive",
-        action: retryCount < MAX_RETRIES ? {
-          label: "Tentar novamente",
-          onClick: () => {
-            setRetryCount(prev => prev + 1);
-            processWithAI(imageUrl);
-          }
-        } : undefined
+        action: retryCount < MAX_RETRIES ? (
+          <Button 
+            onClick={() => {
+              setRetryCount(prev => prev + 1);
+              processWithAI(imageUrl);
+            }}
+            size="sm"
+            variant="outline"
+          >
+            Tentar novamente
+          </Button>
+        ) : undefined
       });
       
       // Ainda permite que o usuário continue com entrada manual
