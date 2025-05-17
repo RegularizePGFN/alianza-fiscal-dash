@@ -1,11 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Loader2 } from "lucide-react";
+import { FileText, Loader2, Search } from "lucide-react";
 import { ExtractedData } from '@/lib/types/proposals';
+import { fetchCnpjData } from '@/lib/api';
 
 interface DataFormProps {
   formData: Partial<ExtractedData>;
@@ -15,6 +16,59 @@ interface DataFormProps {
 }
 
 const DataForm = ({ formData, processing, onInputChange, onGenerateProposal }: DataFormProps) => {
+  const [isSearchingCnpj, setIsSearchingCnpj] = useState<boolean>(false);
+  
+  const handleSearchCnpj = async () => {
+    if (!formData.cnpj) return;
+    
+    setIsSearchingCnpj(true);
+    
+    try {
+      const result = await fetchCnpjData(formData.cnpj);
+      
+      if (result) {
+        // Update form data with company information
+        const event = {
+          target: {
+            name: 'clientName',
+            value: result.company.name
+          }
+        } as React.ChangeEvent<HTMLInputElement>;
+        
+        onInputChange(event);
+        
+        // If there's an email, use the first one
+        if (result.emails && result.emails.length > 0) {
+          const emailEvent = {
+            target: {
+              name: 'clientEmail',
+              value: result.emails[0]
+            }
+          } as React.ChangeEvent<HTMLInputElement>;
+          
+          onInputChange(emailEvent);
+        }
+        
+        // If there's a phone, use the first one
+        if (result.phones && result.phones.length > 0) {
+          const phone = result.phones[0];
+          const phoneEvent = {
+            target: {
+              name: 'clientPhone',
+              value: `${phone.areacode}${phone.number}`
+            }
+          } as React.ChangeEvent<HTMLInputElement>;
+          
+          onInputChange(phoneEvent);
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao buscar dados do CNPJ:", error);
+    } finally {
+      setIsSearchingCnpj(false);
+    }
+  };
+  
   return (
     <Card>
       <CardHeader>
@@ -33,13 +87,28 @@ const DataForm = ({ formData, processing, onInputChange, onGenerateProposal }: D
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="grid gap-2">
                 <Label htmlFor="cnpj">CNPJ</Label>
-                <Input 
-                  id="cnpj" 
-                  name="cnpj"
-                  value={formData.cnpj || ''}
-                  onChange={onInputChange}
-                  placeholder="00.000.000/0000-00"
-                />
+                <div className="flex gap-2">
+                  <Input 
+                    id="cnpj" 
+                    name="cnpj"
+                    value={formData.cnpj || ''}
+                    onChange={onInputChange}
+                    placeholder="00.000.000/0000-00"
+                    className="flex-1"
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    disabled={!formData.cnpj || isSearchingCnpj}
+                    onClick={handleSearchCnpj}
+                  >
+                    {isSearchingCnpj ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Search className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
               </div>
               
               <div className="grid gap-2">
@@ -50,6 +119,39 @@ const DataForm = ({ formData, processing, onInputChange, onGenerateProposal }: D
                   value={formData.debtNumber || ''}
                   onChange={onInputChange}
                   placeholder="00 0 00 000000-00"
+                />
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="clientName">Nome/Razão Social</Label>
+                <Input 
+                  id="clientName" 
+                  name="clientName"
+                  value={formData.clientName || ''}
+                  onChange={onInputChange}
+                  placeholder="Nome da Empresa"
+                />
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="clientPhone">Telefone</Label>
+                <Input 
+                  id="clientPhone" 
+                  name="clientPhone"
+                  value={formData.clientPhone || ''}
+                  onChange={onInputChange}
+                  placeholder="(00) 00000-0000"
+                />
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="clientEmail">Email</Label>
+                <Input 
+                  id="clientEmail" 
+                  name="clientEmail"
+                  value={formData.clientEmail || ''}
+                  onChange={onInputChange}
+                  placeholder="email@exemplo.com"
                 />
               </div>
               

@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { FileText, Percent } from "lucide-react";
 
 interface ProposalHeaderProps {
@@ -10,7 +9,7 @@ interface ProposalHeaderProps {
 
 const ProposalHeader = ({ discountedValue }: ProposalHeaderProps) => {
   return (
-    <CardHeader className="bg-gradient-to-r from-af-blue-600 to-af-blue-800 text-white pb-8">
+    <CardHeader className="bg-af-blue-700 text-white pb-8 print:bg-af-blue-700">
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-4">
           <img 
@@ -25,10 +24,10 @@ const ProposalHeader = ({ discountedValue }: ProposalHeaderProps) => {
             </div>
           </CardTitle>
         </div>
-        <Badge className="bg-af-green-500 hover:bg-af-green-400 text-white text-sm py-1.5 px-3">
+        <div className="bg-af-green-500 text-white text-sm py-1.5 px-3 flex items-center">
           <Percent className="mr-1 h-4 w-4" /> 
           Economia de R$ {discountedValue || '0,00'}
-        </Badge>
+        </div>
       </div>
     </CardHeader>
   );

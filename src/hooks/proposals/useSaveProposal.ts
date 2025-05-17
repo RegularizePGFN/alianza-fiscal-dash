@@ -35,9 +35,9 @@ export const useSaveProposal = () => {
         installments: parseInt(data.installments),
         installment_value: parseFloat(data.installmentValue.replace('.', '').replace(',', '.')),
         fees_value: data.feesValue ? parseFloat(data.feesValue.replace('.', '').replace(',', '.')) : null,
-        client_name: user.name || '',
-        client_email: user.email || '',
-        client_phone: '',
+        client_name: data.clientName || user.name || '',
+        client_email: data.clientEmail || user.email || '',
+        client_phone: data.clientPhone || '',
         image_url: imageUrl || null,
         status: 'active'
       };
@@ -70,6 +70,9 @@ export const useSaveProposal = () => {
           installmentValue: data.installmentValue,
           debtNumber: data.debtNumber,
           feesValue: data.feesValue || '0,00',
+          clientName: data.clientName,
+          clientEmail: data.clientEmail,
+          clientPhone: data.clientPhone,
         },
         imageUrl: savedProposal.image_url || '',
       };
