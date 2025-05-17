@@ -38,6 +38,7 @@ export const useSaveProposal = () => {
         client_name: data.clientName || user.name || '',
         client_email: data.clientEmail || user.email || '',
         client_phone: data.clientPhone || '',
+        business_activity: data.businessActivity || '',
         image_url: imageUrl || null,
         status: 'active'
       };
@@ -73,6 +74,7 @@ export const useSaveProposal = () => {
           clientName: data.clientName,
           clientEmail: data.clientEmail,
           clientPhone: data.clientPhone,
+          businessActivity: data.businessActivity,
         },
         imageUrl: savedProposal.image_url || '',
       };

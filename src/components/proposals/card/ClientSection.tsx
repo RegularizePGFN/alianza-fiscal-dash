@@ -1,17 +1,19 @@
 
 import React from 'react';
-import { BriefcaseIcon, Building2, Phone, Mail, Search } from 'lucide-react';
+import { BriefcaseIcon, Building2, Phone, Mail, Search, Briefcase } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
 interface CompanyInfo {
   name?: string;
   phones?: string[];
   emails?: string[];
+  businessActivity?: string;
 }
 
 interface ClientSectionProps {
   cnpj: string;
   debtNumber: string;
+  businessActivity?: string;
   companyInfo?: CompanyInfo;
   onSearchCnpj: () => void;
   isSearching: boolean;
@@ -19,7 +21,8 @@ interface ClientSectionProps {
 
 const ClientSection = ({ 
   cnpj, 
-  debtNumber, 
+  debtNumber,
+  businessActivity,
   companyInfo, 
   onSearchCnpj,
   isSearching
@@ -56,6 +59,16 @@ const ClientSection = ({
           <span className="font-medium text-af-blue-700">Número do Débito:</span>
           <p className="text-lg">{debtNumber || '-'}</p>
         </div>
+        
+        {businessActivity && (
+          <div className="col-span-2 bg-white p-4 border border-af-blue-100">
+            <span className="font-medium text-af-blue-700 flex items-center">
+              <Briefcase className="h-4 w-4 mr-2" />
+              Ramo de Atividade:
+            </span>
+            <p className="text-base mt-1">{businessActivity}</p>
+          </div>
+        )}
         
         {companyInfo && (
           <div className="col-span-2 bg-white p-4 border border-af-blue-100 border-l-4 border-l-af-blue-600">
@@ -95,6 +108,16 @@ const ClientSection = ({
                       <li key={index} className="text-base">{email}</li>
                     ))}
                   </ul>
+                </div>
+              )}
+              
+              {companyInfo.businessActivity && (
+                <div>
+                  <div className="flex items-center text-af-blue-700 font-medium mb-1">
+                    <Briefcase className="h-4 w-4 mr-2" />
+                    Ramo de Atividade:
+                  </div>
+                  <p className="text-base pl-6">{companyInfo.businessActivity}</p>
                 </div>
               )}
             </div>

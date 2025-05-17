@@ -7,10 +7,23 @@ interface CompanyData {
     name: string;
   };
   phones?: {
-    areacode: string;
+    area: string;
     number: string;
+    type?: string;
   }[];
-  emails?: string[];
+  emails?: {
+    address: string;
+    ownership?: string;
+    domain?: string;
+  }[];
+  sideActivities?: {
+    id: number;
+    text: string;
+  }[];
+  mainActivity?: {
+    id: number;
+    text: string;
+  };
 }
 
 export const fetchCnpjData = async (cnpj: string): Promise<CompanyData | null> => {

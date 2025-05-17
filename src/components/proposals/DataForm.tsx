@@ -28,21 +28,23 @@ const DataForm = ({ formData, processing, onInputChange, onGenerateProposal }: D
       
       if (result) {
         // Update form data with company information
-        const event = {
-          target: {
-            name: 'clientName',
-            value: result.company.name
-          }
-        } as React.ChangeEvent<HTMLInputElement>;
-        
-        onInputChange(event);
+        if (result.company?.name) {
+          const event = {
+            target: {
+              name: 'clientName',
+              value: result.company.name
+            }
+          } as React.ChangeEvent<HTMLInputElement>;
+          
+          onInputChange(event);
+        }
         
         // If there's an email, use the first one
         if (result.emails && result.emails.length > 0) {
           const emailEvent = {
             target: {
               name: 'clientEmail',
-              value: result.emails[0]
+              value: result.emails[0].address
             }
           } as React.ChangeEvent<HTMLInputElement>;
           
@@ -55,11 +57,33 @@ const DataForm = ({ formData, processing, onInputChange, onGenerateProposal }: D
           const phoneEvent = {
             target: {
               name: 'clientPhone',
-              value: `${phone.areacode}${phone.number}`
+              value: `${phone.area}${phone.number}`
             }
           } as React.ChangeEvent<HTMLInputElement>;
           
           onInputChange(phoneEvent);
+        }
+        
+        // If there's business activity, use the first side activity or main activity
+        if (result.sideActivities && result.sideActivities.length > 0) {
+          const activity = result.sideActivities[0];
+          const activityEvent = {
+            target: {
+              name: 'businessActivity',
+              value: `${activity.id} | ${activity.text}`
+            }
+          } as React.ChangeEvent<HTMLInputElement>;
+          
+          onInputChange(activityEvent);
+        } else if (result.mainActivity) {
+          const activityEvent = {
+            target: {
+              name: 'businessActivity',
+              value: `${result.mainActivity.id} | ${result.mainActivity.text}`
+            }
+          } as React.ChangeEvent<HTMLInputElement>;
+          
+          onInputChange(activityEvent);
         }
       }
     } catch (error) {
@@ -130,6 +154,17 @@ const DataForm = ({ formData, processing, onInputChange, onGenerateProposal }: D
                   value={formData.clientName || ''}
                   onChange={onInputChange}
                   placeholder="Nome da Empresa"
+                />
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="businessActivity">Ramo de Atividade</Label>
+                <Input 
+                  id="businessActivity" 
+                  name="businessActivity"
+                  value={formData.businessActivity || ''}
+                  onChange={onInputChange}
+                  placeholder="Código | Descrição da Atividade"
                 />
               </div>
               

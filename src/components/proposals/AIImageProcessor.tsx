@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExtractedData } from '@/lib/types/proposals';
+import { fetchCnpjData } from '@/lib/api';
 
 interface AIImageProcessorProps {
   onProcessComplete: (data: Partial<ExtractedData>, preview: string) => void;
@@ -39,6 +40,44 @@ const AIImageProcessor = ({
       
       // Generate sample data (in a real app, this would be AI-processed)
       const sampleData = generateSampleData();
+      
+      // Automatically fetch CNPJ data if available
+      if (sampleData.cnpj) {
+        try {
+          const cnpjData = await fetchCnpjData(sampleData.cnpj);
+          if (cnpjData) {
+            // Update client information with CNPJ data
+            if (cnpjData.company && cnpjData.company.name) {
+              sampleData.clientName = cnpjData.company.name;
+            }
+            
+            if (cnpjData.emails && cnpjData.emails.length > 0) {
+              sampleData.clientEmail = cnpjData.emails[0].address;
+            }
+            
+            if (cnpjData.phones && cnpjData.phones.length > 0) {
+              const phone = cnpjData.phones[0];
+              sampleData.clientPhone = `${phone.area}${phone.number}`;
+            }
+            
+            // Add business activity information
+            if (cnpjData.sideActivities && cnpjData.sideActivities.length > 0) {
+              const activity = cnpjData.sideActivities[0];
+              sampleData.businessActivity = `${activity.id} | ${activity.text}`;
+            } else if (cnpjData.mainActivity) {
+              sampleData.businessActivity = `${cnpjData.mainActivity.id} | ${cnpjData.mainActivity.text}`;
+            }
+
+            toast({
+              title: "Dados da Empresa",
+              description: "Informações do CNPJ foram adicionadas automaticamente!",
+            });
+          }
+        } catch (error) {
+          console.error('Erro ao buscar dados do CNPJ:', error);
+          // Continue without CNPJ data if there's an error
+        }
+      }
       
       console.log('AI-generated data:', sampleData);
       

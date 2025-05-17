@@ -27,16 +27,18 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     
     // Ajustar alinhamento de ícones temporariamente
     const iconElements = proposalElement.querySelectorAll('.mr-1, .mr-2');
-    const iconOriginalStyles: { element: Element; marginRight: string }[] = [];
+    const iconOriginalStyles: { element: Element; marginRight: string; verticalAlign: string }[] = [];
     
     iconElements.forEach(element => {
       const computedStyle = window.getComputedStyle(element);
       iconOriginalStyles.push({
         element,
-        marginRight: computedStyle.marginRight
+        marginRight: computedStyle.marginRight,
+        verticalAlign: computedStyle.verticalAlign
       });
       (element as HTMLElement).style.marginRight = '8px';
       (element as HTMLElement).style.verticalAlign = 'middle';
+      (element as HTMLElement).style.display = 'inline-block';
     });
     
     // Capturar o elemento como imagem com melhor qualidade
@@ -91,6 +93,7 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     
     iconOriginalStyles.forEach(item => {
       (item.element as HTMLElement).style.marginRight = item.marginRight;
+      (item.element as HTMLElement).style.verticalAlign = item.verticalAlign;
     });
     
     return Promise.resolve();

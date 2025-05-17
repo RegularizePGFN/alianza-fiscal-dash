@@ -12,6 +12,7 @@ export interface ExtractedData {
   clientName?: string;
   clientEmail?: string;
   clientPhone?: string;
+  businessActivity?: string;
 }
 
 export interface Proposal {

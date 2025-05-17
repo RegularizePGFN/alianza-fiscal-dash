@@ -22,6 +22,7 @@ interface CompanyInfo {
   name?: string;
   phones?: string[];
   emails?: string[];
+  businessActivity?: string;
 }
 
 const ProposalCard = ({ data }: ProposalCardProps) => {
@@ -51,13 +52,22 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
       
       if (result) {
         const formattedPhones = result.phones ? 
-          result.phones.map(phone => `${phone.areacode} ${phone.number}`) : 
+          result.phones.map(phone => `(${phone.area}) ${phone.number}`) : 
           [];
           
+        let businessActivity = '';
+        if (result.sideActivities && result.sideActivities.length > 0) {
+          const activity = result.sideActivities[0];
+          businessActivity = `${activity.id} | ${activity.text}`;
+        } else if (result.mainActivity) {
+          businessActivity = `${result.mainActivity.id} | ${result.mainActivity.text}`;
+        }
+        
         setCompanyInfo({
           name: result.company.name,
           phones: formattedPhones,
-          emails: result.emails
+          emails: result.emails?.map(email => email.address),
+          businessActivity: businessActivity
         });
         
         toast({
@@ -78,13 +88,14 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
   };
 
   return (
-    <Card ref={proposalRef} className="border max-w-4xl mx-auto shadow-lg bg-white overflow-hidden print:shadow-none print:border-none">
+    <Card ref={proposalRef} className="border max-w-4xl mx-auto shadow-lg bg-white print:shadow-none print:border-none">
       <ProposalHeader discountedValue={data.discountedValue || '0,00'} />
 
       <CardContent className="pt-6 space-y-8 px-8 pb-8">
         <ClientSection 
           cnpj={data.cnpj || ''} 
           debtNumber={data.debtNumber || ''}
+          businessActivity={data.businessActivity}
           companyInfo={companyInfo}
           onSearchCnpj={handleSearchCnpj}
           isSearching={isSearchingCnpj}

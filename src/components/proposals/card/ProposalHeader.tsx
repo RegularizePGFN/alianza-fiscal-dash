@@ -24,8 +24,8 @@ const ProposalHeader = ({ discountedValue }: ProposalHeaderProps) => {
             </div>
           </CardTitle>
         </div>
-        <div className="bg-af-green-500 text-white text-sm py-1.5 px-3 flex items-center">
-          <Percent className="mr-1 h-4 w-4" /> 
+        <div className="bg-af-green-500 text-white text-sm py-1.5 px-3">
+          <Percent className="inline-block mr-2 align-text-bottom h-4 w-4" /> 
           Economia de R$ {discountedValue || '0,00'}
         </div>
       </div>
