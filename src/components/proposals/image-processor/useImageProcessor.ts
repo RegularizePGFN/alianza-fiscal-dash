@@ -1,10 +1,10 @@
-
 import { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { ExtractedData } from '@/lib/types/proposals';
 import { fetchCnpjData } from '@/lib/api';
 import { analyzeImageWithAI } from '@/lib/services/vision';
 import { Button } from "@/components/ui/button";
+import * as React from 'react';
 
 interface UseImageProcessorProps {
   onProcessComplete: (data: Partial<ExtractedData>, preview: string) => void;
@@ -133,23 +133,27 @@ export const useImageProcessor = ({
       
       setError(errorMessage);
       
-      // Corrige a estrutura do action - removendo a propriedade 'label' e passando o conteúdo como children
+      // Modificação: Criando o botão sem usar JSX
+      let actionButton;
+      if (retryCount < MAX_RETRIES) {
+        const handleRetry = () => {
+          setRetryCount(prev => prev + 1);
+          processWithAI(imageUrl);
+        };
+        
+        // Cria o elemento Button usando a API do React sem JSX
+        actionButton = React.createElement(Button, {
+          onClick: handleRetry,
+          size: "sm",
+          variant: "outline"
+        }, "Tentar novamente");
+      }
+      
       toast({
         title: "Erro no processamento",
         description: "Não foi possível processar a imagem com IA. Por favor, insira os dados manualmente.",
         variant: "destructive",
-        action: retryCount < MAX_RETRIES ? (
-          <Button 
-            onClick={() => {
-              setRetryCount(prev => prev + 1);
-              processWithAI(imageUrl);
-            }}
-            size="sm"
-            variant="outline"
-          >
-            Tentar novamente
-          </Button>
-        ) : undefined
+        action: actionButton
       });
       
       // Ainda permite que o usuário continue com entrada manual
