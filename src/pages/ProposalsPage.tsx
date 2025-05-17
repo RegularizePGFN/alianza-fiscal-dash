@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -10,10 +10,13 @@ import ProposalHistory from "@/components/proposals/ProposalHistory";
 import { ExtractedData, Proposal } from "@/lib/types/proposals";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth";
+import { useSaveProposal, useFetchProposals } from "@/hooks/proposals";
 
 const ProposalsPage = () => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { saveProposal } = useSaveProposal();
+  const { proposals, isLoading: loadingProposals, fetchProposals, deleteProposal } = useFetchProposals();
 
   const [activeTab, setActiveTab] = useState("upload");
   const [processing, setProcessing] = useState(false);
@@ -21,13 +24,28 @@ const ProposalsPage = () => {
   const [formData, setFormData] = useState<Partial<ExtractedData>>({});
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [generatedProposal, setGeneratedProposal] = useState<boolean>(false);
-  
-  // For history tab example data
-  const [proposals, setProposals] = useState<Proposal[]>([]);
   const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
 
+  // Preencher dados do usuário no formulário
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        clientName: user.name || '',
+        clientEmail: user.email || '',
+        clientPhone: '', // Preenchido pelo usuário se necessário
+      }));
+    }
+  }, [user]);
+
   const handleProcessComplete = (data: Partial<ExtractedData>, preview: string) => {
-    setFormData(data);
+    setFormData(prev => ({
+      ...prev,
+      ...data,
+      // Garantir que os dados do usuário atual sejam mantidos
+      clientName: user?.name || prev.clientName || '',
+      clientEmail: user?.email || prev.clientEmail || '',
+    }));
     setImagePreview(preview);
     setActiveTab("data");
   };
@@ -37,26 +55,23 @@ const ProposalsPage = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleGenerateProposal = () => {
+  const handleGenerateProposal = async () => {
     setGeneratedProposal(true);
     
-    // In a real app, we would save the proposal to a database
-    const newProposal: Proposal = {
-      id: `proposal-${Date.now()}`,
-      userId: user?.id || 'unknown',
-      userName: user?.name || 'Unknown User',
-      createdAt: new Date().toISOString(),
-      data: formData as ExtractedData,
-      imageUrl: imagePreview || '',
-    };
-    
-    // Add to history
-    setProposals(prev => [newProposal, ...prev]);
-    
-    toast({
-      title: "Proposta gerada",
-      description: "Sua proposta foi gerada com sucesso!"
-    });
+    // Salvar a proposta no Supabase
+    if (formData) {
+      const proposal = await saveProposal(formData as ExtractedData, imagePreview || undefined);
+      
+      if (proposal) {
+        // Em caso de sucesso, atualize a lista de propostas
+        fetchProposals();
+        setSelectedProposal(proposal);
+        toast({
+          title: "Proposta gerada",
+          description: "Sua proposta foi gerada e armazenada com sucesso!"
+        });
+      }
+    }
     
     setActiveTab("proposal");
   };
@@ -70,10 +85,10 @@ const ProposalsPage = () => {
   };
 
   const handleDeleteProposal = async (id: string) => {
-    setProposals(prev => prev.filter(p => p.id !== id));
+    const success = await deleteProposal(id);
     
-    // If the deleted proposal was selected, clear it
-    if (selectedProposal?.id === id) {
+    // Se a proposta excluída era a selecionada, limpar o state
+    if (success && selectedProposal?.id === id) {
       setSelectedProposal(null);
       setGeneratedProposal(false);
       setFormData({});
@@ -81,11 +96,15 @@ const ProposalsPage = () => {
       setActiveTab("upload");
     }
     
-    return Promise.resolve(); // Simulate async operation
+    return success;
   };
 
   const handleReset = () => {
-    setFormData({});
+    setFormData({
+      clientName: user?.name || '',
+      clientEmail: user?.email || '',
+      clientPhone: '',
+    });
     setImagePreview(null);
     setGeneratedProposal(false);
     setSelectedProposal(null);
@@ -126,6 +145,7 @@ const ProposalsPage = () => {
               <div className="md:col-span-1">
                 <ProposalHistory
                   proposals={proposals}
+                  isLoading={loadingProposals}
                   onViewProposal={handleViewProposal}
                   onDeleteProposal={handleDeleteProposal}
                 />

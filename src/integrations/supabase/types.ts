@@ -90,6 +90,69 @@ export type Database = {
         }
         Relationships: []
       }
+      proposals: {
+        Row: {
+          client_email: string | null
+          client_name: string | null
+          client_phone: string | null
+          cnpj: string | null
+          created_at: string
+          debt_number: string | null
+          discount_percentage: number | null
+          discounted_value: number | null
+          entry_value: number | null
+          fees_value: number | null
+          id: string
+          image_url: string | null
+          installment_value: number | null
+          installments: number | null
+          status: string | null
+          total_debt: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_email?: string | null
+          client_name?: string | null
+          client_phone?: string | null
+          cnpj?: string | null
+          created_at?: string
+          debt_number?: string | null
+          discount_percentage?: number | null
+          discounted_value?: number | null
+          entry_value?: number | null
+          fees_value?: number | null
+          id?: string
+          image_url?: string | null
+          installment_value?: number | null
+          installments?: number | null
+          status?: string | null
+          total_debt?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_email?: string | null
+          client_name?: string | null
+          client_phone?: string | null
+          cnpj?: string | null
+          created_at?: string
+          debt_number?: string | null
+          discount_percentage?: number | null
+          discounted_value?: number | null
+          entry_value?: number | null
+          fees_value?: number | null
+          id?: string
+          image_url?: string | null
+          installment_value?: number | null
+          installments?: number | null
+          status?: string | null
+          total_debt?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sales: {
         Row: {
           client_document: string

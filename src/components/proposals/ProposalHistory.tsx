@@ -2,29 +2,36 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Eye, FileText, Trash2 } from "lucide-react";
+import { Eye, FileText, Trash2, Loader2 } from "lucide-react";
 import { Proposal } from "@/lib/types/proposals";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/utils";
+import { useAuth } from "@/contexts/auth";
 
 interface ProposalHistoryProps {
   proposals: Proposal[];
+  isLoading?: boolean;
   onViewProposal: (proposal: Proposal) => void;
   onDeleteProposal: (id: string) => void;
 }
 
-const ProposalHistory = ({ proposals, onViewProposal, onDeleteProposal }: ProposalHistoryProps) => {
+const ProposalHistory = ({ proposals, isLoading = false, onViewProposal, onDeleteProposal }: ProposalHistoryProps) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  
+  const isAdmin = user?.role === 'admin';
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     try {
-      await onDeleteProposal(id);
-      toast({
-        title: "Proposta excluída",
-        description: "A proposta foi removida com sucesso.",
-      });
+      const success = await onDeleteProposal(id);
+      if (success) {
+        toast({
+          title: "Proposta excluída",
+          description: "A proposta foi removida com sucesso.",
+        });
+      }
     } catch (error) {
       toast({
         title: "Erro ao excluir",
@@ -35,6 +42,22 @@ const ProposalHistory = ({ proposals, onViewProposal, onDeleteProposal }: Propos
       setDeletingId(null);
     }
   };
+
+  if (isLoading) {
+    return (
+      <Card className="border-border">
+        <CardHeader>
+          <CardTitle className="text-lg font-medium">Histórico de Propostas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="mt-2 text-sm text-muted-foreground">Carregando propostas...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (proposals.length === 0) {
     return (
@@ -83,15 +106,21 @@ const ProposalHistory = ({ proposals, onViewProposal, onDeleteProposal }: Propos
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => handleDelete(proposal.id)}
-                        disabled={deletingId === proposal.id}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {isAdmin && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleDelete(proposal.id)}
+                          disabled={deletingId === proposal.id}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          {deletingId === proposal.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      )}
                     </div>
                   </td>
                 </tr>

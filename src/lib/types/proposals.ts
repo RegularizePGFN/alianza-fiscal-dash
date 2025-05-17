@@ -9,6 +9,9 @@ export interface ExtractedData {
   installmentValue: string;
   debtNumber: string;
   feesValue: string;
+  clientName?: string;
+  clientEmail?: string;
+  clientPhone?: string;
 }
 
 export interface Proposal {
