@@ -61,6 +61,20 @@ interface AIAnalysisResponse {
 }
 
 /**
+ * Detecta se o ambiente é local ou produção para usar a URL correta
+ * @returns URL da função edge
+ */
+const getEdgeFunctionUrl = (): string => {
+  // Se estivermos em localhost (desenvolvimento local)
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return 'http://localhost:54321/functions/v1/analyze-image';
+  }
+  
+  // Se estivermos em produção (Supabase Cloud)
+  return '/functions/analyze-image';
+};
+
+/**
  * Analisa uma imagem usando o modelo de visão da OpenAI
  * 
  * @param imageBase64 - Imagem em formato base64
@@ -107,9 +121,12 @@ export const analyzeImageWithAI = async (
     
     console.log('Enviando imagem para análise...');
     
+    // Obter a URL correta para a função edge
+    const functionUrl = getEdgeFunctionUrl();
+    console.log(`Usando endpoint: ${functionUrl}`);
+    
     try {
-      // Importante: Chama diretamente a função Supabase em vez de usar /api/
-      const response = await fetch('/functions/analyze-image', {
+      const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
