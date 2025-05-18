@@ -6,6 +6,7 @@ import UploadTabContent from "./tabs/UploadTabContent";
 import DataTabContent from "./tabs/DataTabContent";
 import PDFEditorTabContent from "./tabs/PDFEditorTabContent";
 import ProposalTabContent from "./tabs/ProposalTabContent";
+import { ChangeEvent } from "react";
 
 interface ProposalsTabsProps {
   activeTab: string;
@@ -21,7 +22,7 @@ interface ProposalsTabsProps {
   selectedProposal: Proposal | null;
   proposals: Proposal[];
   loadingProposals: boolean;
-  onInputChange: (name: string, value: string) => void;
+  onInputChange: (nameOrEvent: string | ChangeEvent<HTMLInputElement>, value?: string) => void;
   onGenerateProposal: () => void;
   onViewProposal: (proposal: Proposal) => void;
   onDeleteProposal: (id: string) => Promise<boolean>;
@@ -54,14 +55,8 @@ const ProposalsTabs = ({
 }: ProposalsTabsProps) => {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-4 mb-6">
+      <TabsList className="grid w-full grid-cols-2 mb-6">
         <TabsTrigger value="upload">Upload de Imagem</TabsTrigger>
-        <TabsTrigger value="data" disabled={!formData.cnpj && !generatedProposal}>
-          Dados Extraídos
-        </TabsTrigger>
-        <TabsTrigger value="pdf-editor" disabled={!formData.cnpj && !generatedProposal}>
-          Edite o PDF
-        </TabsTrigger>
         <TabsTrigger value="proposal" disabled={!generatedProposal}>
           Proposta Gerada
         </TabsTrigger>
@@ -86,18 +81,15 @@ const ProposalsTabs = ({
         <DataTabContent
           formData={formData}
           processing={processing}
-          onInputChange={onInputChange}
-          onGenerateProposal={() => setActiveTab("pdf-editor")}
-          setProcessingStatus={setProcessingStatus}
-        />
-      </TabsContent>
-
-      <TabsContent value="pdf-editor" className="space-y-6">
-        <PDFEditorTabContent 
-          formData={formData} 
-          onInputChange={onInputChange}
+          onInputChange={(nameOrEvent, value) => {
+            if (typeof nameOrEvent === 'string') {
+              onInputChange(nameOrEvent, value);
+            } else {
+              onInputChange(nameOrEvent);
+            }
+          }}
           onGenerateProposal={onGenerateProposal}
-          imagePreview={imagePreview}
+          setProcessingStatus={setProcessingStatus}
         />
       </TabsContent>
       
