@@ -81,7 +81,13 @@ const ProposalsTabs = ({
         <DataTabContent
           formData={formData}
           processing={processing}
-          onInputChange={onInputChange}
+          onInputChange={(nameOrEvent, value) => {
+            if (typeof nameOrEvent === 'string') {
+              onInputChange(nameOrEvent, value);
+            } else {
+              onInputChange(nameOrEvent);
+            }
+          }}
           onGenerateProposal={onGenerateProposal}
           setProcessingStatus={setProcessingStatus}
         />

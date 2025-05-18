@@ -24,7 +24,10 @@ export function DailySalesTeamCard({ todaySales, currentDate }: DailySalesTeamCa
       </CardHeader>
       <CardContent className="px-4 pb-3 pt-0">
         <DailyResultsProvider>
-          <DailyResultsContent />
+          <DailyResultsContent 
+            todaySales={todaySales}
+            currentDate={currentDate}
+          />
         </DailyResultsProvider>
       </CardContent>
     </Card>

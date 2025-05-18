@@ -21,7 +21,3 @@ export interface SortConfig {
   key: keyof DailySalesperson;
   direction: 'asc' | 'desc';
 }
-
-// Adding new types needed for the DailyResultsContext
-export type SortColumn = keyof DailySalesperson;
-export type SortDirection = 'asc' | 'desc';
