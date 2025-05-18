@@ -19,6 +19,7 @@ export interface ExtractedData {
   templateId?: string; // ID of the selected template for PDF rendering
   templateColors?: string; // JSON string representation of colors
   templateLayout?: string; // JSON string representation of layout
+  showSignature?: string; // Whether to show the specialist's signature ("true" or "false")
 }
 
 export interface Proposal {

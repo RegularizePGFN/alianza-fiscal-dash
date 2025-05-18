@@ -31,10 +31,17 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     // Apply styles for printing to the clone
     const styleElement = document.createElement('style');
     styleElement.textContent = `
+      /* Reset border-radius for print */
       .rounded-lg, .rounded-md, .rounded { border-radius: 0 !important; }
-      svg { display: none !important; } /* Remove all icons */
+      
+      /* Hide SVG icons in print */
+      svg { display: none !important; }
+      
+      /* Set consistent spacing */
       .mr-1, .mr-2 { margin-right: 4px !important; }
       .print\\:hidden { display: none !important; }
+      
+      /* Font size adjustments */
       .text-xs { font-size: 8px !important; }
       .text-sm { font-size: 10px !important; }
       .text-base { font-size: 11px !important; }
@@ -43,7 +50,7 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       .text-2xl { font-size: 14px !important; }
       .text-3xl { font-size: 16px !important; }
       
-      /* More compact spacing */
+      /* Compact spacing */
       .p-1, .p-2, .p-3, .p-4, .p-5, .p-6 { padding: 4px !important; }
       .px-1, .px-2, .px-3, .px-4, .px-5, .px-6 { padding-left: 4px !important; padding-right: 4px !important; }
       .py-1, .py-2, .py-3, .py-4, .py-5, .py-6 { padding-top: 4px !important; padding-bottom: 4px !important; }
@@ -53,8 +60,14 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       .gap-1, .gap-2, .gap-3, .gap-4, .gap-5, .gap-6 { gap: 4px !important; }
       .space-y-1, .space-y-2, .space-y-3, .space-y-4, .space-y-5, .space-y-6 { margin-top: 4px !important; margin-bottom: 4px !important; }
       
+      /* Fix background colors */
       body {
         background-color: ${colors.background} !important;
+      }
+      
+      /* Remove action buttons from PDF */
+      [data-pdf-remove="true"] {
+        display: none !important;
       }
     `;
     
@@ -67,7 +80,13 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     clonedElement.style.width = '210mm'; // A4 width
     document.body.appendChild(clonedElement);
     
-    // Now that the element is in the DOM, we can capture it
+    // Hide action buttons
+    const actionButtons = clonedElement.querySelectorAll('.pdf-action-buttons');
+    actionButtons.forEach(button => {
+      button.setAttribute('data-pdf-remove', 'true');
+    });
+    
+    // Now capture the element
     const canvas = await html2canvas(clonedElement, {
       scale: 2, // Balance quality and file size
       useCORS: true,
@@ -83,7 +102,7 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
           icon.style.display = 'none';
         });
         
-        // Make text smaller
+        // Make text smaller for PDF
         const textElements = clonedDoc.querySelectorAll('p, span, h1, h2, h3, h4, h5, h6');
         textElements.forEach(el => {
           const element = el as HTMLElement;
@@ -127,7 +146,7 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
         });
         
         // Remove action buttons
-        const buttons = clonedDoc.querySelectorAll('button');
+        const buttons = clonedDoc.querySelectorAll('button, [data-pdf-remove="true"]');
         buttons.forEach(button => {
           button.style.display = 'none';
         });
