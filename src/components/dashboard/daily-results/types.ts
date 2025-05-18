@@ -1,22 +1,17 @@
 
-import { Sale } from "@/lib/types";
-
-export type SortColumn = 'name' | 'salesCount' | 'salesAmount';
-export type SortDirection = 'asc' | 'desc';
-
 export interface DailySalesperson {
   id: string;
   name: string;
   salesCount: number;
   salesAmount: number;
+  proposalsCount?: number; // Number of proposals created today
+  feesAmount?: number;     // Total fees from proposals
 }
 
-export interface DailyResultsContextType {
-  sortColumn: SortColumn;
-  sortDirection: SortDirection;
-  handleSort: (column: SortColumn) => void;
+export interface SortConfig {
+  column: SortColumn;
+  direction: SortDirection;
 }
 
-export interface DailyResultsProps {
-  salesData: Sale[];
-}
+export type SortColumn = 'name' | 'salesCount' | 'salesAmount' | 'proposalsCount' | 'feesAmount';
+export type SortDirection = 'asc' | 'desc';

@@ -1,3 +1,4 @@
+
 export interface ExtractedData {
   cnpj: string;
   totalDebt: string;
@@ -20,6 +21,7 @@ export interface ExtractedData {
   templateColors?: string; // JSON string representation of colors
   templateLayout?: string; // JSON string representation of layout
   showSignature?: string; // Whether to show the specialist's signature ("true" or "false")
+  additionalComments?: string; // Additional comments or observations
 }
 
 export interface Proposal {

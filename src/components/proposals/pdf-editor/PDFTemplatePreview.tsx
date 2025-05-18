@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { ExtractedData, PDFTemplate, TemplateColors, TemplateLayout } from '@/lib/types/proposals';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { DollarSign, FileText, Briefcase, CreditCard, CheckSquare, Calendar, Info, Percent, Clock } from 'lucide-react';
+import { DollarSign, FileText, Briefcase, CreditCard, CheckSquare, Calendar, Info, Percent, Clock, MessageSquare } from 'lucide-react';
 
 interface PDFTemplatePreviewProps {
   formData: Partial<ExtractedData>;
@@ -283,7 +283,17 @@ const PDFTemplatePreview = ({ formData, template, imagePreview }: PDFTemplatePre
             </div>
           </div>
         </div>
-      )
+      ),
+      comments: formData.additionalComments ? (
+        <div className="mt-4 mb-4 bg-slate-50 border border-slate-200 p-4 rounded-lg">
+          <h3 className="font-semibold text-sm border-b border-slate-200 pb-2 mb-2 flex items-center"
+              style={{ color: colors.primary }}>
+            <MessageSquare style={{ color: colors.secondary }} className="mr-2 h-4 w-4" />
+            Observações
+          </h3>
+          <p className="text-sm whitespace-pre-line">{formData.additionalComments}</p>
+        </div>
+      ) : null
     };
 
     return (
@@ -316,6 +326,9 @@ const PDFTemplatePreview = ({ formData, template, imagePreview }: PDFTemplatePre
             {sectionComponents[section]}
           </React.Fragment>
         ))}
+        
+        {/* Always show comments at the end if they exist, regardless of layout */}
+        {formData.additionalComments && !layout.sections.includes('comments') && sectionComponents.comments}
         
         <div className="py-3 text-center opacity-70 text-sm">
           Especialista Tributário: {specialistName}

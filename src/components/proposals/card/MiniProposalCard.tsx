@@ -167,6 +167,14 @@ const MiniProposalCard = ({ data, imageUrl }: MiniProposalCardProps) => {
         {layout.sections.includes('fees') && (
           <FeesSection feesValue={data.feesValue || ''} />
         )}
+        
+        {/* Additional comments section */}
+        {data.additionalComments && (
+          <div className="bg-gray-50 border border-gray-200 rounded-md p-3">
+            <h4 className="text-sm font-medium mb-1 text-gray-700">Observações:</h4>
+            <p className="text-sm whitespace-pre-line">{data.additionalComments}</p>
+          </div>
+        )}
 
         <Separator className="my-4" />
         

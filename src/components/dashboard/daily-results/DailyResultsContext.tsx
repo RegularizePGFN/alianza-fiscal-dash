@@ -1,26 +1,46 @@
 
-import { createContext, useContext, useState } from "react";
-import { SortColumn, SortDirection, DailyResultsContextType } from "./types";
+import React, { createContext, useContext, useState } from 'react';
+import { SortColumn, SortConfig, SortDirection } from './types';
 
-const DailyResultsContext = createContext<DailyResultsContextType | undefined>(undefined);
+interface DailyResultsContextValue {
+  sortColumn: SortColumn;
+  sortDirection: SortDirection;
+  sortBy: (column: SortColumn) => void;
+  sortConfig: SortConfig;
+}
 
-export const DailyResultsProvider = ({ children }: { children: React.ReactNode }) => {
-  const [sortColumn, setSortColumn] = useState<SortColumn>('salesAmount');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  
-  const handleSort = (column: SortColumn) => {
-    // If clicking the same column, toggle direction
-    if (sortColumn === column) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      // If clicking a new column, set it as the sort column and default to descending
-      setSortColumn(column);
-      setSortDirection('desc');
-    }
+const DailyResultsContext = createContext<DailyResultsContextValue | undefined>(undefined);
+
+export const DailyResultsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [sortConfig, setSortConfig] = useState<SortConfig>({
+    column: 'salesAmount',
+    direction: 'desc',
+  });
+
+  const sortBy = (column: SortColumn) => {
+    setSortConfig(prev => {
+      if (prev.column === column) {
+        return {
+          column,
+          direction: prev.direction === 'asc' ? 'desc' : 'asc',
+        };
+      }
+      return {
+        column,
+        direction: 'desc',
+      };
+    });
   };
-  
+
+  const value = {
+    sortColumn: sortConfig.column,
+    sortDirection: sortConfig.direction,
+    sortBy,
+    sortConfig,
+  };
+
   return (
-    <DailyResultsContext.Provider value={{ sortColumn, sortDirection, handleSort }}>
+    <DailyResultsContext.Provider value={value}>
       {children}
     </DailyResultsContext.Provider>
   );

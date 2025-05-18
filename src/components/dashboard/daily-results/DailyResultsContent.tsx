@@ -5,6 +5,7 @@ import { Sale } from "@/lib/types";
 import { DailySalesperson } from "./types";
 import { SalespeopleTable } from "./SalespeopleTable";
 import { useDailyResults } from "./DailyResultsContext";
+import { getTodayISO } from "@/lib/utils";
 
 interface DailyResultsContentProps {
   todaySales: Sale[];
@@ -24,35 +25,53 @@ export function DailyResultsContent({ todaySales, currentDate }: DailyResultsCon
           ? a.name.localeCompare(b.name) 
           : b.name.localeCompare(a.name);
       } else {
-        const valueA = a[sortColumn];
-        const valueB = b[sortColumn];
-        return sortDirection === 'asc' 
-          ? (valueA as number) - (valueB as number) 
-          : (valueB as number) - (valueA as number);
+        // Handle cases where properties might be undefined
+        const valueA = a[sortColumn] !== undefined ? a[sortColumn] as number : 0;
+        const valueB = b[sortColumn] !== undefined ? b[sortColumn] as number : 0;
+        
+        return sortDirection === 'asc' ? valueA - valueB : valueB - valueA;
       }
     });
   };
   
   useEffect(() => {
-    // Fetch all salespeople first
-    const fetchAllSalespeople = async () => {
+    // Fetch all data needed for the dashboard
+    const fetchAllData = async () => {
       setLoading(true);
       try {
-        const {
-          data: profilesData,
-          error
-        } = await supabase.from("profiles").select("id, name").eq("role", "vendedor");
-        if (error) {
-          console.error("Error fetching salespeople:", error);
+        // Get today's date in ISO format
+        const today = getTodayISO();
+        
+        // 1. Fetch all salespeople profiles
+        const { data: profilesData, error: profilesError } = await supabase
+          .from("profiles")
+          .select("id, name, role")
+          .eq("role", "vendedor");
+          
+        if (profilesError) {
+          console.error("Error fetching salespeople:", profilesError);
           return;
         }
-
-        // Initialize all salespeople with zero sales
+        
+        // 2. Fetch today's proposals
+        const { data: proposalsData, error: proposalsError } = await supabase
+          .from("proposals")
+          .select("*")
+          .gte("created_at", `${today}T00:00:00`)
+          .lte("created_at", `${today}T23:59:59`);
+          
+        if (proposalsError) {
+          console.error("Error fetching proposals:", proposalsError);
+        }
+        
+        // Initialize all salespeople with zero counts
         const allSalespeople = (profilesData || []).map(profile => ({
           id: profile.id,
           name: profile.name || "Sem nome",
           salesCount: 0,
-          salesAmount: 0
+          salesAmount: 0,
+          proposalsCount: 0,
+          feesAmount: 0
         }));
 
         // Update counts for salespeople who made sales today
@@ -67,25 +86,49 @@ export function DailyResultsContent({ todaySales, currentDate }: DailyResultsCon
               id: sale.salesperson_id,
               name: sale.salesperson_name || "Sem nome",
               salesCount: 1,
-              salesAmount: sale.gross_amount
+              salesAmount: sale.gross_amount,
+              proposalsCount: 0,
+              feesAmount: 0
             });
           }
         });
+        
+        // Update counts for salespeople who created proposals today
+        if (proposalsData) {
+          proposalsData.forEach(proposal => {
+            const existingSalesperson = allSalespeople.find(sp => sp.id === proposal.user_id);
+            if (existingSalesperson) {
+              existingSalesperson.proposalsCount = (existingSalesperson.proposalsCount || 0) + 1;
+              
+              // Add fees if available
+              if (proposal.fees_value) {
+                const feesValue = typeof proposal.fees_value === 'string' 
+                  ? parseFloat(proposal.fees_value.replace(/[^0-9,.-]/g, '').replace(',', '.')) 
+                  : Number(proposal.fees_value);
+                  
+                if (!isNaN(feesValue)) {
+                  existingSalesperson.feesAmount = (existingSalesperson.feesAmount || 0) + feesValue;
+                }
+              }
+            }
+          });
+        }
 
         // Apply initial sort to the data
         setSalespeople(sortData(allSalespeople));
       } catch (error) {
-        console.error("Error processing salespeople data:", error);
+        console.error("Error processing data:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchAllSalespeople();
+    
+    fetchAllData();
   }, [todaySales]);
   
   // Apply sorting whenever sort criteria changes
   useEffect(() => {
-    setSalespeople(sortData(salespeople));
+    setSalespeople(prevSalespeople => sortData(prevSalespeople));
   }, [sortColumn, sortDirection]);
   
   return (

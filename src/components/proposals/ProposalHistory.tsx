@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Eye, FileText, Trash2, Loader2, Search, ArrowUpDown } from "lucide-react";
+import { Eye, FileText, Trash2, Loader2, Search, ArrowUpDown, User } from "lucide-react";
 import { Proposal } from "@/lib/types/proposals";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate, formatCurrency } from "@/lib/utils";
@@ -85,7 +85,8 @@ const ProposalHistory = ({ proposals, isLoading = false, onViewProposal, onDelet
     return (
       proposal.data.cnpj?.toLowerCase().includes(searchLower) ||
       proposal.data.clientName?.toLowerCase().includes(searchLower) ||
-      proposal.id.toLowerCase().includes(searchLower)
+      proposal.id.toLowerCase().includes(searchLower) ||
+      proposal.userName.toLowerCase().includes(searchLower)
     );
   });
 
@@ -101,6 +102,9 @@ const ProposalHistory = ({ proposals, isLoading = false, onViewProposal, onDelet
       } else if (sortConfig.key === 'clientName') {
         aVal = a.data.clientName || '';
         bVal = b.data.clientName || '';
+      } else if (sortConfig.key === 'userName') {
+        aVal = a.userName || '';
+        bVal = b.userName || '';
       } else if (sortConfig.key === 'totalDebt') {
         aVal = parseFloat((a.data.totalDebt || '0').replace(/[^\d,-]/g, '').replace(',', '.'));
         bVal = parseFloat((b.data.totalDebt || '0').replace(/[^\d,-]/g, '').replace(',', '.'));
@@ -177,7 +181,7 @@ const ProposalHistory = ({ proposals, isLoading = false, onViewProposal, onDelet
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por CNPJ, nome ou número da proposta..."
+              placeholder="Buscar por CNPJ, nome, número da proposta ou usuário..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -208,6 +212,16 @@ const ProposalHistory = ({ proposals, isLoading = false, onViewProposal, onDelet
                 >
                   <div className="flex items-center">
                     Nome / Razão Social
+                    <ArrowUpDown className="ml-1 h-3 w-3" />
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => requestSort('userName')}
+                >
+                  <div className="flex items-center">
+                    <User className="mr-1 h-3 w-3" />
+                    Usuário
                     <ArrowUpDown className="ml-1 h-3 w-3" />
                   </div>
                 </TableHead>
@@ -259,6 +273,7 @@ const ProposalHistory = ({ proposals, isLoading = false, onViewProposal, onDelet
                 >
                   <TableCell className="font-medium">{proposal.data.cnpj}</TableCell>
                   <TableCell>{proposal.data.clientName || '-'}</TableCell>
+                  <TableCell>{proposal.userName}</TableCell>
                   <TableCell className="text-right">R$ {proposal.data.totalDebt}</TableCell>
                   <TableCell className="text-right">R$ {proposal.data.discountedValue}</TableCell>
                   <TableCell className="text-right">{proposal.data.discountPercentage}%</TableCell>

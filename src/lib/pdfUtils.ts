@@ -99,7 +99,9 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
         // Remove all SVG icons to save space
         const icons = clonedDoc.querySelectorAll('svg');
         icons.forEach(icon => {
-          icon.style.display = 'none';
+          if (icon instanceof Element) {
+            icon.style.display = 'none';
+          }
         });
         
         // Make text smaller for PDF
@@ -148,7 +150,9 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
         // Remove action buttons
         const buttons = clonedDoc.querySelectorAll('button, [data-pdf-remove="true"]');
         buttons.forEach(button => {
-          button.style.display = 'none';
+          if (button instanceof HTMLElement) {
+            button.style.display = 'none';
+          }
         });
       }
     });
