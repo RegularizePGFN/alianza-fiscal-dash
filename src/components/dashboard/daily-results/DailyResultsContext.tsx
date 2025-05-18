@@ -1,14 +1,11 @@
 
 import React, { createContext, useContext, useState } from 'react';
-import { SortConfig } from './types';
-
-type SortColumn = keyof SortConfig['key'];
-type SortDirection = SortConfig['direction'];
+import { DailySalesperson, SortConfig } from './types';
 
 interface DailyResultsContextValue {
-  sortColumn: keyof SortConfig['key'];
-  sortDirection: SortDirection;
-  sortBy: (column: keyof SortConfig['key']) => void;
+  sortColumn: keyof DailySalesperson;
+  sortDirection: SortConfig['direction'];
+  sortBy: (column: keyof DailySalesperson) => void;
   sortConfig: SortConfig;
 }
 
@@ -20,7 +17,7 @@ export const DailyResultsProvider: React.FC<{ children: React.ReactNode }> = ({ 
     direction: 'desc',
   });
 
-  const sortBy = (column: keyof SortConfig['key']) => {
+  const sortBy = (column: keyof DailySalesperson) => {
     setSortConfig(prev => {
       if (prev.key === column) {
         return {
@@ -35,7 +32,7 @@ export const DailyResultsProvider: React.FC<{ children: React.ReactNode }> = ({ 
     });
   };
 
-  const value = {
+  const value: DailyResultsContextValue = {
     sortColumn: sortConfig.key,
     sortDirection: sortConfig.direction,
     sortBy,

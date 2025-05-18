@@ -24,16 +24,11 @@ export function DailyResultsContent() {
   
   useEffect(() => {
     if (user) {
-      // Initialize salespeople with the current user and their team members
+      // Initialize salespeople with the current user only
       const initialSalespeople: DailySalesperson[] = [
-        { id: user.id, name: user.name, salesCount: 0, salesAmount: 0 },
-        ...(user.teamMembers || []).map((member: any) => ({
-          id: member.id,
-          name: member.name,
-          salesCount: 0,
-          salesAmount: 0,
-        })),
+        { id: user.id, name: user.name, salesCount: 0, salesAmount: 0 }
       ];
+      
       setSalespeople(initialSalespeople);
       setSalespeopleSortedData(initialSalespeople);
     }
