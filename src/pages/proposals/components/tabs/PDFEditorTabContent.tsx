@@ -197,6 +197,7 @@ const PDFEditorTabContent = ({
                     users={users}
                     selectedSpecialist={formData.specialistName || user?.name || ''}
                     onChange={handleSpecialistChange}
+                    isAdmin={isAdmin}
                   />
                 ) : (
                   <div className="bg-slate-50 p-3 rounded border">
