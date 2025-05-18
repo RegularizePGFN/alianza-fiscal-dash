@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from "@/contexts/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -26,12 +27,13 @@ export function DailyResultsContent() {
       // Initialize salespeople with the current user and their team members
       const initialSalespeople: DailySalesperson[] = [
         { id: user.id, name: user.name, salesCount: 0, salesAmount: 0 },
-        ...(user.teamMembers || []).map((member: any) => ({
+        // Check if user has team members before mapping
+        ...(user.team ? (user.team.map((member: any) => ({
           id: member.id,
           name: member.name,
           salesCount: 0,
           salesAmount: 0,
-        })),
+        }))) : []),
       ];
       setSalespeople(initialSalespeople);
       setSalespeopleSortedData(initialSalespeople);
