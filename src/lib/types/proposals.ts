@@ -17,18 +17,8 @@ export interface ExtractedData {
   validityDate?: string;
   specialistName?: string; // Name of the tax specialist (usually the current user)
   templateId?: string; // ID of the selected template for PDF rendering
-  templateColors?: {
-    primary?: string;
-    secondary?: string;
-    accent?: string;
-    background?: string;
-  };
-  templateLayout?: {
-    sections?: string[]; // Order of sections
-    showHeader?: boolean;
-    showWatermark?: boolean;
-    showLogo?: boolean;
-  };
+  templateColors?: string; // JSON string representation of colors
+  templateLayout?: string; // JSON string representation of layout
 }
 
 export interface Proposal {
@@ -117,6 +107,22 @@ export interface AIVisionResponse {
     quantidade_parcelas: number;
     valor_parcela: string;
   };
+}
+
+// Template colors interface for parsed templateColors
+export interface TemplateColors {
+  primary: string;
+  secondary: string;
+  accent: string;
+  background: string;
+}
+
+// Template layout interface for parsed templateLayout
+export interface TemplateLayout {
+  sections: string[];
+  showHeader: boolean;
+  showWatermark: boolean;
+  showLogo: boolean;
 }
 
 // New PDF template interface

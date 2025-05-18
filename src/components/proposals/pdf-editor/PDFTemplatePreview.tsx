@@ -1,7 +1,7 @@
 
 import React, { useMemo } from 'react';
 import { Card } from '@/components/ui/card';
-import { ExtractedData, PDFTemplate } from '@/lib/types/proposals';
+import { ExtractedData, PDFTemplate, TemplateColors, TemplateLayout } from '@/lib/types/proposals';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { DollarSign, FileText, Briefcase, CreditCard, CheckSquare, Calendar } from 'lucide-react';
@@ -17,7 +17,7 @@ const PDFTemplatePreview = ({ formData, template, imagePreview }: PDFTemplatePre
   const colors = useMemo(() => {
     if (formData.templateColors && typeof formData.templateColors === 'string') {
       try {
-        return JSON.parse(formData.templateColors);
+        return JSON.parse(formData.templateColors) as TemplateColors;
       } catch (e) {
         console.error('Failed to parse template colors', e);
       }
@@ -28,14 +28,14 @@ const PDFTemplatePreview = ({ formData, template, imagePreview }: PDFTemplatePre
       secondary: template.secondaryColor,
       accent: template.accentColor,
       background: template.backgroundColor
-    };
+    } as TemplateColors;
   }, [formData.templateColors, template]);
   
   // Parse template layout from formData or use defaults from selected template
   const layout = useMemo(() => {
     if (formData.templateLayout && typeof formData.templateLayout === 'string') {
       try {
-        return JSON.parse(formData.templateLayout);
+        return JSON.parse(formData.templateLayout) as TemplateLayout;
       } catch (e) {
         console.error('Failed to parse template layout', e);
       }
@@ -46,7 +46,7 @@ const PDFTemplatePreview = ({ formData, template, imagePreview }: PDFTemplatePre
       showHeader: true,
       showLogo: true,
       showWatermark: false
-    };
+    } as TemplateLayout;
   }, [formData.templateLayout, template]);
 
   // Format date for display

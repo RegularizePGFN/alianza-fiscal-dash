@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { ExtractedData } from '@/lib/types/proposals';
+import { ExtractedData, TemplateLayout } from '@/lib/types/proposals';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
@@ -51,7 +50,7 @@ const SectionOrganizer = ({
   useEffect(() => {
     if (formData.templateLayout && typeof formData.templateLayout === 'string') {
       try {
-        const layout = JSON.parse(formData.templateLayout);
+        const layout = JSON.parse(formData.templateLayout) as TemplateLayout;
         if (layout.sections) setSections(layout.sections);
         if (layout.showHeader !== undefined) setShowHeader(layout.showHeader);
         if (layout.showLogo !== undefined) setShowLogo(layout.showLogo);

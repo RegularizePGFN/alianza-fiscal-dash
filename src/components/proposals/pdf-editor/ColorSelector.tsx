@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ExtractedData, PDFTemplate } from '@/lib/types/proposals';
+import { ExtractedData, PDFTemplate, TemplateColors } from '@/lib/types/proposals';
 import { Palette, RefreshCw } from 'lucide-react';
 
 interface ColorSelectorProps {
@@ -17,7 +16,7 @@ const ColorSelector = ({
   onInputChange, 
   selectedTemplate 
 }: ColorSelectorProps) => {
-  const [colors, setColors] = useState({
+  const [colors, setColors] = useState<TemplateColors>({
     primary: selectedTemplate.primaryColor,
     secondary: selectedTemplate.secondaryColor,
     accent: selectedTemplate.accentColor,
@@ -28,7 +27,7 @@ const ColorSelector = ({
   useEffect(() => {
     if (formData.templateColors && typeof formData.templateColors === 'string') {
       try {
-        const parsedColors = JSON.parse(formData.templateColors);
+        const parsedColors = JSON.parse(formData.templateColors) as TemplateColors;
         setColors({
           primary: parsedColors.primary || selectedTemplate.primaryColor,
           secondary: parsedColors.secondary || selectedTemplate.secondaryColor,
@@ -60,13 +59,13 @@ const ColorSelector = ({
     });
   };
 
-  const handleColorChange = (colorKey: string, value: string) => {
+  const handleColorChange = (colorKey: keyof TemplateColors, value: string) => {
     const newColors = { ...colors, [colorKey]: value };
     setColors(newColors);
     updateColorsInFormData(newColors);
   };
 
-  const updateColorsInFormData = (newColors: any) => {
+  const updateColorsInFormData = (newColors: TemplateColors) => {
     const event = {
       target: {
         name: 'templateColors',

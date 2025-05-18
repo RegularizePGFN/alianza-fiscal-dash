@@ -171,42 +171,24 @@ export const useProposalHandlers = ({
     let templateColors = proposal.data.templateColors;
     let templateLayout = proposal.data.templateLayout;
     
-    if (templateColors && typeof templateColors === 'string') {
-      try {
-        templateColors = JSON.parse(templateColors);
-      } catch (e) {
-        console.error('Failed to parse template colors', e);
-        templateColors = {
-          primary: '#3B82F6',
-          secondary: '#1E40AF',
-          accent: '#10B981',
-          background: '#F8FAFC'
-        };
-      }
-    }
-    
-    if (templateLayout && typeof templateLayout === 'string') {
-      try {
-        templateLayout = JSON.parse(templateLayout);
-      } catch (e) {
-        console.error('Failed to parse template layout', e);
-        templateLayout = {
-          sections: ['client', 'debt', 'payment', 'fees'],
-          showHeader: true,
-          showLogo: true,
-          showWatermark: false
-        };
-      }
-    }
-    
     setFormData({
       ...proposal.data,
       creationDate: proposal.data.creationDate || proposal.creationDate,
       validityDate: proposal.data.validityDate || proposal.validityDate,
       specialistName: proposal.data.specialistName || proposal.specialistName || user?.name,
       templateId: proposal.data.templateId || 'default',
-      templateColors: typeof templateColors === 'string' ? templateColors : JSON.stringify(templateColors),
-      templateLayout: typeof templateLayout === 'string' ? templateLayout : JSON.stringify(templateLayout)
+      templateColors: templateColors || JSON.stringify({
+        primary: '#3B82F6',
+        secondary: '#1E40AF',
+        accent: '#10B981',
+        background: '#F8FAFC'
+      }),
+      templateLayout: templateLayout || JSON.stringify({
+        sections: ['client', 'debt', 'payment', 'fees'],
+        showHeader: true,
+        showLogo: true,
+        showWatermark: false
+      })
     });
     
     setImagePreview(proposal.imageUrl);
