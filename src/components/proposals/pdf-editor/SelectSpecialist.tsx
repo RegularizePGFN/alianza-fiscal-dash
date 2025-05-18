@@ -10,7 +10,7 @@ interface SelectSpecialistProps {
   isAdmin: boolean;
 }
 
-export const SelectSpecialist = ({ 
+const SelectSpecialist = ({ 
   users, 
   selectedSpecialist,
   onChange,
@@ -44,3 +44,5 @@ export const SelectSpecialist = ({
     </div>
   );
 };
+
+export default SelectSpecialist;

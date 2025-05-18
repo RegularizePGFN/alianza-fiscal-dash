@@ -21,7 +21,7 @@ interface ProposalsTabsProps {
   selectedProposal: Proposal | null;
   proposals: Proposal[];
   loadingProposals: boolean;
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onInputChange: (name: string, value: string) => void;
   onGenerateProposal: () => void;
   onViewProposal: (proposal: Proposal) => void;
   onDeleteProposal: (id: string) => Promise<boolean>;

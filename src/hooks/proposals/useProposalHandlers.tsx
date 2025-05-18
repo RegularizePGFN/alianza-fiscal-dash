@@ -1,4 +1,3 @@
-
 import { ChangeEvent } from "react";
 import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 import { fetchCnpjData } from "@/lib/api";
@@ -113,12 +112,23 @@ export const useProposalHandlers = ({
     setActiveTab("data");
   };
   
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  // Updated to handle both direct name/value and event-based changes
+  const handleInputChange = (nameOrEvent: string | ChangeEvent<HTMLInputElement>, value?: string) => {
+    // If it's an event (from a form element)
+    if (typeof nameOrEvent !== 'string') {
+      const { name, value } = nameOrEvent.target;
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    } 
+    // If it's a direct name/value pair (as used in PDFEditorTabContent)
+    else if (typeof value !== 'undefined') {
+      setFormData(prev => ({
+        ...prev,
+        [nameOrEvent]: value
+      }));
+    }
   };
   
   const handleGenerateProposal = async () => {

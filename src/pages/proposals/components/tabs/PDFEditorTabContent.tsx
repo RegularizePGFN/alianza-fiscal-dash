@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import {
   PDFTemplatePreview,
@@ -67,7 +66,7 @@ export default function PDFEditorTabContent({
   formData, 
   onInputChange,
   imagePreview,
-  users,
+  users = [],
   isAdmin = false
 }: PDFEditorTabContentProps) {
   const [activeTab, setActiveTab] = useState("preview");
