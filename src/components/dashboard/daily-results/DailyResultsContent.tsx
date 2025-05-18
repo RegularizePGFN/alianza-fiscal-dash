@@ -100,12 +100,19 @@ export function DailyResultsContent({ todaySales, currentDate }: DailyResultsCon
             if (existingSalesperson) {
               existingSalesperson.proposalsCount = (existingSalesperson.proposalsCount || 0) + 1;
               
-              // Add fees if available
+              // Add fees if available - fix the type error here
               if (proposal.fees_value) {
-                const feesValue = typeof proposal.fees_value === 'string' 
-                  ? parseFloat(proposal.fees_value.replace(/[^0-9,.-]/g, '').replace(',', '.')) 
-                  : Number(proposal.fees_value);
-                  
+                let feesValue = 0;
+                
+                // Handle different possible types of fees_value
+                if (typeof proposal.fees_value === 'string') {
+                  // Remove non-numeric characters except for decimal point and convert to number
+                  const cleanedValue = proposal.fees_value.replace(/[^0-9,.]/g, '').replace(',', '.');
+                  feesValue = parseFloat(cleanedValue);
+                } else if (typeof proposal.fees_value === 'number') {
+                  feesValue = proposal.fees_value;
+                }
+                
                 if (!isNaN(feesValue)) {
                   existingSalesperson.feesAmount = (existingSalesperson.feesAmount || 0) + feesValue;
                 }

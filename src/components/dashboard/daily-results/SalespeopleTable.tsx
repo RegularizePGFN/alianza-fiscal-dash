@@ -1,6 +1,6 @@
 
 import { TableHeader } from "./TableHeader";
-import { SalespersonRow } from "./SalespersonRow";
+import SalespersonRow from "./SalespersonRow";
 import { DailySalesperson } from "./types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 

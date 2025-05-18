@@ -1,11 +1,10 @@
 
 import React from 'react';
-import { DailySalesperson, SortConfig } from './types';
+import { DailySalesperson } from './types';
 import { formatCurrency } from '@/lib/utils';
 
 export interface SalespersonRowProps {
   person: DailySalesperson;
-  key?: string;
 }
 
 const SalespersonRow: React.FC<SalespersonRowProps> = ({ person }) => {
