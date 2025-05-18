@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
-import { Sale, UserRole } from "@/lib/types";
+import { Sale, UserRole, PaymentMethod } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
 import { DailySummaryCard } from "./DailySummaryCard";
 import { DailySalesTeamCard } from "./DailySalesTeamCard";
@@ -91,6 +91,7 @@ export function DailyResultsCard({ salesData }: DailyResultsProps) {
           currentDate={currentDate} 
         />
         <DailySalesTeamCard 
+          todaySales={todaySales} 
           currentDate={currentDate} 
         />
       </div>

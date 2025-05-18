@@ -1,14 +1,16 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Sale } from "@/lib/types";
 import { Users } from "lucide-react";
 import { DailyResultsContent } from "./DailyResultsContent";
 import { DailyResultsProvider } from "./DailyResultsContext";
 
 interface DailySalesTeamCardProps {
+  todaySales: Sale[];
   currentDate: string;
 }
 
-export function DailySalesTeamCard({ currentDate }: DailySalesTeamCardProps) {
+export function DailySalesTeamCard({ todaySales, currentDate }: DailySalesTeamCardProps) {
   return (
     <Card className="transition-all duration-300 hover:shadow-md dark:border-gray-700">
       <CardHeader className="pb-2 px-4 pt-3">
@@ -22,7 +24,10 @@ export function DailySalesTeamCard({ currentDate }: DailySalesTeamCardProps) {
       </CardHeader>
       <CardContent className="px-4 pb-3 pt-0">
         <DailyResultsProvider>
-          <DailyResultsContent />
+          <DailyResultsContent 
+            todaySales={todaySales}
+            currentDate={currentDate}
+          />
         </DailyResultsProvider>
       </CardContent>
     </Card>

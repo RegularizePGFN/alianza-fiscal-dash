@@ -1,4 +1,3 @@
-
 import { ChangeEvent } from "react";
 import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 import { fetchCnpjData } from "@/lib/api";
@@ -76,13 +75,13 @@ export const useProposalHandlers = ({
         // Set creation and validity dates
         creationDate: format(now, "yyyy-MM-dd'T'HH:mm:ss", { locale: ptBR }),
         validityDate: format(validityDate, "yyyy-MM-dd'T'HH:mm:ss", { locale: ptBR }),
-        // Set modern design defaults
-        templateId: prev.templateId || 'modern',
+        // Set default template
+        templateId: prev.templateId || 'default',
         templateColors: prev.templateColors || JSON.stringify({
-          primary: '#4F46E5',
-          secondary: '#7C3AED',
+          primary: '#3B82F6',
+          secondary: '#1E40AF',
           accent: '#10B981',
-          background: '#FFFFFF'
+          background: '#F8FAFC'
         }),
         templateLayout: prev.templateLayout || JSON.stringify({
           sections: ['client', 'debt', 'payment', 'fees'],
@@ -110,8 +109,7 @@ export const useProposalHandlers = ({
     }
     
     setImagePreview(preview);
-    setGeneratedProposal(true);
-    setActiveTab("proposal");
+    setActiveTab("data");
   };
   
   // Updated to handle both direct name/value and event-based changes
@@ -185,15 +183,15 @@ export const useProposalHandlers = ({
     
     setFormData({
       ...proposal.data,
-      creationDate: proposal.data.creationDate || proposal.createdAt,
+      creationDate: proposal.data.creationDate || proposal.creationDate,
       validityDate: proposal.data.validityDate || proposal.validityDate,
-      specialistName: proposal.data.specialistName || proposal.userName || user?.name,
-      templateId: proposal.data.templateId || 'modern',
+      specialistName: proposal.data.specialistName || proposal.specialistName || user?.name,
+      templateId: proposal.data.templateId || 'default',
       templateColors: templateColors || JSON.stringify({
-        primary: '#4F46E5',
-        secondary: '#7C3AED',
+        primary: '#3B82F6',
+        secondary: '#1E40AF',
         accent: '#10B981',
-        background: '#FFFFFF'
+        background: '#F8FAFC'
       }),
       templateLayout: templateLayout || JSON.stringify({
         sections: ['client', 'debt', 'payment', 'fees'],
@@ -238,12 +236,12 @@ export const useProposalHandlers = ({
       clientEmail: user?.email || '',
       clientPhone: '',
       specialistName: user?.name || '',
-      templateId: 'modern',
+      templateId: 'default',
       templateColors: JSON.stringify({
-        primary: '#4F46E5',
-        secondary: '#7C3AED',
+        primary: '#3B82F6',
+        secondary: '#1E40AF',
         accent: '#10B981',
-        background: '#FFFFFF'
+        background: '#F8FAFC'
       }),
       templateLayout: JSON.stringify({
         sections: ['client', 'debt', 'payment', 'fees'],

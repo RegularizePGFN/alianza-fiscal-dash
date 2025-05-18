@@ -69,12 +69,6 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       [data-pdf-remove="true"] {
         display: none !important;
       }
-      
-      /* Ensure content stays within A4 boundaries */
-      * {
-        overflow: hidden !important;
-        box-sizing: border-box !important;
-      }
     `;
     
     clonedElement.appendChild(styleElement);
@@ -84,14 +78,10 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     clonedElement.style.left = '-9999px';
     clonedElement.style.top = '-9999px';
     clonedElement.style.width = '210mm'; // A4 width
-    clonedElement.style.height = '297mm'; // A4 height
-    clonedElement.style.margin = '0';
-    clonedElement.style.padding = '10mm'; // Standard margin
-    clonedElement.style.overflow = 'hidden';
     document.body.appendChild(clonedElement);
     
     // Hide action buttons
-    const actionButtons = clonedElement.querySelectorAll('[data-pdf-remove="true"], .pdf-action-buttons');
+    const actionButtons = clonedElement.querySelectorAll('.pdf-action-buttons');
     actionButtons.forEach(button => {
       button.setAttribute('data-pdf-remove', 'true');
     });
@@ -184,8 +174,11 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     const pageHeight = 297; // A4 height in mm
     const imgHeight = canvas.height * imgWidth / canvas.width;
     
+    // Force the image to be on a single page
+    let finalImgHeight = Math.min(imgHeight, pageHeight);
+    
     // Add the image of the element to the PDF with appropriate margins
-    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, Math.min(imgHeight, pageHeight));
+    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, finalImgHeight);
 
     // Get specialist name for filename
     const specialist = data.specialistName ? 

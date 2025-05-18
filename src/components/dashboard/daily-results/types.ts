@@ -2,22 +2,16 @@
 export interface DailySalesperson {
   id: string;
   name: string;
-  salesCount?: number;
-  salesAmount?: number;
-  goalsPercentage?: number;
-  proposalsCount?: number;
-  feesAmount?: number;
-}
-
-export interface DailyPerformance {
-  totalSales: number;
-  totalAmount: number;
-  averageTicket: number;
-  proposalsCount?: number;
-  feesAmount?: number;
+  salesCount: number;
+  salesAmount: number;
+  proposalsCount?: number; // Number of proposals created today
+  feesAmount?: number;     // Total fees from proposals
 }
 
 export interface SortConfig {
-  key: keyof DailySalesperson;
-  direction: 'asc' | 'desc';
+  column: SortColumn;
+  direction: SortDirection;
 }
+
+export type SortColumn = 'name' | 'salesCount' | 'salesAmount' | 'proposalsCount' | 'feesAmount';
+export type SortDirection = 'asc' | 'desc';

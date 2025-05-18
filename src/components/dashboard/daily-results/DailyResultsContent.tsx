@@ -1,169 +1,157 @@
 
-import React, { useState, useEffect } from 'react';
-import { useAuth } from "@/contexts/auth";
-import { useToast } from "@/hooks/use-toast";
-import { useDashboard } from "@/hooks/useDashboard";
-import { DailyPerformance, DailySalesperson, SortConfig } from "./types";
-import { PerformanceCards } from "./PerformanceCards";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Sale } from "@/lib/types";
+import { DailySalesperson } from "./types";
 import { SalespeopleTable } from "./SalespeopleTable";
-import { formatCurrency } from "@/lib/utils";
-import { ArrowDown, ArrowUp } from 'lucide-react';
+import { useDailyResults } from "./DailyResultsContext";
+import { getTodayISO } from "@/lib/utils";
 
-export function DailyResultsContent() {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const { proposals } = useDashboard();
+interface DailyResultsContentProps {
+  todaySales: Sale[];
+  currentDate: string;
+}
+
+export function DailyResultsContent({ todaySales, currentDate }: DailyResultsContentProps) {
   const [salespeople, setSalespeople] = useState<DailySalesperson[]>([]);
-  const [salespeopleSortedData, setSalespeopleSortedData] = useState<DailySalesperson[]>([]);
-  const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
-  const [dailyPerformance, setDailyPerformance] = useState<DailyPerformance>({
-    totalSales: 0,
-    totalAmount: 0,
-    averageTicket: 0,
-  });
+  const [loading, setLoading] = useState(true);
+  const { sortColumn, sortDirection } = useDailyResults();
   
-  useEffect(() => {
-    if (user) {
-      // Initialize salespeople with the current user only
-      const initialSalespeople: DailySalesperson[] = [
-        { id: user.id, name: user.name, salesCount: 0, salesAmount: 0 }
-      ];
-      
-      setSalespeople(initialSalespeople);
-      setSalespeopleSortedData(initialSalespeople);
-    }
-  }, [user]);
-  
-  useEffect(() => {
-    const calculateDailyPerformance = () => {
-      let totalSales = 0;
-      let totalAmount = 0;
-      
-      salespeople.forEach(person => {
-        totalSales += person.salesCount || 0;
-        totalAmount += person.salesAmount || 0;
-      });
-      
-      const averageTicket = totalSales > 0 ? totalAmount / totalSales : 0;
-      
-      setDailyPerformance({
-        totalSales,
-        totalAmount,
-        averageTicket,
-      });
-    };
-    
-    calculateDailyPerformance();
-  }, [salespeople]);
-  
-  const handleRequestDemo = () => {
-    toast({
-      title: "Sucesso",
-      description: "Solicitação enviada com sucesso!",
+  // Function to sort salespeople data
+  const sortData = (data: DailySalesperson[]) => {
+    return [...data].sort((a, b) => {
+      if (sortColumn === 'name') {
+        return sortDirection === 'asc' 
+          ? a.name.localeCompare(b.name) 
+          : b.name.localeCompare(a.name);
+      } else {
+        // Handle cases where properties might be undefined
+        const valueA = a[sortColumn] !== undefined ? a[sortColumn] as number : 0;
+        const valueB = b[sortColumn] !== undefined ? b[sortColumn] as number : 0;
+        
+        return sortDirection === 'asc' ? valueA - valueB : valueB - valueA;
+      }
     });
   };
-
-  // In the useEffect function that processes proposal data:
+  
   useEffect(() => {
-    const processProposalData = async () => {
-      if (!proposals) return;
-    
-      // Make a copy of the salespeople array
-      const updatedSalespeople = [...salespeople];
-    
-      // Map proposals to salespeople
-      proposals.forEach(proposal => {
-        // Check if proposal was created today
-        const proposalDate = new Date(proposal.createdAt);
-        const today = new Date();
-      
-        if (proposalDate.toDateString() === today.toDateString()) {
-          // Find the salesperson by userId
-          const existingSalesperson = updatedSalespeople.find(
-            person => person.id === proposal.userId
-          );
+    // Fetch all data needed for the dashboard
+    const fetchAllData = async () => {
+      setLoading(true);
+      try {
+        // Get today's date in ISO format
+        const today = getTodayISO();
         
-          // Update existing salesperson data or create new
-          if (existingSalesperson) {
-            existingSalesperson.proposalsCount = (existingSalesperson.proposalsCount || 0) + 1;
+        // 1. Fetch all salespeople profiles
+        const { data: profilesData, error: profilesError } = await supabase
+          .from("profiles")
+          .select("id, name, role")
+          .eq("role", "vendedor");
           
-            // Add fees if available
-            if (proposal.data && proposal.data.feesValue) {
-              let feesValue = 0;
-            
-              // Handle different possible types of fees_value
-              if (typeof proposal.data.feesValue === 'string') {
-                // Remove non-numeric characters except for decimal point and convert to number
-                const cleanedValue = proposal.data.feesValue.replace(/[^0-9,.]/g, '').replace(',', '.');
-                feesValue = parseFloat(cleanedValue);
-              } else if (typeof proposal.data.feesValue === 'number') {
-                feesValue = proposal.data.feesValue;
-              }
-            
-              if (!isNaN(feesValue)) {
-                existingSalesperson.feesAmount = (existingSalesperson.feesAmount || 0) + feesValue;
+        if (profilesError) {
+          console.error("Error fetching salespeople:", profilesError);
+          return;
+        }
+        
+        // 2. Fetch today's proposals
+        const { data: proposalsData, error: proposalsError } = await supabase
+          .from("proposals")
+          .select("*")
+          .gte("created_at", `${today}T00:00:00`)
+          .lte("created_at", `${today}T23:59:59`);
+          
+        if (proposalsError) {
+          console.error("Error fetching proposals:", proposalsError);
+        }
+        
+        // Initialize all salespeople with zero counts
+        const allSalespeople = (profilesData || []).map(profile => ({
+          id: profile.id,
+          name: profile.name || "Sem nome",
+          salesCount: 0,
+          salesAmount: 0,
+          proposalsCount: 0,
+          feesAmount: 0
+        }));
+
+        // Update counts for salespeople who made sales today
+        todaySales.forEach(sale => {
+          const existingSalesperson = allSalespeople.find(sp => sp.id === sale.salesperson_id);
+          if (existingSalesperson) {
+            existingSalesperson.salesCount += 1;
+            existingSalesperson.salesAmount += sale.gross_amount;
+          } else if (sale.salesperson_id) {
+            // In case there's a salesperson in the sales data but not in profiles
+            allSalespeople.push({
+              id: sale.salesperson_id,
+              name: sale.salesperson_name || "Sem nome",
+              salesCount: 1,
+              salesAmount: sale.gross_amount,
+              proposalsCount: 0,
+              feesAmount: 0
+            });
+          }
+        });
+        
+        // Update counts for salespeople who created proposals today
+        if (proposalsData) {
+          proposalsData.forEach(proposal => {
+            const existingSalesperson = allSalespeople.find(sp => sp.id === proposal.user_id);
+            if (existingSalesperson) {
+              existingSalesperson.proposalsCount = (existingSalesperson.proposalsCount || 0) + 1;
+              
+              // Add fees if available - fix the type error here
+              if (proposal.fees_value) {
+                let feesValue = 0;
+                
+                // Handle different possible types of fees_value
+                if (typeof proposal.fees_value === 'string') {
+                  // Remove non-numeric characters except for decimal point and convert to number
+                  const cleanedValue = proposal.fees_value.replace(/[^0-9,.]/g, '').replace(',', '.');
+                  feesValue = parseFloat(cleanedValue);
+                } else if (typeof proposal.fees_value === 'number') {
+                  feesValue = proposal.fees_value;
+                }
+                
+                if (!isNaN(feesValue)) {
+                  existingSalesperson.feesAmount = (existingSalesperson.feesAmount || 0) + feesValue;
+                }
               }
             }
-          }
+          });
         }
-      });
-    
-      // Update state with the processed data
-      setSalespeopleSortedData(updatedSalespeople);
+
+        // Apply initial sort to the data
+        setSalespeople(sortData(allSalespeople));
+      } catch (error) {
+        console.error("Error processing data:", error);
+      } finally {
+        setLoading(false);
+      }
     };
-  
-    // Process data
-    processProposalData();
-  }, [proposals, salespeople]);
-
-  const requestSort = (key: keyof DailySalesperson) => {
-    let direction: 'asc' | 'desc' = 'asc';
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
-    }
-    setSortConfig({ key, direction });
     
-    let sortedData = [...salespeopleSortedData];
-    sortedData.sort((a: DailySalesperson, b: DailySalesperson) => {
-      const valueA = a[key] || 0;
-      const valueB = b[key] || 0;
-      if (valueA < valueB) {
-        return direction === 'asc' ? -1 : 1;
-      }
-      if (valueA > valueB) {
-        return direction === 'asc' ? 1 : -1;
-      }
-      return 0;
-    });
-    setSalespeopleSortedData(sortedData);
-  };
+    fetchAllData();
+  }, [todaySales]);
   
-  const getSortIndicator = (key: keyof DailySalesperson) => {
-    if (sortConfig && sortConfig.key === key) {
-      return sortConfig.direction === 'asc' ? <ArrowUp className="h-3 w-3 inline-block ml-1" /> : <ArrowDown className="h-3 w-3 inline-block ml-1" />;
-    }
-    return null;
-  };
-
+  // Apply sorting whenever sort criteria changes
+  useEffect(() => {
+    setSalespeople(prevSalespeople => sortData(prevSalespeople));
+  }, [sortColumn, sortDirection]);
+  
   return (
-    <div className="space-y-8">
-      <PerformanceCards performance={dailyPerformance} />
-      
-      <div className="border rounded-md">
-        <div className="flex items-center justify-between px-4 py-2 border-b bg-gray-50">
-          <h2 className="text-sm font-semibold">Vendedores do Dia</h2>
-          <button onClick={handleRequestDemo} className="text-xs text-blue-600 hover:underline">
-            Solicitar Demo
-          </button>
+    <div className="bg-white rounded-md p-2">
+      <h3 className="text-xs font-medium text-muted-foreground mb-1">Vendedores Hoje:</h3>
+      {loading ? (
+        <div className="flex h-[150px] items-center justify-center">
+          <p className="text-xs text-muted-foreground">Carregando dados...</p>
         </div>
-        
-        <SalespeopleTable salespeople={salespeopleSortedData} />
-        
-        <div className="px-4 py-3 bg-gray-50 text-xs text-gray-600">
-          <span className="mr-2">Total de vendas: {dailyPerformance.totalSales}</span>
-          <span>Valor total: {formatCurrency(dailyPerformance.totalAmount)}</span>
+      ) : salespeople.length > 0 ? (
+        <SalespeopleTable salespeople={salespeople} />
+      ) : (
+        <div className="flex h-[150px] items-center justify-center text-xs text-muted-foreground">
+          Sem vendedores cadastrados
         </div>
-      </div>
+      )}
     </div>
   );
 }

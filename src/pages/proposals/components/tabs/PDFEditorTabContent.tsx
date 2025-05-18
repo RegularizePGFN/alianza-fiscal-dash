@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import {
   PDFTemplatePreview,
@@ -17,7 +16,6 @@ import { generateProposalPdf } from "@/lib/pdfUtils";
 import { User } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { ExtractedData, PDFTemplate, TemplateColors, TemplateLayout } from "@/lib/types/proposals";
-import { ChangeEvent } from "react";
 
 // Sample templates
 const defaultTemplates: PDFTemplate[] = [
@@ -58,10 +56,9 @@ const defaultTemplates: PDFTemplate[] = [
 
 interface PDFEditorTabContentProps {
   formData: Partial<ExtractedData>;
-  onInputChange: (nameOrEvent: string | ChangeEvent<HTMLInputElement>, value?: string) => void;
+  onInputChange: (name: string, value: string) => void;
   imagePreview: string | null;
-  onGenerateProposal?: () => void;
-  users?: User[];
+  users: User[];
   isAdmin?: boolean;
 }
 
@@ -69,7 +66,6 @@ export default function PDFEditorTabContent({
   formData, 
   onInputChange,
   imagePreview,
-  onGenerateProposal,
   users = [],
   isAdmin = false
 }: PDFEditorTabContentProps) {
@@ -289,15 +285,6 @@ export default function PDFEditorTabContent({
                   <Download className="h-4 w-4 mr-2" />
                   Baixar PDF
                 </Button>
-                
-                {onGenerateProposal && (
-                  <Button 
-                    onClick={onGenerateProposal}
-                    className="w-full mt-2 bg-green-600 hover:bg-green-700"
-                  >
-                    Gerar Proposta
-                  </Button>
-                )}
               </div>
             </TabsContent>
             

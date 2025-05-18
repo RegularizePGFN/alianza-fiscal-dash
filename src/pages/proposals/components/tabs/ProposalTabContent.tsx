@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ExtractedData } from "@/lib/types/proposals";
-import ModernProposalCard from "@/components/proposals/ModernProposalCard";
+import MiniProposalCard from "@/components/proposals/card/MiniProposalCard";
 
 interface ProposalTabContentProps {
   formData: Partial<ExtractedData>;
@@ -21,7 +21,7 @@ const ProposalTabContent = ({
           Criar Nova Proposta
         </Button>
       </div>
-      <ModernProposalCard
+      <MiniProposalCard
         data={formData}
         imageUrl={imagePreview || undefined}
       />
