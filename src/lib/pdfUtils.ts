@@ -5,10 +5,30 @@ import { ExtractedData } from './types/proposals';
 
 export async function generateProposalPdf(proposalElement: HTMLElement, data: Partial<ExtractedData>): Promise<void> {
   try {
-    // Criar uma cópia do elemento para manipular sem afetar a UI original
+    // Get template colors if available
+    let colors = {
+      primary: '#3B82F6',
+      secondary: '#1E40AF',
+      accent: '#10B981',
+      background: '#FFFFFF'
+    };
+    
+    if (data.templateColors && typeof data.templateColors === 'string') {
+      try {
+        const parsedColors = JSON.parse(data.templateColors);
+        colors = {
+          ...colors,
+          ...parsedColors
+        };
+      } catch (e) {
+        console.error('Failed to parse template colors', e);
+      }
+    }
+    
+    // Create a clone of the element to manipulate without affecting the UI
     const clonedElement = proposalElement.cloneNode(true) as HTMLElement;
     
-    // Aplicar estilos para impressão no clone
+    // Apply styles for printing to the clone
     const styleElement = document.createElement('style');
     styleElement.textContent = `
       .rounded-lg, .rounded-md, .rounded { border-radius: 0 !important; }
@@ -32,23 +52,27 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       .my-1, .my-2, .my-3, .my-4, .my-5, .my-6 { margin-top: 4px !important; margin-bottom: 4px !important; }
       .gap-1, .gap-2, .gap-3, .gap-4, .gap-5, .gap-6 { gap: 4px !important; }
       .space-y-1, .space-y-2, .space-y-3, .space-y-4, .space-y-5, .space-y-6 { margin-top: 4px !important; margin-bottom: 4px !important; }
+      
+      body {
+        background-color: ${colors.background} !important;
+      }
     `;
     
     clonedElement.appendChild(styleElement);
     
-    // Adicionar ao DOM temporariamente, mas invisível
+    // Add to DOM temporarily, but invisible
     clonedElement.style.position = 'absolute';
     clonedElement.style.left = '-9999px';
     clonedElement.style.top = '-9999px';
     clonedElement.style.width = '210mm'; // A4 width
     document.body.appendChild(clonedElement);
     
-    // Agora que o elemento está no DOM, podemos capturá-lo
+    // Now that the element is in the DOM, we can capture it
     const canvas = await html2canvas(clonedElement, {
-      scale: 2, // Balancear qualidade e tamanho do arquivo
+      scale: 2, // Balance quality and file size
       useCORS: true,
       allowTaint: true,
-      backgroundColor: '#ffffff',
+      backgroundColor: colors.background,
       logging: false,
       width: 595, // A4 width in points at 72dpi
       height: 842, // A4 height in points at 72dpi
@@ -110,38 +134,42 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       }
     });
     
-    // Remover o clone após a captura
+    // Remove the clone after capture
     document.body.removeChild(clonedElement);
     
     const imgData = canvas.toDataURL('image/png');
     
-    // Criar um novo PDF no tamanho A4
+    // Create a new PDF in A4 size
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
       format: 'a4'
     });
     
-    // Calcular proporções para ajustar a imagem ao PDF
+    // Calculate proportions to fit the image to PDF
     const imgWidth = 210; // A4 width in mm (210mm)
     const pageHeight = 297; // A4 height in mm
     const imgHeight = canvas.height * imgWidth / canvas.width;
     
-    // Forçar a imagem a estar em uma única página
+    // Force the image to be on a single page
     let finalImgHeight = Math.min(imgHeight, pageHeight);
     
-    // Adicionar a imagem do elemento no PDF com margens apropriadas
+    // Add the image of the element to the PDF with appropriate margins
     pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, finalImgHeight);
+
+    // Get specialist name for filename
+    const specialist = data.specialistName ? 
+      data.specialistName.replace(/[^\w]/g, '_').toLowerCase() : 'especialista';
     
-    // Nome do arquivo
-    const fileName = `proposta_pgfn_${data.cnpj?.replace(/[^\d]/g, '') || 'cliente'}.pdf`;
+    // File name
+    const fileName = `proposta_pgfn_${data.cnpj?.replace(/\D/g, '') || 'cliente'}_${specialist}.pdf`;
     
-    // Fazer o download do PDF
+    // Download the PDF
     pdf.save(fileName);
     
     return Promise.resolve();
   } catch (error) {
-    console.error('Erro ao gerar PDF:', error);
+    console.error('Error generating PDF:', error);
     return Promise.reject(error);
   }
 }

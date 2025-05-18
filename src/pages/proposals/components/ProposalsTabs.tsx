@@ -4,6 +4,7 @@ import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 
 import UploadTabContent from "./tabs/UploadTabContent";
 import DataTabContent from "./tabs/DataTabContent";
+import PDFEditorTabContent from "./tabs/PDFEditorTabContent";
 import ProposalTabContent from "./tabs/ProposalTabContent";
 
 interface ProposalsTabsProps {
@@ -53,10 +54,13 @@ const ProposalsTabs = ({
 }: ProposalsTabsProps) => {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-3 mb-6">
+      <TabsList className="grid w-full grid-cols-4 mb-6">
         <TabsTrigger value="upload">Upload de Imagem</TabsTrigger>
         <TabsTrigger value="data" disabled={!formData.cnpj && !generatedProposal}>
           Dados Extraídos
+        </TabsTrigger>
+        <TabsTrigger value="pdf-editor" disabled={!formData.cnpj && !generatedProposal}>
+          Edite o PDF
         </TabsTrigger>
         <TabsTrigger value="proposal" disabled={!generatedProposal}>
           Proposta Gerada
@@ -83,8 +87,17 @@ const ProposalsTabs = ({
           formData={formData}
           processing={processing}
           onInputChange={onInputChange}
-          onGenerateProposal={onGenerateProposal}
+          onGenerateProposal={() => setActiveTab("pdf-editor")}
           setProcessingStatus={setProcessingStatus}
+        />
+      </TabsContent>
+
+      <TabsContent value="pdf-editor" className="space-y-6">
+        <PDFEditorTabContent 
+          formData={formData} 
+          onInputChange={onInputChange}
+          onGenerateProposal={onGenerateProposal}
+          imagePreview={imagePreview}
         />
       </TabsContent>
       

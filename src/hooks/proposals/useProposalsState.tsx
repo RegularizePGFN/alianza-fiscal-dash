@@ -5,6 +5,8 @@ import { useAuth } from "@/contexts/auth";
 import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 import { useSaveProposal, useFetchProposals } from "@/hooks/proposals";
 import { fetchCnpjData } from "@/lib/api";
+import { format, addDays } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export const useProposalsState = () => {
   const { toast } = useToast();
@@ -26,20 +28,41 @@ export const useProposalsState = () => {
   const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
   const [companyData, setCompanyData] = useState<CompanyData | null>(null);
   const [processingStatus, setProcessingStatus] = useState<string>("");
+  
+  // Set default template when component mounts
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      templateId: 'default',
+      templateColors: JSON.stringify({
+        primary: '#3B82F6',
+        secondary: '#1E40AF',
+        accent: '#10B981',
+        background: '#F8FAFC'
+      }),
+      templateLayout: JSON.stringify({
+        sections: ['client', 'debt', 'payment', 'fees'],
+        showHeader: true,
+        showLogo: true,
+        showWatermark: false
+      })
+    }));
+  }, []);
 
   // Fetch proposals when component mounts
   useEffect(() => {
     fetchProposals();
   }, []);
 
-  // Preencher dados do usuário no formulário
+  // Add user data to form
   useEffect(() => {
     if (user) {
       setFormData(prev => ({
         ...prev,
         clientName: user.name || '',
         clientEmail: user.email || '',
-        clientPhone: '' // Preenchido pelo usuário se necessário
+        clientPhone: '', // User can fill this if needed
+        specialistName: user.name || ''
       }));
     }
   }, [user]);
@@ -103,6 +126,20 @@ export const useProposalsState = () => {
       }
     }
   }, [formData.totalDebt, formData.discountedValue]);
+  
+  // Set creation and validity dates when generating proposal
+  useEffect(() => {
+    if (activeTab === "pdf-editor" && !formData.creationDate) {
+      const now = new Date();
+      const validityDate = addDays(now, 1);
+      
+      setFormData(prev => ({
+        ...prev,
+        creationDate: format(now, "yyyy-MM-dd'T'HH:mm:ss", { locale: ptBR }),
+        validityDate: format(validityDate, "yyyy-MM-dd'T'HH:mm:ss", { locale: ptBR })
+      }));
+    }
+  }, [activeTab, formData.creationDate]);
 
   return {
     // State

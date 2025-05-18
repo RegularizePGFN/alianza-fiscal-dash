@@ -9,6 +9,7 @@ import FinancialInfoSection from './data-form/FinancialInfoSection';
 import ClientInfoSection from './data-form/ClientInfoSection';
 import { Input } from '@/components/ui/input';
 import { useCnpjSearch } from './data-form/useCnpjSearch';
+import { useAuth } from '@/contexts/auth';
 
 interface DataFormProps {
   formData: Partial<ExtractedData>;
@@ -25,6 +26,7 @@ const DataForm = ({
   onGenerateProposal,
   setProcessingStatus
 }: DataFormProps) => {
+  const { user } = useAuth();
   
   const {
     isSearchingCnpj,
@@ -35,6 +37,19 @@ const DataForm = ({
     formData, 
     onInputChange,
     setProcessingStatus
+  });
+
+  // Set specialist name when form loads
+  useState(() => {
+    if (!formData.specialistName && user?.name) {
+      const event = {
+        target: {
+          name: 'specialistName',
+          value: user.name
+        }
+      } as React.ChangeEvent<HTMLInputElement>;
+      onInputChange(event);
+    }
   });
   
   // Format currency when user inputs values
@@ -72,6 +87,27 @@ const DataForm = ({
     }
   };
 
+  // Calculate entry installment value
+  const calculateEntryInstallmentValue = () => {
+    if (formData.entryValue && formData.entryInstallments) {
+      try {
+        const entryValue = parseFloat(formData.entryValue.replace(/\./g, '').replace(',', '.'));
+        const installments = parseInt(formData.entryInstallments);
+        
+        if (!isNaN(entryValue) && !isNaN(installments) && installments > 0) {
+          const installmentValue = entryValue / installments;
+          return installmentValue.toLocaleString('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          });
+        }
+      } catch (error) {
+        console.error("Error calculating entry installment value:", error);
+      }
+    }
+    return "0,00";
+  };
+
   return (
     <Card className="shadow-md rounded-xl">
       <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b">
@@ -83,7 +119,7 @@ const DataForm = ({
         
         {/* Dates Section */}
         {!processing && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium flex items-center gap-2 text-slate-700">
                 <Clock className="h-4 w-4 text-af-blue-600" />
@@ -94,7 +130,7 @@ const DataForm = ({
                 disabled
                 className="bg-slate-50"
               />
-              <p className="text-xs text-slate-500">Data de geração automática (não editável)</p>
+              <p className="text-xs text-slate-500">Data de geração automática</p>
             </div>
             
             <div className="space-y-2">
@@ -107,7 +143,21 @@ const DataForm = ({
                 disabled
                 className="bg-slate-50"
               />
-              <p className="text-xs text-slate-500">Validade de 24h após criação (não editável)</p>
+              <p className="text-xs text-slate-500">Validade de 24h após criação</p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium flex items-center gap-2 text-slate-700">
+                Especialista Tributário
+              </label>
+              <Input 
+                value={formData.specialistName || user?.name || ''}
+                disabled
+                className="bg-slate-50"
+              />
+              <p className="text-xs text-slate-500">
+                {user?.role === 'admin' ? 'Pode ser alterado na aba "Edite o PDF"' : 'Nome do especialista responsável'}
+              </p>
             </div>
           </div>
         )}
@@ -124,6 +174,7 @@ const DataForm = ({
           formData={formData}
           onInputChange={handleCurrencyInput}
           disabled={processing}
+          entryInstallmentValue={calculateEntryInstallmentValue()}
         />
       </CardContent>
       
@@ -134,7 +185,7 @@ const DataForm = ({
           className="bg-af-blue-600 hover:bg-af-blue-700"
         >
           {processing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          Gerar Proposta
+          Continuar para Edição de PDF
         </Button>
       </CardFooter>
     </Card>

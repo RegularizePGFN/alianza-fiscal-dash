@@ -3,6 +3,8 @@ import { ChangeEvent } from "react";
 import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 import { fetchCnpjData } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { format, addDays } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface UseProposalHandlersProps {
   formData: Partial<ExtractedData>;
@@ -40,6 +42,8 @@ export const useProposalHandlers = ({
   const handleProcessComplete = (data: Partial<ExtractedData>, preview: string) => {
     // Calculate creation date and validity date
     const now = new Date();
+    const validityDate = addDays(now, 1);
+    
     setFormData(prev => {
       // Calculate fees if possible
       let feesValue = data.feesValue;
@@ -64,9 +68,28 @@ export const useProposalHandlers = ({
         feesValue: feesValue || prev.feesValue || '0,00',
         // Make sure entryInstallments is set, defaulting to '1' if not provided
         entryInstallments: data.entryInstallments || prev.entryInstallments || '1',
-        // Garantir que os dados do usuário atual sejam mantidos
+        // Ensure user data is preserved
         clientName: data.clientName || user?.name || prev.clientName || '',
-        clientEmail: data.clientEmail || user?.email || prev.clientEmail || ''
+        clientEmail: data.clientEmail || user?.email || prev.clientEmail || '',
+        // Set default specialist name
+        specialistName: prev.specialistName || user?.name || '',
+        // Set creation and validity dates
+        creationDate: format(now, "yyyy-MM-dd'T'HH:mm:ss", { locale: ptBR }),
+        validityDate: format(validityDate, "yyyy-MM-dd'T'HH:mm:ss", { locale: ptBR }),
+        // Set default template
+        templateId: prev.templateId || 'default',
+        templateColors: prev.templateColors || JSON.stringify({
+          primary: '#3B82F6',
+          secondary: '#1E40AF',
+          accent: '#10B981',
+          background: '#F8FAFC'
+        }),
+        templateLayout: prev.templateLayout || JSON.stringify({
+          sections: ['client', 'debt', 'payment', 'fees'],
+          showHeader: true,
+          showLogo: true,
+          showWatermark: false
+        })
       };
     });
     
@@ -125,11 +148,11 @@ export const useProposalHandlers = ({
       }
     });
 
-    // Salvar a proposta no Supabase
+    // Save the proposal to Supabase
     if (processedData) {
       const proposal = await saveProposal(processedData as ExtractedData, imagePreview || undefined);
       if (proposal) {
-        // Em caso de sucesso, atualize a lista de propostas
+        // On success, update the proposals list
         fetchProposals();
         setSelectedProposal(proposal);
         toast({
@@ -143,11 +166,49 @@ export const useProposalHandlers = ({
   
   const handleViewProposal = (proposal: Proposal) => {
     setSelectedProposal(proposal);
+    
+    // Parse template data if stored as strings
+    let templateColors = proposal.data.templateColors;
+    let templateLayout = proposal.data.templateLayout;
+    
+    if (templateColors && typeof templateColors === 'string') {
+      try {
+        templateColors = JSON.parse(templateColors);
+      } catch (e) {
+        console.error('Failed to parse template colors', e);
+        templateColors = {
+          primary: '#3B82F6',
+          secondary: '#1E40AF',
+          accent: '#10B981',
+          background: '#F8FAFC'
+        };
+      }
+    }
+    
+    if (templateLayout && typeof templateLayout === 'string') {
+      try {
+        templateLayout = JSON.parse(templateLayout);
+      } catch (e) {
+        console.error('Failed to parse template layout', e);
+        templateLayout = {
+          sections: ['client', 'debt', 'payment', 'fees'],
+          showHeader: true,
+          showLogo: true,
+          showWatermark: false
+        };
+      }
+    }
+    
     setFormData({
       ...proposal.data,
       creationDate: proposal.data.creationDate || proposal.creationDate,
-      validityDate: proposal.data.validityDate || proposal.validityDate
+      validityDate: proposal.data.validityDate || proposal.validityDate,
+      specialistName: proposal.data.specialistName || proposal.specialistName || user?.name,
+      templateId: proposal.data.templateId || 'default',
+      templateColors: typeof templateColors === 'string' ? templateColors : JSON.stringify(templateColors),
+      templateLayout: typeof templateLayout === 'string' ? templateLayout : JSON.stringify(templateLayout)
     });
+    
     setImagePreview(proposal.imageUrl);
     setGeneratedProposal(true);
     setActiveTab("proposal");
@@ -165,7 +226,7 @@ export const useProposalHandlers = ({
   const handleDeleteProposal = async (id: string) => {
     const success = await deleteProposal(id);
 
-    // Se a proposta excluída era a selecionada, limpar o state
+    // If the deleted proposal was selected, clear the state
     if (success && selectedProposal?.id === id) {
       setSelectedProposal(null);
       setGeneratedProposal(false);
@@ -181,7 +242,21 @@ export const useProposalHandlers = ({
     setFormData({
       clientName: user?.name || '',
       clientEmail: user?.email || '',
-      clientPhone: ''
+      clientPhone: '',
+      specialistName: user?.name || '',
+      templateId: 'default',
+      templateColors: JSON.stringify({
+        primary: '#3B82F6',
+        secondary: '#1E40AF',
+        accent: '#10B981',
+        background: '#F8FAFC'
+      }),
+      templateLayout: JSON.stringify({
+        sections: ['client', 'debt', 'payment', 'fees'],
+        showHeader: true,
+        showLogo: true,
+        showWatermark: false
+      })
     });
     setImagePreview(null);
     setGeneratedProposal(false);

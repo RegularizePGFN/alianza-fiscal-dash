@@ -9,12 +9,14 @@ interface FinancialInfoSectionProps {
   formData: Partial<ExtractedData>;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   disabled?: boolean;
+  entryInstallmentValue?: string;
 }
 
 const FinancialInfoSection = ({ 
   formData, 
   onInputChange, 
-  disabled = false 
+  disabled = false,
+  entryInstallmentValue = "0,00"
 }: FinancialInfoSectionProps) => {
   
   return (
@@ -125,7 +127,7 @@ const FinancialInfoSection = ({
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium">
-            Valor das Parcelas (Entrada)
+            Valor Total da Entrada
           </label>
           <div className="relative">
             <span className="absolute left-3 top-2.5 text-gray-500">R$</span>
@@ -138,6 +140,23 @@ const FinancialInfoSection = ({
               disabled={disabled}
             />
           </div>
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium">
+            Valor da Parcela (Entrada)
+          </label>
+          <div className="relative">
+            <span className="absolute left-3 top-2.5 text-gray-500">R$</span>
+            <Input
+              placeholder="0,00"
+              className="pl-8"
+              value={entryInstallmentValue}
+              disabled={true}
+            />
+          </div>
+          <p className="text-xs text-gray-500">
+            Valor calculado automaticamente
+          </p>
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium">

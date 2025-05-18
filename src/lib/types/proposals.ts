@@ -15,6 +15,20 @@ export interface ExtractedData {
   businessActivity?: string;
   creationDate?: string;
   validityDate?: string;
+  specialistName?: string; // Name of the tax specialist (usually the current user)
+  templateId?: string; // ID of the selected template for PDF rendering
+  templateColors?: {
+    primary?: string;
+    secondary?: string;
+    accent?: string;
+    background?: string;
+  };
+  templateLayout?: {
+    sections?: string[]; // Order of sections
+    showHeader?: boolean;
+    showWatermark?: boolean;
+    showLogo?: boolean;
+  };
 }
 
 export interface Proposal {
@@ -26,6 +40,8 @@ export interface Proposal {
   imageUrl: string;
   creationDate?: string;
   validityDate?: string;
+  specialistName?: string; // Added for direct access
+  templateId?: string;     // Added for direct access
 }
 
 export interface CompanyData {
@@ -101,4 +117,19 @@ export interface AIVisionResponse {
     quantidade_parcelas: number;
     valor_parcela: string;
   };
+}
+
+// New PDF template interface
+export interface PDFTemplate {
+  id: string;
+  name: string;
+  description: string;
+  preview: string; // URL to preview image
+  primaryColor: string; 
+  secondaryColor: string;
+  accentColor: string;
+  backgroundColor: string;
+  headerImage?: string;
+  watermarkImage?: string;
+  defaultLayout: string[]; // Default section order, e.g. ["client", "debt", "negotiation"]
 }
