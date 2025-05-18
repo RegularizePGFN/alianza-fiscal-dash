@@ -1,11 +1,14 @@
 
 import React, { createContext, useContext, useState } from 'react';
-import { SortColumn, SortConfig, SortDirection } from './types';
+import { SortConfig } from './types';
+
+type SortColumn = keyof SortConfig['key'];
+type SortDirection = SortConfig['direction'];
 
 interface DailyResultsContextValue {
-  sortColumn: SortColumn;
+  sortColumn: keyof SortConfig['key'];
   sortDirection: SortDirection;
-  sortBy: (column: SortColumn) => void;
+  sortBy: (column: keyof SortConfig['key']) => void;
   sortConfig: SortConfig;
 }
 
@@ -13,27 +16,27 @@ const DailyResultsContext = createContext<DailyResultsContextValue | undefined>(
 
 export const DailyResultsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [sortConfig, setSortConfig] = useState<SortConfig>({
-    column: 'salesAmount',
+    key: 'salesAmount',
     direction: 'desc',
   });
 
-  const sortBy = (column: SortColumn) => {
+  const sortBy = (column: keyof SortConfig['key']) => {
     setSortConfig(prev => {
-      if (prev.column === column) {
+      if (prev.key === column) {
         return {
-          column,
+          key: column,
           direction: prev.direction === 'asc' ? 'desc' : 'asc',
         };
       }
       return {
-        column,
+        key: column,
         direction: 'desc',
       };
     });
   };
 
   const value = {
-    sortColumn: sortConfig.column,
+    sortColumn: sortConfig.key,
     sortDirection: sortConfig.direction,
     sortBy,
     sortConfig,

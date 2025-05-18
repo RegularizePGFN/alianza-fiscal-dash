@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from "@/contexts/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -91,7 +92,7 @@ export function DailyResultsContent() {
           if (existingSalesperson) {
             existingSalesperson.proposalsCount = (existingSalesperson.proposalsCount || 0) + 1;
           
-            // Add fees if available - fix the type error here
+            // Add fees if available
             if (proposal.data && proposal.data.feesValue) {
               let feesValue = 0;
             
