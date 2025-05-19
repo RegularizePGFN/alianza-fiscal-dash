@@ -93,7 +93,7 @@ const FinancialInfoSection = ({
             />
           </div>
 
-          {/* Número de Parcelas da Entrada */}
+          {/* Parcelas da Entrada */}
           <div className="space-y-2">
             <label htmlFor="entryInstallments" className="text-sm font-medium text-slate-700 dark:text-slate-300">
               Parcelas da Entrada
@@ -104,30 +104,32 @@ const FinancialInfoSection = ({
               type="number"
               min="1"
               placeholder="1"
-              value={formData.entryInstallments || ''}
+              value={formData.entryInstallments || '1'}
               onChange={onInputChange}
               disabled={disabled}
               className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 disabled:dark:bg-gray-800 disabled:dark:border-gray-700 disabled:dark:text-gray-400"
             />
           </div>
 
-          {/* Valor da Parcela de Entrada */}
+          {/* Valor Parcela da Entrada */}
           <div className="space-y-2">
-            <label htmlFor="entryInstallmentValue" className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              Valor de cada parcela da entrada
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              Valor Parcela da Entrada
             </label>
             <Input
-              id="entryInstallmentValue"
               value={`R$ ${entryInstallmentValue}`}
               disabled={true}
-              className="bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400"
+              className="bg-gray-100 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-300"
             />
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Calculado automaticamente
+            </p>
           </div>
 
-          {/* Número de Parcelas */}
+          {/* Parcelas */}
           <div className="space-y-2">
             <label htmlFor="installments" className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              Número de Parcelas Restantes
+              Parcelas
             </label>
             <Input
               id="installments"
@@ -145,8 +147,8 @@ const FinancialInfoSection = ({
           {/* Valor das Parcelas */}
           <div className="space-y-2">
             <label htmlFor="installmentValue" className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
-              <CreditCard className="h-4 w-4 text-af-blue-600 dark:text-af-blue-400" />
-              Valor das Parcelas Restantes
+              <DollarSign className="h-4 w-4 text-af-blue-600 dark:text-af-blue-400" />
+              Valor das Parcelas
             </label>
             <Input
               id="installmentValue"
@@ -157,6 +159,26 @@ const FinancialInfoSection = ({
               disabled={disabled}
               className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 disabled:dark:bg-gray-800 disabled:dark:border-gray-700 disabled:dark:text-gray-400"
             />
+          </div>
+
+          {/* Honorários */}
+          <div className="space-y-2">
+            <label htmlFor="feesValue" className="text-sm font-medium text-purple-700 dark:text-purple-300 flex items-center gap-1">
+              <CreditCard className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              Honorários
+            </label>
+            <Input
+              id="feesValue"
+              name="feesValue"
+              placeholder="R$ 0,00"
+              value={formData.feesValue || ''}
+              onChange={onInputChange}
+              disabled={disabled}
+              className="bg-purple-50 dark:bg-purple-900/20 dark:border-purple-800 dark:text-purple-100 dark:placeholder-purple-300/50 disabled:dark:bg-purple-900/10 disabled:dark:border-purple-800/50 disabled:dark:text-purple-300/50"
+            />
+            <p className="text-xs text-purple-600 dark:text-purple-400">
+              Calculado como 20% da economia obtida
+            </p>
           </div>
         </div>
       </div>
