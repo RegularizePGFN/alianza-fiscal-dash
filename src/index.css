@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
@@ -38,14 +37,14 @@
 
     --radius: 0.75rem;
 
-    --sidebar-background: 215 90% 20%;
+    --sidebar-background: 215 50% 15%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 215 90% 20%;
-    --sidebar-accent: 215 90% 25%;
+    --sidebar-primary-foreground: 215 50% 15%;
+    --sidebar-accent: 215 50% 20%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 215 90% 25%;
-    --sidebar-ring: 215 90% 40%;
+    --sidebar-border: 215 50% 22%;
+    --sidebar-ring: 215 50% 30%;
   }
 
   .dark {
@@ -77,14 +76,14 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
     
-    --sidebar-background: 215 90% 10%;
+    --sidebar-background: 217 60% 8%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 215 90% 10%;
-    --sidebar-accent: 215 90% 15%;
+    --sidebar-primary-foreground: 217 60% 8%;
+    --sidebar-accent: 217 60% 12%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 215 90% 15%;
-    --sidebar-ring: 215 90% 30%;
+    --sidebar-border: 217 60% 15%;
+    --sidebar-ring: 217 60% 25%;
   }
 }
 

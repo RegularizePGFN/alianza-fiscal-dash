@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Clock, Calendar, Search } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { ExtractedData } from "@/lib/types/proposals";
 import ProcessingIndicator from './data-form/ProcessingIndicator';
 import FinancialInfoSection from './data-form/FinancialInfoSection';
@@ -91,14 +91,14 @@ const DataForm = ({
   const calculateEntryInstallmentValue = () => {
     if (formData.entryValue && formData.entryInstallments) {
       try {
-        // Converta a string de moeda para um número, substituindo ',' por '.' e removendo '.'
+        // Convert currency string to number, replacing ',' with '.' and removing thousands separator '.'
         const entryValue = parseFloat(formData.entryValue.replace(/\./g, '').replace(',', '.'));
         const installments = parseInt(formData.entryInstallments);
         
         if (!isNaN(entryValue) && !isNaN(installments) && installments > 0) {
           const installmentValue = entryValue / installments;
           
-          // Formatar com precisão de 2 casas decimais
+          // Format with 2 decimal places
           return installmentValue.toLocaleString('pt-BR', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
@@ -112,9 +112,9 @@ const DataForm = ({
   };
 
   return (
-    <Card className="shadow-md rounded-xl">
-      <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b">
-        <CardTitle className="text-lg font-medium">Dados Extraídos da Proposta</CardTitle>
+    <Card className="shadow-md rounded-xl dark:bg-gray-800 dark:border-gray-700">
+      <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b dark:from-gray-800 dark:to-gray-750 dark:border-gray-700">
+        <CardTitle className="text-lg font-medium dark:text-white">Dados Extraídos da Proposta</CardTitle>
       </CardHeader>
       
       <CardContent className="space-y-6 pt-6">
@@ -124,41 +124,39 @@ const DataForm = ({
         {!processing && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center gap-2 text-slate-700">
-                <Clock className="h-4 w-4 text-af-blue-600" />
+              <label className="text-sm font-medium flex items-center gap-2 text-slate-700 dark:text-slate-300">
                 Data de Criação
               </label>
               <Input 
                 value={formData.creationDate || new Date().toLocaleString('pt-BR')}
                 disabled
-                className="bg-slate-50"
+                className="bg-slate-50 dark:bg-gray-700 dark:text-white"
               />
-              <p className="text-xs text-slate-500">Data de geração automática</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Data de geração automática</p>
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center gap-2 text-slate-700">
-                <Calendar className="h-4 w-4 text-af-blue-600" />
+              <label className="text-sm font-medium flex items-center gap-2 text-slate-700 dark:text-slate-300">
                 Data de Validade
               </label>
               <Input 
                 value={formData.validityDate || 'Calculada automaticamente (24h após criação)'}
                 disabled
-                className="bg-slate-50"
+                className="bg-slate-50 dark:bg-gray-700 dark:text-white"
               />
-              <p className="text-xs text-slate-500">Validade de 24h após criação</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Validade de 24h após criação</p>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center gap-2 text-slate-700">
+              <label className="text-sm font-medium flex items-center gap-2 text-slate-700 dark:text-slate-300">
                 Especialista Tributário
               </label>
               <Input 
                 value={formData.specialistName || user?.name || ''}
                 disabled
-                className="bg-slate-50"
+                className="bg-slate-50 dark:bg-gray-700 dark:text-white"
               />
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 {user?.role === 'admin' ? 'Pode ser alterado na aba "Edite o PDF"' : 'Nome do especialista responsável'}
               </p>
             </div>
@@ -181,11 +179,11 @@ const DataForm = ({
         />
       </CardContent>
       
-      <CardFooter className="flex justify-end border-t pt-4">
+      <CardFooter className="flex justify-end border-t pt-4 dark:border-gray-700">
         <Button
           onClick={onGenerateProposal}
           disabled={processing || !formData.cnpj || !formData.totalDebt || !formData.discountedValue}
-          className="bg-af-blue-600 hover:bg-af-blue-700"
+          className="bg-af-blue-600 hover:bg-af-blue-700 dark:bg-af-blue-600 dark:hover:bg-af-blue-700 text-white"
         >
           {processing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           Continuar para Edição de PDF

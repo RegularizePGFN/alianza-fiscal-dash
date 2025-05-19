@@ -1,157 +1,113 @@
-
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Sale } from "@/lib/types";
-import { DailySalesperson } from "./types";
-import { SalespeopleTable } from "./SalespeopleTable";
-import { useDailyResults } from "./DailyResultsContext";
-import { getTodayISO } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { DailySummaryCard } from "./DailySummaryCard";
+import { SalespersonRow } from "./SalespersonRow";
+import { TableHeader } from "@/components/ui/table";
 
 interface DailyResultsContentProps {
-  todaySales: Sale[];
-  currentDate: string;
+  salesData: any[];
+  isLoading: boolean;
 }
 
-export function DailyResultsContent({ todaySales, currentDate }: DailyResultsContentProps) {
-  const [salespeople, setSalespeople] = useState<DailySalesperson[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { sortColumn, sortDirection } = useDailyResults();
-  
-  // Function to sort salespeople data
-  const sortData = (data: DailySalesperson[]) => {
-    return [...data].sort((a, b) => {
-      if (sortColumn === 'name') {
-        return sortDirection === 'asc' 
-          ? a.name.localeCompare(b.name) 
-          : b.name.localeCompare(a.name);
-      } else {
-        // Handle cases where properties might be undefined
-        const valueA = a[sortColumn] !== undefined ? a[sortColumn] as number : 0;
-        const valueB = b[sortColumn] !== undefined ? b[sortColumn] as number : 0;
-        
-        return sortDirection === 'asc' ? valueA - valueB : valueB - valueA;
-      }
-    });
-  };
-  
-  useEffect(() => {
-    // Fetch all data needed for the dashboard
-    const fetchAllData = async () => {
-      setLoading(true);
-      try {
-        // Get today's date in ISO format
-        const today = getTodayISO();
-        
-        // 1. Fetch all salespeople profiles
-        const { data: profilesData, error: profilesError } = await supabase
-          .from("profiles")
-          .select("id, name, role")
-          .eq("role", "vendedor");
-          
-        if (profilesError) {
-          console.error("Error fetching salespeople:", profilesError);
-          return;
-        }
-        
-        // 2. Fetch today's proposals
-        const { data: proposalsData, error: proposalsError } = await supabase
-          .from("proposals")
-          .select("*")
-          .gte("created_at", `${today}T00:00:00`)
-          .lte("created_at", `${today}T23:59:59`);
-          
-        if (proposalsError) {
-          console.error("Error fetching proposals:", proposalsError);
-        }
-        
-        // Initialize all salespeople with zero counts
-        const allSalespeople = (profilesData || []).map(profile => ({
-          id: profile.id,
-          name: profile.name || "Sem nome",
-          salesCount: 0,
-          salesAmount: 0,
-          proposalsCount: 0,
-          feesAmount: 0
-        }));
-
-        // Update counts for salespeople who made sales today
-        todaySales.forEach(sale => {
-          const existingSalesperson = allSalespeople.find(sp => sp.id === sale.salesperson_id);
-          if (existingSalesperson) {
-            existingSalesperson.salesCount += 1;
-            existingSalesperson.salesAmount += sale.gross_amount;
-          } else if (sale.salesperson_id) {
-            // In case there's a salesperson in the sales data but not in profiles
-            allSalespeople.push({
-              id: sale.salesperson_id,
-              name: sale.salesperson_name || "Sem nome",
-              salesCount: 1,
-              salesAmount: sale.gross_amount,
-              proposalsCount: 0,
-              feesAmount: 0
-            });
-          }
-        });
-        
-        // Update counts for salespeople who created proposals today
-        if (proposalsData) {
-          proposalsData.forEach(proposal => {
-            const existingSalesperson = allSalespeople.find(sp => sp.id === proposal.user_id);
-            if (existingSalesperson) {
-              existingSalesperson.proposalsCount = (existingSalesperson.proposalsCount || 0) + 1;
-              
-              // Add fees if available
-              if (proposal.fees_value) {
-                let feesValue = 0;
-                
-                // Handle different possible types of fees_value
-                if (typeof proposal.fees_value === 'string') {
-                  // Fix: Cast to string and then use replace
-                  const cleanedValue = String(proposal.fees_value).replace(/[^0-9,.]/g, '').replace(',', '.');
-                  feesValue = parseFloat(cleanedValue);
-                } else if (typeof proposal.fees_value === 'number') {
-                  feesValue = proposal.fees_value;
-                }
-                
-                if (!isNaN(feesValue)) {
-                  existingSalesperson.feesAmount = (existingSalesperson.feesAmount || 0) + feesValue;
-                }
-              }
-            }
-          });
-        }
-
-        // Apply initial sort to the data
-        setSalespeople(sortData(allSalespeople));
-      } catch (error) {
-        console.error("Error processing data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+const DailyResultsContent = ({ salesData, isLoading }: DailyResultsContentProps) => {
+  const salespeople = salesData.reduce((acc: any, sale: any) => {
+    const existingPerson = acc.find((person: any) => person.id === sale.salesperson_id);
     
-    fetchAllData();
-  }, [todaySales]);
-  
-  // Apply sorting whenever sort criteria changes
-  useEffect(() => {
-    setSalespeople(prevSalespeople => sortData(prevSalespeople));
-  }, [sortColumn, sortDirection]);
-  
+    if (existingPerson) {
+      existingPerson.salesAmount = (parseFloat((existingPerson.salesAmount || "0").replace(/[^\d,\.]/g, '').replace(",", ".")) + parseFloat(sale.amount.replace(/[^\d,\.]/g, '').replace(",", "."))).toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+      existingPerson.salesCount = (existingPerson.salesCount || 0) + 1;
+      existingPerson.proposalsSent = (existingPerson.proposalsSent || 0) + (sale.proposals_sent ? 1 : 0);
+      existingPerson.fees_value = (parseFloat((existingPerson.fees_value || "0").replace(/[^\d,\.]/g, '').replace(",", ".")) + parseFloat(sale.fees_value?.replace(/[^\d,\.]/g, '').replace(",", ".") || "0")).toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    } else {
+      acc.push({
+        id: sale.salesperson_id,
+        name: sale.salesperson_name,
+        salesAmount: sale.amount,
+        salesCount: 1,
+        proposalsSent: sale.proposals_sent ? 1 : 0,
+        fees_value: sale.fees_value
+      });
+    }
+    return acc;
+  }, []);
+
+  const salespeopleSortedBySales = salespeople.sort((a: any, b: any) => {
+    const amountA = parseFloat((a.salesAmount || "0").replace(/[^\d,\.]/g, '').replace(",", "."));
+    const amountB = parseFloat((b.salesAmount || "0").replace(/[^\d,\.]/g, '').replace(",", "."));
+    return amountB - amountA;
+  });
+
   return (
-    <div className="bg-white rounded-md p-2">
-      <h3 className="text-xs font-medium text-muted-foreground mb-1">Vendedores Hoje:</h3>
-      {loading ? (
-        <div className="flex h-[150px] items-center justify-center">
-          <p className="text-xs text-muted-foreground">Carregando dados...</p>
+    <div>
+      <DailySummaryCard />
+
+      <div className="mt-6 border rounded-lg overflow-hidden dark:border-gray-700">
+        <div className="bg-muted py-3 dark:bg-gray-800">
+          <div className="flex justify-center"> {/* Center-align the header */}
+            <h3 className="font-medium text-lg text-center">Vendedores do Dia</h3>
+          </div>
         </div>
-      ) : salespeople.length > 0 ? (
-        <SalespeopleTable salespeople={salespeople} />
-      ) : (
-        <div className="flex h-[150px] items-center justify-center text-xs text-muted-foreground">
-          Sem vendedores cadastrados
+        
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <TableHeader>
+              <tr>
+                <th className="text-left pl-4 py-3 text-sm font-medium text-muted-foreground">
+                  Nome
+                </th>
+                {/* Reordered columns as requested */}
+                <th className="text-center py-3 text-sm font-medium text-muted-foreground">
+                  Prop. Enviadas
+                </th>
+                <th className="text-center py-3 text-sm font-medium text-muted-foreground">
+                  Honorários
+                </th>
+                <th className="text-center py-3 text-sm font-medium text-muted-foreground">
+                  Vendas
+                </th>
+                <th className="text-right pr-4 py-3 text-sm font-medium text-muted-foreground">
+                  Valor
+                </th>
+              </tr>
+            </TableHeader>
+            <tbody>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={5} className="text-center p-4">
+                    <LoadingSpinner size="sm" />
+                  </td>
+                </tr>
+              ) : salespeopleSortedBySales?.length ? (
+                salespeopleSortedBySales.map((person) => (
+                  <SalespersonRow
+                    key={person.id}
+                    name={person.name}
+                    // Reordered values to match the column order above
+                    proposalsSent={person.proposalsSent || 0}
+                    fees={formatCurrency(person.fees_value?.replace(/[^\d,\.]/g, '') || "0")}
+                    salesCount={person.salesCount || 0}
+                    salesAmount={formatCurrency(person.salesAmount || "0")}
+                  />
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} className="text-center px-4 py-8 text-muted-foreground">
+                    Nenhum vendedor registrou vendas hoje
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
     </div>
   );
-}
+};
+
+export default DailyResultsContent;
