@@ -4,7 +4,7 @@ import { useDailyResults } from "./DailyResultsContext";
 export function TableHeader() {
   const { sortColumn, sortDirection, setSortColumn, setSortDirection } = useDailyResults();
   
-  const handleSort = (column: string) => {
+  const handleSort = (column: 'name' | 'proposals' | 'fees' | 'salesCount' | 'salesAmount') => {
     if (sortColumn === column) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
@@ -18,11 +18,11 @@ export function TableHeader() {
       <tr className="border-b border-gray-200 dark:border-gray-700 text-xs">
         <th 
           className="text-left p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
-          onClick={() => handleSort('proposalsCount')}
+          onClick={() => handleSort('proposals')}
         >
           <span className="flex items-center">
             Prop. Enviada
-            {sortColumn === 'proposalsCount' && (
+            {sortColumn === 'proposals' && (
               <span className="ml-1">
                 {sortDirection === 'asc' ? '▲' : '▼'}
               </span>
@@ -31,11 +31,11 @@ export function TableHeader() {
         </th>
         <th 
           className="text-right p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
-          onClick={() => handleSort('feesAmount')}
+          onClick={() => handleSort('fees')}
         >
           <span className="flex items-center justify-end">
             Honorários
-            {sortColumn === 'feesAmount' && (
+            {sortColumn === 'fees' && (
               <span className="ml-1">
                 {sortDirection === 'asc' ? '▲' : '▼'}
               </span>

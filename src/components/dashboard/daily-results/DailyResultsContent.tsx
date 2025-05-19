@@ -24,8 +24,18 @@ export function DailyResultsContent({ todaySales, currentDate }: DailyResultsCon
         return sortDirection === 'asc' 
           ? a.name.localeCompare(b.name) 
           : b.name.localeCompare(a.name);
+      } else if (sortColumn === 'proposals') {
+        // Handle proposals sorting (maps to proposalsCount)
+        const valueA = a.proposalsCount !== undefined ? a.proposalsCount : 0;
+        const valueB = b.proposalsCount !== undefined ? b.proposalsCount : 0;
+        return sortDirection === 'asc' ? valueA - valueB : valueB - valueA;
+      } else if (sortColumn === 'fees') {
+        // Handle fees sorting (maps to feesAmount)
+        const valueA = a.feesAmount !== undefined ? a.feesAmount : 0;
+        const valueB = b.feesAmount !== undefined ? b.feesAmount : 0;
+        return sortDirection === 'asc' ? valueA - valueB : valueB - valueA;
       } else {
-        // Handle cases where properties might be undefined
+        // Handle other numeric columns (salesCount, salesAmount)
         const valueA = a[sortColumn] !== undefined ? a[sortColumn] as number : 0;
         const valueB = b[sortColumn] !== undefined ? b[sortColumn] as number : 0;
         

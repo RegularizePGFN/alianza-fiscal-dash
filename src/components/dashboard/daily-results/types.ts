@@ -13,5 +13,5 @@ export interface SortConfig {
   direction: SortDirection;
 }
 
-export type SortColumn = 'name' | 'salesCount' | 'salesAmount' | 'proposalsCount' | 'feesAmount';
+export type SortColumn = 'name' | 'salesCount' | 'salesAmount' | 'proposals' | 'fees';
 export type SortDirection = 'asc' | 'desc';
