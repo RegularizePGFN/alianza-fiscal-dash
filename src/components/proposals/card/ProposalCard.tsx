@@ -69,18 +69,20 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
   const entryInstallmentValue = () => {
     if (data.entryValue && data.entryInstallments) {
       try {
+        // Converta a string de moeda para um número, substituindo ',' por '.' e removendo '.'
         const entryValue = parseFloat(data.entryValue.replace(/\./g, '').replace(',', '.'));
         const installments = parseInt(data.entryInstallments);
         
         if (!isNaN(entryValue) && !isNaN(installments) && installments > 0) {
           const installmentValue = entryValue / installments;
+          
           return installmentValue.toLocaleString('pt-BR', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
           });
         }
       } catch (error) {
-        console.error("Error calculating entry installment value:", error);
+        console.error("Erro ao calcular o valor da parcela de entrada:", error);
       }
     }
     return "0,00";

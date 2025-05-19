@@ -91,18 +91,21 @@ const DataForm = ({
   const calculateEntryInstallmentValue = () => {
     if (formData.entryValue && formData.entryInstallments) {
       try {
+        // Converta a string de moeda para um número, substituindo ',' por '.' e removendo '.'
         const entryValue = parseFloat(formData.entryValue.replace(/\./g, '').replace(',', '.'));
         const installments = parseInt(formData.entryInstallments);
         
         if (!isNaN(entryValue) && !isNaN(installments) && installments > 0) {
           const installmentValue = entryValue / installments;
+          
+          // Formatar com precisão de 2 casas decimais
           return installmentValue.toLocaleString('pt-BR', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
           });
         }
       } catch (error) {
-        console.error("Error calculating entry installment value:", error);
+        console.error("Erro ao calcular o valor da parcela de entrada:", error);
       }
     }
     return "0,00";

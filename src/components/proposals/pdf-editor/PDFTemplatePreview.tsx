@@ -1,4 +1,3 @@
-
 import React, { useMemo, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { ExtractedData, PDFTemplate, TemplateColors, TemplateLayout } from '@/lib/types/proposals';
@@ -71,18 +70,20 @@ const PDFTemplatePreview = ({ formData, template, imagePreview }: PDFTemplatePre
   const entryInstallmentValue = () => {
     if (formData.entryValue && formData.entryInstallments) {
       try {
+        // Converta a string de moeda para um número, substituindo ',' por '.' e removendo '.'
         const entryValue = parseFloat(formData.entryValue.replace(/\./g, '').replace(',', '.'));
         const installments = parseInt(formData.entryInstallments);
         
         if (!isNaN(entryValue) && !isNaN(installments) && installments > 0) {
           const installmentValue = entryValue / installments;
+          
           return installmentValue.toLocaleString('pt-BR', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
           });
         }
       } catch (error) {
-        console.error("Error calculating entry installment value:", error);
+        console.error("Erro ao calcular o valor da parcela de entrada:", error);
       }
     }
     return "0,00";

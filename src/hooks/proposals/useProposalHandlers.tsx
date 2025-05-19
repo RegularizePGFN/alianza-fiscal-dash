@@ -117,17 +117,88 @@ export const useProposalHandlers = ({
     // If it's an event (from a form element)
     if (typeof nameOrEvent !== 'string') {
       const { name, value } = nameOrEvent.target;
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
+      
+      // Ajuste especial para atualizar o valor da parcela de entrada quando a entrada ou número de parcelas mudar
+      if (name === 'entryValue' || name === 'entryInstallments') {
+        setFormData(prev => {
+          // Atualizar o campo atual
+          const updatedData = {
+            ...prev,
+            [name]: value
+          };
+          
+          // Tentar recalcular o valor da parcela
+          try {
+            if (name === 'entryValue' && prev.entryInstallments || 
+                name === 'entryInstallments' && prev.entryValue) {
+              
+              const entryValue = name === 'entryValue' 
+                ? parseFloat(value.replace(/\./g, '').replace(',', '.'))
+                : parseFloat(prev.entryValue?.replace(/\./g, '').replace(',', '.') || '0');
+              
+              const installments = name === 'entryInstallments'
+                ? parseInt(value)
+                : parseInt(prev.entryInstallments || '1');
+                
+              if (!isNaN(entryValue) && !isNaN(installments) && installments > 0) {
+                // Esta parte apenas calcula, mas não atualiza nenhum campo específico,
+                // pois o cálculo é feito sob demanda nos componentes
+                console.log(`Valor calculado: ${(entryValue / installments).toLocaleString('pt-BR')}`);
+              }
+            }
+          } catch (e) {
+            console.error("Erro ao calcular valor da parcela:", e);
+          }
+          
+          return updatedData;
+        });
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          [name]: value
+        }));
+      }
     } 
     // If it's a direct name/value pair (as used in PDFEditorTabContent)
     else if (typeof value !== 'undefined') {
-      setFormData(prev => ({
-        ...prev,
-        [nameOrEvent]: value
-      }));
+      const name = nameOrEvent;
+      
+      // Similar ao tratamento acima, mas para o caso de uso direto de nome/valor
+      if (name === 'entryValue' || name === 'entryInstallments') {
+        setFormData(prev => {
+          const updatedData = {
+            ...prev,
+            [name]: value
+          };
+          
+          try {
+            if (name === 'entryValue' && prev.entryInstallments || 
+                name === 'entryInstallments' && prev.entryValue) {
+              
+              const entryValue = name === 'entryValue' 
+                ? parseFloat(value.replace(/\./g, '').replace(',', '.'))
+                : parseFloat(prev.entryValue?.replace(/\./g, '').replace(',', '.') || '0');
+              
+              const installments = name === 'entryInstallments'
+                ? parseInt(value)
+                : parseInt(prev.entryInstallments || '1');
+                
+              if (!isNaN(entryValue) && !isNaN(installments) && installments > 0) {
+                console.log(`Valor calculado: ${(entryValue / installments).toLocaleString('pt-BR')}`);
+              }
+            }
+          } catch (e) {
+            console.error("Erro ao calcular valor da parcela:", e);
+          }
+          
+          return updatedData;
+        });
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          [name]: value
+        }));
+      }
     }
   };
   
