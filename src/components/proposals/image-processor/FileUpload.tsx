@@ -1,8 +1,8 @@
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Upload, Image } from "lucide-react";
+import { Upload, Image, Clipboard } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface FileUploadProps {
@@ -11,6 +11,44 @@ interface FileUploadProps {
 }
 
 const FileUpload = ({ onImageChange, disabled }: FileUploadProps) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dropzoneRef = useRef<HTMLLabelElement>(null);
+
+  // Handle clipboard paste events
+  useEffect(() => {
+    const handlePaste = async (e: ClipboardEvent) => {
+      if (disabled) return;
+      
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const file = items[i].getAsFile();
+          if (file && inputRef.current) {
+            // Create a DataTransfer object to create a valid file input event
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            inputRef.current.files = dataTransfer.files;
+            
+            // Trigger the onChange event manually
+            const event = new Event('change', { bubbles: true });
+            inputRef.current.dispatchEvent(event);
+            break;
+          }
+        }
+      }
+    };
+    
+    // Add event listener to the document for detecting paste events
+    document.addEventListener('paste', handlePaste);
+    
+    // Cleanup
+    return () => {
+      document.removeEventListener('paste', handlePaste);
+    };
+  }, [disabled, onImageChange]);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center space-x-2">
@@ -27,6 +65,7 @@ const FileUpload = ({ onImageChange, disabled }: FileUploadProps) => {
         )}
       >
         <label 
+          ref={dropzoneRef}
           htmlFor="image" 
           className="flex flex-col items-center justify-center cursor-pointer"
         >
@@ -38,16 +77,20 @@ const FileUpload = ({ onImageChange, disabled }: FileUploadProps) => {
             "text-lg font-medium",
             disabled ? "text-muted-foreground" : "text-purple-700 dark:text-purple-300"
           )}>
-            Clique ou arraste sua imagem
+            Clique, arraste ou cole sua imagem
           </span>
-          <p className={cn(
-            "text-sm mt-2",
-            "text-muted-foreground dark:text-gray-400"
-          )}>
-            Suporta PNG, JPG ou JPEG (máx. 10MB)
-          </p>
+          <div className="flex items-center gap-2 mt-2">
+            <p className={cn(
+              "text-sm",
+              "text-muted-foreground dark:text-gray-400"
+            )}>
+              Suporta PNG, JPG ou JPEG (máx. 10MB)
+            </p>
+            <Clipboard className="h-4 w-4 text-muted-foreground" />
+          </div>
           <Input 
             id="image" 
+            ref={inputRef}
             type="file" 
             accept="image/*"
             onChange={onImageChange}
