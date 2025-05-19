@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +10,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 // Form schema for password change
 const passwordChangeSchema = z.object({
@@ -26,10 +25,9 @@ const passwordChangeSchema = z.object({
 type PasswordChangeForm = z.infer<typeof passwordChangeSchema>;
 
 const ProfilePage = () => {
-  const { user, isImpersonating, stopImpersonating } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [isReturningToOriginal, setIsReturningToOriginal] = useState(false);
 
   const form = useForm<PasswordChangeForm>({
     resolver: zodResolver(passwordChangeSchema),
@@ -92,60 +90,9 @@ const ProfilePage = () => {
     }
   };
 
-  const handleReturnToOriginalUser = async () => {
-    setIsReturningToOriginal(true);
-    try {
-      const success = await stopImpersonating();
-      if (success) {
-        toast({
-          title: "Sucesso",
-          description: "Você retornou à sua conta original",
-        });
-      } else {
-        toast({
-          title: "Erro",
-          description: "Não foi possível retornar à sua conta original",
-          variant: "destructive",
-        });
-      }
-    } catch (error: any) {
-      toast({
-        title: "Erro",
-        description: error.message || "Ocorreu um erro ao retornar à sua conta",
-        variant: "destructive",
-      });
-    } finally {
-      setIsReturningToOriginal(false);
-    }
-  };
-
   return (
     <AppLayout>
       <div className="container max-w-4xl mx-auto py-10">
-        {/* Return to original user button (only for admins impersonating another user) */}
-        {isImpersonating && (
-          <div className="mb-6">
-            <Button 
-              variant="outline" 
-              onClick={handleReturnToOriginalUser}
-              disabled={isReturningToOriginal}
-              className="mb-4"
-            >
-              {isReturningToOriginal ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Retornando...
-                </>
-              ) : (
-                <>
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Voltar à sua conta
-                </>
-              )}
-            </Button>
-          </div>
-        )}
-
         <h1 className="text-2xl font-bold mb-8">Perfil do Usuário</h1>
 
         <div className="grid gap-8">
