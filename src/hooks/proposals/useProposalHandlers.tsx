@@ -1,3 +1,4 @@
+
 import { ChangeEvent } from "react";
 import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 import { fetchCnpjData } from "@/lib/api";
@@ -61,15 +62,18 @@ export const useProposalHandlers = ({
         }
       }
       
+      // Preserve existing client data if available, only update if not already set
       return {
         ...prev,
         ...data,
+        // Fix to preserve client data across tab changes - only update if fields don't already exist
+        clientName: prev.clientName || data.clientName || user?.name || '',
+        clientEmail: prev.clientEmail || data.clientEmail || user?.email || '',
+        clientPhone: prev.clientPhone || data.clientPhone || '',
+        businessActivity: prev.businessActivity || data.businessActivity || '',
         feesValue: feesValue || prev.feesValue || '0,00',
         // Make sure entryInstallments is set, defaulting to '1' if not provided
         entryInstallments: data.entryInstallments || prev.entryInstallments || '1',
-        // Ensure user data is preserved
-        clientName: data.clientName || user?.name || prev.clientName || '',
-        clientEmail: data.clientEmail || user?.email || prev.clientEmail || '',
         // Set default specialist name
         specialistName: prev.specialistName || user?.name || '',
         // Set creation and validity dates
@@ -97,13 +101,19 @@ export const useProposalHandlers = ({
       fetchCnpjData(data.cnpj).then(companyData => {
         if (companyData) {
           setCompanyData(companyData);
-          setFormData(prev => ({
-            ...prev,
-            clientName: companyData.company?.name || prev.clientName || '',
-            clientEmail: companyData.emails?.[0]?.address || prev.clientEmail || '',
-            clientPhone: companyData.phones?.[0] ? `${companyData.phones[0].area}${companyData.phones[0].number}` : prev.clientPhone || '',
-            businessActivity: companyData.sideActivities?.[0] ? `${companyData.sideActivities[0].id} | ${companyData.sideActivities[0].text}` : companyData.mainActivity ? `${companyData.mainActivity.id} | ${companyData.mainActivity.text}` : prev.businessActivity || ''
-          }));
+          // Modified this section to preserve existing user data
+          setFormData(prev => {
+            return {
+              ...prev,
+              // Only update client info if it's not already set by the user
+              clientName: prev.clientName || companyData.company?.name || '',
+              clientEmail: prev.clientEmail || companyData.emails?.[0]?.address || '',
+              clientPhone: prev.clientPhone || (companyData.phones?.[0] ? `${companyData.phones[0].area}${companyData.phones[0].number}` : ''),
+              businessActivity: prev.businessActivity || (companyData.sideActivities?.[0] ? 
+                `${companyData.sideActivities[0].id} | ${companyData.sideActivities[0].text}` : 
+                companyData.mainActivity ? `${companyData.mainActivity.id} | ${companyData.mainActivity.text}` : '')
+            };
+          });
         }
       }).catch(err => console.error("Error fetching company data:", err));
     }

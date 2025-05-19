@@ -1,386 +1,131 @@
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Eye, FileText, Trash2, Loader2, Search, ArrowUpDown, User } from "lucide-react";
-import { Proposal } from "@/lib/types/proposals";
-import { useToast } from "@/hooks/use-toast";
-import { formatDate, formatCurrency } from "@/lib/utils";
-import { useAuth } from "@/contexts/auth";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import React, { useState } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Eye, Trash2 } from 'lucide-react';
+import { Proposal } from '@/lib/types/proposals';
+import { formatBrazilianCurrency } from '@/lib/utils';
 
 interface ProposalHistoryProps {
   proposals: Proposal[];
-  isLoading?: boolean;
+  loading: boolean;
   onViewProposal: (proposal: Proposal) => void;
   onDeleteProposal: (id: string) => Promise<boolean>;
 }
 
-interface SortConfig {
-  key: string;
-  direction: 'asc' | 'desc';
-}
-
-const ProposalHistory = ({ proposals, isLoading = false, onViewProposal, onDeleteProposal }: ProposalHistoryProps) => {
-  const { toast } = useToast();
-  const { user } = useAuth();
+const ProposalHistory = ({ proposals, loading, onViewProposal, onDeleteProposal }: ProposalHistoryProps) => {
+  const [searchTerm, setSearchTerm] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
-  
-  const isAdmin = user?.role === 'admin';
-  const itemsPerPage = 10;
 
+  // Filter proposals based on search term
+  const filteredProposals = proposals.filter(proposal => {
+    const searchTermLower = searchTerm.toLowerCase();
+    return (
+      proposal.data.cnpj?.toLowerCase().includes(searchTermLower) ||
+      proposal.data.clientName?.toLowerCase().includes(searchTermLower) ||
+      proposal.data.debtNumber?.toLowerCase().includes(searchTermLower) ||
+      proposal.userName?.toLowerCase().includes(searchTermLower)
+    );
+  });
+
+  // Handle deletion with confirmation
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     try {
-      const success = await onDeleteProposal(id);
-      if (success) {
-        toast({
-          title: "Proposta excluída",
-          description: "A proposta foi removida com sucesso.",
-        });
+      if (window.confirm('Tem certeza que deseja excluir esta proposta?')) {
+        const success = await onDeleteProposal(id);
+        if (success) {
+          // The proposals list will be updated via the parent component
+        }
       }
-    } catch (error) {
-      toast({
-        title: "Erro ao excluir",
-        description: "Não foi possível excluir a proposta.",
-        variant: "destructive",
-      });
     } finally {
       setDeletingId(null);
     }
   };
 
-  // Sorting function
-  const requestSort = (key: string) => {
-    let direction: 'asc' | 'desc' = 'asc';
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
-    }
-    setSortConfig({ key, direction });
-  };
-
-  // Filter and sort proposals
-  const filteredProposals = proposals.filter(proposal => {
-    const searchLower = searchQuery.toLowerCase();
-    return (
-      proposal.data.cnpj?.toLowerCase().includes(searchLower) ||
-      proposal.data.clientName?.toLowerCase().includes(searchLower) ||
-      proposal.id.toLowerCase().includes(searchLower) ||
-      proposal.userName.toLowerCase().includes(searchLower)
-    );
-  });
-
-  const sortedProposals = [...filteredProposals];
-  if (sortConfig !== null) {
-    sortedProposals.sort((a, b) => {
-      let aVal, bVal;
-      
-      // Handle different data paths based on the sort key
-      if (sortConfig.key === 'cnpj') {
-        aVal = a.data.cnpj || '';
-        bVal = b.data.cnpj || '';
-      } else if (sortConfig.key === 'clientName') {
-        aVal = a.data.clientName || '';
-        bVal = b.data.clientName || '';
-      } else if (sortConfig.key === 'userName') {
-        aVal = a.userName || '';
-        bVal = b.userName || '';
-      } else if (sortConfig.key === 'totalDebt') {
-        aVal = parseFloat((a.data.totalDebt || '0').replace(/[^\d,-]/g, '').replace(',', '.'));
-        bVal = parseFloat((b.data.totalDebt || '0').replace(/[^\d,-]/g, '').replace(',', '.'));
-      } else if (sortConfig.key === 'discountedValue') {
-        aVal = parseFloat((a.data.discountedValue || '0').replace(/[^\d,-]/g, '').replace(',', '.'));
-        bVal = parseFloat((b.data.discountedValue || '0').replace(/[^\d,-]/g, '').replace(',', '.'));
-      } else if (sortConfig.key === 'discountPercentage') {
-        aVal = parseFloat((a.data.discountPercentage || '0').replace(/[^\d,-]/g, '').replace(',', '.'));
-        bVal = parseFloat((b.data.discountPercentage || '0').replace(/[^\d,-]/g, '').replace(',', '.'));
-      } else if (sortConfig.key === 'feesValue') {
-        aVal = parseFloat((a.data.feesValue || '0').replace(/[^\d,-]/g, '').replace(',', '.'));
-        bVal = parseFloat((b.data.feesValue || '0').replace(/[^\d,-]/g, '').replace(',', '.'));
-      } else {
-        // Default to created date
-        aVal = new Date(a.createdAt).getTime();
-        bVal = new Date(b.createdAt).getTime();
-      }
-
-      // Sort based on direction
-      if (aVal < bVal) {
-        return sortConfig.direction === 'asc' ? -1 : 1;
-      }
-      if (aVal > bVal) {
-        return sortConfig.direction === 'asc' ? 1 : -1;
-      }
-      return 0;
-    });
-  }
-
-  // Pagination
-  const totalPages = Math.ceil(sortedProposals.length / itemsPerPage);
-  const paginatedProposals = sortedProposals.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  if (isLoading) {
-    return (
-      <Card className="border-border">
-        <CardHeader>
-          <CardTitle className="text-lg font-medium">Histórico de Propostas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="mt-2 text-sm text-muted-foreground">Carregando propostas...</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (proposals.length === 0) {
-    return (
-      <Card className="border-border shadow-md rounded-xl">
-        <CardHeader className="border-b">
-          <CardTitle className="text-lg font-medium">Histórico de Propostas</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <div className="text-center py-8">
-            <FileText className="mx-auto h-12 w-12 text-muted-foreground opacity-40" />
-            <p className="mt-4 text-muted-foreground">Nenhuma proposta gerada ainda.</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card className="border-border shadow-md rounded-xl">
-      <CardHeader className="border-b">
-        <CardTitle className="text-lg font-semibold mb-4">Histórico de Propostas</CardTitle>
-        <div className="flex items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por CNPJ, nome, número da proposta ou usuário..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="pl-8 w-full"
-            />
-          </div>
-        </div>
+    <Card className="shadow-md rounded-xl">
+      <CardHeader id="history-card-header" className="bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 border-b dark:border-gray-700">
+        <CardTitle className="text-lg font-medium">Histórico de Propostas</CardTitle>
       </CardHeader>
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead 
-                  className="w-[140px] cursor-pointer hover:bg-muted/50"
-                  onClick={() => requestSort('cnpj')}
-                >
-                  <div className="flex items-center">
-                    CNPJ
-                    <ArrowUpDown className="ml-1 h-3 w-3" />
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => requestSort('clientName')}
-                >
-                  <div className="flex items-center">
-                    Nome / Razão Social
-                    <ArrowUpDown className="ml-1 h-3 w-3" />
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => requestSort('userName')}
-                >
-                  <div className="flex items-center">
-                    <User className="mr-1 h-3 w-3" />
-                    Usuário
-                    <ArrowUpDown className="ml-1 h-3 w-3" />
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="text-right cursor-pointer hover:bg-muted/50"
-                  onClick={() => requestSort('totalDebt')}
-                >
-                  <div className="flex items-center justify-end">
-                    Valor Consolidado
-                    <ArrowUpDown className="ml-1 h-3 w-3" />
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="text-right cursor-pointer hover:bg-muted/50"
-                  onClick={() => requestSort('discountedValue')}
-                >
-                  <div className="flex items-center justify-end">
-                    Valor com Reduções
-                    <ArrowUpDown className="ml-1 h-3 w-3" />
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="text-right cursor-pointer hover:bg-muted/50"
-                  onClick={() => requestSort('discountPercentage')}
-                >
-                  <div className="flex items-center justify-end">
-                    Desconto
-                    <ArrowUpDown className="ml-1 h-3 w-3" />
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="text-right cursor-pointer hover:bg-muted/50"
-                  onClick={() => requestSort('feesValue')}
-                >
-                  <div className="flex items-center justify-end">
-                    <span className="font-semibold text-af-blue-600">Honorários</span>
-                    <ArrowUpDown className="ml-1 h-3 w-3" />
-                  </div>
-                </TableHead>
-                <TableHead className="text-right w-[100px]">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedProposals.map((proposal) => (
-                <TableRow 
-                  key={proposal.id} 
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => onViewProposal(proposal)}
-                >
-                  <TableCell className="font-medium">{proposal.data.cnpj}</TableCell>
-                  <TableCell>{proposal.data.clientName || '-'}</TableCell>
-                  <TableCell>{proposal.userName}</TableCell>
-                  <TableCell className="text-right">R$ {proposal.data.totalDebt}</TableCell>
-                  <TableCell className="text-right">R$ {proposal.data.discountedValue}</TableCell>
-                  <TableCell className="text-right">{proposal.data.discountPercentage}%</TableCell>
-                  <TableCell className="text-right font-semibold text-purple-700">
-                    R$ {proposal.data.feesValue || '0,00'}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onViewProposal(proposal);
-                        }}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      {isAdmin && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(proposal.id);
-                          }}
-                          disabled={deletingId === proposal.id}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          {deletingId === proposal.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+      <CardContent className="p-4 space-y-4">
+        {/* Search bar */}
+        <div>
+          <Input
+            placeholder="Buscar por CNPJ, nome, número da proposta ou usuário..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="mb-4"
+          />
         </div>
-        
-        {totalPages > 1 && (
-          <div className="py-4 border-t">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious 
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                  />
-                </PaginationItem>
-                
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  // Logic to show pages around current page
-                  let pageNum;
-                  if (totalPages <= 5) {
-                    pageNum = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNum = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
-                  } else {
-                    pageNum = currentPage - 2 + i;
-                  }
-                  
-                  return (
-                    <PaginationItem key={pageNum}>
-                      <PaginationLink
-                        isActive={pageNum === currentPage}
-                        onClick={() => setCurrentPage(pageNum)}
-                        className="cursor-pointer"
-                      >
-                        {pageNum}
-                      </PaginationLink>
-                    </PaginationItem>
-                  );
-                })}
-                
-                {totalPages > 5 && currentPage < totalPages - 2 && (
-                  <>
-                    <PaginationItem>
-                      <PaginationEllipsis />
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationLink
-                        onClick={() => setCurrentPage(totalPages)}
-                        className="cursor-pointer"
-                      >
-                        {totalPages}
-                      </PaginationLink>
-                    </PaginationItem>
-                  </>
-                )}
-                
-                <PaginationItem>
-                  <PaginationNext 
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-        )}
+
+        {/* Proposals list */}
+        <div className="overflow-x-auto">
+          {loading ? (
+            <div className="flex justify-center p-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-af-blue-500"></div>
+            </div>
+          ) : filteredProposals.length > 0 ? (
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-800">
+                <tr>
+                  <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">CNPJ ↕</th>
+                  <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nome / Razão Social ↕</th>
+                  <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Usuário ↕</th>
+                  <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Valor Consolidado ↕</th>
+                  <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Valor com Reduções ↕</th>
+                  <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Desconto ↕</th>
+                  <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Honorários ↕</th>
+                  <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
+                {filteredProposals.map((proposal) => (
+                  <tr key={proposal.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                    <td className="px-2 py-2 whitespace-nowrap text-xs text-gray-900 dark:text-gray-200">{proposal.data.cnpj}</td>
+                    <td className="px-2 py-2 whitespace-nowrap text-xs text-gray-900 dark:text-gray-200">{proposal.data.clientName}</td>
+                    <td className="px-2 py-2 whitespace-nowrap text-xs text-gray-900 dark:text-gray-200">{proposal.userName}</td>
+                    <td className="px-2 py-2 whitespace-nowrap text-xs text-right text-gray-900 dark:text-gray-200">
+                      R$ {formatBrazilianCurrency(proposal.data.totalDebt)}
+                    </td>
+                    <td className="px-2 py-2 whitespace-nowrap text-xs text-right text-green-700 dark:text-green-400 font-semibold">
+                      R$ {formatBrazilianCurrency(proposal.data.discountedValue)}
+                    </td>
+                    <td className="px-2 py-2 whitespace-nowrap text-xs text-center text-gray-900 dark:text-gray-200">
+                      {proposal.data.discountPercentage}%
+                    </td>
+                    <td className="px-2 py-2 whitespace-nowrap text-xs text-right text-purple-700 dark:text-purple-400 font-semibold">
+                      R$ {formatBrazilianCurrency(proposal.data.feesValue)}
+                    </td>
+                    <td className="px-2 py-2 whitespace-nowrap text-right text-xs font-medium">
+                      <div className="flex justify-center space-x-2">
+                        <button
+                          onClick={() => onViewProposal(proposal)}
+                          className="text-af-blue-600 hover:text-af-blue-900 dark:text-af-blue-400 dark:hover:text-af-blue-300"
+                          title="Visualizar proposta"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(proposal.id)}
+                          disabled={deletingId === proposal.id}
+                          className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 disabled:opacity-50"
+                          title="Excluir proposta"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="text-center p-4 text-gray-500 dark:text-gray-400">
+              {searchTerm ? 'Nenhuma proposta encontrada para a pesquisa.' : 'Nenhuma proposta cadastrada ainda.'}
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

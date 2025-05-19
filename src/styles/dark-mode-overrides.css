@@ -44,4 +44,26 @@
   .dark .panel {
     @apply bg-gray-800/90 border-gray-700;
   }
+  
+  /* Card header gradient backgrounds in dark mode */
+  .dark .bg-gradient-to-r.from-gray-50.to-white {
+    @apply from-gray-800 to-gray-900;
+  }
+  
+  /* Fix for the ProposalHistory card header in dark mode */
+  .dark .text-slate-700 {
+    @apply text-slate-200;
+  }
+  
+  /* Fix for all card headers in dark mode - more specific targeting */
+  .dark .Card > .CardHeader,
+  .dark .card > .card-header,
+  .dark .MuiCard-root > .MuiCardHeader-root {
+    @apply bg-gray-800 border-gray-700;
+  }
+  
+  /* Specific fix for the Proposals history card header */
+  .dark #history-card-header {
+    @apply bg-gray-800 border-gray-700;
+  }
 }
