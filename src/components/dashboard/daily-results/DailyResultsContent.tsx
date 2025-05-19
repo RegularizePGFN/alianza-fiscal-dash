@@ -100,7 +100,7 @@ export function DailyResultsContent({ todaySales, currentDate }: DailyResultsCon
             if (existingSalesperson) {
               existingSalesperson.proposalsCount = (existingSalesperson.proposalsCount || 0) + 1;
               
-              // Add fees if available - fix the type error here
+              // Add fees if available
               if (proposal.fees_value) {
                 let feesValue = 0;
                 

@@ -58,8 +58,9 @@ interface PDFEditorTabContentProps {
   formData: Partial<ExtractedData>;
   onInputChange: (name: string, value: string) => void;
   imagePreview: string | null;
-  users: User[];
+  users?: User[];
   isAdmin?: boolean;
+  onGenerateProposal?: () => void; // Add this prop
 }
 
 export default function PDFEditorTabContent({ 
@@ -67,7 +68,8 @@ export default function PDFEditorTabContent({
   onInputChange,
   imagePreview,
   users = [],
-  isAdmin = false
+  isAdmin = false,
+  onGenerateProposal
 }: PDFEditorTabContentProps) {
   const [activeTab, setActiveTab] = useState("preview");
   const [selectedTemplate, setSelectedTemplate] = useState<PDFTemplate>(defaultTemplates[0]);
@@ -190,6 +192,12 @@ export default function PDFEditorTabContent({
 
   // Generate PDF
   const handleGeneratePDF = async () => {
+    // If onGenerateProposal is provided, call it instead of generating PDF directly
+    if (onGenerateProposal) {
+      onGenerateProposal();
+      return;
+    }
+    
     const previewElement = document.querySelector(".preview-proposal");
     if (!previewElement) {
       toast({

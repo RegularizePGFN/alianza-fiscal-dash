@@ -1,6 +1,7 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
+import { ChangeEvent } from "react";
 
 import UploadTabContent from "./tabs/UploadTabContent";
 import DataTabContent from "./tabs/DataTabContent";
@@ -21,7 +22,7 @@ interface ProposalsTabsProps {
   selectedProposal: Proposal | null;
   proposals: Proposal[];
   loadingProposals: boolean;
-  onInputChange: (name: string, value: string) => void;
+  onInputChange: (nameOrEvent: string | ChangeEvent<HTMLInputElement>, value?: string) => void;
   onGenerateProposal: () => void;
   onViewProposal: (proposal: Proposal) => void;
   onDeleteProposal: (id: string) => Promise<boolean>;
@@ -52,6 +53,16 @@ const ProposalsTabs = ({
   onReset,
   setProcessingStatus
 }: ProposalsTabsProps) => {
+  // Create a function that adapts onInputChange to the format expected by DataTabContent
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    onInputChange(e);
+  };
+
+  // Create a wrapper for string-based input changes for PDFEditor
+  const handlePDFEditorInputChange = (name: string, value: string) => {
+    onInputChange(name, value);
+  };
+
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsList className="grid w-full grid-cols-4 mb-6">
@@ -86,7 +97,7 @@ const ProposalsTabs = ({
         <DataTabContent
           formData={formData}
           processing={processing}
-          onInputChange={onInputChange}
+          onInputChange={handleInputChange}
           onGenerateProposal={() => setActiveTab("pdf-editor")}
           setProcessingStatus={setProcessingStatus}
         />
@@ -95,7 +106,7 @@ const ProposalsTabs = ({
       <TabsContent value="pdf-editor" className="space-y-6">
         <PDFEditorTabContent 
           formData={formData} 
-          onInputChange={onInputChange}
+          onInputChange={handlePDFEditorInputChange}
           onGenerateProposal={onGenerateProposal}
           imagePreview={imagePreview}
         />
