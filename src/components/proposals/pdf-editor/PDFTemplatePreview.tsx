@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card';
 import { ExtractedData, PDFTemplate, TemplateColors, TemplateLayout } from '@/lib/types/proposals';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { formatBrazilianCurrency } from '@/lib/utils';
 
 interface PDFTemplatePreviewProps {
   formData: Partial<ExtractedData>;
@@ -88,6 +89,26 @@ const PDFTemplatePreview = ({ formData, template, imagePreview }: PDFTemplatePre
     }
     return "0,00";
   };
+
+  // Calculate the economy value
+  const calculateEconomyValue = (): string => {
+    if (!formData.totalDebt || !formData.discountedValue) return '0,00';
+    
+    try {
+      const totalDebtValue = parseFloat(formData.totalDebt.replace(/\./g, '').replace(',', '.'));
+      const discountedVal = parseFloat(formData.discountedValue.replace(/\./g, '').replace(',', '.'));
+      
+      if (isNaN(totalDebtValue) || isNaN(discountedVal)) return '0,00';
+      
+      const economyValue = totalDebtValue - discountedVal;
+      return formatBrazilianCurrency(economyValue);
+    } catch (e) {
+      console.error('Error calculating economy value:', e);
+      return '0,00';
+    }
+  };
+  
+  const economyValue = calculateEconomyValue();
 
   // Generate section components based on layout
   const renderSections = () => {
@@ -266,7 +287,7 @@ const PDFTemplatePreview = ({ formData, template, imagePreview }: PDFTemplatePre
                 R$ {formData.discountedValue || '0,00'}
               </p>
               <div className="flex items-center justify-end text-green-300 mt-1 text-sm">
-                <span>Economia de {formData.discountPercentage || '0'}%</span>
+                <span>Economia de R$ {economyValue}</span>
               </div>
             </div>
           </div>
@@ -286,7 +307,7 @@ const PDFTemplatePreview = ({ formData, template, imagePreview }: PDFTemplatePre
     };
 
     return (
-      <div className="space-y-0">
+      <div className="space-y-0 font-['Roboto',sans-serif]">
         {/* Header with geometric accent */}
         {layout.showHeader && (
           <div className="relative overflow-hidden rounded-t-lg mb-6">
@@ -307,7 +328,7 @@ const PDFTemplatePreview = ({ formData, template, imagePreview }: PDFTemplatePre
               
               <div className="bg-gray-50 px-3 py-1.5 rounded-full text-sm font-medium">
                 <span>Economia de</span>{" "}
-                <span style={{ color: colors.accent }}>R$ {formData.discountedValue || '0,00'}</span>
+                <span style={{ color: colors.accent }}>R$ {economyValue}</span>
               </div>
             </div>
           </div>
@@ -346,7 +367,7 @@ const PDFTemplatePreview = ({ formData, template, imagePreview }: PDFTemplatePre
   return (
     <Card 
       ref={previewRef} 
-      className="border p-0 overflow-hidden shadow-md preview-proposal"
+      className="border p-0 overflow-hidden shadow-md preview-proposal font-['Roboto',sans-serif]"
       style={{ backgroundColor: colors.background }}
     >
       <div className="p-6">

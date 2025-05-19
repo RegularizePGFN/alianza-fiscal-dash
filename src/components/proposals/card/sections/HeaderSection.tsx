@@ -1,43 +1,88 @@
 
 import React from 'react';
+import { CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { FileText, Percent } from "lucide-react";
+import { formatBrazilianCurrency } from '@/lib/utils';
 
 interface HeaderSectionProps {
-  showLogo: boolean;
   showHeader: boolean;
+  showLogo: boolean;
   discountedValue: string;
   colors: {
+    primary: string;
     secondary: string;
-    background: string;
     accent: string;
+    background: string;
   };
+  economyValue?: string;
+  totalDebt?: string;
 }
 
-const HeaderSection = ({ showLogo, showHeader, discountedValue, colors }: HeaderSectionProps) => {
+const HeaderSection = ({ 
+  showHeader, 
+  showLogo, 
+  discountedValue, 
+  colors,
+  economyValue,
+  totalDebt
+}: HeaderSectionProps) => {
+  // Calculate the actual economy value (savings)
+  const calculateEconomyValue = (): string => {
+    if (economyValue) return economyValue;
+    
+    if (!totalDebt || !discountedValue) return '0,00';
+    
+    try {
+      const totalDebtValue = parseFloat(totalDebt.replace(/\./g, '').replace(',', '.'));
+      const discountedVal = parseFloat(discountedValue.replace(/\./g, '').replace(',', '.'));
+      
+      if (isNaN(totalDebtValue) || isNaN(discountedVal)) return '0,00';
+      
+      const economy = totalDebtValue - discountedVal;
+      return formatBrazilianCurrency(economy);
+    } catch (e) {
+      console.error('Error calculating economy value:', e);
+      return '0,00';
+    }
+  };
+
   if (!showHeader) return null;
   
   return (
-    <div className="relative overflow-hidden">
-      <div className="absolute inset-0 opacity-10 bg-gradient-to-br from-slate-400 to-slate-100"></div>
-      <div className="relative p-6 flex justify-between items-center">
+    <CardHeader 
+      className="bg-gradient-to-r from-af-blue-600 to-af-blue-800 text-white pb-8"
+      style={{
+        background: `linear-gradient(to right, ${colors.primary}, ${colors.secondary})`
+      }}
+    >
+      <div className="flex justify-between items-start">
         <div className="flex items-center gap-4">
           {showLogo && (
             <img 
               src="/lovable-uploads/d939ccfc-a061-45e8-97e0-1fa1b82d3df2.png" 
               alt="Logo" 
-              className="h-12 w-auto"
+              className="h-14 w-auto"
             />
           )}
-          <h2 className="text-xl font-medium" style={{ color: colors.secondary }}>
-            Proposta de Parcelamento PGFN
-          </h2>
+          <CardTitle className="text-2xl font-bold text-white">
+            <div className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Proposta de Parcelamento PGFN
+            </div>
+          </CardTitle>
         </div>
-        
-        <div className="bg-gray-50 px-3 py-1.5 rounded-full text-sm font-medium">
-          <span>Economia de</span>{" "}
-          <span style={{ color: colors.accent }}>R$ {discountedValue || '0,00'}</span>
-        </div>
+        <Badge 
+          className="text-white text-sm py-1.5 px-3"
+          style={{
+            backgroundColor: colors.accent,
+          }}
+        >
+          <Percent className="mr-1 h-4 w-4" /> 
+          Economia de R$ {calculateEconomyValue()}
+        </Badge>
       </div>
-    </div>
+    </CardHeader>
   );
 };
 

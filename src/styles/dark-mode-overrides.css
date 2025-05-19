@@ -1,4 +1,6 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
 @layer base {
   /* Dark mode specific overrides */
   .dark .bg-white {
@@ -66,4 +68,15 @@
   .dark #history-card-header {
     @apply bg-gray-800 border-gray-700;
   }
+}
+
+/* Font family for PDF generation */
+.preview-proposal {
+  font-family: 'Roboto', sans-serif !important;
+}
+
+/* Apply Roboto to all proposal cards by default */
+.preview-proposal, 
+[ref="proposalRef"] {
+  font-family: 'Roboto', sans-serif !important;
 }

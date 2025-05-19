@@ -8,6 +8,7 @@ import { Download, Printer, ArrowRight, FileText, DollarSign, Percent, CreditCar
 import { ExtractedData } from "@/lib/types/proposals";
 import { generateProposalPdf } from "@/lib/pdfUtils";
 import { useToast } from "@/hooks/use-toast";
+import { formatBrazilianCurrency } from "@/lib/utils";
 
 interface ProposalCardProps {
   data: Partial<ExtractedData>;
@@ -17,6 +18,26 @@ interface ProposalCardProps {
 const ProposalCard = ({ data }: ProposalCardProps) => {
   const proposalRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  
+  // Calculate the actual economy value (savings)
+  const calculateEconomyValue = (): string => {
+    if (!data.totalDebt || !data.discountedValue) return '0,00';
+    
+    try {
+      const totalDebtValue = parseFloat(data.totalDebt.replace(/\./g, '').replace(',', '.'));
+      const discountedVal = parseFloat(data.discountedValue.replace(/\./g, '').replace(',', '.'));
+      
+      if (isNaN(totalDebtValue) || isNaN(discountedVal)) return '0,00';
+      
+      const economyValue = totalDebtValue - discountedVal;
+      return formatBrazilianCurrency(economyValue);
+    } catch (e) {
+      console.error('Error calculating economy value:', e);
+      return '0,00';
+    }
+  };
+  
+  const economyValue = calculateEconomyValue();
   
   const generatePdf = async () => {
     if (!proposalRef.current) {
@@ -74,7 +95,7 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
           </div>
           <Badge className="bg-af-green-500 hover:bg-af-green-400 text-white text-sm py-1.5 px-3">
             <Percent className="mr-1 h-4 w-4" /> 
-            Economia de R$ {data.discountedValue || '0,00'}
+            Economia de R$ {economyValue}
           </Badge>
         </div>
       </CardHeader>
@@ -194,7 +215,7 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
               </p>
               <div className="flex items-center text-af-green-300 mt-1">
                 <ArrowRight className="h-4 w-4 mr-1" />
-                <span className="text-sm">Economia de {data.discountPercentage || '0'}%</span>
+                <span className="text-sm">Economia de R$ {economyValue}</span>
               </div>
             </div>
           </div>

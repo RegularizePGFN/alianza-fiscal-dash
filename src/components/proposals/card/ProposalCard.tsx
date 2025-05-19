@@ -2,6 +2,7 @@
 import React, { useRef } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
+import { formatBrazilianCurrency } from '@/lib/utils';
 import { 
   MetadataSection,
   ClientSection,
@@ -26,6 +27,26 @@ interface ProposalCardProps {
 
 const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
   const proposalRef = useRef<HTMLDivElement>(null);
+  
+  // Calculate the economy value
+  const calculateEconomyValue = (): string => {
+    if (!data.totalDebt || !data.discountedValue) return '0,00';
+    
+    try {
+      const totalDebtValue = parseFloat(data.totalDebt.replace(/\./g, '').replace(',', '.'));
+      const discountedVal = parseFloat(data.discountedValue.replace(/\./g, '').replace(',', '.'));
+      
+      if (isNaN(totalDebtValue) || isNaN(discountedVal)) return '0,00';
+      
+      const economyValue = totalDebtValue - discountedVal;
+      return formatBrazilianCurrency(economyValue);
+    } catch (e) {
+      console.error('Error calculating economy value:', e);
+      return '0,00';
+    }
+  };
+  
+  const economyValue = calculateEconomyValue();
   
   // Get colors from template settings or use defaults
   const colors = (() => {
@@ -97,7 +118,7 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
   };
 
   return (
-    <Card ref={proposalRef} className="max-w-3xl mx-auto shadow border overflow-hidden"
+    <Card ref={proposalRef} className="max-w-3xl mx-auto shadow border overflow-hidden font-['Roboto',sans-serif]"
           style={{ backgroundColor: colors.background }}>
       
       {/* Header with Logo */}
@@ -106,6 +127,8 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
         showLogo={layout?.showLogo ?? true}
         discountedValue={data.discountedValue || '0,00'}
         colors={colors}
+        economyValue={economyValue}
+        totalDebt={data.totalDebt}
       />
 
       <CardContent className="p-6 space-y-0">

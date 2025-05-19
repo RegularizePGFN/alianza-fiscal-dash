@@ -38,9 +38,9 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
         print-color-adjust: exact !important;
       }
       
-      /* Typography adjustments */
+      /* Typography adjustments - Changed to Roboto */
       body {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
+        font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
         color: #1a1a1a !important;
         line-height: 1.5 !important;
       }
