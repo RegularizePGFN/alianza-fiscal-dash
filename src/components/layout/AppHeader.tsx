@@ -1,7 +1,8 @@
+
 import { User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { NotificationsPopover } from "@/components/layout/NotificationsPopover";
+import { NotificationsPopover } from "@/components/notifications/NotificationsPopover";
 
 export function AppHeader() {
   return (
@@ -14,7 +15,7 @@ export function AppHeader() {
         <ThemeToggle />
         <NotificationsPopover />
         
-        {/* Updated profile menu to link to /perfil */}
+        {/* Link to profile page */}
         <Link to="/perfil" className="flex h-8 w-8 items-center justify-center rounded-full bg-muted/50 hover:bg-muted">
           <span className="sr-only">Perfil</span>
           <User className="h-4 w-4" />

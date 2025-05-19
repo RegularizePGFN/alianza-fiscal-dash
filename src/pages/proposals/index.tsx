@@ -19,7 +19,7 @@ export default function ProposalsPage() {
   
   return (
     <div className="proposal-page-container">
-      <style jsx="true">{`
+      <style>{`
         /* Custom linear gradient for the proposals page */
         .proposal-gradient-header {
           background: linear-gradient(135deg, #FFD400, #FF6A00, #FF0066);

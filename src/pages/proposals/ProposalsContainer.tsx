@@ -1,77 +1,49 @@
 
-import { RefreshCcw, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import ProposalsHeader from "./components/ProposalsHeader";
-import ProposalsTabs from "./components/ProposalsTabs";
-import { useProposalsState } from "@/hooks/proposals";
-import { useProposalHandlers } from "@/hooks/proposals";
+import { useState } from 'react';
+import { ProposalsTabs } from './components/ProposalsTabs';
+import { ProposalsHeader } from './components/ProposalsHeader';
+import { 
+  useProposalsState, 
+  useSaveProposal,
+  useFetchProposals, 
+  useProposalHandlers 
+} from '@/hooks/proposals';
 
 const ProposalsContainer = () => {
-  // Get state from our custom hook
-  const proposalsState = useProposalsState();
+  const [refreshKey, setRefreshKey] = useState(0);
   
-  // Get handlers from our custom hook
-  const handlers = useProposalHandlers({
-    formData: proposalsState.formData,
-    setFormData: proposalsState.setFormData,
-    imagePreview: proposalsState.imagePreview,
-    setImagePreview: proposalsState.setImagePreview,
-    setGeneratedProposal: proposalsState.setGeneratedProposal,
-    selectedProposal: proposalsState.selectedProposal,
-    setSelectedProposal: proposalsState.setSelectedProposal,
-    setActiveTab: proposalsState.setActiveTab,
-    setCompanyData: proposalsState.setCompanyData,
-    saveProposal: proposalsState.saveProposal,
-    fetchProposals: proposalsState.fetchProposals,
-    deleteProposal: proposalsState.deleteProposal,
-    user: proposalsState.user,
+  const {
+    proposalState,
+    setProposalState,
+    activeTab,
+    setActiveTab,
+    isLoading,
+  } = useProposalsState();
+
+  const { handleCreateNewProposal } = useProposalHandlers({
+    proposalState,
+    setProposalState,
+    setActiveTab,
   });
-  
+
+  const handleRefresh = () => {
+    // Trigger a refresh of the proposal data
+    setRefreshKey(prev => prev + 1);
+  };
+
   return (
-    <div className="container py-6">
-      <div className="flex justify-between items-center mb-6">
-        <ProposalsHeader />
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => proposalsState.fetchProposals()}
-            disabled={proposalsState.loadingProposals}
-            className="flex items-center gap-2"
-          >
-            <RefreshCcw className="h-4 w-4" />
-            Atualizar
-          </Button>
-          <Button 
-            onClick={handlers.handleReset}
-            className="flex items-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Nova Proposta
-          </Button>
-        </div>
-      </div>
-      
-      <ProposalsTabs 
-        activeTab={proposalsState.activeTab} 
-        setActiveTab={proposalsState.setActiveTab} 
-        formData={proposalsState.formData} 
-        generatedProposal={proposalsState.generatedProposal} 
-        processing={proposalsState.processing} 
-        setProcessing={proposalsState.setProcessing} 
-        progressPercent={proposalsState.progressPercent} 
-        setProgressPercent={proposalsState.setProgressPercent} 
-        companyData={proposalsState.companyData} 
-        imagePreview={proposalsState.imagePreview} 
-        selectedProposal={proposalsState.selectedProposal} 
-        proposals={proposalsState.proposals} 
-        loadingProposals={proposalsState.loadingProposals} 
-        onInputChange={handlers.handleInputChange} 
-        onGenerateProposal={handlers.handleGenerateProposal} 
-        onViewProposal={handlers.handleViewProposal} 
-        onDeleteProposal={handlers.handleDeleteProposal} 
-        onProcessComplete={handlers.handleProcessComplete} 
-        onReset={handlers.handleReset}
-        setProcessingStatus={proposalsState.setProcessingStatus}
+    <div className="space-y-6">
+      {/* Pass the required props to ProposalsHeader */}
+      <ProposalsHeader 
+        onClickNew={handleCreateNewProposal}
+        onClickRefresh={handleRefresh}
+      />
+      <ProposalsTabs
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        proposalState={proposalState}
+        setProposalState={setProposalState}
+        isLoading={isLoading}
       />
     </div>
   );

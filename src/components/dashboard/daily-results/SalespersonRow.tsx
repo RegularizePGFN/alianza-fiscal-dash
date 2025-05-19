@@ -43,3 +43,6 @@ export const SalespersonRow = ({
     </tr>
   );
 };
+
+// Export for compatibility with legacy imports
+export default SalespersonRow;
