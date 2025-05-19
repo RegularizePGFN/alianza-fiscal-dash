@@ -4,7 +4,11 @@ import { Card } from '@/components/ui/card';
 import { ExtractedData, PDFTemplate, TemplateColors, TemplateLayout } from '@/lib/types/proposals';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { DollarSign, FileText, Briefcase, CreditCard, CheckSquare, Calendar, Info, Percent, Clock, MessageSquare } from 'lucide-react';
+import { 
+  FileText, Briefcase, AlertTriangle, CheckSquare, 
+  DollarSign, Percent, CreditCard, MessageSquare, User, 
+  Calendar, CircleCheck, Info
+} from 'lucide-react';
 
 interface PDFTemplatePreviewProps {
   formData: Partial<ExtractedData>;
@@ -55,11 +59,11 @@ const PDFTemplatePreview = ({ formData, template, imagePreview }: PDFTemplatePre
   const formatDate = (dateStr?: string) => {
     if (!dateStr) {
       const now = new Date();
-      return format(now, "dd/MM/yyyy HH:mm", { locale: ptBR });
+      return format(now, "dd/MM/yyyy", { locale: ptBR });
     }
     
     try {
-      return format(new Date(dateStr), "dd/MM/yyyy HH:mm", { locale: ptBR });
+      return format(new Date(dateStr), "dd/MM/yyyy", { locale: ptBR });
     } catch (e) {
       return dateStr;
     }
@@ -95,227 +99,233 @@ const PDFTemplatePreview = ({ formData, template, imagePreview }: PDFTemplatePre
     
     const sectionComponents: Record<string, React.ReactNode> = {
       metadata: (
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="bg-slate-50 p-3 rounded-md border">
-            <span className="text-xs font-medium flex items-center text-gray-700">
-              <Clock className="mr-1 h-3 w-3" />
-              Data de Criação:
-            </span>
-            <p className="text-sm">{formatDate(formData.creationDate)}</p>
+        <div className="flex justify-between items-center text-gray-600 text-xs mb-6">
+          <div className="flex items-center">
+            <Calendar className="h-3 w-3 mr-1 text-gray-500" />
+            <span>Data: {formatDate(formData.creationDate)}</span>
           </div>
-          <div className="bg-slate-50 p-3 rounded-md border">
-            <span className="text-xs font-medium flex items-center text-gray-700">
-              <Calendar className="mr-1 h-3 w-3" />
-              Data de Validade:
-            </span>
-            <p className="text-sm">{formatDate(formData.validityDate)}</p>
+          <div className="flex items-center">
+            <Calendar className="h-3 w-3 mr-1 text-gray-500" />
+            <span>Validade: {formatDate(formData.validityDate)}</span>
           </div>
         </div>
       ),
       client: (
-        <div className="space-y-4 mb-4">
-          <h3 className="font-semibold text-lg border-b pb-2 flex items-center" 
-              style={{ color: colors.primary, borderColor: colors.primary }}>
-            <Briefcase style={{ color: colors.secondary }} className="mr-2 h-5 w-5" />
+        <div className="mb-6">
+          <h3 className="text-sm font-medium pb-2 mb-3 border-b border-gray-200" 
+              style={{ color: colors.secondary }}>
+            <Briefcase className="inline-block mr-1 h-4 w-4" style={{ color: colors.secondary }} />
             Dados do Contribuinte
           </h3>
-          <div className="grid grid-cols-2 gap-6">
-            <div className="bg-white p-4 rounded-md shadow-sm border" 
-                 style={{ borderColor: colors.primary }}>
-              <span className="font-medium" style={{ color: colors.secondary }}>CNPJ:</span>
-              <p className="text-lg">{formData.cnpj || '-'}</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-gray-50 p-3 rounded">
+              <span className="text-xs font-medium text-gray-500">CNPJ:</span>
+              <p className="text-sm mt-1">{formData.cnpj || '-'}</p>
             </div>
-            <div className="bg-white p-4 rounded-md shadow-sm border"
-                 style={{ borderColor: colors.primary }}>
-              <span className="font-medium" style={{ color: colors.secondary }}>Número do Débito:</span>
-              <p className="text-lg">{formData.debtNumber || '-'}</p>
+            <div className="bg-gray-50 p-3 rounded">
+              <span className="text-xs font-medium text-gray-500">Número do Débito:</span>
+              <p className="text-sm mt-1">{formData.debtNumber || '-'}</p>
             </div>
             {formData.clientName && (
-              <div className="bg-white p-4 rounded-md shadow-sm border col-span-2"
-                   style={{ borderColor: colors.primary }}>
-                <span className="font-medium" style={{ color: colors.secondary }}>Razão Social:</span>
-                <p className="text-lg">{formData.clientName}</p>
+              <div className="bg-gray-50 p-3 rounded col-span-2">
+                <span className="text-xs font-medium text-gray-500">Razão Social:</span>
+                <p className="text-sm mt-1">{formData.clientName}</p>
               </div>
             )}
           </div>
         </div>
       ),
       alert: (
-        <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-md text-yellow-800 text-sm mb-4">
-          <div className="flex gap-2">
-            <Info className="h-5 w-5 flex-shrink-0 text-yellow-600" />
-            <div>
-              <p className="font-semibold mb-1">Alerta! Consequências da Dívida:</p>
-              <ul className="list-disc pl-5 space-y-1">
-                <li>Bloqueio de bens e valores</li>
-                <li>Impossibilidade de participação em licitações</li>
-                <li>Restrição de acesso a crédito</li>
-                <li>Inclusão no CADIN e negativação do CNPJ/CPF</li>
-              </ul>
+        <div className="mb-6">
+          <div className="bg-amber-50 border-l-4 border-amber-400 p-3 rounded">
+            <div className="flex items-start">
+              <AlertTriangle className="text-amber-500 h-4 w-4 mr-2 flex-shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-medium text-amber-800 mb-1">Consequências da Dívida Ativa</h4>
+                <ul className="text-xs text-amber-700 space-y-1">
+                  <li className="flex items-start">
+                    <div className="w-1.5 h-1.5 bg-amber-400 rounded-full mt-1 mr-1.5 flex-shrink-0"></div>
+                    <span>Protesto em Cartório - Negativação do CNPJ</span>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="w-1.5 h-1.5 bg-amber-400 rounded-full mt-1 mr-1.5 flex-shrink-0"></div>
+                    <span>Execução Fiscal - Cobrança judicial da dívida</span>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="w-1.5 h-1.5 bg-amber-400 rounded-full mt-1 mr-1.5 flex-shrink-0"></div>
+                    <span>Bloqueio de Contas e Bens - Sisbajud</span>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="w-1.5 h-1.5 bg-amber-400 rounded-full mt-1 mr-1.5 flex-shrink-0"></div>
+                    <span>Impossibilidade de participação em licitações</span>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
       ),
       debt: (
-        <div className="space-y-4 mb-4">
-          <h3 className="font-semibold text-lg border-b pb-2 flex items-center"
-              style={{ color: colors.primary, borderColor: colors.primary }}>
-            <CheckSquare style={{ color: colors.secondary }} className="mr-2 h-5 w-5" />
+        <div className="mb-6">
+          <h3 className="text-sm font-medium pb-2 mb-3 border-b border-gray-200"
+              style={{ color: colors.secondary }}>
+            <CheckSquare className="inline-block mr-1 h-4 w-4" style={{ color: colors.secondary }} />
             Dados da Negociação
           </h3>
-          <div className="grid grid-cols-2 gap-6">
-            <div className="bg-white p-4 rounded-md shadow-sm border"
-                 style={{ borderColor: colors.primary }}>
-              <span className="font-medium flex items-center" style={{ color: colors.secondary }}>
-                <DollarSign className="mr-1 h-4 w-4" />
-                Valor Consolidado:
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-gray-50 p-3 rounded">
+              <span className="text-xs font-medium text-gray-500 flex items-center">
+                <DollarSign className="h-3 w-3 mr-1 text-gray-500" /> Valor Consolidado:
               </span>
-              <p className="text-lg">R$ {formData.totalDebt || '-'}</p>
+              <p className="text-sm mt-1">R$ {formData.totalDebt || '-'}</p>
             </div>
-            <div className="bg-white p-4 rounded-md shadow-sm border"
-                 style={{ borderColor: colors.accent, backgroundColor: `${colors.accent}10` }}>
-              <span className="font-medium flex items-center" style={{ color: colors.accent }}>
-                <DollarSign className="mr-1 h-4 w-4" />
-                Valor com Reduções:
+            <div className="bg-gray-50 p-3 rounded bg-green-50">
+              <span className="text-xs font-medium text-green-700 flex items-center">
+                <DollarSign className="h-3 w-3 mr-1 text-green-600" /> Valor com Reduções:
               </span>
-              <p className="text-lg font-bold" style={{ color: colors.accent }}>
-                R$ {formData.discountedValue || '-'}
-              </p>
+              <p className="text-sm mt-1 font-medium text-green-700">R$ {formData.discountedValue || '-'}</p>
             </div>
-            <div className="bg-white p-4 rounded-md shadow-sm border"
-                 style={{ borderColor: colors.primary }}>
-              <span className="font-medium flex items-center" style={{ color: colors.secondary }}>
-                <Percent className="mr-1 h-4 w-4" />
-                Percentual de Desconto:
+            <div className="bg-gray-50 p-3 rounded">
+              <span className="text-xs font-medium text-gray-500 flex items-center">
+                <Percent className="h-3 w-3 mr-1 text-gray-500" /> Percentual de Desconto:
               </span>
-              <p className="text-lg">{formData.discountPercentage || '-'}%</p>
+              <p className="text-sm mt-1">{formData.discountPercentage || '-'}%</p>
             </div>
-            <div className="bg-white p-4 rounded-md shadow-sm border"
-                 style={{ borderColor: colors.primary }}>
-              <span className="font-medium flex items-center" style={{ color: colors.secondary }}>
-                <DollarSign className="mr-1 h-4 w-4" />
+            <div className="bg-gray-50 p-3 rounded">
+              <span className="text-xs font-medium text-gray-500 flex items-center">
+                <DollarSign className="h-3 w-3 mr-1 text-gray-500" />
                 {parseInt(formData.entryInstallments || '1') > 1 ? 
-                  `Entrada: ${formData.entryInstallments}x` : 
+                  `Entrada (${formData.entryInstallments}x):` : 
                   'Valor da Entrada:'}
               </span>
-              <p className="text-lg">
-                {parseInt(formData.entryInstallments || '1') > 1 ? 
-                  `R$ ${entryInstallmentValue()} (Total: R$ ${formData.entryValue || '0,00'})` : 
-                  `R$ ${formData.entryValue || '-'}`}
-              </p>
-            </div>
-          </div>
-        </div>
-      ),
-      payment: (
-        <div className="space-y-4 mb-4">
-          <h3 className="font-semibold text-lg border-b pb-2 flex items-center"
-              style={{ color: colors.primary, borderColor: colors.primary }}>
-            <CreditCard style={{ color: colors.secondary }} className="mr-2 h-5 w-5" />
-            Opções de Pagamento
-          </h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="border p-4 hover:bg-slate-50 transition-colors" 
-                 style={{ borderColor: colors.primary }}>
-              <p className="font-medium" style={{ color: colors.secondary }}>À Vista</p>
-              <p className="text-lg font-bold">R$ {formData.discountedValue || '0,00'}</p>
-            </div>
-            <div className="border p-4 hover:bg-slate-50 transition-colors"
-                 style={{ borderColor: colors.primary }}>
-              <p className="font-medium" style={{ color: colors.secondary }}>Parcelado</p>
-              <p className="text-lg font-bold">{formData.installments || '0'}x de R$ {formData.installmentValue || '0,00'}</p>
               {parseInt(formData.entryInstallments || '1') > 1 ? (
-                <p className="text-xs text-gray-500">Entrada: {formData.entryInstallments}x de R$ {entryInstallmentValue()}</p>
+                <div className="text-sm mt-1">
+                  <p>R$ {entryInstallmentValue()} por parcela</p>
+                  <p className="text-xs text-gray-500">Total: R$ {formData.entryValue || '0,00'}</p>
+                </div>
               ) : (
-                <p className="text-xs text-gray-500">Entrada de R$ {formData.entryValue || '0,00'}</p>
+                <p className="text-sm mt-1">R$ {formData.entryValue || '-'}</p>
               )}
             </div>
           </div>
         </div>
       ),
-      fees: (
-        <div className="space-y-4 mb-4">
-          <h3 className="font-semibold text-lg border-b pb-2 flex items-center"
-              style={{ color: colors.primary, borderColor: colors.primary }}>
-            <Calendar style={{ color: colors.secondary }} className="mr-2 h-5 w-5" />
+      payment: (
+        <div className="mb-6">
+          <h3 className="text-sm font-medium pb-2 mb-3 border-b border-gray-200"
+              style={{ color: colors.secondary }}>
+            <CreditCard className="inline-block mr-1 h-4 w-4" style={{ color: colors.secondary }} />
+            Opções de Pagamento
+          </h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-gray-50 p-3 rounded border border-gray-100">
+              <span className="text-xs font-medium text-gray-700 flex items-center">
+                <CircleCheck className="h-3 w-3 mr-1 text-gray-600" /> À Vista
+              </span>
+              <p className="text-sm mt-1 font-medium">R$ {formData.discountedValue || '0,00'}</p>
+            </div>
+            <div className="bg-gray-50 p-3 rounded border border-gray-100">
+              <span className="text-xs font-medium text-gray-700 flex items-center">
+                <CircleCheck className="h-3 w-3 mr-1 text-gray-600" /> Parcelado
+              </span>
+              <p className="text-sm mt-1 font-medium">
+                {formData.installments || '0'}x de R$ {formData.installmentValue || '0,00'}
+              </p>
+              {parseInt(formData.entryInstallments || '1') > 1 ? (
+                <p className="text-xs text-gray-500 mt-1">Entrada: {formData.entryInstallments}x de R$ {entryInstallmentValue()}</p>
+              ) : (
+                <p className="text-xs text-gray-500 mt-1">Entrada de R$ {formData.entryValue || '0,00'}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      ),
+      fees: formData.feesValue ? (
+        <div className="mb-6">
+          <h3 className="text-sm font-medium pb-2 mb-3 border-b border-gray-200"
+              style={{ color: colors.secondary }}>
+            <User className="inline-block mr-1 h-4 w-4" style={{ color: colors.secondary }} />
             Custos e Honorários
           </h3>
-          <div className="p-5 rounded-lg border shadow-md"
-               style={{ backgroundColor: `${colors.accent}10`, borderColor: colors.accent }}>
+          <div className="bg-gray-50 p-3 rounded border-l-4" style={{ borderLeftColor: colors.accent }}>
             <div className="flex justify-between items-center">
               <div>
-                <span className="font-semibold flex items-center text-lg" style={{ color: colors.accent }}>
-                  <Briefcase className="mr-2 h-5 w-5" />
+                <span className="text-xs font-medium text-gray-700 flex items-center">
+                  <Briefcase className="h-3 w-3 mr-1 text-gray-600" />
                   Honorários Aliança Fiscal:
                 </span>
-                <p className="text-sm mt-1 opacity-80" style={{ color: colors.accent }}>
+                <p className="text-xs mt-1 text-gray-500">
                   Especialista Tributário - {specialistName}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-2xl font-bold" style={{ color: colors.accent }}>
+                <p className="text-base font-medium" style={{ color: colors.accent }}>
                   R$ {formData.feesValue}
                 </p>
               </div>
             </div>
           </div>
         </div>
-      ),
+      ) : null,
       total: (
-        <div className="mt-6 mb-4 p-6 rounded-lg text-white shadow-md"
-             style={{ background: `linear-gradient(to right, ${colors.primary}, ${colors.secondary})` }}>
+        <div className="mb-6 bg-gray-800 p-4 rounded-lg text-white shadow-sm">
           <div className="flex justify-between items-center">
             <div>
-              <h3 className="text-lg font-semibold mb-1 flex items-center">
-                <DollarSign className="mr-1 h-5 w-5" />
+              <h3 className="text-sm font-medium mb-1 flex items-center">
+                <DollarSign className="h-4 w-4 mr-1" />
                 Valor Total:
               </h3>
-              <p className="text-sm opacity-80">Incluindo todas as reduções aplicáveis</p>
+              <p className="text-xs opacity-80">Com reduções aplicáveis</p>
             </div>
             <div className="text-right">
-              <p className="text-3xl font-bold">
+              <p className="text-lg font-medium">
                 R$ {formData.discountedValue || '0,00'}
               </p>
-              <div className="flex items-center text-green-300 mt-1">
-                <Percent className="h-4 w-4 mr-1" />
-                <span className="text-sm">Economia de {formData.discountPercentage || '0'}%</span>
+              <div className="flex items-center justify-end text-green-300 mt-1 text-xs">
+                <Percent className="h-3 w-3 mr-1" />
+                <span>Economia de {formData.discountPercentage || '0'}%</span>
               </div>
             </div>
           </div>
         </div>
       ),
       comments: formData.additionalComments ? (
-        <div className="mt-4 mb-4 bg-slate-50 border border-slate-200 p-4 rounded-lg">
-          <h3 className="font-semibold text-sm border-b border-slate-200 pb-2 mb-2 flex items-center"
-              style={{ color: colors.primary }}>
-            <MessageSquare style={{ color: colors.secondary }} className="mr-2 h-4 w-4" />
+        <div className="mb-6">
+          <h3 className="text-sm font-medium pb-2 mb-3 border-b border-gray-200"
+              style={{ color: colors.secondary }}>
+            <MessageSquare className="inline-block mr-1 h-4 w-4" style={{ color: colors.secondary }} />
             Observações
           </h3>
-          <p className="text-sm whitespace-pre-line">{formData.additionalComments}</p>
+          <div className="bg-gray-50 p-3 rounded border border-gray-100">
+            <p className="text-xs whitespace-pre-line">{formData.additionalComments}</p>
+          </div>
         </div>
       ) : null
     };
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-0">
+        {/* Header with geometric accent */}
         {layout.showHeader && (
-          <div className={`py-6 px-8 rounded-t-lg text-white`} 
-               style={{ background: `linear-gradient(to right, ${colors.primary}, ${colors.secondary})` }}>
-            <div className="flex justify-between items-start">
+          <div className="relative overflow-hidden rounded-t-lg mb-6">
+            <div className="absolute inset-0 opacity-10 bg-gradient-to-br from-slate-400 to-slate-100"></div>
+            <div className="relative p-6 flex justify-between items-center">
               <div className="flex items-center gap-4">
                 {layout.showLogo && (
                   <img 
                     src="/lovable-uploads/d939ccfc-a061-45e8-97e0-1fa1b82d3df2.png" 
                     alt="Logo" 
-                    className="h-14 w-auto"
+                    className="h-12 w-auto"
                   />
                 )}
-                <h2 className="text-2xl font-bold">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    Proposta de Parcelamento PGFN
-                  </div>
+                <h2 className="text-lg font-medium" style={{ color: colors.secondary }}>
+                  Proposta de Parcelamento PGFN
                 </h2>
+              </div>
+              
+              <div className="bg-gray-50 px-3 py-1.5 rounded-full text-xs font-medium flex items-center space-x-1 border border-gray-200">
+                <span>Economia de</span>
+                <span style={{ color: colors.accent }}>R$ {formData.discountedValue || '0,00'}</span>
               </div>
             </div>
           </div>
@@ -330,8 +340,22 @@ const PDFTemplatePreview = ({ formData, template, imagePreview }: PDFTemplatePre
         {/* Always show comments at the end if they exist, regardless of layout */}
         {formData.additionalComments && !layout.sections.includes('comments') && sectionComponents.comments}
         
-        <div className="py-3 text-center opacity-70 text-sm">
-          Especialista Tributário: {specialistName}
+        {/* Signature Section */}
+        {formData.showSignature === "true" && (
+          <div className="mt-8 border-t border-gray-200 pt-6">
+            <div className="flex flex-col items-center">
+              <div className="w-48 border-b border-gray-300 pb-1 mb-2"></div>
+              <p className="text-xs text-gray-600">
+                {specialistName}
+              </p>
+              <p className="text-xs text-gray-500">Especialista Tributário</p>
+            </div>
+          </div>
+        )}
+        
+        {/* Footer */}
+        <div className="mt-4 text-center text-xs text-gray-500">
+          <p>Especialista Tributário: {specialistName}</p>
         </div>
       </div>
     );

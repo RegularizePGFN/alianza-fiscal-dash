@@ -31,15 +31,25 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     // Apply styles for printing to the clone
     const styleElement = document.createElement('style');
     styleElement.textContent = `
+      /* Global PDF styles */
+      * {
+        box-sizing: border-box;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      
+      /* Typography adjustments */
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
+        color: #1a1a1a !important;
+        line-height: 1.4 !important;
+      }
+      
       /* Reset border-radius for print */
       .rounded-lg, .rounded-md, .rounded { border-radius: 0 !important; }
       
-      /* Hide SVG icons in print */
-      svg { display: none !important; }
-      
-      /* Set consistent spacing */
-      .mr-1, .mr-2 { margin-right: 4px !important; }
-      .print\\:hidden { display: none !important; }
+      /* Hide action buttons in PDF */
+      [data-pdf-remove="true"] { display: none !important; }
       
       /* Font size adjustments */
       .text-xs { font-size: 8px !important; }
@@ -48,27 +58,57 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       .text-lg { font-size: 12px !important; }
       .text-xl { font-size: 13px !important; }
       .text-2xl { font-size: 14px !important; }
-      .text-3xl { font-size: 16px !important; }
       
       /* Compact spacing */
-      .p-1, .p-2, .p-3, .p-4, .p-5, .p-6 { padding: 4px !important; }
-      .px-1, .px-2, .px-3, .px-4, .px-5, .px-6 { padding-left: 4px !important; padding-right: 4px !important; }
-      .py-1, .py-2, .py-3, .py-4, .py-5, .py-6 { padding-top: 4px !important; padding-bottom: 4px !important; }
+      .p-1, .p-2, .p-3 { padding: 4px !important; }
+      .p-4, .p-5, .p-6 { padding: 8px !important; }
+      .px-1, .px-2, .px-3 { padding-left: 4px !important; padding-right: 4px !important; }
+      .px-4, .px-5, .px-6 { padding-left: 8px !important; padding-right: 8px !important; }
+      .py-1, .py-2, .py-3 { padding-top: 4px !important; padding-bottom: 4px !important; }
+      .py-4, .py-5, .py-6 { padding-top: 6px !important; padding-bottom: 6px !important; }
       .m-1, .m-2, .m-3, .m-4, .m-5, .m-6 { margin: 4px !important; }
       .mx-1, .mx-2, .mx-3, .mx-4, .mx-5, .mx-6 { margin-left: 4px !important; margin-right: 4px !important; }
-      .my-1, .my-2, .my-3, .my-4, .my-5, .my-6 { margin-top: 4px !important; margin-bottom: 4px !important; }
-      .gap-1, .gap-2, .gap-3, .gap-4, .gap-5, .gap-6 { gap: 4px !important; }
-      .space-y-1, .space-y-2, .space-y-3, .space-y-4, .space-y-5, .space-y-6 { margin-top: 4px !important; margin-bottom: 4px !important; }
+      .my-1, .my-2, .my-3 { margin-top: 4px !important; margin-bottom: 4px !important; }
+      .my-4, .my-5, .my-6, .my-8 { margin-top: 6px !important; margin-bottom: 6px !important; }
+      .mt-1, .mt-2, .mt-3, .mt-4 { margin-top: 4px !important; }
+      .mb-1, .mb-2, .mb-3, .mb-4, .mb-6 { margin-bottom: 6px !important; }
+      .gap-1, .gap-2, .gap-3, .gap-4 { gap: 4px !important; }
+      
+      /* Remove box shadows in PDF */
+      .shadow, .shadow-md, .shadow-lg, .shadow-sm { box-shadow: none !important; }
+      
+      /* Better border display */
+      .border { border-width: 1px !important; border-color: #e5e7eb !important; }
       
       /* Fix background colors */
       body {
         background-color: ${colors.background} !important;
       }
       
-      /* Remove action buttons from PDF */
-      [data-pdf-remove="true"] {
-        display: none !important;
+      /* Hide icons but preserve space */
+      svg {
+        visibility: hidden;
+        width: 12px !important;
+        height: 12px !important;
+        margin-right: 4px !important;
       }
+      
+      /* Special case for alert sections */
+      .bg-amber-50 {
+        background-color: #fffbeb !important;
+        border-left-color: #fbbf24 !important;
+        border-left-width: 3px !important;
+      }
+      
+      /* Special styling for the signature area */
+      .border-t {
+        border-top-width: 1px !important;
+        border-top-color: #e5e7eb !important;
+      }
+      
+      /* Make grid layout more compact for PDF */
+      .grid { display: grid !important; }
+      .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
     `;
     
     clonedElement.appendChild(styleElement);
@@ -78,12 +118,15 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     clonedElement.style.left = '-9999px';
     clonedElement.style.top = '-9999px';
     clonedElement.style.width = '210mm'; // A4 width
+    clonedElement.style.padding = '10mm'; // 10mm margins
     document.body.appendChild(clonedElement);
     
     // Hide action buttons
-    const actionButtons = clonedElement.querySelectorAll('.pdf-action-buttons');
+    const actionButtons = clonedElement.querySelectorAll('.pdf-action-buttons, [data-pdf-remove="true"]');
     actionButtons.forEach(button => {
-      button.setAttribute('data-pdf-remove', 'true');
+      if (button instanceof HTMLElement) {
+        button.style.display = 'none';
+      }
     });
     
     // Now capture the element
@@ -93,65 +136,26 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       allowTaint: true,
       backgroundColor: colors.background,
       logging: false,
-      width: 595, // A4 width in points at 72dpi
-      height: 842, // A4 height in points at 72dpi
+      windowWidth: 595, // A4 width in points at 72dpi
+      windowHeight: 842, // A4 height in points at 72dpi
       onclone: (clonedDoc) => {
-        // Remove all SVG icons to save space
-        const icons = clonedDoc.querySelectorAll('svg');
-        icons.forEach(icon => {
-          if (icon instanceof Element) {
-            icon.style.display = 'none';
-          }
-        });
-        
-        // Make text smaller for PDF
-        const textElements = clonedDoc.querySelectorAll('p, span, h1, h2, h3, h4, h5, h6');
-        textElements.forEach(el => {
-          const element = el as HTMLElement;
-          if (element.classList.contains('text-xs')) {
-            element.style.fontSize = '8px';
-          } else if (element.classList.contains('text-sm')) {
-            element.style.fontSize = '9px';
-          } else if (element.classList.contains('text-base')) {
-            element.style.fontSize = '10px';
-          } else if (element.classList.contains('text-lg')) {
-            element.style.fontSize = '11px';
-          } else if (element.classList.contains('text-xl')) {
-            element.style.fontSize = '12px';
-          } else if (element.classList.contains('text-2xl')) {
-            element.style.fontSize = '13px';
-          } else if (element.classList.contains('text-3xl')) {
-            element.style.fontSize = '14px';
-          } else {
-            element.style.fontSize = '10px';
-          }
-        });
-        
-        // Make padding/margins smaller
+        // Additional styling for the PDF clone
         const allElements = clonedDoc.querySelectorAll('*');
         allElements.forEach(el => {
           const element = el as HTMLElement;
           
-          // Replace padding
-          if (element.style.padding) element.style.padding = '4px';
-          if (element.style.paddingTop) element.style.paddingTop = '2px';
-          if (element.style.paddingBottom) element.style.paddingBottom = '2px';
-          if (element.style.paddingLeft) element.style.paddingLeft = '4px';
-          if (element.style.paddingRight) element.style.paddingRight = '4px';
+          if (element.classList.contains('bg-green-50')) {
+            element.style.backgroundColor = '#f0fdf4';
+          } else if (element.classList.contains('bg-gray-50')) {
+            element.style.backgroundColor = '#f9fafb';
+          } else if (element.classList.contains('bg-gray-800')) {
+            element.style.backgroundColor = '#1f2937';
+            element.style.color = '#ffffff';
+          }
           
-          // Replace margins
-          if (element.style.margin) element.style.margin = '2px';
-          if (element.style.marginTop) element.style.marginTop = '2px';
-          if (element.style.marginBottom) element.style.marginBottom = '2px';
-          if (element.style.marginLeft) element.style.marginLeft = '2px';
-          if (element.style.marginRight) element.style.marginRight = '2px';
-        });
-        
-        // Remove action buttons
-        const buttons = clonedDoc.querySelectorAll('button, [data-pdf-remove="true"]');
-        buttons.forEach(button => {
-          if (button instanceof HTMLElement) {
-            button.style.display = 'none';
+          // Remove button elements
+          if (element.tagName === 'BUTTON' || element.getAttribute('data-pdf-remove') === 'true') {
+            element.style.display = 'none';
           }
         });
       }
@@ -177,7 +181,7 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     // Force the image to be on a single page
     let finalImgHeight = Math.min(imgHeight, pageHeight);
     
-    // Add the image of the element to the PDF with appropriate margins
+    // Add the image of the element to the PDF
     pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, finalImgHeight);
 
     // Get specialist name for filename

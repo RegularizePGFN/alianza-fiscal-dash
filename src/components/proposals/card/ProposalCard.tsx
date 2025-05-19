@@ -3,7 +3,11 @@ import React, { useRef } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Download, Printer, Percent, FileText, DollarSign, CreditCard, Calendar, CheckSquare, BriefcaseIcon, Info, Clock } from "lucide-react";
+import { 
+  Download, Printer, FileText, Briefcase, AlertTriangle, 
+  CheckSquare, DollarSign, Percent, CreditCard, 
+  MessageSquare, User, Calendar, CircleCheck, Info 
+} from "lucide-react";
 import { ExtractedData } from "@/lib/types/proposals";
 import { generateProposalPdf } from "@/lib/pdfUtils";
 import { useToast } from "@/hooks/use-toast";
@@ -58,7 +62,7 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
   const formatDateTime = (dateStr?: string) => {
     if (!dateStr) return "-";
     try {
-      return format(new Date(dateStr), "dd/MM/yyyy HH:mm", { locale: ptBR });
+      return format(new Date(dateStr), "dd/MM/yyyy", { locale: ptBR });
     } catch (e) {
       console.error("Error formatting date:", e);
       return dateStr;
@@ -109,7 +113,7 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
       } catch (e) {}
     }
     return {
-      sections: ['client', 'debt', 'payment', 'fees'],
+      sections: ['client', 'alert', 'debt', 'payment', 'fees'],
       showHeader: true,
       showLogo: true,
       showWatermark: false
@@ -119,259 +123,295 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
   // Get specialist name
   const specialistName = data.specialistName || 'Especialista Tributário';
 
-  // Generate section components based on layout
-  const renderSections = () => {
-    if (!layout?.sections) return null;
-    
-    const sectionComponents: Record<string, React.ReactNode> = {
-      metadata: (
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="bg-slate-50 p-3 rounded-md border">
-            <span className="text-xs font-medium flex items-center text-gray-700">
-              <Clock className="mr-1 h-3 w-3" />
-              Data de Criação:
-            </span>
-            <p className="text-sm">{formatDateTime(data.creationDate)}</p>
-          </div>
-          <div className="bg-slate-50 p-3 rounded-md border">
-            <span className="text-xs font-medium flex items-center text-gray-700">
-              <Calendar className="mr-1 h-3 w-3" />
-              Data de Validade:
-            </span>
-            <p className="text-sm">{formatDateTime(data.validityDate)}</p>
-          </div>
+  // Neatly formatted sections
+  const ClientSection = () => (
+    <div className="mb-6">
+      <h3 className="text-sm font-medium pb-2 mb-3 border-b border-gray-200" 
+          style={{ color: colors.secondary }}>
+        <Briefcase className="inline-block mr-1 h-4 w-4" style={{ color: colors.secondary }} />
+        Dados do Contribuinte
+      </h3>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-gray-50 p-3 rounded">
+          <span className="text-xs font-medium text-gray-500">CNPJ:</span>
+          <p className="text-sm mt-1">{data.cnpj || '-'}</p>
         </div>
-      ),
-      client: (
-        <div className="space-y-4 mb-4">
-          <h3 className="font-semibold text-lg border-b pb-2 flex items-center" 
-              style={{ color: colors.primary, borderColor: colors.primary }}>
-            <BriefcaseIcon style={{ color: colors.secondary }} className="mr-2 h-5 w-5" />
-            Dados do Contribuinte
-          </h3>
-          <div className="grid grid-cols-2 gap-6">
-            <div className="bg-white p-4 rounded-md shadow-sm border" 
-                 style={{ borderColor: colors.primary }}>
-              <span className="font-medium" style={{ color: colors.secondary }}>CNPJ:</span>
-              <p className="text-lg">{data.cnpj || '-'}</p>
-            </div>
-            <div className="bg-white p-4 rounded-md shadow-sm border"
-                 style={{ borderColor: colors.primary }}>
-              <span className="font-medium" style={{ color: colors.secondary }}>Número do Débito:</span>
-              <p className="text-lg">{data.debtNumber || '-'}</p>
-            </div>
-            {data.clientName && (
-              <div className="bg-white p-4 rounded-md shadow-sm border col-span-2"
-                   style={{ borderColor: colors.primary }}>
-                <span className="font-medium" style={{ color: colors.secondary }}>Razão Social:</span>
-                <p className="text-lg">{data.clientName}</p>
-              </div>
-            )}
-          </div>
+        <div className="bg-gray-50 p-3 rounded">
+          <span className="text-xs font-medium text-gray-500">Número do Débito:</span>
+          <p className="text-sm mt-1">{data.debtNumber || '-'}</p>
         </div>
-      ),
-      alert: (
-        <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-md text-yellow-800 text-sm mb-4">
-          <div className="flex gap-2">
-            <Info className="h-5 w-5 flex-shrink-0 text-yellow-600" />
-            <div>
-              <p className="font-semibold mb-1">Alerta! Consequências da Dívida:</p>
-              <ul className="list-disc pl-5 space-y-1">
-                <li>Bloqueio de bens e valores</li>
-                <li>Impossibilidade de participação em licitações</li>
-                <li>Restrição de acesso a crédito</li>
-                <li>Inclusão no CADIN e negativação do CNPJ/CPF</li>
-              </ul>
-            </div>
+        {data.clientName && (
+          <div className="bg-gray-50 p-3 rounded col-span-2">
+            <span className="text-xs font-medium text-gray-500">Razão Social:</span>
+            <p className="text-sm mt-1">{data.clientName}</p>
           </div>
-        </div>
-      ),
-      debt: (
-        <div className="space-y-4 mb-4">
-          <h3 className="font-semibold text-lg border-b pb-2 flex items-center"
-              style={{ color: colors.primary, borderColor: colors.primary }}>
-            <CheckSquare style={{ color: colors.secondary }} className="mr-2 h-5 w-5" />
-            Dados da Negociação
-          </h3>
-          <div className="grid grid-cols-2 gap-6">
-            <div className="bg-white p-4 rounded-md shadow-sm border"
-                 style={{ borderColor: colors.primary }}>
-              <span className="font-medium flex items-center" style={{ color: colors.secondary }}>
-                <DollarSign className="mr-1 h-4 w-4" />
-                Valor Consolidado:
-              </span>
-              <p className="text-lg">R$ {data.totalDebt || '-'}</p>
-            </div>
-            <div className="bg-white p-4 rounded-md shadow-sm border"
-                 style={{ borderColor: colors.accent, backgroundColor: `${colors.accent}10` }}>
-              <span className="font-medium flex items-center" style={{ color: colors.accent }}>
-                <DollarSign className="mr-1 h-4 w-4" />
-                Valor com Reduções:
-              </span>
-              <p className="text-lg font-bold" style={{ color: colors.accent }}>
-                R$ {data.discountedValue || '-'}
-              </p>
-            </div>
-            <div className="bg-white p-4 rounded-md shadow-sm border"
-                 style={{ borderColor: colors.primary }}>
-              <span className="font-medium flex items-center" style={{ color: colors.secondary }}>
-                <Percent className="mr-1 h-4 w-4" />
-                Percentual de Desconto:
-              </span>
-              <p className="text-lg">{data.discountPercentage || '-'}%</p>
-            </div>
-            <div className="bg-white p-4 rounded-md shadow-sm border"
-                 style={{ borderColor: colors.primary }}>
-              <span className="font-medium flex items-center" style={{ color: colors.secondary }}>
-                <DollarSign className="mr-1 h-4 w-4" />
-                {parseInt(data.entryInstallments || '1') > 1 ? 
-                  `Entrada: ${data.entryInstallments}x` : 
-                  'Valor da Entrada:'}
-              </span>
-              <p className="text-lg">
-                {parseInt(data.entryInstallments || '1') > 1 ? 
-                  `R$ ${entryInstallmentValue()} (Total: R$ ${data.entryValue || '0,00'})` : 
-                  `R$ ${data.entryValue || '-'}`}
-              </p>
-            </div>
-          </div>
-        </div>
-      ),
-      payment: (
-        <div className="space-y-4 mb-4">
-          <h3 className="font-semibold text-lg border-b pb-2 flex items-center"
-              style={{ color: colors.primary, borderColor: colors.primary }}>
-            <CreditCard style={{ color: colors.secondary }} className="mr-2 h-5 w-5" />
-            Opções de Pagamento
-          </h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="border p-4 hover:bg-slate-50 transition-colors" 
-                 style={{ borderColor: colors.primary }}>
-              <p className="font-medium" style={{ color: colors.secondary }}>À Vista</p>
-              <p className="text-lg font-bold">R$ {data.discountedValue || '0,00'}</p>
-            </div>
-            <div className="border p-4 hover:bg-slate-50 transition-colors"
-                 style={{ borderColor: colors.primary }}>
-              <p className="font-medium" style={{ color: colors.secondary }}>Parcelado</p>
-              <p className="text-lg font-bold">{data.installments || '0'}x de R$ {data.installmentValue || '0,00'}</p>
-              {parseInt(data.entryInstallments || '1') > 1 ? (
-                <p className="text-xs text-gray-500">Entrada: {data.entryInstallments}x de R$ {entryInstallmentValue()}</p>
-              ) : (
-                <p className="text-xs text-gray-500">Entrada de R$ {data.entryValue || '0,00'}</p>
-              )}
-            </div>
-          </div>
-        </div>
-      ),
-      fees: (
-        <div className="space-y-4 mb-4">
-          <h3 className="font-semibold text-lg border-b pb-2 flex items-center"
-              style={{ color: colors.primary, borderColor: colors.primary }}>
-            <Calendar style={{ color: colors.secondary }} className="mr-2 h-5 w-5" />
-            Custos e Honorários
-          </h3>
-          <div className="p-5 rounded-lg border shadow-md"
-               style={{ backgroundColor: `${colors.accent}10`, borderColor: colors.accent }}>
-            <div className="flex justify-between items-center">
-              <div>
-                <span className="font-semibold flex items-center text-lg" style={{ color: colors.accent }}>
-                  <BriefcaseIcon className="mr-2 h-5 w-5" />
-                  Honorários Aliança Fiscal:
-                </span>
-                <p className="text-sm mt-1 opacity-80" style={{ color: colors.accent }}>
-                  Especialista Tributário - {specialistName}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold" style={{ color: colors.accent }}>
-                  R$ {data.feesValue}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      ),
-      total: (
-        <div className="mt-6 mb-4 p-6 rounded-lg text-white shadow-md"
-             style={{ background: `linear-gradient(to right, ${colors.primary}, ${colors.secondary})` }}>
-          <div className="flex justify-between items-center">
-            <div>
-              <h3 className="text-lg font-semibold mb-1 flex items-center">
-                <DollarSign className="mr-1 h-5 w-5" />
-                Valor Total:
-              </h3>
-              <p className="text-sm opacity-80">Incluindo todas as reduções aplicáveis</p>
-            </div>
-            <div className="text-right">
-              <p className="text-3xl font-bold">
-                R$ {data.discountedValue || '0,00'}
-              </p>
-              <div className="flex items-center text-green-300 mt-1">
-                <Percent className="h-4 w-4 mr-1" />
-                <span className="text-sm">Economia de {data.discountPercentage || '0'}%</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )
-    };
-
-    return (
-      <div className="space-y-6">
-        {layout.sections.map((section, index) => (
-          <React.Fragment key={index}>
-            {sectionComponents[section]}
-          </React.Fragment>
-        ))}
+        )}
       </div>
-    );
+    </div>
+  );
+  
+  const AlertSection = () => (
+    <div className="mb-6">
+      <div className="bg-amber-50 border-l-4 border-amber-400 p-3 rounded">
+        <div className="flex items-start">
+          <AlertTriangle className="text-amber-500 h-4 w-4 mr-2 flex-shrink-0 mt-0.5" />
+          <div>
+            <h4 className="text-sm font-medium text-amber-800 mb-1">Consequências da Dívida Ativa</h4>
+            <ul className="text-xs text-amber-700 space-y-1">
+              <li className="flex items-start">
+                <div className="w-1.5 h-1.5 bg-amber-400 rounded-full mt-1 mr-1.5 flex-shrink-0"></div>
+                <span>Protesto em Cartório - Negativação do CNPJ</span>
+              </li>
+              <li className="flex items-start">
+                <div className="w-1.5 h-1.5 bg-amber-400 rounded-full mt-1 mr-1.5 flex-shrink-0"></div>
+                <span>Execução Fiscal - Cobrança judicial da dívida</span>
+              </li>
+              <li className="flex items-start">
+                <div className="w-1.5 h-1.5 bg-amber-400 rounded-full mt-1 mr-1.5 flex-shrink-0"></div>
+                <span>Bloqueio de Contas e Bens - Sisbajud</span>
+              </li>
+              <li className="flex items-start">
+                <div className="w-1.5 h-1.5 bg-amber-400 rounded-full mt-1 mr-1.5 flex-shrink-0"></div>
+                <span>Impossibilidade de participação em licitações</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+  
+  const NegotiationSection = () => (
+    <div className="mb-6">
+      <h3 className="text-sm font-medium pb-2 mb-3 border-b border-gray-200"
+          style={{ color: colors.secondary }}>
+        <CheckSquare className="inline-block mr-1 h-4 w-4" style={{ color: colors.secondary }} />
+        Dados da Negociação
+      </h3>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-gray-50 p-3 rounded">
+          <span className="text-xs font-medium text-gray-500 flex items-center">
+            <DollarSign className="h-3 w-3 mr-1 text-gray-500" /> Valor Consolidado:
+          </span>
+          <p className="text-sm mt-1">R$ {data.totalDebt || '-'}</p>
+        </div>
+        <div className="bg-gray-50 p-3 rounded bg-green-50">
+          <span className="text-xs font-medium text-green-700 flex items-center">
+            <DollarSign className="h-3 w-3 mr-1 text-green-600" /> Valor com Reduções:
+          </span>
+          <p className="text-sm mt-1 font-medium text-green-700">R$ {data.discountedValue || '-'}</p>
+        </div>
+        <div className="bg-gray-50 p-3 rounded">
+          <span className="text-xs font-medium text-gray-500 flex items-center">
+            <Percent className="h-3 w-3 mr-1 text-gray-500" /> Percentual de Desconto:
+          </span>
+          <p className="text-sm mt-1">{data.discountPercentage || '-'}%</p>
+        </div>
+        <div className="bg-gray-50 p-3 rounded">
+          <span className="text-xs font-medium text-gray-500 flex items-center">
+            <DollarSign className="h-3 w-3 mr-1 text-gray-500" />
+            {parseInt(data.entryInstallments || '1') > 1 ? 
+              `Entrada (${data.entryInstallments}x):` : 
+              'Valor da Entrada:'}
+          </span>
+          {parseInt(data.entryInstallments || '1') > 1 ? (
+            <div className="text-sm mt-1">
+              <p>R$ {entryInstallmentValue()} por parcela</p>
+              <p className="text-xs text-gray-500">Total: R$ {data.entryValue || '0,00'}</p>
+            </div>
+          ) : (
+            <p className="text-sm mt-1">R$ {data.entryValue || '-'}</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+  
+  const PaymentSection = () => (
+    <div className="mb-6">
+      <h3 className="text-sm font-medium pb-2 mb-3 border-b border-gray-200"
+          style={{ color: colors.secondary }}>
+        <CreditCard className="inline-block mr-1 h-4 w-4" style={{ color: colors.secondary }} />
+        Opções de Pagamento
+      </h3>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-gray-50 p-3 rounded border border-gray-100">
+          <span className="text-xs font-medium text-gray-700 flex items-center">
+            <CircleCheck className="h-3 w-3 mr-1 text-gray-600" /> À Vista
+          </span>
+          <p className="text-sm mt-1 font-medium">R$ {data.discountedValue || '0,00'}</p>
+        </div>
+        <div className="bg-gray-50 p-3 rounded border border-gray-100">
+          <span className="text-xs font-medium text-gray-700 flex items-center">
+            <CircleCheck className="h-3 w-3 mr-1 text-gray-600" /> Parcelado
+          </span>
+          <p className="text-sm mt-1 font-medium">
+            {data.installments || '0'}x de R$ {data.installmentValue || '0,00'}
+          </p>
+          {parseInt(data.entryInstallments || '1') > 1 ? (
+            <p className="text-xs text-gray-500 mt-1">Entrada: {data.entryInstallments}x de R$ {entryInstallmentValue()}</p>
+          ) : (
+            <p className="text-xs text-gray-500 mt-1">Entrada de R$ {data.entryValue || '0,00'}</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+  
+  const FeesSection = () => data.feesValue ? (
+    <div className="mb-6">
+      <h3 className="text-sm font-medium pb-2 mb-3 border-b border-gray-200"
+          style={{ color: colors.secondary }}>
+        <User className="inline-block mr-1 h-4 w-4" style={{ color: colors.secondary }} />
+        Custos e Honorários
+      </h3>
+      <div className="bg-gray-50 p-3 rounded border-l-4" style={{ borderLeftColor: colors.accent }}>
+        <div className="flex justify-between items-center">
+          <div>
+            <span className="text-xs font-medium text-gray-700 flex items-center">
+              <Briefcase className="h-3 w-3 mr-1 text-gray-600" />
+              Honorários Aliança Fiscal:
+            </span>
+            <p className="text-xs mt-1 text-gray-500">
+              Especialista Tributário - {specialistName}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-base font-medium" style={{ color: colors.accent }}>
+              R$ {data.feesValue}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  ) : null;
+  
+  const TotalSection = () => (
+    <div className="mb-6 bg-gray-800 p-4 rounded-lg text-white shadow-sm">
+      <div className="flex justify-between items-center">
+        <div>
+          <h3 className="text-sm font-medium mb-1 flex items-center">
+            <DollarSign className="h-4 w-4 mr-1" />
+            Valor Total:
+          </h3>
+          <p className="text-xs opacity-80">Com reduções aplicáveis</p>
+        </div>
+        <div className="text-right">
+          <p className="text-lg font-medium">
+            R$ {data.discountedValue || '0,00'}
+          </p>
+          <div className="flex items-center justify-end text-green-300 mt-1 text-xs">
+            <Percent className="h-3 w-3 mr-1" />
+            <span>Economia de {data.discountPercentage || '0'}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+  
+  const CommentsSection = () => data.additionalComments ? (
+    <div className="mb-6">
+      <h3 className="text-sm font-medium pb-2 mb-3 border-b border-gray-200"
+          style={{ color: colors.secondary }}>
+        <MessageSquare className="inline-block mr-1 h-4 w-4" style={{ color: colors.secondary }} />
+        Observações
+      </h3>
+      <div className="bg-gray-50 p-3 rounded border border-gray-100">
+        <p className="text-xs whitespace-pre-line">{data.additionalComments}</p>
+      </div>
+    </div>
+  ) : null;
+  
+  const MetadataSection = () => (
+    <div className="flex justify-between items-center text-gray-600 text-xs mb-6">
+      <div className="flex items-center">
+        <Calendar className="h-3 w-3 mr-1 text-gray-500" />
+        <span>Data: {formatDateTime(data.creationDate)}</span>
+      </div>
+      <div className="flex items-center">
+        <Calendar className="h-3 w-3 mr-1 text-gray-500" />
+        <span>Validade: {formatDateTime(data.validityDate)}</span>
+      </div>
+    </div>
+  );
+
+  // Map sections to components
+  const sectionComponents: Record<string, React.ReactNode> = {
+    metadata: <MetadataSection />,
+    client: <ClientSection />,
+    alert: <AlertSection />,
+    debt: <NegotiationSection />,
+    payment: <PaymentSection />,
+    fees: <FeesSection />,
+    total: <TotalSection />,
+    comments: <CommentsSection />
   };
 
   return (
-    <Card ref={proposalRef} className="border-border max-w-4xl mx-auto shadow-lg overflow-hidden"
+    <Card ref={proposalRef} className="max-w-3xl mx-auto shadow border overflow-hidden"
           style={{ backgroundColor: colors.background }}>
       
       {/* Header with Logo */}
       {layout?.showHeader && (
-        <div className="py-6 px-8 text-white" 
-             style={{ background: `linear-gradient(to right, ${colors.primary}, ${colors.secondary})` }}>
-          <div className="flex justify-between items-start">
+        <div className="relative overflow-hidden">
+          <div className="absolute inset-0 opacity-10 bg-gradient-to-br from-slate-400 to-slate-100"></div>
+          <div className="relative p-6 flex justify-between items-center">
             <div className="flex items-center gap-4">
               {layout?.showLogo && (
                 <img 
                   src="/lovable-uploads/d939ccfc-a061-45e8-97e0-1fa1b82d3df2.png" 
                   alt="Logo" 
-                  className="h-14 w-auto"
+                  className="h-12 w-auto"
                 />
               )}
-              <div className="text-2xl font-bold text-white">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Proposta de Parcelamento PGFN
-                </div>
-              </div>
+              <h2 className="text-lg font-medium" style={{ color: colors.secondary }}>
+                Proposta de Parcelamento PGFN
+              </h2>
+            </div>
+            
+            <div className="bg-gray-50 px-3 py-1.5 rounded-full text-xs font-medium flex items-center space-x-1 border border-gray-200">
+              <span>Economia de</span>
+              <span style={{ color: colors.accent }}>R$ {data.discountedValue || '0,00'}</span>
             </div>
           </div>
         </div>
       )}
 
-      <CardContent className="pt-6 space-y-6 px-8 pb-8">
-        {renderSections()}
+      <CardContent className="p-6 space-y-0">
+        {layout?.sections.map((section, index) => (
+          <React.Fragment key={index}>
+            {sectionComponents[section]}
+          </React.Fragment>
+        ))}
         
-        <Separator className="my-6" />
-
-        {/* Specialist Information */}
-        <div className="text-center text-sm" style={{ color: colors.secondary }}>
+        {/* Always show comments at the end if they exist, regardless of layout */}
+        {data.additionalComments && !layout?.sections.includes('comments') && sectionComponents.comments}
+        
+        {/* Signature Section */}
+        {data.showSignature === "true" && (
+          <div className="mt-8 border-t border-gray-200 pt-6">
+            <div className="flex flex-col items-center">
+              <div className="w-48 border-b border-gray-300 pb-1 mb-2"></div>
+              <p className="text-xs text-gray-600">
+                {specialistName}
+              </p>
+              <p className="text-xs text-gray-500">Especialista Tributário</p>
+            </div>
+          </div>
+        )}
+        
+        {/* Footer with Specialist Name */}
+        <div className="mt-4 text-center text-xs text-gray-500">
           <p>Especialista Tributário: {specialistName}</p>
         </div>
 
         {/* Action Buttons */}
-        <div className="pt-4 flex justify-end gap-3">
-          <Button variant="outline" onClick={printProposal} className="text-af-blue-700 hover:bg-af-blue-50">
+        <div className="pt-6 flex justify-end gap-3">
+          <Button variant="outline" onClick={printProposal} className="text-gray-700 hover:bg-gray-50">
             <Printer className="mr-2 h-4 w-4" />
             Imprimir
           </Button>
-          <Button onClick={generatePdf} className="bg-af-blue-600 hover:bg-af-blue-700">
+          <Button onClick={generatePdf} className="bg-gray-800 hover:bg-gray-900">
             <Download className="mr-2 h-4 w-4" />
             Baixar PDF
           </Button>
