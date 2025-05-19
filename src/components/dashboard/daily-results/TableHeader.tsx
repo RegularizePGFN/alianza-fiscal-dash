@@ -1,71 +1,84 @@
 
-import { ArrowDown, ArrowUp, User, DollarSign, ShoppingCart, FileText, Briefcase } from 'lucide-react';
-import { useDailyResults } from './DailyResultsContext';
-import { SortColumn } from './types';
+import { useDailyResults } from "./DailyResultsContext";
 
 export function TableHeader() {
-  const { sortColumn, sortDirection, sortBy } = useDailyResults();
-
-  const renderSortIcon = (column: SortColumn) => {
-    if (sortColumn !== column) return null;
-    return sortDirection === 'asc' ? (
-      <ArrowUp className="h-3 w-3 inline ml-1" />
-    ) : (
-      <ArrowDown className="h-3 w-3 inline ml-1" />
-    );
+  const { sortColumn, sortDirection, setSortColumn, setSortDirection } = useDailyResults();
+  
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('desc'); // Default to descending when changing columns
+    }
   };
   
   return (
     <thead>
-      <tr className="border-b border-gray-200 [&_th]:py-2 [&_th]:px-3 [&_th]:text-xs [&_th]:text-left [&_th]:font-medium [&_th]:text-gray-500">
+      <tr className="border-b border-gray-200 dark:border-gray-700 text-xs">
         <th 
-          className="cursor-pointer hover:text-gray-700"
-          onClick={() => sortBy('name')}
+          className="text-left p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+          onClick={() => handleSort('proposalsCount')}
         >
           <span className="flex items-center">
-            <User className="h-3 w-3 mr-1" />
-            Nome
-            {renderSortIcon('name')}
-          </span>
-        </th>
-        <th 
-          className="cursor-pointer hover:text-gray-700 text-right"
-          onClick={() => sortBy('salesCount')}
-        >
-          <span className="flex items-center justify-end">
-            <ShoppingCart className="h-3 w-3 mr-1" />
-            Vendas
-            {renderSortIcon('salesCount')}
-          </span>
-        </th>
-        <th 
-          className="cursor-pointer hover:text-gray-700 text-right"
-          onClick={() => sortBy('salesAmount')}
-        >
-          <span className="flex items-center justify-end">
-            <DollarSign className="h-3 w-3 mr-1" />
-            Valor
-            {renderSortIcon('salesAmount')}
-          </span>
-        </th>
-        <th 
-          className="cursor-pointer hover:text-gray-700 text-right"
-          onClick={() => sortBy('proposalsCount')}
-        >
-          <span className="flex items-center justify-end">
-            <FileText className="h-3 w-3 mr-1" />
             Prop. Enviada
-            {renderSortIcon('proposalsCount')}
+            {sortColumn === 'proposalsCount' && (
+              <span className="ml-1">
+                {sortDirection === 'asc' ? '▲' : '▼'}
+              </span>
+            )}
           </span>
         </th>
         <th 
-          className="cursor-pointer hover:text-gray-700 text-right"
-          onClick={() => sortBy('feesAmount')}
+          className="text-right p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+          onClick={() => handleSort('feesAmount')}
         >
           <span className="flex items-center justify-end">
-            <Briefcase className="h-3 w-3 mr-1" />
             Honorários
-            {renderSortIcon('feesAmount')}
+            {sortColumn === 'feesAmount' && (
+              <span className="ml-1">
+                {sortDirection === 'asc' ? '▲' : '▼'}
+              </span>
+            )}
+          </span>
+        </th>
+        <th 
+          className="text-left p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+          onClick={() => handleSort('name')}
+        >
+          <span className="flex items-center">
+            Nome
+            {sortColumn === 'name' && (
+              <span className="ml-1">
+                {sortDirection === 'asc' ? '▲' : '▼'}
+              </span>
+            )}
+          </span>
+        </th>
+        <th 
+          className="text-right p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+          onClick={() => handleSort('salesCount')}
+        >
+          <span className="flex items-center justify-end">
+            Vendas
+            {sortColumn === 'salesCount' && (
+              <span className="ml-1">
+                {sortDirection === 'asc' ? '▲' : '▼'}
+              </span>
+            )}
+          </span>
+        </th>
+        <th 
+          className="text-right p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+          onClick={() => handleSort('salesAmount')}
+        >
+          <span className="flex items-center justify-end">
+            Valor
+            {sortColumn === 'salesAmount' && (
+              <span className="ml-1">
+                {sortDirection === 'asc' ? '▲' : '▼'}
+              </span>
+            )}
           </span>
         </th>
       </tr>

@@ -13,7 +13,8 @@ import SalesPage from "./pages/SalesPage";
 import UsersPage from "./pages/UsersPage";
 import ReportsPage from "./pages/ReportsPage";
 import SettingsPage from "./pages/SettingsPage";
-import ProposalsPage from "./pages/proposals"; // Updated import path
+import ProposalsPage from "./pages/proposals"; 
+import ProfilePage from "./pages/ProfilePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,7 +34,8 @@ const App = () => (
             <Route path="/usuarios" element={<UsersPage />} />
             <Route path="/relatorios" element={<ReportsPage />} />
             <Route path="/configuracoes" element={<SettingsPage />} />
-            <Route path="/propostas" element={<ProposalsPage />} /> {/* Updated component path */}
+            <Route path="/propostas" element={<ProposalsPage />} />
+            <Route path="/perfil" element={<ProfilePage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

@@ -39,14 +39,14 @@ const AIImageProcessor = ({
   });
 
   return (
-    <Card className="border-purple-200 overflow-hidden shadow-md bg-white">
-      <CardHeader className="bg-gradient-to-r from-purple-600 to-blue-700 text-white border-b border-purple-700">
+    <Card className="border-purple-200 overflow-hidden shadow-md bg-white dark:bg-gray-800 dark:border-purple-900">
+      <CardHeader className="bg-gradient-to-r from-purple-600 to-blue-700 text-white border-b border-purple-700 dark:border-purple-900">
         <CardTitle className="text-lg font-medium flex items-center gap-2">
           <span className="bg-white/20 p-1 rounded">AI</span>
           Análise de Imagem com Inteligência Artificial
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6">
+      <CardContent className="p-6 dark:bg-gray-800">
         <div className="grid gap-6">
           <FileUpload 
             onImageChange={handleImageChange} 

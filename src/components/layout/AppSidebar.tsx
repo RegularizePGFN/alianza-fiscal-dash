@@ -13,7 +13,7 @@ import {
   LogOut,
   ChevronLeft,
   Settings,
-  FileText // Added new icon for Proposals
+  FileText
 } from "lucide-react";
 
 interface SidebarLinkProps {
@@ -70,10 +70,10 @@ export function AppSidebar() {
   
   return (
     <div className={cn(
-      "bg-sidebar relative h-screen transition-all duration-300 flex flex-col",
+      "bg-sidebar relative h-screen transition-all duration-300 flex flex-col shadow-lg border-r border-sidebar-border",
       expanded ? "w-60" : "w-16"
     )}>
-      <div className="flex items-center justify-between p-4 border-b border-sidebar-border/30">
+      <div className="flex items-center justify-between p-4 border-b border-sidebar-border/30 bg-sidebar-accent/30">
         {expanded && (
           <h1 className="text-sidebar-foreground font-bold text-xl overflow-hidden truncate">
             Aliança<span className="text-af-green-400">Fiscal</span>
@@ -87,7 +87,7 @@ export function AppSidebar() {
         </button>
       </div>
       
-      <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-2">
+      <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-2 bg-gradient-to-b from-sidebar-accent/10 to-sidebar">
         <ul className="space-y-1">
           <SidebarLink 
             to="/dashboard" 
@@ -139,10 +139,18 @@ export function AppSidebar() {
               />
             </>
           )}
+          
+          <SidebarLink 
+            to="/perfil" 
+            icon={<Users size={20} />} 
+            label="Perfil" 
+            expanded={expanded}
+            active={location.pathname === "/perfil"}
+          />
         </ul>
       </nav>
       
-      <div className="mt-auto border-t border-sidebar-border/30 p-2">
+      <div className="mt-auto border-t border-sidebar-border/30 p-2 bg-sidebar-accent/20">
         <ul className="space-y-1">
           <SidebarLink 
             to="#" 
