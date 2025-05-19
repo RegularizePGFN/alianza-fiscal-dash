@@ -34,17 +34,17 @@ interface ProposalsTabsProps {
 const ProposalsTabs = ({
   activeTab,
   setActiveTab,
-  formData,
-  generatedProposal,
-  processing,
+  formData = {}, // Provide default value
+  generatedProposal = false,
+  processing = false,
   setProcessing,
-  progressPercent,
+  progressPercent = 0,
   setProgressPercent,
-  companyData,
-  imagePreview,
-  selectedProposal,
-  proposals,
-  loadingProposals,
+  companyData = null,
+  imagePreview = null,
+  selectedProposal = null,
+  proposals = [],
+  loadingProposals = false,
   onInputChange,
   onGenerateProposal,
   onViewProposal,
@@ -63,14 +63,17 @@ const ProposalsTabs = ({
     onInputChange(name, value);
   };
 
+  // Add safety check for the cnpj property
+  const isCnpjOrGenerated = !!(formData?.cnpj || generatedProposal);
+
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsList className="grid w-full grid-cols-4 mb-6">
         <TabsTrigger value="upload">Upload de Imagem</TabsTrigger>
-        <TabsTrigger value="data" disabled={!formData.cnpj && !generatedProposal}>
+        <TabsTrigger value="data" disabled={!isCnpjOrGenerated}>
           Dados Extraídos
         </TabsTrigger>
-        <TabsTrigger value="pdf-editor" disabled={!formData.cnpj && !generatedProposal}>
+        <TabsTrigger value="pdf-editor" disabled={!isCnpjOrGenerated}>
           Edite o PDF
         </TabsTrigger>
         <TabsTrigger value="proposal" disabled={!generatedProposal}>
@@ -108,7 +111,7 @@ const ProposalsTabs = ({
           formData={formData} 
           onInputChange={handlePDFEditorInputChange}
           onGenerateProposal={onGenerateProposal}
-          imagePreview={imagePreview || null}
+          imagePreview={imagePreview}
         />
       </TabsContent>
       
