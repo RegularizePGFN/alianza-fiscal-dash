@@ -2,9 +2,7 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/auth";
+import { Routes, Route } from "react-router-dom";
 
 import Index from "./pages/Index";
 import LoginPage from "./pages/LoginPage";
@@ -16,32 +14,26 @@ import SettingsPage from "./pages/SettingsPage";
 import ProposalsPage from "./pages/proposals"; 
 import ProfilePage from "./pages/ProfilePage";
 import NotFound from "./pages/NotFound";
-
-const queryClient = new QueryClient();
+import CalculatorPage from "./pages/CalculatorPage";
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/vendas" element={<SalesPage />} />
-            <Route path="/usuarios" element={<UsersPage />} />
-            <Route path="/relatorios" element={<ReportsPage />} />
-            <Route path="/configuracoes" element={<SettingsPage />} />
-            <Route path="/propostas" element={<ProposalsPage />} />
-            <Route path="/perfil" element={<ProfilePage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <TooltipProvider>
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/dashboard" element={<DashboardPage />} />
+      <Route path="/vendas" element={<SalesPage />} />
+      <Route path="/usuarios" element={<UsersPage />} />
+      <Route path="/relatorios" element={<ReportsPage />} />
+      <Route path="/configuracoes" element={<SettingsPage />} />
+      <Route path="/propostas" element={<ProposalsPage />} />
+      <Route path="/perfil" element={<ProfilePage />} />
+      <Route path="/calculadora" element={<CalculatorPage />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+    <Toaster />
+    <Sonner />
+  </TooltipProvider>
 );
 
 export default App;
