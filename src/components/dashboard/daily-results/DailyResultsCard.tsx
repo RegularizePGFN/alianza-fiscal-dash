@@ -98,3 +98,6 @@ export function DailyResultsCard({ salesData }: DailyResultsProps) {
     </DailyResultsProvider>
   );
 }
+
+// Also export as default for compatibility
+export default DailyResultsCard;

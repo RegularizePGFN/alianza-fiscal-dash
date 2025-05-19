@@ -2,7 +2,7 @@
 import { User } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-interface SalespersonRowProps {
+export interface SalespersonRowProps {
   name: string;
   proposalsSent: number;
   fees: string;
@@ -37,9 +37,9 @@ export const SalespersonRow = ({
         </div>
       </td>
       <td className="text-center py-3">{proposalsSent}</td>
-      <td className="text-center py-3">R$ {fees}</td>
+      <td className="text-center py-3">{fees}</td>
       <td className="text-center py-3">{salesCount}</td>
-      <td className="text-right pr-4 py-3">R$ {salesAmount}</td>
+      <td className="text-right pr-4 py-3">{salesAmount}</td>
     </tr>
   );
 };

@@ -10,12 +10,23 @@ interface DailySummaryCardProps {
   todaySales: Sale[];
   currentDate: string;
   previousDaySales?: Sale[];
+  totalSalesAmount?: number;
+  totalFeesAmount?: number;
+  salesCount?: number;
 }
 
-export function DailySummaryCard({ todaySales, currentDate, previousDaySales = [] }: DailySummaryCardProps) {
-  // Calculate totals
-  const totalSalesCount = todaySales.length;
-  const totalSalesAmount = todaySales.reduce((sum, sale) => sum + sale.gross_amount, 0);
+export function DailySummaryCard({ 
+  todaySales, 
+  currentDate, 
+  previousDaySales = [],
+  totalSalesAmount: propsTotalSalesAmount,
+  totalFeesAmount: propsTotalFeesAmount,
+  salesCount: propsSalesCount
+}: DailySummaryCardProps) {
+  // Calculate totals from props or derive from sales array
+  const totalSalesCount = propsSalesCount !== undefined ? propsSalesCount : todaySales.length;
+  const totalSalesAmount = propsTotalSalesAmount !== undefined ? propsTotalSalesAmount : 
+    todaySales.reduce((sum, sale) => sum + sale.gross_amount, 0);
 
   // Calculate previous day metrics for comparison
   const prevDaySalesCount = previousDaySales.length;

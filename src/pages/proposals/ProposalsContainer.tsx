@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
-import { ProposalsTabs } from './components/ProposalsTabs';
-import { ProposalsHeader } from './components/ProposalsHeader';
+import ProposalsTabs from './components/ProposalsTabs';
+import ProposalsHeader from './components/ProposalsHeader';
 import { 
   useProposalsState, 
   useSaveProposal,
@@ -13,18 +13,11 @@ const ProposalsContainer = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   
   const {
-    proposalState,
-    setProposalState,
     activeTab,
     setActiveTab,
-    isLoading,
   } = useProposalsState();
 
-  const { handleCreateNewProposal } = useProposalHandlers({
-    proposalState,
-    setProposalState,
-    setActiveTab,
-  });
+  const { handleCreateProposal } = useProposalHandlers({});
 
   const handleRefresh = () => {
     // Trigger a refresh of the proposal data
@@ -35,15 +28,13 @@ const ProposalsContainer = () => {
     <div className="space-y-6">
       {/* Pass the required props to ProposalsHeader */}
       <ProposalsHeader 
-        onClickNew={handleCreateNewProposal}
+        onClickNew={handleCreateProposal}
         onClickRefresh={handleRefresh}
       />
       <ProposalsTabs
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        proposalState={proposalState}
-        setProposalState={setProposalState}
-        isLoading={isLoading}
+        refreshKey={refreshKey}
       />
     </div>
   );

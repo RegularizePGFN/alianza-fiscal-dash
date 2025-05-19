@@ -18,11 +18,18 @@ export const SummarySection = ({
   totalFeesAmount,
   salesCount,
 }: SummarySectionProps) => {
+  // Format the date for display
+  const formattedDate = currentDate.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+  
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <DailySummaryCard 
         todaySales={todaySales}
-        currentDate={currentDate}
+        currentDate={formattedDate}
         totalSalesAmount={totalSalesAmount}
         totalFeesAmount={totalFeesAmount}
         salesCount={salesCount}
