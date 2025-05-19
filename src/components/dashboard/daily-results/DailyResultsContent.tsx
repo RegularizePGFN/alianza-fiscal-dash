@@ -1,70 +1,157 @@
 
-import { useMemo } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Sale } from "@/lib/types";
-import { formatCurrency, getTodayISO } from "@/lib/utils";
-import { SummarySection } from "./SummarySection";
-import { SalespeopleTable } from "./SalespeopleTable";
 import { DailySalesperson } from "./types";
+import { SalespeopleTable } from "./SalespeopleTable";
+import { useDailyResults } from "./DailyResultsContext";
+import { getTodayISO } from "@/lib/utils";
 
 interface DailyResultsContentProps {
-  salesData: Sale[];
+  todaySales: Sale[];
+  currentDate: string;
 }
 
-export const DailyResultsContent = ({ salesData }: DailyResultsContentProps) => {
-  // Filter today's sales
-  const todaySales = useMemo(() => {
-    const todayStr = getTodayISO();
-    return salesData.filter((sale) => {
-      const saleDate = new Date(sale.sale_date);
-      return saleDate.toISOString().split('T')[0] === todayStr;
-    });
-  }, [salesData]);
-
-  // Calculate summary data
-  const totalSalesAmount = todaySales.reduce((sum, sale) => sum + sale.gross_amount, 0);
-  const totalFeesAmount = todaySales.reduce((sum, sale) => sum + 0, 0); // No fees in Sale type, using 0
-  const salesCount = todaySales.length;
-  const currentDate = new Date();
+export function DailyResultsContent({ todaySales, currentDate }: DailyResultsContentProps) {
+  const [salespeople, setSalespeople] = useState<DailySalesperson[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { sortColumn, sortDirection } = useDailyResults();
   
-  // Group by salesperson
-  const salesBySalesperson = useMemo(() => {
-    const grouped = todaySales.reduce((acc: Record<string, any>, sale) => {
-      const name = sale.salesperson_name || "Não atribuído";
-      if (!acc[name]) {
-        acc[name] = {
-          id: sale.salesperson_id,
-          name,
-          sales: [],
-          proposalsCount: 0, // This would need to be populated from proposals data
-        };
+  // Function to sort salespeople data
+  const sortData = (data: DailySalesperson[]) => {
+    return [...data].sort((a, b) => {
+      if (sortColumn === 'name') {
+        return sortDirection === 'asc' 
+          ? a.name.localeCompare(b.name) 
+          : b.name.localeCompare(a.name);
+      } else {
+        // Handle cases where properties might be undefined
+        const valueA = a[sortColumn] !== undefined ? a[sortColumn] as number : 0;
+        const valueB = b[sortColumn] !== undefined ? b[sortColumn] as number : 0;
+        
+        return sortDirection === 'asc' ? valueA - valueB : valueB - valueA;
       }
-      acc[name].sales.push(sale);
-      return acc;
-    }, {});
+    });
+  };
+  
+  useEffect(() => {
+    // Fetch all data needed for the dashboard
+    const fetchAllData = async () => {
+      setLoading(true);
+      try {
+        // Get today's date in ISO format
+        const today = getTodayISO();
+        
+        // 1. Fetch all salespeople profiles
+        const { data: profilesData, error: profilesError } = await supabase
+          .from("profiles")
+          .select("id, name, role")
+          .eq("role", "vendedor");
+          
+        if (profilesError) {
+          console.error("Error fetching salespeople:", profilesError);
+          return;
+        }
+        
+        // 2. Fetch today's proposals
+        const { data: proposalsData, error: proposalsError } = await supabase
+          .from("proposals")
+          .select("*")
+          .gte("created_at", `${today}T00:00:00`)
+          .lte("created_at", `${today}T23:59:59`);
+          
+        if (proposalsError) {
+          console.error("Error fetching proposals:", proposalsError);
+        }
+        
+        // Initialize all salespeople with zero counts
+        const allSalespeople = (profilesData || []).map(profile => ({
+          id: profile.id,
+          name: profile.name || "Sem nome",
+          salesCount: 0,
+          salesAmount: 0,
+          proposalsCount: 0,
+          feesAmount: 0
+        }));
 
-    return Object.values(grouped).map((group: any) => ({
-      id: group.id,
-      name: group.name,
-      salesCount: group.sales.length,
-      salesAmount: group.sales.reduce((sum: number, s: Sale) => sum + s.gross_amount, 0),
-      feesAmount: 0, // No fees in Sale type
-      proposalsCount: group.proposalsCount,
-    }));
+        // Update counts for salespeople who made sales today
+        todaySales.forEach(sale => {
+          const existingSalesperson = allSalespeople.find(sp => sp.id === sale.salesperson_id);
+          if (existingSalesperson) {
+            existingSalesperson.salesCount += 1;
+            existingSalesperson.salesAmount += sale.gross_amount;
+          } else if (sale.salesperson_id) {
+            // In case there's a salesperson in the sales data but not in profiles
+            allSalespeople.push({
+              id: sale.salesperson_id,
+              name: sale.salesperson_name || "Sem nome",
+              salesCount: 1,
+              salesAmount: sale.gross_amount,
+              proposalsCount: 0,
+              feesAmount: 0
+            });
+          }
+        });
+        
+        // Update counts for salespeople who created proposals today
+        if (proposalsData) {
+          proposalsData.forEach(proposal => {
+            const existingSalesperson = allSalespeople.find(sp => sp.id === proposal.user_id);
+            if (existingSalesperson) {
+              existingSalesperson.proposalsCount = (existingSalesperson.proposalsCount || 0) + 1;
+              
+              // Add fees if available
+              if (proposal.fees_value) {
+                let feesValue = 0;
+                
+                // Handle different possible types of fees_value
+                if (typeof proposal.fees_value === 'string') {
+                  // Fix: Cast to string and then use replace
+                  const cleanedValue = String(proposal.fees_value).replace(/[^0-9,.]/g, '').replace(',', '.');
+                  feesValue = parseFloat(cleanedValue);
+                } else if (typeof proposal.fees_value === 'number') {
+                  feesValue = proposal.fees_value;
+                }
+                
+                if (!isNaN(feesValue)) {
+                  existingSalesperson.feesAmount = (existingSalesperson.feesAmount || 0) + feesValue;
+                }
+              }
+            }
+          });
+        }
+
+        // Apply initial sort to the data
+        setSalespeople(sortData(allSalespeople));
+      } catch (error) {
+        console.error("Error processing data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchAllData();
   }, [todaySales]);
-
+  
+  // Apply sorting whenever sort criteria changes
+  useEffect(() => {
+    setSalespeople(prevSalespeople => sortData(prevSalespeople));
+  }, [sortColumn, sortDirection]);
+  
   return (
-    <div className="space-y-6">
-      <SummarySection 
-        todaySales={todaySales}
-        currentDate={currentDate}
-        totalSalesAmount={totalSalesAmount}
-        totalFeesAmount={totalFeesAmount}
-        salesCount={salesCount}
-      />
-      <SalespeopleTable salespeople={salesBySalesperson} />
+    <div className="bg-white rounded-md p-2">
+      <h3 className="text-xs font-medium text-muted-foreground mb-1">Vendedores Hoje:</h3>
+      {loading ? (
+        <div className="flex h-[150px] items-center justify-center">
+          <p className="text-xs text-muted-foreground">Carregando dados...</p>
+        </div>
+      ) : salespeople.length > 0 ? (
+        <SalespeopleTable salespeople={salespeople} />
+      ) : (
+        <div className="flex h-[150px] items-center justify-center text-xs text-muted-foreground">
+          Sem vendedores cadastrados
+        </div>
+      )}
     </div>
   );
-};
-
-// Default export for compatibility
-export default DailyResultsContent;
+}

@@ -14,7 +14,6 @@ import UsersPage from "./pages/UsersPage";
 import ReportsPage from "./pages/ReportsPage";
 import SettingsPage from "./pages/SettingsPage";
 import ProposalsPage from "./pages/proposals"; // Updated import path
-import ProfilePage from "./pages/ProfilePage"; // Added import for profile page
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,8 +33,7 @@ const App = () => (
             <Route path="/usuarios" element={<UsersPage />} />
             <Route path="/relatorios" element={<ReportsPage />} />
             <Route path="/configuracoes" element={<SettingsPage />} />
-            <Route path="/propostas" element={<ProposalsPage />} />
-            <Route path="/perfil" element={<ProfilePage />} /> {/* Added profile route */}
+            <Route path="/propostas" element={<ProposalsPage />} /> {/* Updated component path */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

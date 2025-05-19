@@ -1,109 +1,77 @@
 
-import { useState } from 'react';
-import ProposalsTabs from './components/ProposalsTabs';
-import ProposalsHeader from './components/ProposalsHeader';
-import { 
-  useProposalsState, 
-  useSaveProposal,
-  useFetchProposals, 
-  useProposalHandlers 
-} from '@/hooks/proposals';
+import { RefreshCcw, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import ProposalsHeader from "./components/ProposalsHeader";
+import ProposalsTabs from "./components/ProposalsTabs";
+import { useProposalsState } from "@/hooks/proposals";
+import { useProposalHandlers } from "@/hooks/proposals";
 
 const ProposalsContainer = () => {
-  const [refreshKey, setRefreshKey] = useState(0);
-  
+  // Get state from our custom hook
   const proposalsState = useProposalsState();
   
-  const {
-    activeTab,
-    setActiveTab,
-    formData,
-    setFormData,
-    processing,
-    setProcessing,
-    progressPercent,
-    setProgressPercent,
-    imagePreview,
-    setImagePreview,
-    generatedProposal,
-    setGeneratedProposal,
-    selectedProposal,
-    setSelectedProposal,
-    companyData,
-    setCompanyData,
-    processingStatus,
-    setProcessingStatus,
-    user,
-    proposals,
-    loadingProposals,
-    saveProposal,
-    fetchProposals,
-    deleteProposal,
-  } = proposalsState;
-
-  const proposalHandlers = useProposalHandlers({
-    formData,
-    setFormData,
-    imagePreview,
-    setImagePreview,
-    setGeneratedProposal,
-    selectedProposal,
-    setSelectedProposal,
-    setActiveTab,
-    setCompanyData,
-    saveProposal,
-    fetchProposals,
-    deleteProposal,
-    user,
+  // Get handlers from our custom hook
+  const handlers = useProposalHandlers({
+    formData: proposalsState.formData,
+    setFormData: proposalsState.setFormData,
+    imagePreview: proposalsState.imagePreview,
+    setImagePreview: proposalsState.setImagePreview,
+    setGeneratedProposal: proposalsState.setGeneratedProposal,
+    selectedProposal: proposalsState.selectedProposal,
+    setSelectedProposal: proposalsState.setSelectedProposal,
+    setActiveTab: proposalsState.setActiveTab,
+    setCompanyData: proposalsState.setCompanyData,
+    saveProposal: proposalsState.saveProposal,
+    fetchProposals: proposalsState.fetchProposals,
+    deleteProposal: proposalsState.deleteProposal,
+    user: proposalsState.user,
   });
-
-  const {
-    handleProcessComplete,
-    handleInputChange,
-    handleGenerateProposal,
-    handleViewProposal,
-    handleDeleteProposal,
-    handleReset
-  } = proposalHandlers;
-
-  const handleRefresh = () => {
-    // Trigger a refresh of the proposal data
-    setRefreshKey(prev => prev + 1);
-    fetchProposals();
-  };
-
-  // Create a handler for creating a new proposal
-  const handleCreateNew = () => {
-    handleReset();
-  };
-
+  
   return (
-    <div className="space-y-6">
-      <ProposalsHeader 
-        onClickNew={handleCreateNew}
-        onClickRefresh={handleRefresh}
-      />
-      <ProposalsTabs
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        formData={formData}
-        generatedProposal={generatedProposal}
-        processing={processing}
-        setProcessing={setProcessing}
-        progressPercent={progressPercent}
-        setProgressPercent={setProgressPercent}
-        companyData={companyData}
-        imagePreview={imagePreview}
-        selectedProposal={selectedProposal}
-        proposals={proposals}
-        loadingProposals={loadingProposals}
-        onInputChange={handleInputChange}
-        onGenerateProposal={handleGenerateProposal}
-        onViewProposal={handleViewProposal}
-        onDeleteProposal={handleDeleteProposal}
-        onProcessComplete={handleProcessComplete}
-        onReset={handleReset}
-        setProcessingStatus={setProcessingStatus}
+    <div className="container py-6">
+      <div className="flex justify-between items-center mb-6">
+        <ProposalsHeader />
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => proposalsState.fetchProposals()}
+            disabled={proposalsState.loadingProposals}
+            className="flex items-center gap-2"
+          >
+            <RefreshCcw className="h-4 w-4" />
+            Atualizar
+          </Button>
+          <Button 
+            onClick={handlers.handleReset}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Nova Proposta
+          </Button>
+        </div>
+      </div>
+      
+      <ProposalsTabs 
+        activeTab={proposalsState.activeTab} 
+        setActiveTab={proposalsState.setActiveTab} 
+        formData={proposalsState.formData} 
+        generatedProposal={proposalsState.generatedProposal} 
+        processing={proposalsState.processing} 
+        setProcessing={proposalsState.setProcessing} 
+        progressPercent={proposalsState.progressPercent} 
+        setProgressPercent={proposalsState.setProgressPercent} 
+        companyData={proposalsState.companyData} 
+        imagePreview={proposalsState.imagePreview} 
+        selectedProposal={proposalsState.selectedProposal} 
+        proposals={proposalsState.proposals} 
+        loadingProposals={proposalsState.loadingProposals} 
+        onInputChange={handlers.handleInputChange} 
+        onGenerateProposal={handlers.handleGenerateProposal} 
+        onViewProposal={handlers.handleViewProposal} 
+        onDeleteProposal={handlers.handleDeleteProposal} 
+        onProcessComplete={handlers.handleProcessComplete} 
+        onReset={handlers.handleReset}
+        setProcessingStatus={proposalsState.setProcessingStatus}
       />
     </div>
   );

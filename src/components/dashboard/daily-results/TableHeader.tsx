@@ -1,75 +1,74 @@
 
-import { useDailyResults } from "./DailyResultsContext";
-import { SortColumn } from "./types";
-import { ArrowDownAZ, ArrowUpAZ } from "lucide-react";
+import { ArrowDown, ArrowUp, User, DollarSign, ShoppingCart, FileText, Briefcase } from 'lucide-react';
+import { useDailyResults } from './DailyResultsContext';
+import { SortColumn } from './types';
 
 export function TableHeader() {
   const { sortColumn, sortDirection, sortBy } = useDailyResults();
 
-  const SortArrow = ({ column }: { column: SortColumn }) => {
+  const renderSortIcon = (column: SortColumn) => {
     if (sortColumn !== column) return null;
-    return sortDirection === "asc" ? (
-      <ArrowUpAZ className="h-3 w-3 ml-1" />
+    return sortDirection === 'asc' ? (
+      <ArrowUp className="h-3 w-3 inline ml-1" />
     ) : (
-      <ArrowDownAZ className="h-3 w-3 ml-1" />
+      <ArrowDown className="h-3 w-3 inline ml-1" />
     );
   };
-
-  const handleSort = (column: SortColumn) => () => {
-    sortBy(column);
-  };
-
+  
   return (
     <thead>
-      <tr className="text-xs font-medium text-muted-foreground border-b dark:border-gray-700">
-        <th className="text-left py-2 pl-4 font-medium">
-          <button
-            className="flex items-center focus:outline-none"
-            onClick={handleSort("name")}
-          >
-            Vendedor
-            <SortArrow column="name" />
-          </button>
+      <tr className="border-b border-gray-200 [&_th]:py-2 [&_th]:px-3 [&_th]:text-xs [&_th]:text-left [&_th]:font-medium [&_th]:text-gray-500">
+        <th 
+          className="cursor-pointer hover:text-gray-700"
+          onClick={() => sortBy('name')}
+        >
+          <span className="flex items-center">
+            <User className="h-3 w-3 mr-1" />
+            Nome
+            {renderSortIcon('name')}
+          </span>
         </th>
-        <th className="text-center py-2 font-medium">
-          <button
-            className="flex items-center justify-center focus:outline-none mx-auto"
-            onClick={handleSort("proposalsCount")}
-          >
-            Prop. Enviadas
-            <SortArrow column="proposalsCount" />
-          </button>
-        </th>
-        <th className="text-center py-2 font-medium">
-          <button
-            className="flex items-center justify-center focus:outline-none mx-auto"
-            onClick={handleSort("feesAmount")}
-          >
-            Honorários
-            <SortArrow column="feesAmount" />
-          </button>
-        </th>
-        <th className="text-center py-2 font-medium">
-          <button
-            className="flex items-center justify-center focus:outline-none mx-auto"
-            onClick={handleSort("salesCount")}
-          >
+        <th 
+          className="cursor-pointer hover:text-gray-700 text-right"
+          onClick={() => sortBy('salesCount')}
+        >
+          <span className="flex items-center justify-end">
+            <ShoppingCart className="h-3 w-3 mr-1" />
             Vendas
-            <SortArrow column="salesCount" />
-          </button>
+            {renderSortIcon('salesCount')}
+          </span>
         </th>
-        <th className="text-right py-2 pr-4 font-medium">
-          <button
-            className="flex items-center justify-end focus:outline-none ml-auto"
-            onClick={handleSort("salesAmount")}
-          >
+        <th 
+          className="cursor-pointer hover:text-gray-700 text-right"
+          onClick={() => sortBy('salesAmount')}
+        >
+          <span className="flex items-center justify-end">
+            <DollarSign className="h-3 w-3 mr-1" />
             Valor
-            <SortArrow column="salesAmount" />
-          </button>
+            {renderSortIcon('salesAmount')}
+          </span>
+        </th>
+        <th 
+          className="cursor-pointer hover:text-gray-700 text-right"
+          onClick={() => sortBy('proposalsCount')}
+        >
+          <span className="flex items-center justify-end">
+            <FileText className="h-3 w-3 mr-1" />
+            Prop. Enviada
+            {renderSortIcon('proposalsCount')}
+          </span>
+        </th>
+        <th 
+          className="cursor-pointer hover:text-gray-700 text-right"
+          onClick={() => sortBy('feesAmount')}
+        >
+          <span className="flex items-center justify-end">
+            <Briefcase className="h-3 w-3 mr-1" />
+            Honorários
+            {renderSortIcon('feesAmount')}
+          </span>
         </th>
       </tr>
     </thead>
   );
 }
-
-export default TableHeader;
