@@ -1,0 +1,20 @@
+
+/* Base styles */
+@import './base.css';
+
+/* Theme */
+@import './theme/dark.css';
+
+/* Component specific styles */
+@import './components/goal-meter.css';
+@import './components/cards.css';
+@import './components/interactive.css';
+
+/* Dark mode overrides */
+@import './dark-mode-overrides.css';
+
+/* Animations */
+@import './animations.css';
+
+/* Legacy styles from App.css - Keep them if still needed */
+@import '../App.css';
