@@ -106,8 +106,8 @@ export function DailyResultsContent({ todaySales, currentDate }: DailyResultsCon
                 
                 // Handle different possible types of fees_value
                 if (typeof proposal.fees_value === 'string') {
-                  // Remove non-numeric characters except for decimal point and convert to number
-                  const cleanedValue = proposal.fees_value.replace(/[^0-9,.]/g, '').replace(',', '.');
+                  // Fix: Cast to string and then use replace
+                  const cleanedValue = String(proposal.fees_value).replace(/[^0-9,.]/g, '').replace(',', '.');
                   feesValue = parseFloat(cleanedValue);
                 } else if (typeof proposal.fees_value === 'number') {
                   feesValue = proposal.fees_value;
