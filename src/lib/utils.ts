@@ -1,3 +1,4 @@
+
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { format, parseISO } from 'date-fns';
@@ -23,6 +24,23 @@ export function formatCurrency(value: string | number): string {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL'
+  }).format(value as number);
+}
+
+// Format Brazilian currency (added this function)
+export function formatBrazilianCurrency(value: string | number): string {
+  if (typeof value === 'string') {
+    // Remove non-numeric characters except for decimal point and handle thousands separators
+    value = parseFloat(value.replace(/\./g, '').replace(',', '.'));
+  }
+  
+  if (isNaN(value as number)) {
+    return '0,00';
+  }
+  
+  return new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
   }).format(value as number);
 }
 

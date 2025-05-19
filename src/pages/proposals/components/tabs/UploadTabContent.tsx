@@ -52,7 +52,7 @@ const UploadTabContent = ({
         <CardContent className="p-4">
           <ProposalHistory
             proposals={proposals}
-            isLoading={loadingProposals}
+            loading={loadingProposals}
             onViewProposal={onViewProposal}
             onDeleteProposal={onDeleteProposal}
           />
