@@ -108,7 +108,7 @@ const ProposalsTabs = ({
           formData={formData} 
           onInputChange={handlePDFEditorInputChange}
           onGenerateProposal={onGenerateProposal}
-          imagePreview={imagePreview}
+          imagePreview={imagePreview || null}
         />
       </TabsContent>
       
@@ -116,6 +116,7 @@ const ProposalsTabs = ({
         <ProposalTabContent
           formData={formData}
           imagePreview={imagePreview}
+          companyData={companyData}
           onReset={onReset}
         />
       </TabsContent>

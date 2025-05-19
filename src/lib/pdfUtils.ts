@@ -42,7 +42,7 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       body {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
         color: #1a1a1a !important;
-        line-height: 1.4 !important;
+        line-height: 1.5 !important;
       }
       
       /* Reset border-radius for print */
@@ -51,28 +51,28 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       /* Hide action buttons in PDF */
       [data-pdf-remove="true"] { display: none !important; }
       
-      /* Font size adjustments */
-      .text-xs { font-size: 8px !important; }
-      .text-sm { font-size: 10px !important; }
-      .text-base { font-size: 11px !important; }
-      .text-lg { font-size: 12px !important; }
-      .text-xl { font-size: 13px !important; }
-      .text-2xl { font-size: 14px !important; }
+      /* Font size adjustments - increased font sizes */
+      .text-xs { font-size: 10px !important; }
+      .text-sm { font-size: 12px !important; }
+      .text-base { font-size: 13px !important; }
+      .text-lg { font-size: 14px !important; }
+      .text-xl { font-size: 16px !important; }
+      .text-2xl { font-size: 18px !important; }
       
       /* Compact spacing */
-      .p-1, .p-2, .p-3 { padding: 4px !important; }
-      .p-4, .p-5, .p-6 { padding: 8px !important; }
-      .px-1, .px-2, .px-3 { padding-left: 4px !important; padding-right: 4px !important; }
-      .px-4, .px-5, .px-6 { padding-left: 8px !important; padding-right: 8px !important; }
-      .py-1, .py-2, .py-3 { padding-top: 4px !important; padding-bottom: 4px !important; }
-      .py-4, .py-5, .py-6 { padding-top: 6px !important; padding-bottom: 6px !important; }
-      .m-1, .m-2, .m-3, .m-4, .m-5, .m-6 { margin: 4px !important; }
-      .mx-1, .mx-2, .mx-3, .mx-4, .mx-5, .mx-6 { margin-left: 4px !important; margin-right: 4px !important; }
-      .my-1, .my-2, .my-3 { margin-top: 4px !important; margin-bottom: 4px !important; }
-      .my-4, .my-5, .my-6, .my-8 { margin-top: 6px !important; margin-bottom: 6px !important; }
-      .mt-1, .mt-2, .mt-3, .mt-4 { margin-top: 4px !important; }
-      .mb-1, .mb-2, .mb-3, .mb-4, .mb-6 { margin-bottom: 6px !important; }
-      .gap-1, .gap-2, .gap-3, .gap-4 { gap: 4px !important; }
+      .p-1, .p-2, .p-3 { padding: 5px !important; }
+      .p-4, .p-5, .p-6 { padding: 10px !important; }
+      .px-1, .px-2, .px-3 { padding-left: 5px !important; padding-right: 5px !important; }
+      .px-4, .px-5, .px-6 { padding-left: 10px !important; padding-right: 10px !important; }
+      .py-1, .py-2, .py-3 { padding-top: 5px !important; padding-bottom: 5px !important; }
+      .py-4, .py-5, .py-6 { padding-top: 8px !important; padding-bottom: 8px !important; }
+      .m-1, .m-2, .m-3, .m-4, .m-5, .m-6 { margin: 6px !important; }
+      .mx-1, .mx-2, .mx-3, .mx-4, .mx-5, .mx-6 { margin-left: 6px !important; margin-right: 6px !important; }
+      .my-1, .my-2, .my-3 { margin-top: 6px !important; margin-bottom: 6px !important; }
+      .my-4, .my-5, .my-6, .my-8 { margin-top: 8px !important; margin-bottom: 8px !important; }
+      .mt-1, .mt-2, .mt-3, .mt-4 { margin-top: 6px !important; }
+      .mb-1, .mb-2, .mb-3, .mb-4, .mb-6 { margin-bottom: 8px !important; }
+      .gap-1, .gap-2, .gap-3, .gap-4 { gap: 6px !important; }
       
       /* Remove box shadows in PDF */
       .shadow, .shadow-md, .shadow-lg, .shadow-sm { box-shadow: none !important; }
@@ -87,10 +87,7 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       
       /* Hide icons but preserve space */
       svg {
-        visibility: hidden;
-        width: 12px !important;
-        height: 12px !important;
-        margin-right: 4px !important;
+        display: none !important;
       }
       
       /* Special case for alert sections */
@@ -109,6 +106,14 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       /* Make grid layout more compact for PDF */
       .grid { display: grid !important; }
       .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+      
+      /* Increased bottom margin for better content separation */
+      .mb-6 { margin-bottom: 16px !important; }
+      
+      /* Button styling */
+      button {
+        display: none !important;
+      }
     `;
     
     clonedElement.appendChild(styleElement);
@@ -122,7 +127,7 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     document.body.appendChild(clonedElement);
     
     // Hide action buttons
-    const actionButtons = clonedElement.querySelectorAll('.pdf-action-buttons, [data-pdf-remove="true"]');
+    const actionButtons = clonedElement.querySelectorAll('.pdf-action-buttons, [data-pdf-remove="true"], button');
     actionButtons.forEach(button => {
       if (button instanceof HTMLElement) {
         button.style.display = 'none';
@@ -155,6 +160,11 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
           
           // Remove button elements
           if (element.tagName === 'BUTTON' || element.getAttribute('data-pdf-remove') === 'true') {
+            element.style.display = 'none';
+          }
+          
+          // Remove all SVG/icon elements
+          if (element.tagName === 'SVG') {
             element.style.display = 'none';
           }
         });
