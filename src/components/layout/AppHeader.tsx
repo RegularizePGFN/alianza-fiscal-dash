@@ -8,7 +8,8 @@ import { useAuth } from "@/contexts/auth";
 export function AppHeader() {
   const { user } = useAuth();
   
-  return <header className="sticky top-0 z-50 h-14 flex items-center gap-4 border-b bg-header px-4 md:px-6 dark:border-gray-800 dark:bg-gray-900/80 dark:backdrop-blur-sm app-header">
+  return (
+    <header className="sticky top-0 z-50 h-14 flex items-center gap-4 border-b bg-header px-4 md:px-6 dark:border-gray-800 dark:bg-gray-900/80 dark:backdrop-blur-sm app-header">
       {/* User greeting aligned to the left */}
       <div className="flex-1">
         {user && (
@@ -27,5 +28,6 @@ export function AppHeader() {
           <User className="h-4 w-4" />
         </Link>
       </div>
-    </header>;
+    </header>
+  );
 }

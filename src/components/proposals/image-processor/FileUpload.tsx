@@ -14,16 +14,16 @@ const FileUpload = ({ onImageChange, disabled }: FileUploadProps) => {
   return (
     <div className="space-y-4">
       <div className="flex items-center space-x-2">
-        <Image className="h-5 w-5 text-purple-500" />
-        <Label htmlFor="image" className="text-lg font-medium">Upload de Simulação PGFN</Label>
+        <Image className="h-5 w-5 text-purple-500 dark:text-purple-400" />
+        <Label htmlFor="image" className="text-lg font-medium dark:text-gray-100">Upload de Simulação PGFN</Label>
       </div>
       
       <div 
         className={cn(
           "border-2 border-dashed rounded-xl p-8 transition-colors text-center",
           disabled 
-            ? "bg-muted/20 border-muted cursor-not-allowed" 
-            : "border-purple-300 hover:border-purple-500 hover:bg-purple-50 cursor-pointer"
+            ? "bg-muted/20 border-muted cursor-not-allowed dark:bg-gray-800/50 dark:border-gray-700" 
+            : "border-purple-300 hover:border-purple-500 hover:bg-purple-50 cursor-pointer dark:border-purple-500/50 dark:hover:border-purple-400 dark:hover:bg-purple-900/20"
         )}
       >
         <label 
@@ -32,17 +32,17 @@ const FileUpload = ({ onImageChange, disabled }: FileUploadProps) => {
         >
           <Upload className={cn(
             "h-10 w-10 mb-4", 
-            disabled ? "text-muted-foreground" : "text-purple-500"
+            disabled ? "text-muted-foreground" : "text-purple-500 dark:text-purple-400"
           )} />
           <span className={cn(
             "text-lg font-medium",
-            disabled ? "text-muted-foreground" : "text-purple-700"
+            disabled ? "text-muted-foreground" : "text-purple-700 dark:text-purple-300"
           )}>
             Clique ou arraste sua imagem
           </span>
           <p className={cn(
             "text-sm mt-2",
-            disabled ? "text-muted-foreground" : "text-muted-foreground"
+            "text-muted-foreground dark:text-gray-400"
           )}>
             Suporta PNG, JPG ou JPEG (máx. 10MB)
           </p>
@@ -57,7 +57,7 @@ const FileUpload = ({ onImageChange, disabled }: FileUploadProps) => {
         </label>
       </div>
       
-      <p className="text-sm text-muted-foreground italic">
+      <p className="text-sm text-muted-foreground dark:text-gray-400 italic">
         As imagens são processadas com tecnologia de visão computacional IA avançada.
       </p>
     </div>

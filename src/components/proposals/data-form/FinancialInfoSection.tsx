@@ -1,204 +1,161 @@
 
-import { Input } from "@/components/ui/input";
+import React from 'react';
 import { ExtractedData } from "@/lib/types/proposals";
-import { CreditCard, DollarSign } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { DollarSign, Percent, CreditCard } from 'lucide-react';
 
 interface FinancialInfoSectionProps {
   formData: Partial<ExtractedData>;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  disabled?: boolean;
-  entryInstallmentValue?: string;
+  disabled: boolean;
+  entryInstallmentValue: string;
 }
 
-const FinancialInfoSection = ({ 
-  formData, 
-  onInputChange, 
-  disabled = false,
-  entryInstallmentValue = "0,00"
+const FinancialInfoSection = ({
+  formData,
+  onInputChange,
+  disabled,
+  entryInstallmentValue
 }: FinancialInfoSectionProps) => {
-  
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="font-medium flex items-center">
-          <DollarSign className="h-4 w-4 mr-1 text-af-blue-600" />
-          Informações Financeiras
-        </h3>
-        <Badge className="bg-af-blue-100 hover:bg-af-blue-200 text-af-blue-700">
-          Dados da Proposta
-        </Badge>
-      </div>
-      <Separator className="my-3" />
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">
-            Valor Total da Dívida
-          </label>
-          <div className="relative">
-            <span className="absolute left-3 top-2.5 text-gray-500">R$</span>
+      <h2 className="text-lg font-medium text-slate-700 dark:text-slate-200">
+        Dados Financeiros
+      </h2>
+      
+      <div className="p-5 border rounded-lg bg-gray-50 dark:bg-gray-800/50 dark:border-gray-700">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Valor Total do Débito */}
+          <div className="space-y-2">
+            <label htmlFor="totalDebt" className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
+              <DollarSign className="h-4 w-4 text-af-blue-600 dark:text-af-blue-400" />
+              Valor Total da Dívida
+            </label>
             <Input
-              placeholder="0,00"
-              className="pl-8"
+              id="totalDebt"
               name="totalDebt"
-              value={formData.totalDebt || ""}
+              placeholder="R$ 0,00"
+              value={formData.totalDebt || ''}
               onChange={onInputChange}
               disabled={disabled}
+              className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 disabled:dark:bg-gray-800 disabled:dark:border-gray-700 disabled:dark:text-gray-400"
             />
           </div>
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">
-            Valor Total com Reduções
-          </label>
-          <div className="relative">
-            <span className="absolute left-3 top-2.5 text-gray-500">R$</span>
-            <Input
-              placeholder="0,00"
-              className="pl-8"
-              name="discountedValue"
-              value={formData.discountedValue || ""}
-              onChange={onInputChange}
-              disabled={disabled}
-            />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">
-            Percentual de Desconto
-          </label>
-          <div className="relative">
-            <Input
-              placeholder="0"
-              className="pr-7"
-              name="discountPercentage"
-              value={formData.discountPercentage || ""}
-              onChange={onInputChange}
-              disabled={disabled}
-            />
-            <span className="absolute right-3 top-2.5 text-gray-500">%</span>
-          </div>
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">
-            Honorários Sugeridos (20% da economia)
-          </label>
-          <div className="relative">
-            <span className="absolute left-3 top-2.5 text-gray-500">R$</span>
-            <Input
-              placeholder="0,00"
-              className="pl-8"
-              name="feesValue"
-              value={formData.feesValue || ""}
-              onChange={onInputChange}
-              disabled={disabled}
-            />
-          </div>
-          <p className="text-xs text-gray-500">
-            Calculado como 20% da diferença entre o valor total e o valor com reduções
-          </p>
-        </div>
-      </div>
 
-      <h3 className="font-medium mt-4 flex items-center">
-        <CreditCard className="h-4 w-4 mr-1 text-af-blue-600" />
-        Informações de Pagamento
-      </h3>
-      <Separator className="my-3" />
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">
-            Número de Parcelas (Entrada)
-          </label>
-          <div className="relative">
+          {/* Valor com Reduções */}
+          <div className="space-y-2">
+            <label htmlFor="discountedValue" className="text-sm font-medium text-green-700 dark:text-green-400 flex items-center gap-1">
+              <DollarSign className="h-4 w-4 text-green-600 dark:text-green-400" />
+              Valor com Reduções
+            </label>
             <Input
-              placeholder="1"
-              className="pr-2"
-              name="entryInstallments"
-              value={formData.entryInstallments || "1"}
+              id="discountedValue"
+              name="discountedValue"
+              placeholder="R$ 0,00"
+              value={formData.discountedValue || ''}
               onChange={onInputChange}
               disabled={disabled}
+              className="bg-green-50 dark:bg-green-900/30 dark:border-green-800 dark:text-green-100 dark:placeholder-green-300/50 disabled:dark:bg-green-900/20 disabled:dark:border-green-800/50 disabled:dark:text-green-300/50"
+            />
+          </div>
+
+          {/* Percentual de Desconto */}
+          <div className="space-y-2">
+            <label htmlFor="discountPercentage" className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
+              <Percent className="h-4 w-4 text-af-blue-600 dark:text-af-blue-400" />
+              Percentual de Desconto
+            </label>
+            <Input
+              id="discountPercentage"
+              name="discountPercentage"
+              placeholder="0%"
+              value={formData.discountPercentage || ''}
+              onChange={onInputChange}
+              disabled={disabled}
+              className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 disabled:dark:bg-gray-800 disabled:dark:border-gray-700 disabled:dark:text-gray-400"
+            />
+          </div>
+
+          {/* Entrada */}
+          <div className="space-y-2">
+            <label htmlFor="entryValue" className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
+              <DollarSign className="h-4 w-4 text-af-blue-600 dark:text-af-blue-400" />
+              Valor da Entrada
+            </label>
+            <Input
+              id="entryValue"
+              name="entryValue"
+              placeholder="R$ 0,00"
+              value={formData.entryValue || ''}
+              onChange={onInputChange}
+              disabled={disabled}
+              className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 disabled:dark:bg-gray-800 disabled:dark:border-gray-700 disabled:dark:text-gray-400"
+            />
+          </div>
+
+          {/* Número de Parcelas da Entrada */}
+          <div className="space-y-2">
+            <label htmlFor="entryInstallments" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              Parcelas da Entrada
+            </label>
+            <Input
+              id="entryInstallments"
+              name="entryInstallments"
               type="number"
               min="1"
-            />
-            <span className="absolute right-3 top-2.5 text-gray-500">x</span>
-          </div>
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">
-            Valor Total da Entrada
-          </label>
-          <div className="relative">
-            <span className="absolute left-3 top-2.5 text-gray-500">R$</span>
-            <Input
-              placeholder="0,00"
-              className="pl-8"
-              name="entryValue"
-              value={formData.entryValue || ""}
+              placeholder="1"
+              value={formData.entryInstallments || ''}
               onChange={onInputChange}
               disabled={disabled}
+              className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 disabled:dark:bg-gray-800 disabled:dark:border-gray-700 disabled:dark:text-gray-400"
             />
           </div>
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">
-            Valor da Parcela (Entrada)
-          </label>
-          <div className="relative">
-            <span className="absolute left-3 top-2.5 text-gray-500">R$</span>
+
+          {/* Valor da Parcela de Entrada */}
+          <div className="space-y-2">
+            <label htmlFor="entryInstallmentValue" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              Valor de cada parcela da entrada
+            </label>
             <Input
-              placeholder="0,00"
-              className="pl-8"
-              value={entryInstallmentValue}
+              id="entryInstallmentValue"
+              value={`R$ ${entryInstallmentValue}`}
               disabled={true}
+              className="bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400"
             />
           </div>
-          <p className="text-xs text-gray-500">
-            Valor calculado automaticamente
-          </p>
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">
-            Número do Débito
-          </label>
-          <Input
-            placeholder="Número da dívida/processo"
-            name="debtNumber"
-            value={formData.debtNumber || ""}
-            onChange={onInputChange}
-            disabled={disabled}
-          />
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">
-            Número de Parcelas
-          </label>
-          <div className="relative">
+
+          {/* Número de Parcelas */}
+          <div className="space-y-2">
+            <label htmlFor="installments" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              Número de Parcelas Restantes
+            </label>
             <Input
-              placeholder="0"
-              className="pr-2"
+              id="installments"
               name="installments"
-              value={formData.installments || ""}
+              type="number"
+              min="1"
+              placeholder="1"
+              value={formData.installments || ''}
               onChange={onInputChange}
               disabled={disabled}
+              className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 disabled:dark:bg-gray-800 disabled:dark:border-gray-700 disabled:dark:text-gray-400"
             />
-            <span className="absolute right-3 top-2.5 text-gray-500">x</span>
           </div>
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">
-            Valor da Parcela
-          </label>
-          <div className="relative">
-            <span className="absolute left-3 top-2.5 text-gray-500">R$</span>
+
+          {/* Valor das Parcelas */}
+          <div className="space-y-2">
+            <label htmlFor="installmentValue" className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
+              <CreditCard className="h-4 w-4 text-af-blue-600 dark:text-af-blue-400" />
+              Valor das Parcelas Restantes
+            </label>
             <Input
-              placeholder="0,00"
-              className="pl-8"
+              id="installmentValue"
               name="installmentValue"
-              value={formData.installmentValue || ""}
+              placeholder="R$ 0,00"
+              value={formData.installmentValue || ''}
               onChange={onInputChange}
               disabled={disabled}
+              className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 disabled:dark:bg-gray-800 disabled:dark:border-gray-700 disabled:dark:text-gray-400"
             />
           </div>
         </div>
