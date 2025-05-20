@@ -1,115 +1,156 @@
+import { ExtractedData } from './types/proposals';
 
-import type { NextApiRequest, NextApiResponse } from 'next';
-import puppeteer from 'puppeteer';
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
+export async function generateProposalPdf(proposalElement: HTMLElement, data: Partial<ExtractedData>): Promise<void> {
   try {
-    const { html, fileName = 'proposta.pdf' } = req.body;
+    const specialist = data.specialistName
+      ? data.specialistName.replace(/[^\w]/g, '_').toLowerCase()
+      : 'especialista';
 
-    if (!html) {
-      return res.status(400).json({ error: 'HTML content is required' });
-    }
+    const fileName = `proposta_pgfn_${data.cnpj?.replace(/\D/g, '') || 'cliente'}_${specialist}.pdf`;
 
-    // Validate HTML has minimum required structure
-    if (!html.includes('<!DOCTYPE html>') || !html.includes('<html') || !html.includes('<body')) {
-      console.error('Invalid HTML structure received');
-      return res.status(400).json({ error: 'Invalid HTML structure received. HTML must include DOCTYPE, html and body tags.' });
-    }
+    const clonedElement = proposalElement.cloneNode(true) as HTMLElement;
 
-    console.log('Starting PDF generation process...');
-
-    // Launch a new browser instance with proper settings, trying both headless modes
-    const browser = await puppeteer.launch({
-      headless: true, // Use boolean instead of 'new' which may not be supported in all environments
-      args: [
-        '--no-sandbox', 
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage', // Overcome limited resource issues
-        '--disable-gpu',           // Disable GPU hardware acceleration
-        '--disable-web-security'   // Allow cross-origin requests
-      ],
-      timeout: 60000 // 60 second timeout for browser launch
-    }).catch(async (err) => {
-      console.error('Failed to launch browser with headless:true, trying headless:"new":', err);
-      return puppeteer.launch({
-        headless: 'new',
-        args: [
-          '--no-sandbox', 
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-gpu',
-          '--disable-web-security'
-        ],
-        timeout: 60000
-      });
+    const elementsToRemove = clonedElement.querySelectorAll('.pdf-action-buttons, [data-pdf-remove="true"], button');
+    elementsToRemove.forEach(element => {
+      if (element instanceof HTMLElement) {
+        element.style.display = 'none';
+      }
     });
 
-    console.log('Browser launched successfully');
-    
-    const page = await browser.newPage();
-    
-    // Set more generous timeout for content loading
-    await page.setDefaultNavigationTimeout(30000);
-    await page.setDefaultTimeout(30000);
-    
-    // Set the content and wait for network idle (ensure all resources are loaded)
-    console.log('Setting page content...');
-    await page.setContent(html, { 
-      waitUntil: ['networkidle0', 'load', 'domcontentloaded'],
-      timeout: 30000
-    }).catch((err) => {
-      throw new Error(`Error setting page content: ${err.message}`);
+    const htmlContent = clonedElement.outerHTML;
+
+    const styleSheets = Array.from(document.styleSheets);
+    let styles = '';
+
+    styleSheets.forEach(sheet => {
+      try {
+        if (sheet.cssRules) {
+          const cssRules = Array.from(sheet.cssRules);
+          cssRules.forEach(rule => {
+            styles += rule.cssText + '\n';
+          });
+        }
+      } catch (e) {
+        console.warn('Could not access stylesheet rules:', e);
+      }
     });
-    
-    console.log('Content loaded in browser page');
-    
-    // Set viewport to A4 size with better scaling for higher quality
-    await page.setViewport({
-      width: 794, // A4 width in px at 96 dpi
-      height: 1123, // A4 height in px at 96 dpi
-      deviceScaleFactor: 2, // Higher for better quality
-    });
-    
-    // Generate PDF with specific settings for A4 size and proper margins
-    console.log('Generating PDF...');
-    const pdfBuffer = await page.pdf({
-      format: 'a4',
-      printBackground: true,
-      margin: {
-        top: '10mm',
-        right: '10mm',
-        bottom: '10mm',
-        left: '10mm'
+
+    const fullHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${fileName}</title>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+        <style>
+          @page {
+            size: A4;
+            margin: 10mm;
+          }
+          body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            background-color: white;
+            font-size: 12px;
+          }
+          ${styles}
+          .preview-proposal {
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            page-break-inside: avoid;
+          }
+          .space-y-8 {
+            margin-top: 1.5rem !important;
+            margin-bottom: 1.5rem !important;
+          }
+          .pt-6 {
+            padding-top: 1rem !important;
+          }
+          .pb-8 {
+            padding-bottom: 1rem !important;
+          }
+          .px-8 {
+            padding-left: 1.5rem !important;
+            padding-right: 1.5rem !important;
+          }
+          .grid > div {
+            padding: 0.75rem !important;
+          }
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+          }
+          section, .card, .bg-gradient-to-r {
+            page-break-inside: avoid;
+          }
+          .card {
+            transform: scale(0.95);
+            transform-origin: top center;
+          }
+        </style>
+      </head>
+      <body>
+        ${htmlContent}
+      </body>
+      </html>
+    `;
+
+    console.log('Sending HTML to API for PDF generation...');
+
+    const response = await fetch('/api/propostas/pdf', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-      preferCSSPageSize: true,
-      timeout: 60000 // 60 second timeout for PDF generation
-    }).catch((err) => {
-      throw new Error(`Error generating PDF: ${err.message}`);
+      body: JSON.stringify({
+        html: fullHtml,
+        fileName: fileName,
+      }),
     });
-    
-    console.log('PDF generated successfully');
-    await browser.close();
-    console.log('Browser closed');
-    
-    // Set appropriate headers for PDF download
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-    res.setHeader('Content-Length', pdfBuffer.length);
-    
-    // Send the PDF buffer
-    res.send(pdfBuffer);
-    
+
+    if (!response.ok) {
+      let errorMessage = 'Erro desconhecido ao gerar o PDF';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.details || errorData.error || response.statusText;
+      } catch (err) {
+        try {
+          const text = await response.text();
+          console.warn('Resposta inesperada da API:', text);
+          errorMessage = text || response.statusText || `Erro ${response.status}`;
+        } catch (textErr) {
+          console.error('Erro ao ler resposta como texto:', textErr);
+          errorMessage = response.statusText || `Erro ${response.status}`;
+        }
+      }
+      throw new Error(`API error: ${errorMessage}`);
+    }
+
+    console.log('PDF generated successfully, creating download...');
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+
+    return Promise.resolve();
+
   } catch (error) {
-    console.error('Detailed PDF generation error:', error);
-    // Send more detailed error message to client
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    res.status(500).json({ 
-      error: 'Failed to generate PDF', 
-      details: errorMessage 
-    });
+    console.error('Error generating PDF:', error);
+    return Promise.reject(error);
   }
 }
