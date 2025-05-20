@@ -19,12 +19,14 @@ export async function generateProposalPng(proposalElement: HTMLElement, data: Pa
     const tempContainer = document.createElement('div');
     tempContainer.style.position = 'absolute';
     tempContainer.style.left = '-9999px';
-    tempContainer.style.width = '210mm'; // A4 width
+    tempContainer.style.width = proposalElement.offsetWidth + 'px'; // Use exact width
+    tempContainer.style.height = proposalElement.offsetHeight + 'px'; // Use exact height
     tempContainer.style.padding = '0';
     tempContainer.style.margin = '0';
+    tempContainer.style.overflow = 'hidden';
     tempContainer.style.backgroundColor = 'white';
     
-    // Hide action buttons
+    // Only hide action buttons, don't modify other styles
     const actionButtons = clonedElement.querySelectorAll('.pdf-action-buttons, [data-pdf-remove="true"], button');
     actionButtons.forEach(button => {
       if (button instanceof HTMLElement) {
@@ -37,22 +39,91 @@ export async function generateProposalPng(proposalElement: HTMLElement, data: Pa
     document.body.appendChild(tempContainer);
     
     try {
-      // Create PNG using html2canvas
-      const scale = 2; // Higher scale for better quality
+      // Import all fonts to ensure accurate rendering
+      const fonts = document.querySelectorAll('style, link[rel="stylesheet"]');
+      const fontStylesContainer = document.createElement('div');
+      fonts.forEach(font => {
+        fontStylesContainer.appendChild(font.cloneNode(true));
+      });
+      tempContainer.appendChild(fontStylesContainer);
       
-      // Capture the content as canvas
+      // Add a custom stylesheet to ensure exact rendering
+      const styleElement = document.createElement('style');
+      styleElement.textContent = `
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+        
+        * {
+          box-sizing: border-box;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+          font-family: 'Roboto', sans-serif;
+        }
+        
+        /* Preserve colors and shadows */
+        * {
+          print-color-adjust: exact !important;
+          -webkit-print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
+        
+        /* Hide any buttons or elements not meant for export */
+        button, [data-pdf-remove="true"] {
+          display: none !important;
+        }
+        
+        /* Preserve background colors */
+        [class*="bg-"] {
+          background-color: var(--tw-bg-opacity) !important;
+        }
+        
+        /* Ensure all borders are visible */
+        [class*="border"] {
+          border-style: solid !important;
+        }
+      `;
+      tempContainer.appendChild(styleElement);
+      
+      // Create PNG with high quality settings
+      const scale = 3; // Higher scale for better quality (3x)
+      const pixelRatio = window.devicePixelRatio || 1;
+      
+      // Wait for styles and fonts to load
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Capture the content as canvas with high fidelity settings
       const canvas = await html2canvas(clonedElement, {
-        scale: scale,
+        scale: scale * pixelRatio, // Multiply by device pixel ratio for higher resolution
         useCORS: true,
         logging: false,
         allowTaint: true,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        imageTimeout: 0, // No timeout for image loading
+        onclone: (document, element) => {
+          // Ensure all styles are preserved in the clone
+          const computedStyle = window.getComputedStyle(proposalElement);
+          Object.values(computedStyle).forEach(property => {
+            try {
+              if (property.startsWith('--')) {
+                element.style.setProperty(property, computedStyle.getPropertyValue(property));
+              }
+            } catch (e) {
+              // Ignore errors for property access
+            }
+          });
+        }
       });
       
-      // Create a download link for the PNG
+      // Improve image quality with smooth scaling
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+      }
+      
+      // Create a download link for the PNG with maximum quality
       const link = document.createElement('a');
       link.download = fileName;
-      link.href = canvas.toDataURL('image/png');
+      link.href = canvas.toDataURL('image/png', 1.0); // Maximum quality (1.0)
       link.click();
       
       return Promise.resolve();

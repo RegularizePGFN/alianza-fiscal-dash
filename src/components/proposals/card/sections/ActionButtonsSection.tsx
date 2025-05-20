@@ -11,7 +11,7 @@ interface ActionButtonsSectionProps {
 
 const ActionButtonsSection = ({ onGeneratePdf, onGeneratePng, onPrint }: ActionButtonsSectionProps) => {
   return (
-    <div className="pt-4 flex justify-end gap-3">
+    <div className="pt-4 flex justify-end gap-3 px-6 pb-6">
       <Button variant="outline" onClick={onPrint} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
         <Printer className="mr-2 h-4 w-4" />
         Imprimir
