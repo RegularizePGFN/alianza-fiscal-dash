@@ -1,5 +1,4 @@
-
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
 import { HeaderSection } from './sections';
@@ -18,6 +17,13 @@ interface ProposalCardProps {
 const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
   const proposalRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  
+  // Optional debugging effect to verify when fonts are loaded
+  useEffect(() => {
+    document.fonts.ready.then(() => {
+      console.log('All fonts loaded for proposal rendering');
+    });
+  }, []);
   
   // Get colors from template settings or use defaults
   const colors = (() => {

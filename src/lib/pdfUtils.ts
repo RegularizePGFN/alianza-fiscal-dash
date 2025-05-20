@@ -5,6 +5,9 @@ import { ExtractedData } from './types/proposals';
 
 export async function generateProposalPng(proposalElement: HTMLElement, data: Partial<ExtractedData>): Promise<void> {
   try {
+    // Wait for a complete render cycle
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    
     // Wait for all fonts to load for accurate rendering
     await document.fonts.ready;
     
@@ -23,6 +26,8 @@ export async function generateProposalPng(proposalElement: HTMLElement, data: Pa
       allowTaint: true,
       backgroundColor: null, // Using null to preserve transparent or gradient backgrounds
       imageTimeout: 0, // No timeout for image loading
+      windowWidth: proposalElement.scrollWidth, // Ensure exact width is captured
+      windowHeight: proposalElement.scrollHeight, // Ensure exact height is captured
     });
     
     // Create a download link for the PNG with maximum quality
