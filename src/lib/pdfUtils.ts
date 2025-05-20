@@ -130,8 +130,21 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     });
     
     if (!response.ok) {
-      const errorData = await response.json();
-      const errorMessage = errorData.details || errorData.error || response.statusText;
+      let errorMessage = 'Erro desconhecido ao gerar o PDF';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.details || errorData.error || response.statusText;
+      } catch (err) {
+        // Fallback if the response is not valid JSON
+        try {
+          const text = await response.text();
+          console.warn('Resposta inesperada da API:', text);
+          errorMessage = text || response.statusText || 'Erro no servidor ao gerar PDF';
+        } catch (textErr) {
+          console.error('Erro ao ler resposta como texto:', textErr);
+          errorMessage = response.statusText || 'Não foi possível obter detalhes do erro';
+        }
+      }
       throw new Error(`API error: ${errorMessage}`);
     }
     
