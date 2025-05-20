@@ -1,37 +1,30 @@
 
 import React, { ReactNode } from 'react';
-import { cn } from '@/lib/utils';
 
 interface SectionContainerProps {
-  children: ReactNode;
   title: string;
-  icon?: React.ReactNode;
+  children: ReactNode;
+  colors: {
+    primary: string;
+    secondary: string;
+    accent: string;
+    background: string;
+  };
   className?: string;
-  color?: string;
-  fullWidth?: boolean;
 }
 
-/**
- * A responsive container for proposal sections
- */
-const SectionContainer = ({ 
-  children, 
-  title, 
-  icon, 
-  className, 
-  color = '#1E40AF',
-  fullWidth = false
+const SectionContainer = ({
+  title,
+  children,
+  colors,
+  className = "",
 }: SectionContainerProps) => {
   return (
-    <div className={cn("mb-6", className)}>
-      <h3 
-        className="text-base font-semibold pb-2 mb-3 border-b border-gray-200 flex items-center" 
-        style={{ color }}
-      >
-        {icon && <span className="mr-2">{icon}</span>}
+    <div className={`border rounded-md overflow-hidden mb-3 ${className}`}>
+      <div className="px-3 py-1 font-medium text-sm" style={{ backgroundColor: colors.primary, color: 'white' }}>
         {title}
-      </h3>
-      <div className={`grid grid-cols-1 ${fullWidth ? '' : 'md:grid-cols-2'} gap-4`}>
+      </div>
+      <div className="px-3 py-2">
         {children}
       </div>
     </div>

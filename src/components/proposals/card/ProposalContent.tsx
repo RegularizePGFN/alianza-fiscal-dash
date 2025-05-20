@@ -124,7 +124,7 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
   const filteredSections = sectionOrder.filter(section => section !== 'total' && section !== 'alert');
 
   return (
-    <div className={`p-6 space-y-0 font-['Roboto',sans-serif] ${className}`}>
+    <div className={`${isPreview ? 'space-y-2' : 'space-y-0'} font-['Roboto',sans-serif] ${className}`}>
       {/* Render sections based on the adjusted section order */}
       {filteredSections.map((section, index) => (
         <React.Fragment key={index}>
@@ -138,7 +138,7 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
       }
       
       {/* Signature is always shown */}
-      <SignatureSection data={data} />
+      <SignatureSection data={data} className={isPreview ? 'mt-2' : 'mt-4'} />
     </div>
   );
 };

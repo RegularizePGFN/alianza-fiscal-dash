@@ -64,7 +64,7 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     tempContainer.style.padding = '0';
     tempContainer.style.margin = '0';
     tempContainer.style.backgroundColor = 'white';
-    tempContainer.style.fontSize = '10px'; // Reduzir tamanho da fonte para otimizar espaço
+    tempContainer.style.fontSize = '9px'; // Reduzir ainda mais o tamanho da fonte para caber em uma página
     
     // Hide action buttons
     const actionButtons = clonedElement.querySelectorAll('.pdf-action-buttons, [data-pdf-remove="true"], button');
@@ -74,14 +74,14 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       }
     });
     
-    // Reduzir espaçamento entre elementos
-    const sections = clonedElement.querySelectorAll('div.space-y-4, div.mb-6, div.mt-8');
+    // Reduzir SIGNIFICATIVAMENTE espaçamento entre elementos para caber em uma página
+    const sections = clonedElement.querySelectorAll('div.space-y-4, div.mb-6, div.mt-8, div.my-4');
     sections.forEach(section => {
       if (section instanceof HTMLElement) {
-        section.style.marginTop = '8px';
-        section.style.marginBottom = '8px';
-        section.classList.remove('space-y-4', 'mb-6', 'mt-8');
-        section.classList.add('space-y-2', 'mb-3', 'mt-2');
+        section.style.marginTop = '4px';
+        section.style.marginBottom = '4px';
+        section.classList.remove('space-y-4', 'mb-6', 'mt-8', 'space-y-6');
+        section.classList.add('space-y-1', 'mb-2', 'mt-1');
       }
     });
     
@@ -89,7 +89,35 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     const grids = clonedElement.querySelectorAll('.grid');
     grids.forEach(grid => {
       if (grid instanceof HTMLElement) {
-        grid.style.gap = '8px';
+        grid.style.gap = '4px';
+      }
+    });
+    
+    // Reduzir tamanho do cabeçalho
+    const headers = clonedElement.querySelectorAll('h1, h2, h3');
+    headers.forEach(header => {
+      if (header instanceof HTMLElement) {
+        header.style.fontSize = '12px';
+        header.style.marginBottom = '2px';
+        header.style.marginTop = '2px';
+      }
+    });
+    
+    // Comprimir espaço em padding de cards
+    const cards = clonedElement.querySelectorAll('.card, .border, [class*="p-"], [class*="px-"], [class*="py-"]');
+    cards.forEach(card => {
+      if (card instanceof HTMLElement) {
+        if (card.classList.contains('p-6') || card.classList.contains('p-5') || card.classList.contains('p-4')) {
+          card.style.padding = '6px';
+        }
+        if (card.classList.contains('px-6') || card.classList.contains('px-5') || card.classList.contains('px-4')) {
+          card.style.paddingLeft = '6px';
+          card.style.paddingRight = '6px';
+        }
+        if (card.classList.contains('py-6') || card.classList.contains('py-5') || card.classList.contains('py-4')) {
+          card.style.paddingTop = '6px';
+          card.style.paddingBottom = '6px';
+        }
       }
     });
     
@@ -106,9 +134,10 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
         margin-block: 0;
       }
       
-      /* Reduce spacing */
+      /* Reduce spacing significantly */
       p, h1, h2, h3, h4, h5, h6 {
-        margin-block: 2px !important;
+        margin-block: 1px !important;
+        line-height: 1.1 !important;
       }
       
       /* Hide button elements */
@@ -118,27 +147,38 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       
       /* Optimize padding and spacing */
       .p-6, .p-5, .p-4 {
-        padding: 8px !important;
-      }
-      
-      .p-3 {
         padding: 6px !important;
       }
       
-      .space-y-4 {
-        margin-top: 8px !important;
-        margin-bottom: 8px !important;
+      .p-3 {
+        padding: 4px !important;
+      }
+      
+      .space-y-4, .space-y-6, .space-y-8 {
+        margin-top: 4px !important;
+        margin-bottom: 4px !important;
       }
       
       /* Optimize grids for space */
       .grid {
-        gap: 8px !important;
+        gap: 4px !important;
       }
       
       /* Compress header */
       [class*="rounded-t-lg"] {
-        padding-top: 8px !important;
-        padding-bottom: 8px !important;
+        padding-top: 4px !important;
+        padding-bottom: 4px !important;
+      }
+      
+      /* Reduce all margins */
+      [class*="mt-"], [class*="mb-"], [class*="my-"] {
+        margin-top: 2px !important;
+        margin-bottom: 2px !important;
+      }
+      
+      /* Make all text smaller */
+      body, p, span, div, li, td {
+        font-size: 9px !important;
       }
       
       /* Preserve colors and backgrounds */
@@ -169,9 +209,9 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
         compress: true
       });
       
-      // Create PDF using html2canvas
+      // Create PDF using html2canvas with compression optimized for single page
       const canvas = await html2canvas(clonedElement, {
-        scale: 2,
+        scale: 1.5, // Reduced for better compression
         useCORS: true,
         logging: false,
         allowTaint: true,
@@ -182,49 +222,23 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       const imgWidth = 210; // A4 width in mm
       const pageHeight = 297; // A4 height in mm
       
-      // Calcular altura proporcional para manter proporção do conteúdo
+      // Calculate height based on aspect ratio
       const contentRatio = canvas.height / canvas.width;
       const imgHeight = imgWidth * contentRatio;
       
-      // Se o conteúdo for maior que uma página A4, vamos dividi-lo em múltiplas páginas
-      if (imgHeight <= pageHeight) {
-        // Conteúdo cabe em uma única página
-        pdf.addImage(
-          canvas.toDataURL('image/jpeg', 0.95), 
-          'JPEG', 
-          0, // x
-          0, // y
-          imgWidth, // width
-          imgHeight // height
-        );
-      } else {
-        // Conteúdo precisa de várias páginas
-        let heightLeft = imgHeight;
-        let position = 0;
-        let page = 0;
-        
-        while (heightLeft > 0) {
-          // Adicionar nova página se não for a primeira
-          if (page > 0) {
-            pdf.addPage();
-          }
-          
-          // Adicionar parte da imagem correspondente a esta página
-          pdf.addImage(
-            canvas.toDataURL('image/jpeg', 0.95),
-            'JPEG',
-            0, // x
-            position > 0 ? -position : 0, // Posição vertical negativa para "recortar" a parte certa
-            imgWidth,
-            imgHeight
-          );
-          
-          // Reduzir altura restante e incrementar posição
-          heightLeft -= pageHeight;
-          position += pageHeight;
-          page++;
-        }
-      }
+      // Escala de compressão para garantir que tudo caiba em uma única página
+      const compressionRatio = imgHeight > pageHeight ? pageHeight / imgHeight : 1;
+      const finalHeight = imgHeight * compressionRatio;
+      
+      // Adicionar a imagem ao PDF, comprimindo se necessário para caber em uma página
+      pdf.addImage(
+        canvas.toDataURL('image/jpeg', 0.85), // Qualidade reduzida para comprimir mais
+        'JPEG', 
+        0, // x
+        0, // y
+        imgWidth, // width
+        finalHeight // height comprimida para caber na página
+      );
       
       // Save the PDF
       pdf.save(fileName);
@@ -241,4 +255,3 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     return Promise.reject(error);
   }
 }
-
