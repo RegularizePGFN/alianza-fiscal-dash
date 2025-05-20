@@ -14,26 +14,15 @@ export async function generateProposalPng(proposalElement: HTMLElement, data: Pa
     // File name
     const fileName = `proposta_pgfn_${data.cnpj?.replace(/\D/g, '') || 'cliente'}_${seller}.png`;
 
-    // Set up high quality capture settings
-    const scale = 4; // Higher scale for better quality (4x)
-    const pixelRatio = window.devicePixelRatio || 1;
-    
-    // Capture the content as it appears on screen without modifications
+    // Capture the content exactly as it appears on screen without modifications
     const canvas = await html2canvas(proposalElement, {
-      scale: scale * pixelRatio, // Multiply by device pixel ratio for higher resolution
-      useCORS: true,
+      scale: 4, // Higher scale for better quality
+      useCORS: true, // Enable CORS for any images
       logging: false,
       allowTaint: true,
       backgroundColor: '#ffffff',
       imageTimeout: 0, // No timeout for image loading
     });
-    
-    // Improve image quality with smooth scaling
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-    }
     
     // Create a download link for the PNG with maximum quality
     const link = document.createElement('a');
