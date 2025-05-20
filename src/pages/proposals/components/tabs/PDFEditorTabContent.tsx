@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   PDFTemplatePreview,
   ColorSelector,
@@ -60,7 +60,7 @@ interface PDFEditorTabContentProps {
   imagePreview: string | null;
   users?: User[];
   isAdmin?: boolean;
-  onGenerateProposal?: () => void; // Add this prop
+  onGenerateProposal?: () => void; 
 }
 
 export default function PDFEditorTabContent({ 
@@ -76,6 +76,7 @@ export default function PDFEditorTabContent({
   const [showSignature, setShowSignature] = useState(formData.showSignature === "true");
   const [selectedSpecialist, setSelectedSpecialist] = useState(formData.specialistName || "");
   const { toast } = useToast();
+  const previewRef = useRef<HTMLDivElement | null>(null);
 
   // Parse colors from formData or use defaults
   const [colors, setColors] = useState<TemplateColors>(() => {
@@ -198,7 +199,8 @@ export default function PDFEditorTabContent({
       return;
     }
     
-    const previewElement = document.querySelector(".preview-proposal");
+    // Obter o elemento de pré-visualização
+    const previewElement = previewRef.current?.querySelector(".preview-proposal");
     if (!previewElement) {
       toast({
         title: "Erro",
@@ -210,7 +212,7 @@ export default function PDFEditorTabContent({
     
     toast({
       title: "Processando",
-      description: "Gerando PDF, aguarde um momento...",
+      description: "Gerando PDF otimizado em uma única página, aguarde...",
     });
     
     try {
@@ -218,7 +220,7 @@ export default function PDFEditorTabContent({
       
       toast({
         title: "Sucesso",
-        description: "PDF gerado com sucesso!",
+        description: "PDF gerado com sucesso em uma única página!",
       });
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
@@ -324,7 +326,7 @@ export default function PDFEditorTabContent({
         </div>
       </div>
 
-      <div>
+      <div ref={previewRef}>
         <div className="sticky top-4 mb-4">
           <PDFTemplatePreview 
             formData={formData}

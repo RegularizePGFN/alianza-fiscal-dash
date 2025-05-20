@@ -23,12 +23,32 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     tempContainer.style.padding = '0';
     tempContainer.style.margin = '0';
     tempContainer.style.backgroundColor = 'white';
+    tempContainer.style.fontSize = '10px'; // Reduzir tamanho da fonte para otimizar espaço
     
     // Hide action buttons
     const actionButtons = clonedElement.querySelectorAll('.pdf-action-buttons, [data-pdf-remove="true"], button');
     actionButtons.forEach(button => {
       if (button instanceof HTMLElement) {
         button.style.display = 'none';
+      }
+    });
+    
+    // Reduzir espaçamento entre elementos
+    const sections = clonedElement.querySelectorAll('div.space-y-4, div.mb-6, div.mt-8');
+    sections.forEach(section => {
+      if (section instanceof HTMLElement) {
+        section.style.marginTop = '8px';
+        section.style.marginBottom = '8px';
+        section.classList.remove('space-y-4', 'mb-6', 'mt-8');
+        section.classList.add('space-y-2', 'mb-3', 'mt-2');
+      }
+    });
+    
+    // Comprimir elementos e grids para economizar espaço
+    const grids = clonedElement.querySelectorAll('.grid');
+    grids.forEach(grid => {
+      if (grid instanceof HTMLElement) {
+        grid.style.gap = '8px';
       }
     });
     
@@ -42,11 +62,42 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       * {
         box-sizing: border-box;
         font-family: 'Roboto', sans-serif !important;
+        margin-block: 0;
+      }
+      
+      /* Reduce spacing */
+      p, h1, h2, h3, h4, h5, h6 {
+        margin-block: 2px !important;
       }
       
       /* Hide button elements */
       button, [data-pdf-remove="true"] {
         display: none !important;
+      }
+      
+      /* Optimize padding and spacing */
+      .p-6, .p-5, .p-4 {
+        padding: 8px !important;
+      }
+      
+      .p-3 {
+        padding: 6px !important;
+      }
+      
+      .space-y-4 {
+        margin-top: 8px !important;
+        margin-bottom: 8px !important;
+      }
+      
+      /* Optimize grids for space */
+      .grid {
+        gap: 8px !important;
+      }
+      
+      /* Compress header */
+      [class*="rounded-t-lg"] {
+        padding-top: 8px !important;
+        padding-bottom: 8px !important;
       }
       
       /* Preserve colors and backgrounds */
@@ -78,49 +129,52 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
         useCORS: true,
         logging: false,
         allowTaint: true,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        // Definir altura máxima para um A4
+        height: clonedElement.offsetHeight,
+        windowHeight: clonedElement.offsetHeight,
+        // Ajustar escala para caber em uma única página
+        onclone: (document, element) => {
+          const contentHeight = element.offsetHeight;
+          const maxA4Height = 1122; // pixels para A4 @ 96 dpi
+          
+          if (contentHeight > maxA4Height) {
+            // Escala para caber em uma página
+            const scaleFactor = maxA4Height / contentHeight;
+            element.style.transform = `scale(${scaleFactor})`;
+            element.style.transformOrigin = 'top left';
+            element.style.width = `${100 / scaleFactor}%`;
+            element.style.height = `${maxA4Height}px`;
+          }
+        }
       });
       
-      // Calculate dimensions
+      // Calculate dimensions for A4
       const imgWidth = 210; // A4 width in mm
       const pageHeight = 297; // A4 height in mm
-      const imgHeight = canvas.height * imgWidth / canvas.width;
-      const heightLeft = imgHeight;
       
-      // Initialize PDF
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const position = 0;
+      // Calcular altura proporcional para caber em uma página
+      const contentRatio = canvas.height / canvas.width;
+      const imgHeight = Math.min(imgWidth * contentRatio, pageHeight - 10);
       
-      // Add image content to PDF
+      // Initialize PDF - modo comprimido de alta qualidade
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        compress: true
+      });
+      
+      // Add image content to PDF - centralizado verticalmente se menor que a página
+      const yPosition = imgHeight < pageHeight ? (pageHeight - imgHeight) / 2 : 0;
       pdf.addImage(
         canvas.toDataURL('image/jpeg', 0.95), 
         'JPEG', 
-        0, 
-        position, 
-        imgWidth, 
-        imgHeight
+        0, // x
+        yPosition, // y
+        imgWidth, // width
+        imgHeight // height
       );
-      
-      // If content is longer than a page, add additional pages
-      let heightLeftAfterFirstPage = heightLeft - pageHeight;
-      let currentPage = 1;
-      
-      while (heightLeftAfterFirstPage > 0) {
-        currentPage++;
-        const position = -pageHeight * (currentPage - 1);
-        
-        pdf.addPage();
-        pdf.addImage(
-          canvas.toDataURL('image/jpeg', 0.95), 
-          'JPEG', 
-          0, 
-          position, 
-          imgWidth, 
-          imgHeight
-        );
-        
-        heightLeftAfterFirstPage -= pageHeight;
-      }
       
       // Save the PDF
       pdf.save(fileName);

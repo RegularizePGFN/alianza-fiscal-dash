@@ -2,6 +2,7 @@
 import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 import { fetchCnpjData } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { generateProposalPdf } from "@/lib/pdfUtils";
 
 interface UseProposalGenerationProps {
   formData: Partial<ExtractedData>;
@@ -115,9 +116,43 @@ export const useProposalGeneration = ({
       }).catch(err => console.error("Error fetching company data:", err));
     }
   };
+  
+  // Função para exportar proposta como PDF
+  const handleExportProposalToPdf = async (proposalRef: React.RefObject<HTMLDivElement>) => {
+    if (!proposalRef.current) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar o PDF. Tente novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    toast({
+      title: "Processando",
+      description: "Gerando PDF em uma única página, aguarde...",
+    });
+    
+    try {
+      await generateProposalPdf(proposalRef.current, formData);
+      
+      toast({
+        title: "Sucesso",
+        description: "PDF gerado com sucesso em uma página!",
+      });
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar o PDF. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return {
     handleGenerateProposal,
-    handleViewProposal
+    handleViewProposal,
+    handleExportProposalToPdf
   };
 };
