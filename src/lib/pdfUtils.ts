@@ -7,7 +7,7 @@ import { ExtractedData } from './types/proposals';
 export async function generateProposalPng(proposalElement: HTMLElement, data: Partial<ExtractedData>): Promise<void> {
   try {
     // Wait for a complete render cycle and all fonts to load
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, 200));
     await document.fonts.ready;
     
     // Get seller name for filename
@@ -19,7 +19,7 @@ export async function generateProposalPng(proposalElement: HTMLElement, data: Pa
 
     // Capture the element with high resolution
     const canvas = await html2canvas(proposalElement, {
-      scale: 2.5, // Higher scale for better quality
+      scale: 3, // Higher scale for better quality
       useCORS: true,
       logging: false,
       allowTaint: true,
@@ -82,6 +82,19 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       }
     });
     
+    // Reduce font sizes for PDF
+    clonedProposal.querySelectorAll('h1, h2, h3, p, span, div').forEach(el => {
+      if (el instanceof HTMLElement) {
+        // Check if element already has a font-size style
+        const currentSize = window.getComputedStyle(el).fontSize;
+        const numericSize = parseFloat(currentSize);
+        
+        if (numericSize > 12) {
+          el.style.fontSize = `${numericSize * 0.85}px`;
+        }
+      }
+    });
+    
     // Hide elements that should not be in PDF
     clonedProposal.querySelectorAll('[data-pdf-remove="true"]').forEach(el => {
       if (el instanceof HTMLElement) {
@@ -103,7 +116,7 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       
       // Capture the element
       const canvas = await html2canvas(clonedProposal, {
-        scale: 1.5,
+        scale: 2,
         useCORS: true,
         logging: false,
         allowTaint: true,
@@ -131,14 +144,14 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
         );
       } else {
         // If content is too tall, scale it to fit on one page
-        const scale = pageHeight / imgHeight;
-        const scaledWidth = imgWidth * scale * 0.95; // 95% of width to add some margin
+        const scale = pageHeight / imgHeight * 0.95; // 95% of height to add some margin
+        const scaledWidth = imgWidth * scale;
         
         pdf.addImage(
           canvas.toDataURL('image/jpeg', 0.95),
           'JPEG',
           (imgWidth - scaledWidth) / 2, // center horizontally
-          0,
+          5, // add a small top margin
           scaledWidth,
           pageHeight * 0.95 // 95% of height to add some margin
         );

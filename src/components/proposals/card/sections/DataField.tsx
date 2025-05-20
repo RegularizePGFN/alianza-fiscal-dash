@@ -1,5 +1,5 @@
 
-import React, { ReactNode } from 'react';
+import React, { ReactNode, CSSProperties } from 'react';
 import { cn } from '@/lib/utils';
 
 interface DataFieldProps {
@@ -10,6 +10,7 @@ interface DataFieldProps {
   highlight?: boolean;
   className?: string;
   compact?: boolean;
+  style?: CSSProperties;
 }
 
 /**
@@ -22,7 +23,8 @@ const DataField = ({
   fullWidth = false,
   highlight = false,
   className,
-  compact = false
+  compact = false,
+  style
 }: DataFieldProps) => {
   return (
     <div 
@@ -33,6 +35,7 @@ const DataField = ({
         highlight && "bg-gradient-to-br from-green-50 to-white",
         className
       )}
+      style={style}
     >
       <span className={cn("font-medium text-gray-500 flex items-center", compact ? "text-xs" : "text-sm")}>
         {icon && <span className={cn("mr-1", compact ? "h-2.5 w-2.5" : "h-3 w-3")}>{icon}</span>}
