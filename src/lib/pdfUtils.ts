@@ -1,3 +1,4 @@
+
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { ExtractedData } from './types/proposals';
@@ -20,7 +21,7 @@ export async function generateProposalPng(proposalElement: HTMLElement, data: Pa
       useCORS: true, // Enable CORS for any images
       logging: false,
       allowTaint: true,
-      backgroundColor: '#ffffff',
+      backgroundColor: null, // Using null to preserve transparent or gradient backgrounds
       imageTimeout: 0, // No timeout for image loading
     });
     
