@@ -1,5 +1,6 @@
 
-import puppeteer from 'puppeteer';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import { ExtractedData } from './types/proposals';
 
 export async function generateProposalPdf(proposalElement: HTMLElement, data: Partial<ExtractedData>): Promise<void> {
@@ -64,116 +65,70 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     // Append to document body temporarily
     document.body.appendChild(tempContainer);
     
-    // Get the HTML content as a string
-    const html = tempContainer.outerHTML;
-    
-    // Remove the temporary container
-    document.body.removeChild(tempContainer);
-    
-    // Use Puppeteer to generate the PDF in a browser context
-    const generatePdf = async () => {
-      // Launch headless browser
-      const browser = await puppeteer.launch({ 
-        headless: 'new',
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    try {
+      // Wait a moment to ensure fonts and styles are loaded
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Create PDF using html2canvas and jsPDF
+      const scale = 2; // Higher scale for better quality
+      
+      // Capture the content as canvas
+      const canvas = await html2canvas(clonedElement, {
+        scale: scale,
+        useCORS: true,
+        logging: false,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
       });
       
-      try {
-        // Create a new page
-        const page = await browser.newPage();
+      // Calculate dimensions
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      const imgHeight = canvas.height * imgWidth / canvas.width;
+      const heightLeft = imgHeight;
+      
+      // Initialize PDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const position = 0;
+      
+      // Add image content to PDF
+      pdf.addImage(
+        canvas.toDataURL('image/jpeg', 0.95), 
+        'JPEG', 
+        0, 
+        position, 
+        imgWidth, 
+        imgHeight
+      );
+      
+      // If content is longer than a page, add additional pages
+      let heightLeftAfterFirstPage = heightLeft - pageHeight;
+      let currentPage = 1;
+      
+      while (heightLeftAfterFirstPage > 0) {
+        currentPage++;
+        const position = -pageHeight * (currentPage - 1);
         
-        // Set viewport to A4 size
-        await page.setViewport({
-          width: 794, // A4 width at 96 DPI
-          height: 1123, // A4 height at 96 DPI
-          deviceScaleFactor: 2,
-        });
+        pdf.addPage();
+        pdf.addImage(
+          canvas.toDataURL('image/jpeg', 0.95), 
+          'JPEG', 
+          0, 
+          position, 
+          imgWidth, 
+          imgHeight
+        );
         
-        // Include Google Fonts
-        const fontStyles = `
-          <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-        `;
-        
-        // Create full HTML document
-        const fullHtml = `
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              ${fontStyles}
-              <style>
-                body {
-                  margin: 0;
-                  padding: 0;
-                  font-family: 'Roboto', sans-serif;
-                  background-color: white;
-                }
-                .proposal-container {
-                  padding: 20px;
-                  max-width: 210mm;
-                  margin: 0 auto;
-                }
-              </style>
-            </head>
-            <body>
-              <div class="proposal-container">
-                ${html}
-              </div>
-            </body>
-          </html>
-        `;
-        
-        // Set the page content
-        await page.setContent(fullHtml, { 
-          waitUntil: ['networkidle0', 'domcontentloaded', 'load'] 
-        });
-        
-        // Wait for fonts to load
-        await page.evaluateHandle('document.fonts.ready');
-        
-        // Wait a bit more for any renders to complete
-        await page.waitForTimeout(500);
-        
-        // Generate PDF buffer
-        const pdfBuffer = await page.pdf({
-          format: 'a4',
-          printBackground: true,
-          margin: {
-            top: '10mm',
-            right: '10mm',
-            bottom: '10mm',
-            left: '10mm',
-          },
-          displayHeaderFooter: false,
-        });
-        
-        // Create a blob from the buffer
-        const blob = new Blob([pdfBuffer], { type: 'application/pdf' });
-        
-        // Create a download link
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = fileName;
-        document.body.appendChild(a);
-        
-        // Start download
-        a.click();
-        
-        // Clean up
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        
-      } finally {
-        // Always close the browser
-        await browser.close();
+        heightLeftAfterFirstPage -= pageHeight;
       }
-    };
-    
-    // Execute the PDF generation
-    await generatePdf();
+      
+      // Save the PDF
+      pdf.save(fileName);
+      
+    } finally {
+      // Clean up the temporary DOM element
+      document.body.removeChild(tempContainer);
+    }
     
     return Promise.resolve();
     
