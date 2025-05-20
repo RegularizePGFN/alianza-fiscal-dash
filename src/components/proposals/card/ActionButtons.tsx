@@ -1,5 +1,5 @@
 
-import React, { useRef } from 'react';
+import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Printer, Download, FileImage } from "lucide-react";
 import { ExtractedData } from "@/lib/types/proposals";
@@ -80,7 +80,7 @@ const ActionButtons = ({ onPrint, proposalData, proposalRef }: ActionButtonsProp
   };
 
   return (
-    <div className="pt-4 flex justify-end gap-3">
+    <div className="pt-4 flex justify-end gap-3 px-6 pb-6">
       <Button variant="outline" onClick={onPrint} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
         <Printer className="mr-2 h-4 w-4" />
         Imprimir
