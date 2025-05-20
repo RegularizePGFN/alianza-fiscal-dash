@@ -38,11 +38,15 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
     }
     return {
       sections: ['client', 'alert', 'debt', 'payment', 'fees', 'total'],
-      showHeader: true,
-      showLogo: true,
+      showHeader: layout?.showHeader ?? true,
+      showLogo: layout?.showLogo ?? true,
       showWatermark: false
     };
   })();
+
+  const handlePrint = () => {
+    window.print();
+  };
 
   return (
     <Card ref={proposalRef} className="max-w-3xl mx-auto shadow border overflow-hidden font-['Roboto',sans-serif]"
@@ -50,8 +54,8 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
       
       {/* Header with Logo */}
       <HeaderSection 
-        showHeader={layout?.showHeader ?? true} 
-        showLogo={layout?.showLogo ?? true}
+        showHeader={layout.showHeader} 
+        showLogo={layout.showLogo}
         discountedValue={data.discountedValue || '0,00'}
         colors={colors}
         totalDebt={data.totalDebt}
@@ -65,7 +69,11 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
         />
         
         {/* Action Buttons */}
-        <ActionButtons proposalRef={proposalRef} data={data} />
+        <ActionButtons 
+          onPrint={handlePrint} 
+          proposalData={data} 
+          proposalRef={proposalRef} 
+        />
       </CardContent>
     </Card>
   );

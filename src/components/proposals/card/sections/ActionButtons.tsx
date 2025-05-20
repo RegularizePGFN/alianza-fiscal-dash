@@ -7,14 +7,15 @@ import { generateProposalPdf } from "@/lib/pdfUtils";
 import { useToast } from "@/hooks/use-toast";
 
 interface ActionButtonsProps {
+  onPrint: () => void;
+  proposalData: Partial<ExtractedData>;
   proposalRef: React.RefObject<HTMLDivElement>;
-  data: Partial<ExtractedData>;
 }
 
-const ActionButtons = ({ proposalRef, data }: ActionButtonsProps) => {
+const ActionButtons = ({ onPrint, proposalData, proposalRef }: ActionButtonsProps) => {
   const { toast } = useToast();
   
-  const handleGeneratePdf = async () => {
+  const onGeneratePdf = async () => {
     if (!proposalRef.current) {
       toast({
         title: "Erro",
@@ -30,7 +31,7 @@ const ActionButtons = ({ proposalRef, data }: ActionButtonsProps) => {
     });
     
     try {
-      await generateProposalPdf(proposalRef.current, data);
+      await generateProposalPdf(proposalRef.current, proposalData);
       
       toast({
         title: "Sucesso",
@@ -46,17 +47,13 @@ const ActionButtons = ({ proposalRef, data }: ActionButtonsProps) => {
     }
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   return (
-    <div className="pt-4 flex justify-end gap-3 pdf-action-buttons" data-pdf-remove="true">
-      <Button variant="outline" onClick={handlePrint} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
+    <div className="pt-4 flex justify-end gap-3 px-6 pb-6">
+      <Button variant="outline" onClick={onPrint} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
         <Printer className="mr-2 h-4 w-4" />
         Imprimir
       </Button>
-      <Button onClick={handleGeneratePdf} className="bg-af-blue-600 hover:bg-af-blue-700">
+      <Button onClick={onGeneratePdf} className="bg-af-blue-600 hover:bg-af-blue-700">
         <Download className="mr-2 h-4 w-4" />
         Baixar PDF
       </Button>
