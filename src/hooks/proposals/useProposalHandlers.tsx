@@ -1,4 +1,3 @@
-
 import { ChangeEvent } from "react";
 import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 import { fetchCnpjData } from "@/lib/api";
@@ -296,7 +295,7 @@ export const useProposalHandlers = ({
     }
   };
   
-  const handleDeleteProposal = async (id: string) => {
+  const handleDeleteProposal = async (id: string): Promise<boolean> => {
     const success = await deleteProposal(id);
 
     // If the deleted proposal was selected, clear the state
@@ -341,10 +340,10 @@ export const useProposalHandlers = ({
 
   return {
     handleProcessComplete,
-    handleInputChange: typeof handleInputChange !== 'undefined' ? handleInputChange : () => {},
-    handleGenerateProposal: typeof handleGenerateProposal !== 'undefined' ? handleGenerateProposal : () => {},
-    handleViewProposal: typeof handleViewProposal !== 'undefined' ? handleViewProposal : () => {},
-    handleDeleteProposal: typeof handleDeleteProposal !== 'undefined' ? handleDeleteProposal : () => {},
+    handleInputChange,
+    handleGenerateProposal,
+    handleViewProposal,
+    handleDeleteProposal,
     handleReset
   };
 };
