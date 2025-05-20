@@ -2,7 +2,7 @@
 import React, { useRef } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
-import { HeaderSection, ActionButtons } from './sections';
+import { HeaderSection } from './sections';
 import ProposalContent from './ProposalContent';
 import { useToast } from "@/hooks/use-toast";
 import { generateProposalPdf, generateProposalPng } from "@/lib/pdfUtils";
@@ -121,42 +121,45 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
   };
 
   return (
-    <Card ref={proposalRef} className="max-w-3xl mx-auto shadow border overflow-hidden font-['Roboto',sans-serif]"
-          style={{ backgroundColor: colors.background }}>
-      
-      {/* Header with Logo */}
-      <HeaderSection 
-        showHeader={layout.showHeader} 
-        showLogo={layout.showLogo}
-        discountedValue={data.discountedValue || '0,00'}
-        colors={colors}
-        totalDebt={data.totalDebt}
-      />
-
-      <CardContent className="p-0">
-        {/* Use the shared ProposalContent component */}
-        <ProposalContent 
-          data={data}
-          companyData={companyData}
-        />
+    <div className="flex flex-col items-center space-y-4">
+      {/* Main proposal card - action buttons moved outside */}
+      <Card ref={proposalRef} className="max-w-3xl mx-auto shadow border overflow-hidden font-['Roboto',sans-serif] w-full"
+            style={{ backgroundColor: colors.background }}>
         
-        {/* Action Buttons */}
-        <div className="pt-4 flex justify-end gap-3 px-6 pb-6">
-          <Button variant="outline" onClick={handlePrint} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
-            <Printer className="mr-2 h-4 w-4" />
-            Imprimir
-          </Button>
-          <Button variant="outline" onClick={handleGeneratePng} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
-            <FileImage className="mr-2 h-4 w-4" />
-            Baixar PNG
-          </Button>
-          <Button onClick={handleGeneratePdf} className="bg-af-blue-600 hover:bg-af-blue-700">
-            <Download className="mr-2 h-4 w-4" />
-            Baixar PDF
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+        {/* Header with Logo */}
+        <HeaderSection 
+          showHeader={layout.showHeader} 
+          showLogo={layout.showLogo}
+          discountedValue={data.discountedValue || '0,00'}
+          colors={colors}
+          totalDebt={data.totalDebt}
+        />
+
+        <CardContent className="p-0">
+          {/* Use the shared ProposalContent component */}
+          <ProposalContent 
+            data={data}
+            companyData={companyData}
+          />
+        </CardContent>
+      </Card>
+      
+      {/* Action buttons - now outside the proposal card, centered below */}
+      <div className="flex justify-center gap-3 py-4 w-full" data-pdf-remove="true">
+        <Button variant="outline" onClick={handlePrint} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
+          <Printer className="mr-2 h-4 w-4" />
+          Imprimir
+        </Button>
+        <Button variant="outline" onClick={handleGeneratePng} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
+          <FileImage className="mr-2 h-4 w-4" />
+          Baixar PNG
+        </Button>
+        <Button onClick={handleGeneratePdf} className="bg-af-blue-600 hover:bg-af-blue-700">
+          <Download className="mr-2 h-4 w-4" />
+          Baixar PDF
+        </Button>
+      </div>
+    </div>
   );
 };
 

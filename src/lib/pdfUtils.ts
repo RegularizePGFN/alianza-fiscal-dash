@@ -5,12 +5,12 @@ import { ExtractedData } from './types/proposals';
 
 export async function generateProposalPng(proposalElement: HTMLElement, data: Partial<ExtractedData>): Promise<void> {
   try {
-    // Get specialist name for filename
-    const specialist = data.specialistName ? 
-      data.specialistName.replace(/[^\w]/g, '_').toLowerCase() : 'especialista';
+    // Get seller name for filename
+    const seller = data.sellerName ? 
+      data.sellerName.replace(/[^\w]/g, '_').toLowerCase() : 'vendedor';
     
     // File name
-    const fileName = `proposta_pgfn_${data.cnpj?.replace(/\D/g, '') || 'cliente'}_${specialist}.png`;
+    const fileName = `proposta_pgfn_${data.cnpj?.replace(/\D/g, '') || 'cliente'}_${seller}.png`;
 
     // Clone the element to avoid modifying the original
     const clonedElement = proposalElement.cloneNode(true) as HTMLElement;
@@ -19,18 +19,18 @@ export async function generateProposalPng(proposalElement: HTMLElement, data: Pa
     const tempContainer = document.createElement('div');
     tempContainer.style.position = 'absolute';
     tempContainer.style.left = '-9999px';
-    tempContainer.style.width = proposalElement.offsetWidth + 'px'; // Use exact width
-    tempContainer.style.height = proposalElement.offsetHeight + 'px'; // Use exact height
+    tempContainer.style.width = proposalElement.offsetWidth + 'px';
+    tempContainer.style.height = proposalElement.offsetHeight + 'px';
     tempContainer.style.padding = '0';
     tempContainer.style.margin = '0';
     tempContainer.style.overflow = 'hidden';
     tempContainer.style.backgroundColor = 'white';
     
-    // Only hide action buttons, don't modify other styles
-    const actionButtons = clonedElement.querySelectorAll('.pdf-action-buttons, [data-pdf-remove="true"], button');
-    actionButtons.forEach(button => {
-      if (button instanceof HTMLElement) {
-        button.style.display = 'none';
+    // Hide elements not meant for export
+    const elementsToHide = clonedElement.querySelectorAll('[data-pdf-remove="true"], button');
+    elementsToHide.forEach(element => {
+      if (element instanceof HTMLElement) {
+        element.style.display = 'none';
       }
     });
     
@@ -84,11 +84,11 @@ export async function generateProposalPng(proposalElement: HTMLElement, data: Pa
       tempContainer.appendChild(styleElement);
       
       // Create PNG with high quality settings
-      const scale = 3; // Higher scale for better quality (3x)
+      const scale = 4; // Higher scale for better quality (4x)
       const pixelRatio = window.devicePixelRatio || 1;
       
       // Wait for styles and fonts to load
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       // Capture the content as canvas with high fidelity settings
       const canvas = await html2canvas(clonedElement, {
@@ -108,6 +108,30 @@ export async function generateProposalPng(proposalElement: HTMLElement, data: Pa
               }
             } catch (e) {
               // Ignore errors for property access
+            }
+          });
+          
+          // Make sure all styles are correctly applied
+          const allElements = element.querySelectorAll('*');
+          allElements.forEach(el => {
+            if (el instanceof HTMLElement) {
+              // Ensure background colors render correctly
+              const bgColor = getComputedStyle(el).backgroundColor;
+              if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)') {
+                el.style.backgroundColor = bgColor;
+              }
+              
+              // Ensure text colors render correctly
+              const textColor = getComputedStyle(el).color;
+              if (textColor) {
+                el.style.color = textColor;
+              }
+              
+              // Ensure borders render correctly
+              const border = getComputedStyle(el).border;
+              if (border && border !== '') {
+                el.style.border = border;
+              }
             }
           });
         }

@@ -11,15 +11,6 @@ export const useUserData = ({
   user,
   setFormData
 }: UseUserDataProps) => {
-  
-  // Only set the specialist name, nothing else
-  useEffect(() => {
-    if (user) {
-      setFormData(prev => ({
-        ...prev,
-        // Only set specialistName, no client data
-        specialistName: user.name || ''
-      }));
-    }
-  }, [user]);
+  // No longer automatically sets any user data
+  // This is intentionally empty as we want to avoid auto-populating any fields
 };
