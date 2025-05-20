@@ -55,11 +55,23 @@ const PDFTemplatePreview = ({
     };
   })();
 
+  // Dimensões de um A4 (210mm x 297mm) aproximadas para pixels com uma escala de 0.75
+  // para se ajustar bem à tela (usando proporção aproximada de 3.7795 pixels por mm)
+  const a4Width = 210 * 3.7795 * 0.75;
+  const a4Height = 297 * 3.7795 * 0.75;
+
   return (
     <Card 
       ref={previewRef} 
-      className="border p-0 overflow-hidden shadow-md preview-proposal font-['Roboto',sans-serif] transition-colors"
-      style={{ backgroundColor: colors.background }}
+      className="border p-0 overflow-hidden shadow-md preview-proposal font-['Roboto',sans-serif] transition-colors mx-auto"
+      style={{ 
+        backgroundColor: colors.background,
+        width: `${a4Width}px`,
+        height: `${a4Height}px`,
+        maxHeight: '100%',
+        aspectRatio: '210/297', // Proporção A4
+        overflow: 'auto'
+      }}
     >
       {layout.showHeader && (
         <div className="relative overflow-hidden rounded-t-lg">

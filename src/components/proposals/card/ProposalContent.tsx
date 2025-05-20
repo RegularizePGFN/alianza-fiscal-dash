@@ -10,7 +10,6 @@ import {
   NegotiationSection,
   PaymentSection,
   FeesSection,
-  TotalSection,
   CommentsSection,
   SignatureSection,
   FooterSection
@@ -24,26 +23,6 @@ interface ProposalContentProps {
 }
 
 const ProposalContent = ({ data, companyData, className = "", isPreview = false }: ProposalContentProps) => {
-  // Calculate the economy value
-  const calculateEconomyValue = (): string => {
-    if (!data.totalDebt || !data.discountedValue) return '0,00';
-    
-    try {
-      const totalDebtValue = parseFloat(data.totalDebt.replace(/\./g, '').replace(',', '.'));
-      const discountedVal = parseFloat(data.discountedValue.replace(/\./g, '').replace(',', '.'));
-      
-      if (isNaN(totalDebtValue) || isNaN(discountedVal)) return '0,00';
-      
-      const economyValue = totalDebtValue - discountedVal;
-      return formatBrazilianCurrency(economyValue);
-    } catch (e) {
-      console.error('Error calculating economy value:', e);
-      return '0,00';
-    }
-  };
-  
-  const economyValue = calculateEconomyValue();
-  
   // Get colors from template settings or use defaults
   const colors = (() => {
     if (data.templateColors && typeof data.templateColors === 'string') {
@@ -71,7 +50,7 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
 
   // Parse layout settings or use defaults
   const layout = {
-    sections: layoutData?.sections || ['company', 'alert', 'debt', 'payment', 'fees', 'total'],
+    sections: layoutData?.sections || ['company', 'debt', 'payment', 'fees'],
     showHeader: layoutData?.showHeader !== undefined ? layoutData.showHeader : true,
     showLogo: layoutData?.showLogo !== undefined ? layoutData.showLogo : true,
     showWatermark: layoutData?.showWatermark || false
@@ -110,7 +89,7 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
           <CompanyInfoSection companyData={companyData} colors={colors} />
         ) : null;
       case 'alert':
-        return <AlertSection />;
+        return null; // Não renderizar a seção de alerta (removida)
       case 'debt':
         return <NegotiationSection data={data} colors={colors} />;
       case 'payment':
@@ -118,7 +97,7 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
       case 'fees':
         return <FeesSection data={data} colors={colors} />;
       case 'total':
-        return <TotalSection data={data} economyValue={economyValue} />;
+        return null; // Não renderizar a seção de total (removida)
       case 'comments':
         return <CommentsSection data={data} colors={colors} />;
       default:
@@ -141,10 +120,13 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
     }
   }
 
+  // Remover 'total' e 'alert' do array de seções
+  const filteredSections = sectionOrder.filter(section => section !== 'total' && section !== 'alert');
+
   return (
     <div className={`p-6 space-y-0 font-['Roboto',sans-serif] ${className}`}>
       {/* Render sections based on the adjusted section order */}
-      {sectionOrder.map((section, index) => (
+      {filteredSections.map((section, index) => (
         <React.Fragment key={index}>
           {renderSection(section)}
         </React.Fragment>

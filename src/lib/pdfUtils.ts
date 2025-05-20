@@ -162,44 +162,7 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       // Wait a moment to ensure fonts and styles are loaded
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Create PDF using html2canvas and jsPDF
-      const scale = 2; // Higher scale for better quality
-      
-      // Capture the content as canvas
-      const canvas = await html2canvas(clonedElement, {
-        scale: scale,
-        useCORS: true,
-        logging: false,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        // Definir altura máxima para um A4
-        height: clonedElement.offsetHeight,
-        windowHeight: clonedElement.offsetHeight,
-        // Ajustar escala para caber em uma única página
-        onclone: (document, element) => {
-          const contentHeight = element.offsetHeight;
-          const maxA4Height = 1122; // pixels para A4 @ 96 dpi
-          
-          if (contentHeight > maxA4Height) {
-            // Escala para caber em uma página
-            const scaleFactor = maxA4Height / contentHeight;
-            element.style.transform = `scale(${scaleFactor})`;
-            element.style.transformOrigin = 'top left';
-            element.style.width = `${100 / scaleFactor}%`;
-            element.style.height = `${maxA4Height}px`;
-          }
-        }
-      });
-      
-      // Calculate dimensions for A4
-      const imgWidth = 210; // A4 width in mm
-      const pageHeight = 297; // A4 height in mm
-      
-      // Calcular altura proporcional para caber em uma página
-      const contentRatio = canvas.height / canvas.width;
-      const imgHeight = Math.min(imgWidth * contentRatio, pageHeight - 10);
-      
-      // Initialize PDF - modo comprimido de alta qualidade
+      // Initialize PDF with A4 dimensions
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
@@ -207,16 +170,62 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
         compress: true
       });
       
-      // Add image content to PDF - centralizado verticalmente se menor que a página
-      const yPosition = imgHeight < pageHeight ? (pageHeight - imgHeight) / 2 : 0;
-      pdf.addImage(
-        canvas.toDataURL('image/jpeg', 0.95), 
-        'JPEG', 
-        0, // x
-        yPosition, // y
-        imgWidth, // width
-        imgHeight // height
-      );
+      // Create PDF using html2canvas
+      const canvas = await html2canvas(clonedElement, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
+      
+      // Calculate dimensions for A4
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      
+      // Calcular altura proporcional para manter proporção do conteúdo
+      const contentRatio = canvas.height / canvas.width;
+      const imgHeight = imgWidth * contentRatio;
+      
+      // Se o conteúdo for maior que uma página A4, vamos dividi-lo em múltiplas páginas
+      if (imgHeight <= pageHeight) {
+        // Conteúdo cabe em uma única página
+        pdf.addImage(
+          canvas.toDataURL('image/jpeg', 0.95), 
+          'JPEG', 
+          0, // x
+          0, // y
+          imgWidth, // width
+          imgHeight // height
+        );
+      } else {
+        // Conteúdo precisa de várias páginas
+        let heightLeft = imgHeight;
+        let position = 0;
+        let page = 0;
+        
+        while (heightLeft > 0) {
+          // Adicionar nova página se não for a primeira
+          if (page > 0) {
+            pdf.addPage();
+          }
+          
+          // Adicionar parte da imagem correspondente a esta página
+          pdf.addImage(
+            canvas.toDataURL('image/jpeg', 0.95),
+            'JPEG',
+            0, // x
+            position > 0 ? -position : 0, // Posição vertical negativa para "recortar" a parte certa
+            imgWidth,
+            imgHeight
+          );
+          
+          // Reduzir altura restante e incrementar posição
+          heightLeft -= pageHeight;
+          position += pageHeight;
+          page++;
+        }
+      }
       
       // Save the PDF
       pdf.save(fileName);

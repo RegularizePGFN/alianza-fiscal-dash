@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -11,7 +10,6 @@ import ProposalHeader from './card/sections/ProposalHeader';
 import ProposalDataSection from './card/sections/ProposalDataSection';
 import NegotiationDataSection from './card/sections/NegotiationDataSection';
 import FeesDisplaySection from './card/sections/FeesDisplaySection';
-import TotalValueDisplay from './card/sections/TotalValueDisplay';
 import PaymentOptionsDisplay from './card/sections/PaymentOptionsDisplay';
 import ActionButtonsSection from './card/sections/ActionButtonsSection';
 
@@ -109,9 +107,6 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
 
         {/* Fees Section - Highlighted */}
         <FeesDisplaySection data={data} />
-
-        {/* Total Value Section */}
-        <TotalValueDisplay data={data} />
 
         {/* Payment Options */}
         <PaymentOptionsDisplay data={data} />
