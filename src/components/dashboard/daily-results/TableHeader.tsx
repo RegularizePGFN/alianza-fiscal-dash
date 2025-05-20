@@ -20,6 +20,14 @@ export function TableHeader() {
   
   return <thead>
       <tr className="border-b border-gray-200 dark:border-gray-700 text-xs">
+        <th className="text-center p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => handleSort('name')}>
+          <span className="flex items-center justify-center">
+            Nome
+            {sortColumn === 'name' && <span className="ml-1">
+                {sortDirection === 'asc' ? '▲' : '▼'}
+              </span>}
+          </span>
+        </th>
         <th className="text-center p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => handleSort('proposals')}>
           <span className="flex items-center justify-center">
             Prop. Enviada
@@ -32,14 +40,6 @@ export function TableHeader() {
           <span className="flex items-center justify-center">
             Honorários
             {sortColumn === 'fees' && <span className="ml-1">
-                {sortDirection === 'asc' ? '▲' : '▼'}
-              </span>}
-          </span>
-        </th>
-        <th className="text-center p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => handleSort('name')}>
-          <span className="flex items-center justify-center">
-            Nome
-            {sortColumn === 'name' && <span className="ml-1">
                 {sortDirection === 'asc' ? '▲' : '▼'}
               </span>}
           </span>
