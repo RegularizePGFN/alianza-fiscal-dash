@@ -1,4 +1,3 @@
-
 import { ChangeEvent } from "react";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
 import { fetchCnpjData } from "@/lib/api";
@@ -64,11 +63,11 @@ export const useFormHandlers = ({
       return {
         ...prev,
         ...data,
-        // Preserve client data if it exists
-        clientName: data.clientName || prev.clientName || '',
-        clientEmail: prev.clientEmail || companyContactInfo.clientEmail || '',
-        clientPhone: prev.clientPhone || companyContactInfo.clientPhone || '',
-        businessActivity: prev.businessActivity || companyContactInfo.businessActivity || '',
+        // Only keep client data from the data object, not from prev
+        clientName: data.clientName || '',
+        clientEmail: data.clientEmail || '',
+        clientPhone: data.clientPhone || '',
+        businessActivity: data.businessActivity || '',
         feesValue: feesValue || prev.feesValue || '0,00',
         // Make sure entryInstallments is set, defaulting to '1' if not provided
         entryInstallments: data.entryInstallments || prev.entryInstallments || '1',
@@ -100,26 +99,15 @@ export const useFormHandlers = ({
         if (companyData) {
           setCompanyData(companyData);
           
-          // Update form data with company information from the API
+          // Update form data with company information from the API, but don't overwrite existing values
           setFormData(prev => {
-            // Store the company contact information in our memory
-            const email = companyData.emails?.[0]?.address || '';
-            const phone = companyData.phones?.[0] ? `${companyData.phones[0].area}${companyData.phones[0].number}` : '';
-            const activity = companyData.mainActivity ? `${companyData.mainActivity.id} | ${companyData.mainActivity.text}` : '';
-            
-            companyContactInfo = {
-              clientEmail: email,
-              clientPhone: phone,
-              businessActivity: activity
-            };
-            
             return {
               ...prev,
-              clientName: companyData.company?.name || prev.clientName || '',
-              // Only update these fields if they're not already set
-              clientEmail: email || prev.clientEmail || '',
-              clientPhone: phone || prev.clientPhone || '',
-              businessActivity: activity || prev.businessActivity || ''
+              // Only use API data if we don't already have values
+              clientName: prev.clientName || companyData.company?.name || '',
+              clientEmail: prev.clientEmail || (companyData.emails?.[0]?.address || ''),
+              clientPhone: prev.clientPhone || (companyData.phones?.[0] ? `${companyData.phones[0].area}${companyData.phones[0].number}` : ''),
+              businessActivity: prev.businessActivity || (companyData.mainActivity ? `${companyData.mainActivity.id} | ${companyData.mainActivity.text}` : '')
             };
           });
         }

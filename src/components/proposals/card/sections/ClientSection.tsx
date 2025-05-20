@@ -19,8 +19,8 @@ interface ClientSectionProps {
 }
 
 const ClientSection = ({ data, colors, companyInfo }: ClientSectionProps) => {
-  // Get client name from data or companyInfo
-  const clientName = data.clientName || companyInfo?.name;
+  // Get client name from data, not from logged-in user
+  const clientName = data.clientName;
   
   return (
     <div className="mb-6">
@@ -44,23 +44,23 @@ const ClientSection = ({ data, colors, companyInfo }: ClientSectionProps) => {
           </div>
         )}
         
-        {/* Display phone if available */}
-        {companyInfo?.phones && companyInfo.phones.length > 0 && companyInfo.phones[0] && (
+        {/* Display phone if available from data, not from user */}
+        {data.clientPhone && (
           <div className="bg-gray-50 p-3 rounded">
             <span className="text-sm font-medium text-gray-500 flex items-center">
               <Phone className="h-3 w-3 mr-1" /> Telefone:
             </span>
-            <p className="text-base mt-1">{companyInfo.phones[0]}</p>
+            <p className="text-base mt-1">{data.clientPhone}</p>
           </div>
         )}
         
-        {/* Display email if available */}
-        {companyInfo?.emails && companyInfo.emails.length > 0 && companyInfo.emails[0] && (
+        {/* Display email if available from data, not from user */}
+        {data.clientEmail && (
           <div className="bg-gray-50 p-3 rounded">
             <span className="text-sm font-medium text-gray-500 flex items-center">
               <Mail className="h-3 w-3 mr-1" /> Email:
             </span>
-            <p className="text-base mt-1 break-all">{companyInfo.emails[0]}</p>
+            <p className="text-base mt-1 break-all">{data.clientEmail}</p>
           </div>
         )}
         

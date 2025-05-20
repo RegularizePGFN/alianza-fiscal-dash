@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,7 +38,7 @@ const DataForm = ({
     setProcessingStatus
   });
 
-  // Defina apenas o especialista, não a razão social
+  // Only set specialist name, not client data
   useState(() => {
     if (!formData.specialistName && user?.name) {
       const event = {
@@ -50,7 +49,6 @@ const DataForm = ({
       } as React.ChangeEvent<HTMLInputElement>;
       onInputChange(event);
     }
-    // Removido o preenchimento automático de clientName com o nome do usuário
   });
   
   // Format currency when user inputs values

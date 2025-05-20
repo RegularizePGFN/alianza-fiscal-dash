@@ -12,14 +12,12 @@ export const useUserData = ({
   setFormData
 }: UseUserDataProps) => {
   
-  // Add user data to form - exceto o nome para razão social
+  // Only set the specialist name, nothing else
   useEffect(() => {
     if (user) {
       setFormData(prev => ({
         ...prev,
-        // Removido o clientName: user.name para evitar preenchimento indevido
-        clientEmail: user.email || '',
-        clientPhone: '', // User can fill this if needed
+        // Only set specialistName, no client data
         specialistName: user.name || ''
       }));
     }
