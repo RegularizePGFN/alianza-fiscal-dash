@@ -1,3 +1,4 @@
+
 import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 import { fetchCnpjData } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
@@ -133,80 +134,10 @@ export const useProposalGeneration = ({
     }
   };
   
-  // Função para exportar proposta como PDF
-  const handleExportProposalToPdf = async (proposalRef: React.RefObject<HTMLDivElement>): Promise<void> => {
-    if (!proposalRef.current) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível gerar o PDF. Tente novamente.",
-        variant: "destructive",
-      });
-      return Promise.reject("Proposal element not found");
-    }
-    
-    toast({
-      title: "Processando",
-      description: "Gerando PDF em uma única página, aguarde...",
-    });
-    
-    try {
-      await generateProposalPdf(proposalRef.current, formData);
-      
-      toast({
-        title: "Sucesso",
-        description: "PDF gerado com sucesso em uma página!",
-      });
-      return Promise.resolve();
-    } catch (error) {
-      console.error("Erro ao gerar PDF:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível gerar o PDF. Tente novamente.",
-        variant: "destructive",
-      });
-      return Promise.reject(error);
-    }
-  };
+  // Function removed as it's now handled directly in ProposalCard
   
-  // Nova função para exportar proposta como PNG
-  const handleExportProposalToPng = async (proposalRef: React.RefObject<HTMLDivElement>): Promise<void> => {
-    if (!proposalRef.current) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível gerar a imagem PNG. Tente novamente.",
-        variant: "destructive",
-      });
-      return Promise.reject("Proposal element not found");
-    }
-    
-    toast({
-      title: "Processando",
-      description: "Gerando imagem PNG de alta qualidade, aguarde...",
-    });
-    
-    try {
-      await generateProposalPng(proposalRef.current, formData);
-      
-      toast({
-        title: "Sucesso",
-        description: "Imagem PNG gerada com sucesso!",
-      });
-      return Promise.resolve();
-    } catch (error) {
-      console.error("Erro ao gerar PNG:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível gerar a imagem PNG. Tente novamente.",
-        variant: "destructive",
-      });
-      return Promise.reject(error);
-    }
-  };
-
   return {
     handleGenerateProposal,
-    handleViewProposal,
-    handleExportProposalToPdf,
-    handleExportProposalToPng
+    handleViewProposal
   };
 };
