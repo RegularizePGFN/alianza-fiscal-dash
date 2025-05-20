@@ -1,11 +1,12 @@
+
 import React, { useRef } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ExtractedData } from "@/lib/types/proposals";
+import { ExtractedData } from '@/lib/types/proposals';
 import { generateProposalPdf, generateProposalPng } from "@/lib/pdfUtils";
 import { useToast } from "@/hooks/use-toast";
 
-// Import the new component sections
+// Import the component sections
 import ProposalHeader from './card/sections/ProposalHeader';
 import ProposalDataSection from './card/sections/ProposalDataSection';
 import NegotiationDataSection from './card/sections/NegotiationDataSection';
@@ -16,9 +17,10 @@ import ActionButtonsSection from './card/sections/ActionButtonsSection';
 interface ProposalCardProps {
   data: Partial<ExtractedData>;
   imageUrl?: string;
+  companyData?: any; // Add companyData prop
 }
 
-const ProposalCard = ({ data }: ProposalCardProps) => {
+const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
   const proposalRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
@@ -118,6 +120,8 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
           onGeneratePdf={generatePdf}
           onGeneratePng={generatePng}
           onPrint={printProposal}
+          proposalData={data}
+          companyData={companyData}
         />
       </CardContent>
     </Card>
