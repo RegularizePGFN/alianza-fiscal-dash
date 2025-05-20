@@ -9,6 +9,7 @@
 @import './components/goal-meter.css';
 @import './components/cards.css';
 @import './components/interactive.css';
+@import './components/print.css';
 
 /* Dark mode overrides */
 @import './dark-mode-overrides.css';

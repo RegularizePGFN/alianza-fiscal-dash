@@ -1,0 +1,49 @@
+
+/* Print and PDF generation styles */
+@media print {
+  /* Hide elements not needed for printing */
+  button, 
+  [data-pdf-remove="true"],
+  .pdf-action-buttons {
+    display: none !important;
+  }
+  
+  /* Global text spacing */
+  body {
+    font-family: 'Roboto', sans-serif !important;
+    color: #000 !important;
+    background-color: white !important;
+  }
+  
+  /* Text elements proper spacing */
+  p, h1, h2, h3, h4, h5, h6, span, td, th {
+    padding: 2px 4px !important;
+    word-break: break-word !important;
+    white-space: pre-line !important;
+    page-break-inside: avoid !important;
+  }
+  
+  /* Maintain grid layout */
+  .grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+  
+  /* Ensure spacing between sections */
+  section, .section, .mb-6, .space-y-4 {
+    margin-bottom: 10px !important;
+  }
+  
+  /* Ensure labels and values have proper spacing */
+  .label, .font-medium {
+    margin-bottom: 2px !important;
+  }
+  
+  /* Ensure backgrounds print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+}

@@ -21,10 +21,8 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     tempContainer.style.left = '-9999px';
     tempContainer.style.width = '794px'; // A4 width in pixels at 96dpi
     tempContainer.style.padding = '0';
-    tempContainer.style.margin = '0 auto';
+    tempContainer.style.margin = '0';
     tempContainer.style.backgroundColor = 'white';
-    tempContainer.style.transform = 'scale(0.90)';
-    tempContainer.style.transformOrigin = 'top center';
     
     // Hide action buttons
     const actionButtons = clonedElement.querySelectorAll('.pdf-action-buttons, [data-pdf-remove="true"], button');
@@ -38,19 +36,31 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     const sections = clonedElement.querySelectorAll('div.space-y-4, div.mb-6, div.mt-8, div.gap-6');
     sections.forEach(section => {
       if (section instanceof HTMLElement) {
-        section.style.marginTop = '4px';
-        section.style.marginBottom = '4px';
-        section.style.gap = '4px';
+        section.style.marginTop = '6px';
+        section.style.marginBottom = '6px';
+        section.style.gap = '8px';
         section.classList.remove('space-y-4', 'mb-6', 'mt-8');
-        section.classList.add('space-y-2', 'mb-2', 'mt-2');
+        section.classList.add('space-y-3', 'mb-3', 'mt-2');
       }
     });
     
-    // Compress grids to save space
+    // Ensure proper spacing in grids
     const grids = clonedElement.querySelectorAll('.grid');
     grids.forEach(grid => {
       if (grid instanceof HTMLElement) {
-        grid.style.gap = '6px';
+        grid.style.gap = '8px';
+        grid.style.display = 'grid';
+        grid.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
+      }
+    });
+    
+    // Fix text spacing in all elements
+    const textElements = clonedElement.querySelectorAll('p, span, h1, h2, h3, h4, h5, h6, td, th');
+    textElements.forEach(el => {
+      if (el instanceof HTMLElement) {
+        el.style.padding = '2px 4px';
+        el.style.wordBreak = 'break-word';
+        el.style.whiteSpace = 'pre-line';
       }
     });
     
@@ -60,18 +70,26 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       /* Ensure Roboto font is loaded */
       @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
       
-      /* Make sure all content fits on page */
+      /* Apply proper styling to all elements */
       * {
         box-sizing: border-box;
         font-family: 'Roboto', sans-serif !important;
         margin-block: 0;
         page-break-inside: avoid !important;
+        word-break: break-word;
       }
       
-      /* Reduce spacing */
+      /* Proper spacing for text elements */
       p, h1, h2, h3, h4, h5, h6 {
-        margin-block: 2px !important;
-        line-height: 1.3 !important;
+        margin-block: 4px !important;
+        line-height: 1.4 !important;
+        padding: 2px 4px !important;
+      }
+      
+      /* Labels and values spacing */
+      span.text-sm, span.font-medium, span.text-gray-500, span.text-gray-700 {
+        margin-bottom: 2px !important;
+        display: block !important;
       }
       
       /* Hide button elements */
@@ -81,27 +99,42 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       
       /* Optimize padding and spacing */
       .p-6, .p-5, .p-4 {
-        padding: 6px !important;
+        padding: 8px !important;
       }
       
       .p-3 {
-        padding: 4px !important;
+        padding: 6px !important;
       }
       
-      .space-y-4 {
-        margin-top: 4px !important;
-        margin-bottom: 4px !important;
-      }
-      
-      /* Optimize grids for space */
+      /* Grids and layouts */
       .grid {
-        gap: 6px !important;
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+        margin-bottom: 10px !important;
+      }
+      
+      /* Sections spacing */
+      section, .section {
+        margin-bottom: 12px !important;
+      }
+      
+      /* Section headings */
+      section h2, .section-title {
+        margin-bottom: 8px !important;
+        font-weight: 600 !important;
+      }
+      
+      /* Item labels */
+      .label {
+        margin-bottom: 2px !important;
+        display: block !important;
       }
       
       /* Compress header */
       [class*="rounded-t-lg"] {
-        padding-top: 6px !important;
-        padding-bottom: 6px !important;
+        padding-top: 8px !important;
+        padding-bottom: 8px !important;
       }
       
       /* Preserve colors and backgrounds */
@@ -116,7 +149,11 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       .card {
         max-width: 794px !important;
         margin: 0 auto !important;
-        transform: scale(0.90) !important;
+      }
+      
+      /* Add proper body transform */
+      body {
+        transform: scale(0.95) !important;
         transform-origin: top center !important;
       }
     `;
@@ -151,12 +188,17 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
           const maxA4Height = 1123; // pixels for A4 @ 96 dpi
           
           if (contentHeight > maxA4Height) {
-            // Scale down to fit on a single page
-            const scaleFactor = Math.min(0.90, maxA4Height / contentHeight);
-            element.style.transform = `scale(${scaleFactor})`;
-            element.style.transformOrigin = 'top center';
-            element.style.width = `${100 / scaleFactor}%`;
-            element.style.height = `${maxA4Height}px`;
+            // Scale down to fit on a single page - use body instead of direct element
+            const wrapper = document.createElement('div');
+            wrapper.style.transformOrigin = 'top center';
+            wrapper.style.transform = `scale(0.95)`;
+            wrapper.style.width = '100%';
+            wrapper.style.maxWidth = '794px';
+            wrapper.style.margin = '0 auto';
+            
+            // Reparent the element
+            element.parentNode?.insertBefore(wrapper, element);
+            wrapper.appendChild(element);
           }
         }
       });
