@@ -6,6 +6,10 @@ interface PreviewTabContentProps {
   users: any[];
   formData: any;
   onInputChange: (name: string, value: string) => void;
+  // We no longer need these props since we removed the specialist selection
+  // selectedSpecialist?: string;
+  // onChange?: (specialist: string) => void;
+  // isAdmin?: boolean;
 }
 
 export const PreviewTabContent = ({ 

@@ -68,9 +68,6 @@ export const EditorTabs = ({
       <TabsContent value="preview">
         <PreviewTabContent 
           users={users}
-          selectedSpecialist={selectedSpecialist}
-          onChange={setSelectedSpecialist}
-          isAdmin={isAdmin}
           formData={formData}
           onInputChange={onInputChange}
         />

@@ -1,5 +1,5 @@
 
-export { default as EditorTabs } from './EditorTabs';
+export { EditorTabs } from './EditorTabs';
 export { default as SelectSpecialist } from './SelectSpecialist';
 export { default as AdditionalCommentsField } from './AdditionalCommentsField';
 export { default as ColorSelector } from './ColorSelector';
