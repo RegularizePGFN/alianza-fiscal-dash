@@ -21,3 +21,4 @@ export { default as FeesDisplaySection } from './FeesDisplaySection';
 export { default as TotalValueDisplay } from './TotalValueDisplay';
 export { default as PaymentOptionsDisplay } from './PaymentOptionsDisplay';
 export { default as ActionButtonsSection } from './ActionButtonsSection';
+export { default as SectionContainer } from './SectionContainer';
