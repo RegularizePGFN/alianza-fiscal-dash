@@ -1,16 +1,21 @@
 
-import { useEffect } from "react";
-import { ExtractedData } from "@/lib/types/proposals";
+import { useEffect } from 'react';
 
 interface UseUserDataProps {
   user: any;
-  setFormData: (formData: Partial<ExtractedData> | ((prev: Partial<ExtractedData>) => Partial<ExtractedData>)) => void;
+  setFormData: (formData: any) => void;
 }
 
-export const useUserData = ({
-  user,
-  setFormData
-}: UseUserDataProps) => {
-  // No longer automatically sets any user data
-  // This is intentionally empty as we want to avoid auto-populating any fields
+export const useUserData = ({ user, setFormData }: UseUserDataProps) => {
+  // Set user data when component mounts or user changes
+  useEffect(() => {
+    if (user) {
+      setFormData((prevData: any) => ({
+        ...prevData,
+        // Set the seller name from the user's profile name
+        sellerName: user.name || 'Nome do Especialista',
+        sellerEmail: user.email || '',
+      }));
+    }
+  }, [user, setFormData]);
 };

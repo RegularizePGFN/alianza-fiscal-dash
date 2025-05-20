@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,14 +23,22 @@ const passwordChangeSchema = z.object({
   path: ["confirmPassword"],
 });
 
+// Form schema for profile update
+const profileUpdateSchema = z.object({
+  name: z.string().min(2, "O nome deve ter pelo menos 2 caracteres"),
+});
+
 type PasswordChangeForm = z.infer<typeof passwordChangeSchema>;
+type ProfileUpdateForm = z.infer<typeof profileUpdateSchema>;
 
 const ProfilePage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isProfileLoading, setIsProfileLoading] = useState(false);
 
-  const form = useForm<PasswordChangeForm>({
+  // Password change form
+  const passwordForm = useForm<PasswordChangeForm>({
     resolver: zodResolver(passwordChangeSchema),
     defaultValues: {
       currentPassword: "",
@@ -38,7 +47,24 @@ const ProfilePage = () => {
     },
   });
 
-  const onSubmit = async (data: PasswordChangeForm) => {
+  // Profile update form
+  const profileForm = useForm<ProfileUpdateForm>({
+    resolver: zodResolver(profileUpdateSchema),
+    defaultValues: {
+      name: user?.name || "",
+    },
+  });
+
+  // Update profile form when user changes
+  useState(() => {
+    if (user) {
+      profileForm.reset({
+        name: user.name || "",
+      });
+    }
+  });
+
+  const onSubmitPassword = async (data: PasswordChangeForm) => {
     if (!user) return;
 
     setIsLoading(true);
@@ -78,7 +104,7 @@ const ProfilePage = () => {
       });
 
       // Reset the form
-      form.reset();
+      passwordForm.reset();
     } catch (error: any) {
       toast({
         title: "Erro",
@@ -87,6 +113,43 @@ const ProfilePage = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const onSubmitProfile = async (data: ProfileUpdateForm) => {
+    if (!user) return;
+
+    setIsProfileLoading(true);
+    try {
+      // Update the profile in Supabase
+      const { error } = await supabase
+        .from('profiles')
+        .update({ name: data.name })
+        .eq('id', user.id);
+
+      if (error) {
+        toast({
+          title: "Erro",
+          description: error.message || "Erro ao atualizar o perfil",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Update local user state through auth context (this will happen automatically through onAuthStateChange)
+      
+      toast({
+        title: "Perfil atualizado",
+        description: "Suas informações foram atualizadas com sucesso",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Ocorreu um erro ao atualizar o perfil",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProfileLoading(false);
     }
   };
 
@@ -101,53 +164,74 @@ const ProfilePage = () => {
             <CardHeader>
               <CardTitle>Informações do Usuário</CardTitle>
               <CardDescription>
-                Seus dados cadastrais no sistema
+                Atualize seus dados pessoais
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground block mb-1">
-                    Nome
-                  </label>
-                  <Input 
-                    value={user?.name || ""}
-                    disabled 
-                    className="bg-muted/50"
+            
+            <Form {...profileForm}>
+              <form onSubmit={profileForm.handleSubmit(onSubmitProfile)}>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={profileForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nome</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground block mb-1">
-                    Email
-                  </label>
-                  <Input 
-                    value={user?.email || ""} 
-                    disabled 
-                    className="bg-muted/50"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground block mb-1">
-                    Função
-                  </label>
-                  <Input 
-                    value={user?.role === "admin" ? "Administrador" : "Vendedor"} 
-                    disabled 
-                    className="bg-muted/50"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground block mb-1">
-                    Desde
-                  </label>
-                  <Input 
-                    value={user?.created_at ? new Date(user.created_at).toLocaleDateString('pt-BR') : ""}
-                    disabled 
-                    className="bg-muted/50"
-                  />
-                </div>
-              </div>
-            </CardContent>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground block mb-1">
+                      Email
+                    </label>
+                    <Input 
+                      value={user?.email || ""} 
+                      disabled 
+                      className="bg-muted/50"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground block mb-1">
+                      Função
+                    </label>
+                    <Input 
+                      value={user?.role === "admin" ? "Administrador" : "Especialista Tributário"} 
+                      disabled 
+                      className="bg-muted/50"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground block mb-1">
+                      Desde
+                    </label>
+                    <Input 
+                      value={user?.created_at ? new Date(user.created_at).toLocaleDateString('pt-BR') : ""}
+                      disabled 
+                      className="bg-muted/50"
+                    />
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button type="submit" disabled={isProfileLoading}>
+                    {isProfileLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Salvando...
+                      </>
+                    ) : (
+                      "Salvar Alterações"
+                    )}
+                  </Button>
+                </CardFooter>
+              </form>
+            </Form>
           </Card>
 
           {/* Change Password Card */}
@@ -158,11 +242,11 @@ const ProfilePage = () => {
                 Informe sua senha atual e a nova senha desejada
               </CardDescription>
             </CardHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)}>
+            <Form {...passwordForm}>
+              <form onSubmit={passwordForm.handleSubmit(onSubmitPassword)}>
                 <CardContent className="space-y-4">
                   <FormField
-                    control={form.control}
+                    control={passwordForm.control}
                     name="currentPassword"
                     render={({ field }) => (
                       <FormItem>
@@ -175,7 +259,7 @@ const ProfilePage = () => {
                     )}
                   />
                   <FormField
-                    control={form.control}
+                    control={passwordForm.control}
                     name="newPassword"
                     render={({ field }) => (
                       <FormItem>
@@ -188,7 +272,7 @@ const ProfilePage = () => {
                     )}
                   />
                   <FormField
-                    control={form.control}
+                    control={passwordForm.control}
                     name="confirmPassword"
                     render={({ field }) => (
                       <FormItem>
