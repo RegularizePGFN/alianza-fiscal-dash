@@ -1,5 +1,4 @@
 
-import puppeteer from 'puppeteer';
 import { ExtractedData } from './types/proposals';
 
 export async function generateProposalPdf(proposalElement: HTMLElement, data: Partial<ExtractedData>): Promise<void> {
@@ -15,14 +14,14 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     const clonedElement = proposalElement.cloneNode(true) as HTMLElement;
     
     // Hide action buttons and other elements not needed in PDF
-    const actionButtons = clonedElement.querySelectorAll('.pdf-action-buttons, [data-pdf-remove="true"], button');
-    actionButtons.forEach(button => {
-      if (button instanceof HTMLElement) {
-        button.style.display = 'none';
+    const elementsToRemove = clonedElement.querySelectorAll('.pdf-action-buttons, [data-pdf-remove="true"], button');
+    elementsToRemove.forEach(element => {
+      if (element instanceof HTMLElement) {
+        element.style.display = 'none';
       }
     });
     
-    // Get the HTML content with styles
+    // Get the HTML content
     const htmlContent = clonedElement.outerHTML;
     
     // Get all stylesheets from the document
@@ -64,6 +63,7 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
             padding: 0;
             color: #333;
             background-color: white;
+            font-size: 12px; /* Slightly smaller font to fit content */
           }
           ${styles}
           /* Additional PDF-specific styles */
@@ -73,11 +73,39 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
             box-sizing: border-box;
             page-break-inside: avoid;
           }
+          /* Optimize spacing for single page */
+          .space-y-8 {
+            margin-top: 1.5rem !important;
+            margin-bottom: 1.5rem !important;
+          }
+          .pt-6 {
+            padding-top: 1rem !important;
+          }
+          .pb-8 {
+            padding-bottom: 1rem !important;
+          }
+          .px-8 {
+            padding-left: 1.5rem !important;
+            padding-right: 1.5rem !important;
+          }
+          /* Ensure all grid cells take minimal height */
+          .grid > div {
+            padding: 0.75rem !important;
+          }
           /* Ensure colors and backgrounds are printed */
           * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
             color-adjust: exact !important;
+          }
+          /* Ensure no page breaks within sections */
+          section, .card, .bg-gradient-to-r {
+            page-break-inside: avoid;
+          }
+          /* Scale content to fit page */
+          .card {
+            transform: scale(0.95);
+            transform-origin: top center;
           }
         </style>
       </head>
@@ -87,43 +115,28 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       </html>
     `;
     
-    // Generate PDF using Puppeteer in browser environment
-    const browser = await puppeteer.launch({
-      headless: "new",
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
-    
-    const page = await browser.newPage();
-    
-    // Set content and wait for network idle
-    await page.setContent(fullHtml, { waitUntil: 'networkidle0' });
-    
-    // Set viewport to A4 size
-    await page.setViewport({
-      width: 794, // A4 width in px at 96 dpi
-      height: 1123, // A4 height in px at 96 dpi
-      deviceScaleFactor: 2, // Higher for better quality
-    });
-    
-    // Generate PDF
-    const pdfBuffer = await page.pdf({
-      format: 'a4',
-      printBackground: true,
-      margin: {
-        top: '10mm',
-        right: '10mm',
-        bottom: '10mm',
-        left: '10mm'
+    // Make API call to the PDF generation endpoint
+    const response = await fetch('/api/propostas/pdf', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-      preferCSSPageSize: true,
+      body: JSON.stringify({
+        html: fullHtml,
+        fileName: fileName,
+      }),
     });
     
-    await browser.close();
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`API error: ${errorData.error || response.statusText}`);
+    }
     
-    // Create blob and download
-    const blob = new Blob([pdfBuffer], { type: 'application/pdf' });
+    // Get the binary data
+    const blob = await response.blob();
     const url = URL.createObjectURL(blob);
     
+    // Create a download link
     const a = document.createElement('a');
     a.href = url;
     a.download = fileName;

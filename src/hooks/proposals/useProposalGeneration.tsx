@@ -117,7 +117,7 @@ export const useProposalGeneration = ({
     }
   };
   
-  // Função para exportar proposta como PDF
+  // Function to export proposal as PDF
   const handleExportProposalToPdf = async (proposalRef: React.RefObject<HTMLDivElement>) => {
     if (!proposalRef.current) {
       toast({
