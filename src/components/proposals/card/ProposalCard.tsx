@@ -30,19 +30,22 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
   })();
 
   // Get layout settings or use defaults
-  const layout = (() => {
+  const layoutData = (() => {
     if (data.templateLayout && typeof data.templateLayout === 'string') {
       try {
         return JSON.parse(data.templateLayout);
       } catch (e) {}
     }
-    return {
-      sections: ['client', 'alert', 'debt', 'payment', 'fees', 'total'],
-      showHeader: layout?.showHeader ?? true,
-      showLogo: layout?.showLogo ?? true,
-      showWatermark: false
-    };
+    return null;
   })();
+
+  // Parse layout settings or use defaults without self-referencing
+  const layout = {
+    sections: layoutData?.sections || ['client', 'alert', 'debt', 'payment', 'fees', 'total'],
+    showHeader: layoutData?.showHeader !== undefined ? layoutData.showHeader : true,
+    showLogo: layoutData?.showLogo !== undefined ? layoutData.showLogo : true,
+    showWatermark: layoutData?.showWatermark || false
+  };
 
   const handlePrint = () => {
     window.print();
