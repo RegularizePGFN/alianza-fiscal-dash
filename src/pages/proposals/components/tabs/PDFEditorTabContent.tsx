@@ -1,20 +1,12 @@
+
 import { useState, useEffect, useRef } from "react";
-import {
-  PDFTemplatePreview,
-  ColorSelector,
-  SectionOrganizer,
-  SelectSpecialist,
-  TemplateSelector,
-  AdditionalCommentsField
-} from "@/components/proposals/pdf-editor";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Label } from "@/components/ui/label";
-import { FileCheck, Eye, FileText, Palette, CheckSquare } from "lucide-react";
+import { PDFTemplate, ExtractedData, TemplateColors, TemplateLayout } from "@/lib/types/proposals";
+import { useToast } from "@/hooks/use-toast";
 import { generateProposalPdf } from "@/lib/pdfUtils";
 import { User } from "@/lib/types";
-import { useToast } from "@/hooks/use-toast";
-import { ExtractedData, PDFTemplate, TemplateColors, TemplateLayout } from "@/lib/types/proposals";
+import { FileText } from "lucide-react";
+import { EditorTabs } from "@/components/proposals/pdf-editor/EditorTabs";
+import { ProposalPreviewContainer } from "@/components/proposals/pdf-editor/ProposalPreviewContainer";
 
 // Sample templates
 const defaultTemplates: PDFTemplate[] = [
@@ -112,7 +104,6 @@ export default function PDFEditorTabContent({
 
   // Update formData when template changes
   useEffect(() => {
-    // Find template based on formData.templateId
     if (formData.templateId) {
       const template = defaultTemplates.find(t => t.id === formData.templateId);
       if (template) {
@@ -240,89 +231,32 @@ export default function PDFEditorTabContent({
               Editor de Proposta
             </h2>
             
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="w-full mb-4">
-                <TabsTrigger value="preview" className="flex-1">
-                  <Eye className="h-4 w-4 mr-2" />
-                  Visualizar
-                </TabsTrigger>
-                <TabsTrigger value="template" className="flex-1">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Modelos
-                </TabsTrigger>
-                <TabsTrigger value="colors" className="flex-1">
-                  <Palette className="h-4 w-4 mr-2" />
-                  Cores
-                </TabsTrigger>
-                <TabsTrigger value="structure" className="flex-1">
-                  <CheckSquare className="h-4 w-4 mr-2" />
-                  Estrutura
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="preview">
-                <div className="space-y-4">
-                  <SelectSpecialist 
-                    users={users}
-                    selectedSpecialist={selectedSpecialist}
-                    onChange={setSelectedSpecialist}
-                    isAdmin={isAdmin}
-                  />
-                  
-                  <AdditionalCommentsField
-                    value={formData.additionalComments || ''}
-                    onChange={(value) => onInputChange('additionalComments', value)}
-                  />
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="template">
-                <TemplateSelector 
-                  templates={defaultTemplates}
-                  selectedTemplateId={selectedTemplate.id}
-                  onSelectTemplate={handleTemplateChange}
-                />
-              </TabsContent>
-              
-              <TabsContent value="colors">
-                <ColorSelector colors={colors} onChange={handleColorChange} />
-              </TabsContent>
-              
-              <TabsContent value="structure">
-                <SectionOrganizer 
-                  sections={layout.sections}
-                  onChange={handleSectionsChange}
-                  layoutOptions={{
-                    showHeader: layout.showHeader,
-                    showLogo: layout.showLogo,
-                    showWatermark: layout.showWatermark
-                  }}
-                  onLayoutOptionChange={handleLayoutOptionChange}
-                />
-              </TabsContent>
-            </Tabs>
+            <EditorTabs
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              colors={colors}
+              layout={layout}
+              selectedTemplate={selectedTemplate}
+              formData={formData}
+              onInputChange={onInputChange}
+              users={users}
+              isAdmin={isAdmin}
+              selectedSpecialist={selectedSpecialist}
+              setSelectedSpecialist={setSelectedSpecialist}
+              handleTemplateChange={handleTemplateChange}
+              handleColorChange={handleColorChange}
+              handleSectionsChange={handleSectionsChange}
+              handleLayoutOptionChange={handleLayoutOptionChange}
+            />
           </div>
         </div>
 
-        <div ref={previewRef} className="flex flex-col">
-          <div className="sticky top-4 mb-4">
-            <PDFTemplatePreview 
-              formData={formData}
-              template={selectedTemplate}
-              imagePreview={imagePreview}
-            />
-            
-            {/* Button aligned with the proposal card */}
-            <Button 
-              onClick={handleGeneratePDF}
-              className="w-full mt-4"
-              size="lg"
-            >
-              <FileCheck className="h-5 w-5 mr-2" />
-              Gerar Proposta
-            </Button>
-          </div>
-        </div>
+        <ProposalPreviewContainer
+          formData={formData}
+          selectedTemplate={selectedTemplate}
+          imagePreview={imagePreview}
+          onGeneratePDF={handleGeneratePDF}
+        />
       </div>
     </div>
   );
