@@ -16,8 +16,6 @@ export interface ExtractedData {
   creationDate?: string;
   validityDate?: string;
   specialistName?: string; // Name of the tax specialist (usually the current user)
-  specialistRole?: string; // Role of the tax specialist
-  specialistEmail?: string; // Email of the tax specialist
   templateId?: string; // ID of the selected template for PDF rendering
   templateColors?: string; // JSON string representation of colors
   templateLayout?: string; // JSON string representation of layout
@@ -27,7 +25,6 @@ export interface ExtractedData {
   sellerName?: string;
   sellerPhone?: string;
   sellerEmail?: string;
-  entryInfo?: string; // Information about the entry payment
 }
 
 export interface Proposal {

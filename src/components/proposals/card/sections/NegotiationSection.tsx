@@ -41,7 +41,7 @@ const NegotiationSection = ({ data, colors }: NegotiationSectionProps) => {
           
           <DataField 
             label="Entrada (se aplicável):" 
-            value={`R$ ${data.entryValue || "0,00"}`}
+            value={`R$ ${data.entryValue || "0,00"} ${data.entryInfo ? `(${data.entryInfo})` : ""}`}
           />
         </div>
       </div>
