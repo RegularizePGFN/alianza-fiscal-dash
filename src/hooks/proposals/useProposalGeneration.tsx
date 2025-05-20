@@ -1,4 +1,3 @@
-
 import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 import { fetchCnpjData } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
@@ -65,13 +64,16 @@ export const useProposalGeneration = ({
       try {
         const proposal = await saveProposal(processedData as ExtractedData, imagePreview || undefined);
         if (proposal) {
-          // On success, update the proposals list
+          // On success, update the proposals list and navigate to proposal tab
           await fetchProposals();
           setSelectedProposal(proposal);
           toast({
             title: "Proposta gerada",
             description: "Sua proposta foi gerada e armazenada com sucesso!"
           });
+          
+          // Important: Navigate to the proposal tab to show the final result
+          setActiveTab("proposal");
         }
       } catch (error) {
         console.error("Error saving proposal:", error);
@@ -83,7 +85,6 @@ export const useProposalGeneration = ({
       }
     }
     
-    setActiveTab("proposal");
     return Promise.resolve();
   };
   
