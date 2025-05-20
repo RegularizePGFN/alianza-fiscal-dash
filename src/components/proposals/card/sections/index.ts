@@ -13,6 +13,9 @@ export { default as FooterSection } from './FooterSection';
 export { default as HeaderSection } from './HeaderSection';
 export { default as ActionButtons } from './ActionButtons';
 
+// Add the SectionContainer export
+export { default as SectionContainer } from './SectionContainer';
+
 // Add the new component exports
 export { default as ProposalHeader } from './ProposalHeader';
 export { default as ProposalDataSection } from './ProposalDataSection';

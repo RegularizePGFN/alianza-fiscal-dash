@@ -18,32 +18,32 @@ const CompanyInfoSection = ({ companyData, colors }: CompanyInfoSectionProps) =>
   return (
     <SectionContainer title="Dados do Contribuinte" colors={colors}>
       <div className="text-sm space-y-0">
-        {companyData.cnpj && (
-          <DataField label="CNPJ:" value={companyData.cnpj} />
+        {companyData.taxId && (
+          <DataField label="CNPJ:" value={companyData.taxId} />
         )}
         
-        {companyData.name && (
+        {companyData.company?.name && (
           <DataField 
             label="Razão Social:" 
-            value={companyData.name} 
+            value={companyData.company.name} 
             textStyle="font-medium"
           />
         )}
         
         <div className="grid grid-cols-2 gap-2">
-          {companyData.situation && (
-            <DataField label="Situação:" value={companyData.situation} />
+          {companyData.status?.text && (
+            <DataField label="Situação:" value={companyData.status.text} />
           )}
           
-          {companyData.openingDate && (
-            <DataField label="Data de Abertura:" value={companyData.openingDate} />
+          {companyData.founded && (
+            <DataField label="Data de Abertura:" value={companyData.founded} />
           )}
         </div>
         
         {companyData.address && (
           <DataField 
             label="Endereço:" 
-            value={companyData.address} 
+            value={formatAddress(companyData.address)} 
             textSize="xs"
           />
         )}
@@ -52,7 +52,7 @@ const CompanyInfoSection = ({ companyData, colors }: CompanyInfoSectionProps) =>
           {companyData.phones && companyData.phones.length > 0 && (
             <DataField 
               label="Telefone:" 
-              value={companyData.phones[0]} 
+              value={formatPhone(companyData.phones[0])} 
               textSize="xs"
             />
           )}
@@ -60,7 +60,7 @@ const CompanyInfoSection = ({ companyData, colors }: CompanyInfoSectionProps) =>
           {companyData.emails && companyData.emails.length > 0 && (
             <DataField 
               label="Email:" 
-              value={companyData.emails[0]} 
+              value={companyData.emails[0].address} 
               textSize="xs"
             />
           )}
@@ -69,13 +69,35 @@ const CompanyInfoSection = ({ companyData, colors }: CompanyInfoSectionProps) =>
         {companyData.mainActivity && (
           <DataField 
             label="Atividade Principal:" 
-            value={`${companyData.mainActivity.code} | ${companyData.mainActivity.description}`} 
+            value={`${companyData.mainActivity.id} | ${companyData.mainActivity.text}`} 
             textSize="xs"
           />
         )}
       </div>
     </SectionContainer>
   );
+};
+
+// Helper functions for formatting
+const formatAddress = (address: CompanyData['address']) => {
+  if (!address) return '-';
+  
+  const parts = [
+    address.street,
+    address.number ? `nº ${address.number}` : '',
+    address.details,
+    address.district ? `- ${address.district}` : '',
+    address.city,
+    address.state,
+    address.zip
+  ].filter(Boolean);
+  
+  return parts.join(', ');
+};
+
+const formatPhone = (phone: { area: string; number: string; type?: string }) => {
+  if (!phone) return '-';
+  return `(${phone.area}) ${phone.number}`;
 };
 
 export default CompanyInfoSection;
