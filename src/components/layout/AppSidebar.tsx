@@ -22,10 +22,11 @@ interface SidebarLinkProps {
   label: string;
   expanded: boolean;
   active?: boolean;
+  isBeta?: boolean;
   onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
-const SidebarLink = ({ to, icon, label, expanded, active, onClick }: SidebarLinkProps) => {
+const SidebarLink = ({ to, icon, label, expanded, active, isBeta, onClick }: SidebarLinkProps) => {
   return (
     <li>
       <Link 
@@ -47,7 +48,21 @@ const SidebarLink = ({ to, icon, label, expanded, active, onClick }: SidebarLink
         <div className={cn("transition-all duration-200", active ? "text-sidebar-accent-foreground" : "text-sidebar-foreground/70")}>
           {icon}
         </div>
-        {expanded && <span className="truncate">{label}</span>}
+        {expanded && (
+          <div className="relative flex items-center">
+            <span className="truncate">{label}</span>
+            {isBeta && (
+              <span className="absolute -top-3 -right-8 text-[9px] px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-800 font-medium">
+                beta
+              </span>
+            )}
+          </div>
+        )}
+        {!expanded && isBeta && (
+          <span className="absolute top-0.5 right-0.5 text-[8px] px-1 py-0 rounded-full bg-purple-100 text-purple-800 font-medium">
+            β
+          </span>
+        )}
       </Link>
     </li>
   );
@@ -111,6 +126,7 @@ export function AppSidebar() {
             label="Propostas" 
             expanded={expanded}
             active={location.pathname === "/propostas"}
+            isBeta={true}
           />
           
           {/* Admin links */}
