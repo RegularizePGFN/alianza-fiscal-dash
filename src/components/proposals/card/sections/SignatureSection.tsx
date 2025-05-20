@@ -7,8 +7,6 @@ interface SignatureSectionProps {
 }
 
 const SignatureSection = ({ data }: SignatureSectionProps) => {
-  if (data.showSignature !== "true") return null;
-  
   // Get specialist name
   const specialistName = data.specialistName || 'Especialista';
   

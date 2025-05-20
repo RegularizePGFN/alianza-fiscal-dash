@@ -9,9 +9,8 @@ import {
 } from "@/components/proposals/pdf-editor";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Download, Eye, FileText, Palette, CheckSquare } from "lucide-react";
+import { FileCheck, Eye, FileText, Palette, CheckSquare } from "lucide-react";
 import { generateProposalPdf } from "@/lib/pdfUtils";
 import { User } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
@@ -73,7 +72,6 @@ export default function PDFEditorTabContent({
 }: PDFEditorTabContentProps) {
   const [activeTab, setActiveTab] = useState("preview");
   const [selectedTemplate, setSelectedTemplate] = useState<PDFTemplate>(defaultTemplates[0]);
-  const [showSignature, setShowSignature] = useState(formData.showSignature === "true");
   const [selectedSpecialist, setSelectedSpecialist] = useState(formData.specialistName || "");
   const { toast } = useToast();
   const previewRef = useRef<HTMLDivElement | null>(null);
@@ -133,10 +131,10 @@ export default function PDFEditorTabContent({
     onInputChange("templateLayout", JSON.stringify(layout));
   }, [layout, onInputChange]);
 
-  // Update showSignature in formData when it changes
+  // Always set showSignature to true since we're removing the toggle
   useEffect(() => {
-    onInputChange("showSignature", showSignature ? "true" : "false");
-  }, [showSignature, onInputChange]);
+    onInputChange("showSignature", "true");
+  }, [onInputChange]);
 
   // Update specialist name in formData when it changes
   useEffect(() => {
@@ -271,19 +269,6 @@ export default function PDFEditorTabContent({
                     isAdmin={isAdmin}
                   />
                   
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="show-signature" className="cursor-pointer">
-                        Mostrar Assinatura
-                      </Label>
-                      <Switch 
-                        id="show-signature" 
-                        checked={showSignature}
-                        onCheckedChange={setShowSignature}
-                      />
-                    </div>
-                  </div>
-                  
                   <AdditionalCommentsField
                     value={formData.additionalComments || ''}
                     onChange={(value) => onInputChange('additionalComments', value)}
@@ -319,27 +304,25 @@ export default function PDFEditorTabContent({
           </div>
         </div>
 
-        <div ref={previewRef}>
+        <div ref={previewRef} className="flex flex-col">
           <div className="sticky top-4 mb-4">
             <PDFTemplatePreview 
               formData={formData}
               template={selectedTemplate}
               imagePreview={imagePreview}
             />
+            
+            {/* Button aligned with the proposal card */}
+            <Button 
+              onClick={handleGeneratePDF}
+              className="w-full mt-4"
+              size="lg"
+            >
+              <FileCheck className="h-5 w-5 mr-2" />
+              Gerar Proposta
+            </Button>
           </div>
         </div>
-      </div>
-      
-      {/* Always show the Download PDF button below the preview */}
-      <div className="mt-6 flex justify-center">
-        <Button 
-          onClick={handleGeneratePDF}
-          className="w-full max-w-md"
-          size="lg"
-        >
-          <Download className="h-5 w-5 mr-2" />
-          Baixar PDF
-        </Button>
       </div>
     </div>
   );
