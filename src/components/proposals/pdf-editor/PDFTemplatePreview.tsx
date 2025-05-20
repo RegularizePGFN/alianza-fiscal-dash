@@ -260,9 +260,6 @@ const PDFTemplatePreview = ({ formData, template, imagePreview }: PDFTemplatePre
                 <span className="text-sm font-medium text-gray-700">
                   Honorários Aliança Fiscal:
                 </span>
-                <p className="text-sm mt-1 text-gray-500">
-                  Especialista Tributário - {specialistName}
-                </p>
               </div>
               <div className="text-right">
                 <p className="text-lg font-medium" style={{ color: colors.accent }}>

@@ -233,107 +233,113 @@ export default function PDFEditorTabContent({
   };
   
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div>
-        <div className="bg-white rounded-lg shadow-sm border p-4 mb-4">
-          <h2 className="font-semibold flex items-center mb-4">
-            <FileText className="h-5 w-5 mr-2 text-blue-600" />
-            Editor de Proposta
-          </h2>
-          
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="w-full mb-4">
-              <TabsTrigger value="preview" className="flex-1">
-                <Eye className="h-4 w-4 mr-2" />
-                Visualizar
-              </TabsTrigger>
-              <TabsTrigger value="template" className="flex-1">
-                <FileText className="h-4 w-4 mr-2" />
-                Modelos
-              </TabsTrigger>
-              <TabsTrigger value="colors" className="flex-1">
-                <Palette className="h-4 w-4 mr-2" />
-                Cores
-              </TabsTrigger>
-              <TabsTrigger value="structure" className="flex-1">
-                <CheckSquare className="h-4 w-4 mr-2" />
-                Estrutura
-              </TabsTrigger>
-            </TabsList>
+    <div className="flex flex-col">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div>
+          <div className="bg-white rounded-lg shadow-sm border p-4 mb-4">
+            <h2 className="font-semibold flex items-center mb-4">
+              <FileText className="h-5 w-5 mr-2 text-blue-600" />
+              Editor de Proposta
+            </h2>
             
-            <TabsContent value="preview">
-              <div className="space-y-4">
-                <SelectSpecialist 
-                  users={users}
-                  selectedSpecialist={selectedSpecialist}
-                  onChange={setSelectedSpecialist}
-                  isAdmin={isAdmin}
-                />
-                
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="show-signature" className="cursor-pointer">
-                      Mostrar Assinatura
-                    </Label>
-                    <Switch 
-                      id="show-signature" 
-                      checked={showSignature}
-                      onCheckedChange={setShowSignature}
-                    />
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="w-full mb-4">
+                <TabsTrigger value="preview" className="flex-1">
+                  <Eye className="h-4 w-4 mr-2" />
+                  Visualizar
+                </TabsTrigger>
+                <TabsTrigger value="template" className="flex-1">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Modelos
+                </TabsTrigger>
+                <TabsTrigger value="colors" className="flex-1">
+                  <Palette className="h-4 w-4 mr-2" />
+                  Cores
+                </TabsTrigger>
+                <TabsTrigger value="structure" className="flex-1">
+                  <CheckSquare className="h-4 w-4 mr-2" />
+                  Estrutura
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="preview">
+                <div className="space-y-4">
+                  <SelectSpecialist 
+                    users={users}
+                    selectedSpecialist={selectedSpecialist}
+                    onChange={setSelectedSpecialist}
+                    isAdmin={isAdmin}
+                  />
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="show-signature" className="cursor-pointer">
+                        Mostrar Assinatura
+                      </Label>
+                      <Switch 
+                        id="show-signature" 
+                        checked={showSignature}
+                        onCheckedChange={setShowSignature}
+                      />
+                    </div>
                   </div>
+                  
+                  <AdditionalCommentsField
+                    value={formData.additionalComments || ''}
+                    onChange={(value) => onInputChange('additionalComments', value)}
+                  />
                 </div>
-                
-                <AdditionalCommentsField
-                  value={formData.additionalComments || ''}
-                  onChange={(value) => onInputChange('additionalComments', value)}
+              </TabsContent>
+              
+              <TabsContent value="template">
+                <TemplateSelector 
+                  templates={defaultTemplates}
+                  selectedTemplateId={selectedTemplate.id}
+                  onSelectTemplate={handleTemplateChange}
                 />
-                
-                <Button 
-                  onClick={handleGeneratePDF}
-                  className="w-full"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Baixar PDF
-                </Button>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="template">
-              <TemplateSelector 
-                templates={defaultTemplates}
-                selectedTemplateId={selectedTemplate.id}
-                onSelectTemplate={handleTemplateChange}
-              />
-            </TabsContent>
-            
-            <TabsContent value="colors">
-              <ColorSelector colors={colors} onChange={handleColorChange} />
-            </TabsContent>
-            
-            <TabsContent value="structure">
-              <SectionOrganizer 
-                sections={layout.sections}
-                onChange={handleSectionsChange}
-                layoutOptions={{
-                  showHeader: layout.showHeader,
-                  showLogo: layout.showLogo,
-                  showWatermark: layout.showWatermark
-                }}
-                onLayoutOptionChange={handleLayoutOptionChange}
-              />
-            </TabsContent>
-          </Tabs>
+              </TabsContent>
+              
+              <TabsContent value="colors">
+                <ColorSelector colors={colors} onChange={handleColorChange} />
+              </TabsContent>
+              
+              <TabsContent value="structure">
+                <SectionOrganizer 
+                  sections={layout.sections}
+                  onChange={handleSectionsChange}
+                  layoutOptions={{
+                    showHeader: layout.showHeader,
+                    showLogo: layout.showLogo,
+                    showWatermark: layout.showWatermark
+                  }}
+                  onLayoutOptionChange={handleLayoutOptionChange}
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
+
+        <div ref={previewRef}>
+          <div className="sticky top-4 mb-4">
+            <PDFTemplatePreview 
+              formData={formData}
+              template={selectedTemplate}
+              imagePreview={imagePreview}
+            />
+          </div>
         </div>
       </div>
-
-      <div ref={previewRef}>
-        <div className="sticky top-4 mb-4">
-          <PDFTemplatePreview 
-            formData={formData}
-            template={selectedTemplate}
-            imagePreview={imagePreview}
-          />
-        </div>
+      
+      {/* Always show the Download PDF button below the preview */}
+      <div className="mt-6 flex justify-center">
+        <Button 
+          onClick={handleGeneratePDF}
+          className="w-full max-w-md"
+          size="lg"
+        >
+          <Download className="h-5 w-5 mr-2" />
+          Baixar PDF
+        </Button>
       </div>
     </div>
   );

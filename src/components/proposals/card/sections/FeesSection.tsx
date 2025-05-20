@@ -13,9 +13,6 @@ interface FeesSectionProps {
 const FeesSection = ({ data, colors }: FeesSectionProps) => {
   if (!data.feesValue) return null;
   
-  // Get specialist name
-  const specialistName = data.specialistName || 'Especialista Tributário';
-  
   return (
     <div className="mb-6">
       <h3 className="text-base font-semibold pb-2 mb-3 border-b border-gray-200"
@@ -28,9 +25,6 @@ const FeesSection = ({ data, colors }: FeesSectionProps) => {
             <span className="text-sm font-medium text-gray-700">
               Honorários Aliança Fiscal:
             </span>
-            <p className="text-sm mt-1 text-gray-500">
-              Especialista Tributário - {specialistName}
-            </p>
           </div>
           <div className="text-right">
             <p className="text-lg font-medium" style={{ color: colors.accent }}>
