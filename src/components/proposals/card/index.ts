@@ -1,3 +1,4 @@
+
 // Export all card components to simplify imports
 export { default as ProposalCard } from './ProposalCard';
 export { default as ProposalHeader } from './ProposalHeader';
@@ -11,6 +12,3 @@ export { default as DebtConsequencesAlert } from './DebtConsequencesAlert';
 
 // Export sections
 export * from './sections';
-
-// Export content components
-export * from './content';
