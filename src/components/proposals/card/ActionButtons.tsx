@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Printer, Download } from "lucide-react";
 import { ExtractedData } from "@/lib/types/proposals";
@@ -27,7 +27,7 @@ const ActionButtons = ({ onPrint, proposalData, proposalRef }: ActionButtonsProp
     
     toast({
       title: "Processando",
-      description: "Gerando PDF em uma única página, aguarde um momento...",
+      description: "Gerando PDF, aguarde um momento...",
     });
     
     try {
@@ -35,7 +35,7 @@ const ActionButtons = ({ onPrint, proposalData, proposalRef }: ActionButtonsProp
       
       toast({
         title: "Sucesso",
-        description: "PDF gerado com sucesso em uma única página!",
+        description: "PDF gerado com sucesso!",
       });
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);

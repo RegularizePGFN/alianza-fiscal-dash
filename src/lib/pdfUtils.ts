@@ -19,10 +19,11 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     const tempContainer = document.createElement('div');
     tempContainer.style.position = 'absolute';
     tempContainer.style.left = '-9999px';
-    tempContainer.style.width = '794px'; // A4 width in pixels at 96dpi
+    tempContainer.style.width = '210mm'; // A4 width
     tempContainer.style.padding = '0';
     tempContainer.style.margin = '0';
     tempContainer.style.backgroundColor = 'white';
+    tempContainer.style.fontSize = '10px'; // Reduzir tamanho da fonte para otimizar espaço
     
     // Hide action buttons
     const actionButtons = clonedElement.querySelectorAll('.pdf-action-buttons, [data-pdf-remove="true"], button');
@@ -32,35 +33,22 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       }
     });
     
-    // Reduce spacing between elements
-    const sections = clonedElement.querySelectorAll('div.space-y-4, div.mb-6, div.mt-8, div.gap-6');
+    // Reduzir espaçamento entre elementos
+    const sections = clonedElement.querySelectorAll('div.space-y-4, div.mb-6, div.mt-8');
     sections.forEach(section => {
       if (section instanceof HTMLElement) {
-        section.style.marginTop = '6px';
-        section.style.marginBottom = '6px';
-        section.style.gap = '8px';
+        section.style.marginTop = '8px';
+        section.style.marginBottom = '8px';
         section.classList.remove('space-y-4', 'mb-6', 'mt-8');
-        section.classList.add('space-y-3', 'mb-3', 'mt-2');
+        section.classList.add('space-y-2', 'mb-3', 'mt-2');
       }
     });
     
-    // Ensure proper spacing in grids
+    // Comprimir elementos e grids para economizar espaço
     const grids = clonedElement.querySelectorAll('.grid');
     grids.forEach(grid => {
       if (grid instanceof HTMLElement) {
         grid.style.gap = '8px';
-        grid.style.display = 'grid';
-        grid.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
-      }
-    });
-    
-    // Fix text spacing in all elements
-    const textElements = clonedElement.querySelectorAll('p, span, h1, h2, h3, h4, h5, h6, td, th');
-    textElements.forEach(el => {
-      if (el instanceof HTMLElement) {
-        el.style.padding = '2px 4px';
-        el.style.wordBreak = 'break-word';
-        el.style.whiteSpace = 'pre-line';
       }
     });
     
@@ -70,26 +58,16 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       /* Ensure Roboto font is loaded */
       @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
       
-      /* Apply proper styling to all elements */
+      /* Make sure all content fits on page */
       * {
         box-sizing: border-box;
         font-family: 'Roboto', sans-serif !important;
         margin-block: 0;
-        page-break-inside: avoid !important;
-        word-break: break-word;
       }
       
-      /* Proper spacing for text elements */
+      /* Reduce spacing */
       p, h1, h2, h3, h4, h5, h6 {
-        margin-block: 4px !important;
-        line-height: 1.4 !important;
-        padding: 2px 4px !important;
-      }
-      
-      /* Labels and values spacing */
-      span.text-sm, span.font-medium, span.text-gray-500, span.text-gray-700 {
-        margin-bottom: 2px !important;
-        display: block !important;
+        margin-block: 2px !important;
       }
       
       /* Hide button elements */
@@ -106,29 +84,14 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
         padding: 6px !important;
       }
       
-      /* Grids and layouts */
-      .grid {
-        display: grid !important;
-        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-        gap: 8px !important;
-        margin-bottom: 10px !important;
-      }
-      
-      /* Sections spacing */
-      section, .section {
-        margin-bottom: 12px !important;
-      }
-      
-      /* Section headings */
-      section h2, .section-title {
+      .space-y-4 {
+        margin-top: 8px !important;
         margin-bottom: 8px !important;
-        font-weight: 600 !important;
       }
       
-      /* Item labels */
-      .label {
-        margin-bottom: 2px !important;
-        display: block !important;
+      /* Optimize grids for space */
+      .grid {
+        gap: 8px !important;
       }
       
       /* Compress header */
@@ -143,18 +106,6 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
         print-color-adjust: exact !important;
         color-adjust: exact !important;
         background-color: white;
-      }
-      
-      /* Card container optimization */
-      .card {
-        max-width: 794px !important;
-        margin: 0 auto !important;
-      }
-      
-      /* Add proper body transform */
-      body {
-        transform: scale(0.95) !important;
-        transform-origin: top center !important;
       }
     `;
     
@@ -179,26 +130,21 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
         logging: false,
         allowTaint: true,
         backgroundColor: '#ffffff',
-        // Define max height for A4
+        // Definir altura máxima para um A4
         height: clonedElement.offsetHeight,
         windowHeight: clonedElement.offsetHeight,
-        // Apply scaling to fit in a single page
+        // Ajustar escala para caber em uma única página
         onclone: (document, element) => {
           const contentHeight = element.offsetHeight;
-          const maxA4Height = 1123; // pixels for A4 @ 96 dpi
+          const maxA4Height = 1122; // pixels para A4 @ 96 dpi
           
           if (contentHeight > maxA4Height) {
-            // Scale down to fit on a single page - use body instead of direct element
-            const wrapper = document.createElement('div');
-            wrapper.style.transformOrigin = 'top center';
-            wrapper.style.transform = `scale(0.95)`;
-            wrapper.style.width = '100%';
-            wrapper.style.maxWidth = '794px';
-            wrapper.style.margin = '0 auto';
-            
-            // Reparent the element
-            element.parentNode?.insertBefore(wrapper, element);
-            wrapper.appendChild(element);
+            // Escala para caber em uma página
+            const scaleFactor = maxA4Height / contentHeight;
+            element.style.transform = `scale(${scaleFactor})`;
+            element.style.transformOrigin = 'top left';
+            element.style.width = `${100 / scaleFactor}%`;
+            element.style.height = `${maxA4Height}px`;
           }
         }
       });
@@ -207,11 +153,11 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       const imgWidth = 210; // A4 width in mm
       const pageHeight = 297; // A4 height in mm
       
-      // Calculate proportional height to fit on a single page
+      // Calcular altura proporcional para caber em uma página
       const contentRatio = canvas.height / canvas.width;
       const imgHeight = Math.min(imgWidth * contentRatio, pageHeight - 10);
       
-      // Initialize PDF - compressed high quality mode
+      // Initialize PDF - modo comprimido de alta qualidade
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
@@ -219,7 +165,7 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
         compress: true
       });
       
-      // Add image content to PDF - center vertically if shorter than page
+      // Add image content to PDF - centralizado verticalmente se menor que a página
       const yPosition = imgHeight < pageHeight ? (pageHeight - imgHeight) / 2 : 0;
       pdf.addImage(
         canvas.toDataURL('image/jpeg', 0.95), 
