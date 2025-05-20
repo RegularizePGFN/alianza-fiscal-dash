@@ -39,7 +39,7 @@ const DataForm = ({
     setProcessingStatus
   });
 
-  // Set specialist name when form loads
+  // Defina apenas o especialista, não a razão social
   useState(() => {
     if (!formData.specialistName && user?.name) {
       const event = {
@@ -50,6 +50,7 @@ const DataForm = ({
       } as React.ChangeEvent<HTMLInputElement>;
       onInputChange(event);
     }
+    // Removido o preenchimento automático de clientName com o nome do usuário
   });
   
   // Format currency when user inputs values

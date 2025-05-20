@@ -54,12 +54,12 @@ export const useProposalsState = () => {
     fetchProposals();
   }, []);
 
-  // Add user data to form
+  // Add user data to form - exceto o nome para razão social
   useEffect(() => {
     if (user) {
       setFormData(prev => ({
         ...prev,
-        clientName: user.name || '',
+        // Removido o clientName: user.name para evitar preenchimento indevido
         clientEmail: user.email || '',
         clientPhone: '', // User can fill this if needed
         specialistName: user.name || ''

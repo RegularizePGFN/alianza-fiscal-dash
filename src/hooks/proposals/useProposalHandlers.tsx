@@ -1,4 +1,3 @@
-
 import { ChangeEvent } from "react";
 import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 import { fetchCnpjData } from "@/lib/api";
@@ -62,19 +61,19 @@ export const useProposalHandlers = ({
         }
       }
       
-      // Preserve existing client data if available, only update if not already set
+      // MODIFICAÇÃO IMPORTANTE: Manter dados do cliente existentes, mas NÃO usar o nome do usuário como razão social
       return {
         ...prev,
         ...data,
-        // Fix to preserve client data across tab changes - only update if fields don't already exist
-        clientName: prev.clientName || data.clientName || user?.name || '',
+        // Manter clientName apenas se já existir, caso contrário usar o dado da imagem processada
+        clientName: prev.clientName || data.clientName || '',
         clientEmail: prev.clientEmail || data.clientEmail || user?.email || '',
         clientPhone: prev.clientPhone || data.clientPhone || '',
         businessActivity: prev.businessActivity || data.businessActivity || '',
         feesValue: feesValue || prev.feesValue || '0,00',
         // Make sure entryInstallments is set, defaulting to '1' if not provided
         entryInstallments: data.entryInstallments || prev.entryInstallments || '1',
-        // Set default specialist name
+        // Set specialist name using user's name
         specialistName: prev.specialistName || user?.name || '',
         // Set creation and validity dates
         creationDate: format(now, "yyyy-MM-dd'T'HH:mm:ss", { locale: ptBR }),
@@ -101,12 +100,12 @@ export const useProposalHandlers = ({
       fetchCnpjData(data.cnpj).then(companyData => {
         if (companyData) {
           setCompanyData(companyData);
-          // Modified this section to preserve existing user data
+          // Importante: Usar o nome da empresa dos dados do CNPJ como razão social
           setFormData(prev => {
             return {
               ...prev,
-              // Only update client info if it's not already set by the user
-              clientName: prev.clientName || companyData.company?.name || '',
+              // Usar o nome da empresa como clientName
+              clientName: companyData.company?.name || prev.clientName || '',
               clientEmail: prev.clientEmail || companyData.emails?.[0]?.address || '',
               clientPhone: prev.clientPhone || (companyData.phones?.[0] ? `${companyData.phones[0].area}${companyData.phones[0].number}` : ''),
               businessActivity: prev.businessActivity || (companyData.sideActivities?.[0] ? 
@@ -313,7 +312,8 @@ export const useProposalHandlers = ({
   
   const handleReset = () => {
     setFormData({
-      clientName: user?.name || '',
+      // Não usar o nome do usuário para clientName
+      clientName: '',
       clientEmail: user?.email || '',
       clientPhone: '',
       specialistName: user?.name || '',
@@ -340,10 +340,10 @@ export const useProposalHandlers = ({
 
   return {
     handleProcessComplete,
-    handleInputChange,
-    handleGenerateProposal,
-    handleViewProposal,
-    handleDeleteProposal,
+    handleInputChange: typeof handleInputChange !== 'undefined' ? handleInputChange : () => {},
+    handleGenerateProposal: typeof handleGenerateProposal !== 'undefined' ? handleGenerateProposal : () => {},
+    handleViewProposal: typeof handleViewProposal !== 'undefined' ? handleViewProposal : () => {},
+    handleDeleteProposal: typeof handleDeleteProposal !== 'undefined' ? handleDeleteProposal : () => {},
     handleReset
   };
 };
