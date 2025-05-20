@@ -11,7 +11,7 @@ interface SalespeopleTableProps {
 export function SalespeopleTable({ salespeople }: SalespeopleTableProps) {
   return (
     <ScrollArea className="h-[150px]">
-      <table className="w-full text-xs">
+      <table className="w-full text-xs daily-salespeople-table">
         <TableHeader />
         <tbody>
           {salespeople.map(person => (
