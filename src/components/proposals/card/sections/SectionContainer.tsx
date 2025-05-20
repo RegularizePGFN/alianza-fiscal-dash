@@ -9,11 +9,10 @@ interface SectionContainerProps {
   className?: string;
   color?: string;
   fullWidth?: boolean;
-  compact?: boolean;
 }
 
 /**
- * A responsive container for proposal sections with compact option for PDF
+ * A responsive container for proposal sections
  */
 const SectionContainer = ({ 
   children, 
@@ -21,22 +20,18 @@ const SectionContainer = ({
   icon, 
   className, 
   color = '#1E40AF',
-  fullWidth = false,
-  compact = false
+  fullWidth = false
 }: SectionContainerProps) => {
   return (
-    <div className={cn("mb-6", compact ? "mb-3" : "mb-6", className)}>
+    <div className={cn("mb-6", className)}>
       <h3 
-        className={cn(
-          "text-base font-semibold border-b border-gray-200 flex items-center",
-          compact ? "pb-1 mb-2" : "pb-2 mb-3"
-        )}
+        className="text-base font-semibold pb-2 mb-3 border-b border-gray-200 flex items-center" 
         style={{ color }}
       >
         {icon && <span className="mr-2">{icon}</span>}
         {title}
       </h3>
-      <div className={`grid grid-cols-1 ${fullWidth ? '' : 'md:grid-cols-2'} ${compact ? 'gap-2' : 'gap-4'}`}>
+      <div className={`grid grid-cols-1 ${fullWidth ? '' : 'md:grid-cols-2'} gap-4`}>
         {children}
       </div>
     </div>

@@ -1,17 +1,15 @@
 
 import React from 'react';
 import { ExtractedData } from "@/lib/types/proposals";
-import { SectionContainer, DataField } from './index';
 
 interface NegotiationSectionProps {
   data: Partial<ExtractedData>;
   colors: {
     secondary: string;
   };
-  compact?: boolean;
 }
 
-const NegotiationSection = ({ data, colors, compact = false }: NegotiationSectionProps) => {
+const NegotiationSection = ({ data, colors }: NegotiationSectionProps) => {
   // Calculate entry installment value
   const entryInstallmentValue = () => {
     if (data.entryValue && data.entryInstallments) {
@@ -36,50 +34,47 @@ const NegotiationSection = ({ data, colors, compact = false }: NegotiationSectio
   };
 
   return (
-    <SectionContainer 
-      title="Dados da Negociação" 
-      color={colors.secondary}
-      compact={compact}
-    >
-      <DataField 
-        label="Valor Consolidado" 
-        value={`R$ ${data.totalDebt || '-'}`}
-        compact={compact}
-      />
-      
-      <DataField 
-        label="Valor com Reduções" 
-        value={`R$ ${data.discountedValue || '-'}`}
-        highlight={true}
-        className="bg-green-50"
-        compact={compact}
-      />
-      
-      <DataField 
-        label="Percentual de Desconto" 
-        value={`${data.discountPercentage || '-'}%`}
-        compact={compact}
-      />
-      
-      <DataField 
-        label={parseInt(data.entryInstallments || '1') > 1 ? 
-          `Entrada (${data.entryInstallments}x)` : 
-          'Valor da Entrada'}
-        value={
-          parseInt(data.entryInstallments || '1') > 1 ? (
-            <>
+    <div className="mb-6">
+      <h3 className="text-base font-semibold pb-2 mb-3 border-b border-gray-200"
+          style={{ color: colors.secondary }}>
+        Dados da Negociação
+      </h3>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-gray-50 p-3 rounded">
+          <span className="text-sm font-medium text-gray-500">
+            Valor Consolidado:
+          </span>
+          <p className="text-base mt-1">R$ {data.totalDebt || '-'}</p>
+        </div>
+        <div className="bg-gray-50 p-3 rounded bg-green-50">
+          <span className="text-sm font-medium text-green-700">
+            Valor com Reduções:
+          </span>
+          <p className="text-base mt-1 font-medium text-green-700">R$ {data.discountedValue || '-'}</p>
+        </div>
+        <div className="bg-gray-50 p-3 rounded">
+          <span className="text-sm font-medium text-gray-500">
+            Percentual de Desconto:
+          </span>
+          <p className="text-base mt-1">{data.discountPercentage || '-'}%</p>
+        </div>
+        <div className="bg-gray-50 p-3 rounded">
+          <span className="text-sm font-medium text-gray-500">
+            {parseInt(data.entryInstallments || '1') > 1 ? 
+              `Entrada (${data.entryInstallments}x):` : 
+              'Valor da Entrada:'}
+          </span>
+          {parseInt(data.entryInstallments || '1') > 1 ? (
+            <div className="text-base mt-1">
               <p>R$ {entryInstallmentValue()} por parcela</p>
-              <p className={compact ? "text-xs text-gray-500" : "text-sm text-gray-500"}>
-                Total: R$ {data.entryValue || '0,00'}
-              </p>
-            </>
+              <p className="text-sm text-gray-500">Total: R$ {data.entryValue || '0,00'}</p>
+            </div>
           ) : (
-            `R$ ${data.entryValue || '-'}`
-          )
-        }
-        compact={compact}
-      />
-    </SectionContainer>
+            <p className="text-base mt-1">R$ {data.entryValue || '-'}</p>
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
 

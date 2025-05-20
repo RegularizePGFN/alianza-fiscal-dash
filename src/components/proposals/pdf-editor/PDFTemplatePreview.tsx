@@ -93,12 +93,11 @@ const PDFTemplatePreview = ({
         </div>
       )}
       
-      {/* Use the shared ProposalContent component with compact mode */}
+      {/* Use the shared ProposalContent component for consistency */}
       <ProposalContent 
         data={formData}
         companyData={companyData}
         isPreview={true}
-        compact={true}
       />
     </Card>
   );
