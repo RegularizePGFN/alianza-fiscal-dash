@@ -18,38 +18,15 @@ export async function generateProposalPng(proposalElement: HTMLElement, data: Pa
     // File name
     const fileName = `proposta_pgfn_${data.cnpj?.replace(/\D/g, '') || 'cliente'}_${seller}.png`;
 
-    // Remover elementos que não devem aparecer na exportação
-    const elementsToHide = proposalElement.querySelectorAll('[data-pdf-remove="true"]');
-    elementsToHide.forEach(el => {
-      if (el instanceof HTMLElement) {
-        el.style.display = 'none';
-      }
-    });
-
     // Capture the content exactly as it appears on screen without modifications
     const canvas = await html2canvas(proposalElement, {
-      scale: 2, // Melhor balanço entre qualidade e tamanho de arquivo
+      scale: 2, // Bom balanço entre qualidade e tamanho do arquivo
       useCORS: true, // Enable CORS for any images
       logging: false,
       allowTaint: true,
-      backgroundColor: '#ffffff', // Usar fundo branco para evitar transparência
+      backgroundColor: '#ffffff', // Fundo branco para consistência
       imageTimeout: 0, // No timeout for image loading
-      onclone: (documentClone) => {
-        // Encontrar e esconder botões de ação no clone
-        const actionButtons = documentClone.querySelectorAll('button, [data-pdf-remove="true"]');
-        actionButtons.forEach(button => {
-          if (button instanceof HTMLElement) {
-            button.style.display = 'none';
-          }
-        });
-      }
-    });
-    
-    // Restaurar a visibilidade dos elementos escondidos
-    elementsToHide.forEach(el => {
-      if (el instanceof HTMLElement) {
-        el.style.display = '';
-      }
+      // Não aplicamos transformações para manter exatamente como está na tela
     });
     
     // Create a download link for the PNG with maximum quality
@@ -264,3 +241,4 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     return Promise.reject(error);
   }
 }
+
