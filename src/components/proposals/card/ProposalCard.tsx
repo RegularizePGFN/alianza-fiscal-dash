@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
@@ -100,10 +99,11 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
     
     toast({
       title: "Processando",
-      description: "Gerando imagem PNG, aguarde um momento...",
+      description: "Gerando imagem PNG de alta qualidade, aguarde...",
     });
     
     try {
+      // Direct use of the element to capture exact screen appearance
       await generateProposalPng(proposalRef.current, data);
       
       toast({

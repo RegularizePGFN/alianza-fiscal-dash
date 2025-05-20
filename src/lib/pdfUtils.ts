@@ -1,10 +1,12 @@
-
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { ExtractedData } from './types/proposals';
 
 export async function generateProposalPng(proposalElement: HTMLElement, data: Partial<ExtractedData>): Promise<void> {
   try {
+    // Wait for all fonts to load for accurate rendering
+    await document.fonts.ready;
+    
     // Get seller name for filename
     const seller = data.sellerName ? 
       data.sellerName.replace(/[^\w]/g, '_').toLowerCase() : 'vendedor';
@@ -12,149 +14,36 @@ export async function generateProposalPng(proposalElement: HTMLElement, data: Pa
     // File name
     const fileName = `proposta_pgfn_${data.cnpj?.replace(/\D/g, '') || 'cliente'}_${seller}.png`;
 
-    // Clone the element to avoid modifying the original
-    const clonedElement = proposalElement.cloneNode(true) as HTMLElement;
+    // Set up high quality capture settings
+    const scale = 4; // Higher scale for better quality (4x)
+    const pixelRatio = window.devicePixelRatio || 1;
     
-    // Create a temporary container for the PNG content with all necessary styles
-    const tempContainer = document.createElement('div');
-    tempContainer.style.position = 'absolute';
-    tempContainer.style.left = '-9999px';
-    tempContainer.style.width = proposalElement.offsetWidth + 'px';
-    tempContainer.style.height = proposalElement.offsetHeight + 'px';
-    tempContainer.style.padding = '0';
-    tempContainer.style.margin = '0';
-    tempContainer.style.overflow = 'hidden';
-    tempContainer.style.backgroundColor = 'white';
-    
-    // Hide elements not meant for export
-    const elementsToHide = clonedElement.querySelectorAll('[data-pdf-remove="true"], button');
-    elementsToHide.forEach(element => {
-      if (element instanceof HTMLElement) {
-        element.style.display = 'none';
-      }
+    // Capture the content as it appears on screen without modifications
+    const canvas = await html2canvas(proposalElement, {
+      scale: scale * pixelRatio, // Multiply by device pixel ratio for higher resolution
+      useCORS: true,
+      logging: false,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      imageTimeout: 0, // No timeout for image loading
     });
     
-    // Append the element to the temporary container
-    tempContainer.appendChild(clonedElement);
-    document.body.appendChild(tempContainer);
-    
-    try {
-      // Import all fonts to ensure accurate rendering
-      const fonts = document.querySelectorAll('style, link[rel="stylesheet"]');
-      const fontStylesContainer = document.createElement('div');
-      fonts.forEach(font => {
-        fontStylesContainer.appendChild(font.cloneNode(true));
-      });
-      tempContainer.appendChild(fontStylesContainer);
-      
-      // Add a custom stylesheet to ensure exact rendering
-      const styleElement = document.createElement('style');
-      styleElement.textContent = `
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
-        
-        * {
-          box-sizing: border-box;
-          -webkit-font-smoothing: antialiased;
-          -moz-osx-font-smoothing: grayscale;
-          font-family: 'Roboto', sans-serif;
-        }
-        
-        /* Preserve colors and shadows */
-        * {
-          print-color-adjust: exact !important;
-          -webkit-print-color-adjust: exact !important;
-          color-adjust: exact !important;
-        }
-        
-        /* Hide any buttons or elements not meant for export */
-        button, [data-pdf-remove="true"] {
-          display: none !important;
-        }
-        
-        /* Preserve background colors */
-        [class*="bg-"] {
-          background-color: var(--tw-bg-opacity) !important;
-        }
-        
-        /* Ensure all borders are visible */
-        [class*="border"] {
-          border-style: solid !important;
-        }
-      `;
-      tempContainer.appendChild(styleElement);
-      
-      // Create PNG with high quality settings
-      const scale = 4; // Higher scale for better quality (4x)
-      const pixelRatio = window.devicePixelRatio || 1;
-      
-      // Wait for styles and fonts to load
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Capture the content as canvas with high fidelity settings
-      const canvas = await html2canvas(clonedElement, {
-        scale: scale * pixelRatio, // Multiply by device pixel ratio for higher resolution
-        useCORS: true,
-        logging: false,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        imageTimeout: 0, // No timeout for image loading
-        onclone: (document, element) => {
-          // Ensure all styles are preserved in the clone
-          const computedStyle = window.getComputedStyle(proposalElement);
-          Object.values(computedStyle).forEach(property => {
-            try {
-              if (property.startsWith('--')) {
-                element.style.setProperty(property, computedStyle.getPropertyValue(property));
-              }
-            } catch (e) {
-              // Ignore errors for property access
-            }
-          });
-          
-          // Make sure all styles are correctly applied
-          const allElements = element.querySelectorAll('*');
-          allElements.forEach(el => {
-            if (el instanceof HTMLElement) {
-              // Ensure background colors render correctly
-              const bgColor = getComputedStyle(el).backgroundColor;
-              if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)') {
-                el.style.backgroundColor = bgColor;
-              }
-              
-              // Ensure text colors render correctly
-              const textColor = getComputedStyle(el).color;
-              if (textColor) {
-                el.style.color = textColor;
-              }
-              
-              // Ensure borders render correctly
-              const border = getComputedStyle(el).border;
-              if (border && border !== '') {
-                el.style.border = border;
-              }
-            }
-          });
-        }
-      });
-      
-      // Improve image quality with smooth scaling
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-      }
-      
-      // Create a download link for the PNG with maximum quality
-      const link = document.createElement('a');
-      link.download = fileName;
-      link.href = canvas.toDataURL('image/png', 1.0); // Maximum quality (1.0)
-      link.click();
-      
-      return Promise.resolve();
-    } finally {
-      // Clean up the temporary DOM element
-      document.body.removeChild(tempContainer);
+    // Improve image quality with smooth scaling
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
     }
+    
+    // Create a download link for the PNG with maximum quality
+    const link = document.createElement('a');
+    link.download = fileName;
+    link.href = canvas.toDataURL('image/png', 1.0); // Maximum quality (1.0)
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    return Promise.resolve();
   } catch (error) {
     console.error('Error generating PNG:', error);
     return Promise.reject(error);
