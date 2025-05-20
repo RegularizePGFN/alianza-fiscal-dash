@@ -1,16 +1,22 @@
 
 import React, { useRef } from 'react';
 import { Card } from '@/components/ui/card';
-import { ExtractedData, PDFTemplate } from '@/lib/types/proposals';
+import { ExtractedData, PDFTemplate, CompanyData } from '@/lib/types/proposals';
 import ProposalContent from '../card/ProposalContent';
 
 interface PDFTemplatePreviewProps {
   formData: Partial<ExtractedData>;
   template: PDFTemplate;
   imagePreview: string | null;
+  companyData?: CompanyData | null;
 }
 
-const PDFTemplatePreview = ({ formData, template, imagePreview }: PDFTemplatePreviewProps) => {
+const PDFTemplatePreview = ({ 
+  formData, 
+  template, 
+  imagePreview,
+  companyData 
+}: PDFTemplatePreviewProps) => {
   const previewRef = useRef<HTMLDivElement>(null);
   
   // Parse template colors from formData or use defaults from selected template
@@ -52,7 +58,7 @@ const PDFTemplatePreview = ({ formData, template, imagePreview }: PDFTemplatePre
   return (
     <Card 
       ref={previewRef} 
-      className="border p-0 overflow-hidden shadow-md preview-proposal font-['Roboto',sans-serif]"
+      className="border p-0 overflow-hidden shadow-md preview-proposal font-['Roboto',sans-serif] transition-colors"
       style={{ backgroundColor: colors.background }}
     >
       {layout.showHeader && (
@@ -78,6 +84,7 @@ const PDFTemplatePreview = ({ formData, template, imagePreview }: PDFTemplatePre
       {/* Use the shared ProposalContent component for consistency */}
       <ProposalContent 
         data={formData}
+        companyData={companyData}
         isPreview={true}
       />
     </Card>

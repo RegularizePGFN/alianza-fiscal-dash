@@ -3,12 +3,13 @@ import React, { useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { FileCheck } from "lucide-react";
 import { PDFTemplatePreview } from "@/components/proposals/pdf-editor";
-import { ExtractedData, PDFTemplate } from "@/lib/types/proposals";
+import { ExtractedData, PDFTemplate, CompanyData } from "@/lib/types/proposals";
 
 interface ProposalPreviewContainerProps {
   formData: Partial<ExtractedData>;
   selectedTemplate: PDFTemplate;
   imagePreview: string | null;
+  companyData?: CompanyData | null;
   onGeneratePDF: () => Promise<void>;
 }
 
@@ -16,6 +17,7 @@ export const ProposalPreviewContainer = ({
   formData,
   selectedTemplate,
   imagePreview,
+  companyData,
   onGeneratePDF
 }: ProposalPreviewContainerProps) => {
   const previewRef = useRef<HTMLDivElement | null>(null);
@@ -27,6 +29,7 @@ export const ProposalPreviewContainer = ({
           formData={formData}
           template={selectedTemplate}
           imagePreview={imagePreview}
+          companyData={companyData}
         />
         
         <Button 

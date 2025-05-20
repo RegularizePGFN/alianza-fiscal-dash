@@ -22,11 +22,25 @@ export const useFormHandlers = ({
   setCompanyData,
   user,
 }: UseFormHandlersProps) => {
+  // Store company data in a memoized state to ensure consistency
+  let companyContactInfo = {
+    clientEmail: '',
+    clientPhone: '',
+    businessActivity: ''
+  };
+
   // Handle the completion of the image processing
   const handleProcessComplete = (data: Partial<ExtractedData>, preview: string) => {
     // Calculate creation date and validity date
     const now = new Date();
     const validityDate = addDays(now, 1);
+    
+    // Preserve current company data
+    companyContactInfo = {
+      clientEmail: formData.clientEmail || '',
+      clientPhone: formData.clientPhone || '',
+      businessActivity: formData.businessActivity || ''
+    };
     
     setFormData(prev => {
       // Calculate fees if possible
@@ -46,15 +60,15 @@ export const useFormHandlers = ({
         }
       }
       
-      // IMPORTANTE: Preservar os dados da empresa vindos do CNPJ, NÃO usar dados do usuário
+      // Combine the existing data with new data, preserving company contact info
       return {
         ...prev,
         ...data,
-        // PRESERVAR os dados do cliente obtidos: nome, email, telefone, etc.
+        // Preserve client data if it exists
         clientName: data.clientName || prev.clientName || '',
-        clientEmail: data.clientEmail || prev.clientEmail || '',
-        clientPhone: data.clientPhone || prev.clientPhone || '',
-        businessActivity: data.businessActivity || prev.businessActivity || '',
+        clientEmail: prev.clientEmail || companyContactInfo.clientEmail || '',
+        clientPhone: prev.clientPhone || companyContactInfo.clientPhone || '',
+        businessActivity: prev.businessActivity || companyContactInfo.businessActivity || '',
         feesValue: feesValue || prev.feesValue || '0,00',
         // Make sure entryInstallments is set, defaulting to '1' if not provided
         entryInstallments: data.entryInstallments || prev.entryInstallments || '1',
@@ -72,7 +86,7 @@ export const useFormHandlers = ({
           background: '#F8FAFC'
         }),
         templateLayout: prev.templateLayout || JSON.stringify({
-          sections: ['client', 'debt', 'payment', 'fees'],
+          sections: ['company', 'debt', 'payment', 'fees'],
           showHeader: true,
           showLogo: true,
           showWatermark: false
@@ -85,16 +99,27 @@ export const useFormHandlers = ({
       fetchCnpjData(data.cnpj).then(companyData => {
         if (companyData) {
           setCompanyData(companyData);
-          // Usar dados da empresa consultada para preencher os campos
+          
+          // Update form data with company information from the API
           setFormData(prev => {
+            // Store the company contact information in our memory
+            const email = companyData.emails?.[0]?.address || '';
+            const phone = companyData.phones?.[0] ? `${companyData.phones[0].area}${companyData.phones[0].number}` : '';
+            const activity = companyData.mainActivity ? `${companyData.mainActivity.id} | ${companyData.mainActivity.text}` : '';
+            
+            companyContactInfo = {
+              clientEmail: email,
+              clientPhone: phone,
+              businessActivity: activity
+            };
+            
             return {
               ...prev,
               clientName: companyData.company?.name || prev.clientName || '',
-              clientEmail: prev.clientEmail || companyData.emails?.[0]?.address || '',
-              clientPhone: prev.clientPhone || (companyData.phones?.[0] ? `${companyData.phones[0].area}${companyData.phones[0].number}` : ''),
-              businessActivity: prev.businessActivity || (companyData.sideActivities?.[0] ? 
-                `${companyData.sideActivities[0].id} | ${companyData.sideActivities[0].text}` : 
-                companyData.mainActivity ? `${companyData.mainActivity.id} | ${companyData.mainActivity.text}` : '')
+              // Only update these fields if they're not already set
+              clientEmail: email || prev.clientEmail || '',
+              clientPhone: phone || prev.clientPhone || '',
+              businessActivity: activity || prev.businessActivity || ''
             };
           });
         }
@@ -105,22 +130,27 @@ export const useFormHandlers = ({
     setActiveTab("data");
   };
   
-  // Handle form input changes - preserving company email and phone data
+  // Handle form input changes - preserving company contact information
   const handleInputChange = (nameOrEvent: string | ChangeEvent<HTMLInputElement>, value?: string) => {
     // If it's an event (from a form element)
     if (typeof nameOrEvent !== 'string') {
       const { name, value } = nameOrEvent.target;
       
+      // Update stored company contact info if relevant
+      if (name === 'clientEmail') companyContactInfo.clientEmail = value;
+      if (name === 'clientPhone') companyContactInfo.clientPhone = value;
+      if (name === 'businessActivity') companyContactInfo.businessActivity = value;
+      
       setFormData(prev => {
-        // Ajuste especial para atualizar o valor da parcela de entrada quando a entrada ou número de parcelas mudar
+        // Adjust special behavior for updating entry value or installments
         if (name === 'entryValue' || name === 'entryInstallments') {
-          // Atualizar o campo atual
+          // Update the current field
           const updatedData = {
             ...prev,
             [name]: value
           };
           
-          // Tentar recalcular o valor da parcela
+          // Try calculating installment value
           try {
             if (name === 'entryValue' && prev.entryInstallments || 
                 name === 'entryInstallments' && prev.entryValue) {
@@ -153,6 +183,11 @@ export const useFormHandlers = ({
     // If it's a direct name/value pair
     else if (typeof value !== 'undefined') {
       const name = nameOrEvent;
+      
+      // Update stored company contact info if relevant
+      if (name === 'clientEmail') companyContactInfo.clientEmail = value;
+      if (name === 'clientPhone') companyContactInfo.clientPhone = value;
+      if (name === 'businessActivity') companyContactInfo.businessActivity = value;
       
       setFormData(prev => {
         if (name === 'entryValue' || name === 'entryInstallments') {

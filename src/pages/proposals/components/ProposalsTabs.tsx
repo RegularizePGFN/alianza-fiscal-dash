@@ -109,6 +109,7 @@ const ProposalsTabs = ({
           onInputChange={handlePDFEditorInputChange}
           onGenerateProposal={onGenerateProposal}
           imagePreview={imagePreview || null}
+          companyData={companyData}
         />
       </TabsContent>
       

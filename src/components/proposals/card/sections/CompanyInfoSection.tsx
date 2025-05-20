@@ -48,7 +48,7 @@ const CompanyInfoSection = ({ companyData, colors }: CompanyInfoSectionProps) =>
         {/* CNPJ */}
         <div className="bg-gray-50 p-3 rounded">
           <span className="text-sm font-medium text-gray-500">CNPJ:</span>
-          <p className="text-base mt-1">{companyData.document || '-'}</p>
+          <p className="text-base mt-1">{companyData.taxId || '-'}</p>
         </div>
         
         {/* Razão Social / Nome */}

@@ -71,37 +71,23 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
 
   // Parse layout settings or use defaults
   const layout = {
-    sections: layoutData?.sections || ['client', 'alert', 'debt', 'payment', 'fees', 'total'],
+    sections: layoutData?.sections || ['company', 'alert', 'debt', 'payment', 'fees', 'total'],
     showHeader: layoutData?.showHeader !== undefined ? layoutData.showHeader : true,
     showLogo: layoutData?.showLogo !== undefined ? layoutData.showLogo : true,
     showWatermark: layoutData?.showWatermark || false
   };
 
-  // Define sections to render - don't duplicate client/company sections
-  const sectionsToRender = [...(layout?.sections || [])];
-  
-  // If companyData exists, replace 'client' with 'company' if client exists
-  if (companyData) {
-    const clientIndex = sectionsToRender.indexOf('client');
-    if (clientIndex !== -1) {
-      // Replace 'client' with 'company' 
-      sectionsToRender.splice(clientIndex, 1, 'company');
-    } else if (!sectionsToRender.includes('company')) {
-      // If client doesn't exist and company isn't already in the list, add company
-      sectionsToRender.unshift('company');
-    }
-  }
-
-  // Prepare complete companyInfo for ClientSection with email and phone
-  const companyInfo = {
-    name: data.clientName,
-    phones: data.clientPhone ? [data.clientPhone] : [],
-    emails: data.clientEmail ? [data.clientEmail] : [],
-    businessActivity: data.businessActivity
-  };
+  // We'll use a set to track which sections we've rendered to avoid duplicates
+  const renderedSections = new Set();
 
   // Map section IDs to their corresponding components
   const renderSection = (sectionId: string) => {
+    // If we've already rendered this section, don't render it again
+    if (renderedSections.has(sectionId)) return null;
+    
+    // Mark this section as rendered
+    renderedSections.add(sectionId);
+    
     switch (sectionId) {
       case 'metadata':
         return <MetadataSection creationDate={data.creationDate} validityDate={data.validityDate} />;
@@ -111,7 +97,12 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
           <ClientSection 
             data={data} 
             colors={colors} 
-            companyInfo={companyInfo}
+            companyInfo={{
+              name: data.clientName,
+              phones: data.clientPhone ? [data.clientPhone] : [],
+              emails: data.clientEmail ? [data.clientEmail] : [],
+              businessActivity: data.businessActivity
+            }}
           />
         ) : null;
       case 'company':
@@ -135,17 +126,32 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
     }
   };
 
+  // Make sure company data is shown first if available
+  const sectionOrder = [...layout.sections];
+  if (companyData && !sectionOrder.includes('company')) {
+    // If there's company data but no company section, add it at the beginning
+    sectionOrder.unshift('company');
+  }
+  
+  // Remove client section if we have company data to prevent duplication
+  if (companyData) {
+    const clientIndex = sectionOrder.indexOf('client');
+    if (clientIndex !== -1) {
+      sectionOrder.splice(clientIndex, 1);
+    }
+  }
+
   return (
     <div className={`p-6 space-y-0 font-['Roboto',sans-serif] ${className}`}>
-      {/* Render sections based on the layout configuration */}
-      {sectionsToRender.map((section, index) => (
+      {/* Render sections based on the adjusted section order */}
+      {sectionOrder.map((section, index) => (
         <React.Fragment key={index}>
           {renderSection(section)}
         </React.Fragment>
       ))}
       
-      {/* Always show comments at the end if they exist, regardless of layout */}
-      {data.additionalComments && !sectionsToRender.includes('comments') && 
+      {/* Always show comments at the end if they exist and aren't already in the sections */}
+      {data.additionalComments && !renderedSections.has('comments') && 
         <CommentsSection data={data} colors={colors} />
       }
       
