@@ -5,7 +5,6 @@ import { ChangeEvent } from "react";
 
 import UploadTabContent from "./tabs/UploadTabContent";
 import DataTabContent from "./tabs/DataTabContent";
-import PDFEditorTabContent from "./tabs/PDFEditorTabContent";
 import ProposalTabContent from "./tabs/ProposalTabContent";
 
 interface ProposalsTabsProps {
@@ -58,23 +57,15 @@ const ProposalsTabs = ({
     onInputChange(e);
   };
 
-  // Create a wrapper for string-based input changes for PDFEditor
-  const handlePDFEditorInputChange = (name: string, value: string) => {
-    onInputChange(name, value);
-  };
-
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-4 mb-6">
+      <TabsList className="grid w-full grid-cols-3 mb-6">
         <TabsTrigger value="upload">Upload de Imagem</TabsTrigger>
         <TabsTrigger value="data" disabled={!formData.cnpj && !generatedProposal}>
           Dados Extraídos
         </TabsTrigger>
-        <TabsTrigger value="pdf-editor" disabled={!formData.cnpj && !generatedProposal}>
-          Edite o PDF
-        </TabsTrigger>
-        <TabsTrigger value="proposal" disabled={!generatedProposal}>
-          Proposta Gerada
+        <TabsTrigger value="proposal" disabled={!formData.cnpj && !generatedProposal}>
+          Proposta
         </TabsTrigger>
       </TabsList>
       
@@ -98,27 +89,18 @@ const ProposalsTabs = ({
           formData={formData}
           processing={processing}
           onInputChange={handleInputChange}
-          onGenerateProposal={() => setActiveTab("pdf-editor")}
+          onGenerateProposal={onGenerateProposal}
           setProcessingStatus={setProcessingStatus}
         />
       </TabsContent>
 
-      <TabsContent value="pdf-editor" className="space-y-6">
-        <PDFEditorTabContent 
-          formData={formData} 
-          onInputChange={handlePDFEditorInputChange}
-          onGenerateProposal={onGenerateProposal}
-          imagePreview={imagePreview || null}
-          companyData={companyData}
-        />
-      </TabsContent>
-      
       <TabsContent value="proposal" className="space-y-6">
         <ProposalTabContent
           formData={formData}
           imagePreview={imagePreview}
           companyData={companyData}
           onReset={onReset}
+          onInputChange={onInputChange}
         />
       </TabsContent>
     </Tabs>

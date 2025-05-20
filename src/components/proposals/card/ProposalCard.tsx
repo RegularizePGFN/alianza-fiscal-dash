@@ -19,7 +19,7 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
   const proposalRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
-  // Optional debugging effect to verify when fonts are loaded
+  // Effect to verify when fonts are loaded
   useEffect(() => {
     document.fonts.ready.then(() => {
       console.log('All fonts loaded for proposal rendering');
@@ -28,35 +28,29 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
   
   // Get colors from template settings or use defaults
   const colors = (() => {
-    if (data.templateColors && typeof data.templateColors === 'string') {
-      try {
-        return JSON.parse(data.templateColors);
-      } catch (e) {}
+    try {
+      return {
+        primary: '#3B82F6',
+        secondary: '#1E40AF',
+        accent: '#10B981',
+        background: '#F8FAFC'
+      };
+    } catch (e) {
+      return {
+        primary: '#3B82F6',
+        secondary: '#1E40AF',
+        accent: '#10B981',
+        background: '#F8FAFC'
+      };
     }
-    return {
-      primary: '#3B82F6',
-      secondary: '#1E40AF',
-      accent: '#10B981',
-      background: '#F8FAFC'
-    };
   })();
 
-  // Get layout settings or use defaults
-  const layoutData = (() => {
-    if (data.templateLayout && typeof data.templateLayout === 'string') {
-      try {
-        return JSON.parse(data.templateLayout);
-      } catch (e) {}
-    }
-    return null;
-  })();
-
-  // Parse layout settings or use defaults without self-referencing
+  // Default layout settings
   const layout = {
-    sections: layoutData?.sections || ['client', 'alert', 'debt', 'payment', 'fees', 'total'],
-    showHeader: layoutData?.showHeader !== undefined ? layoutData.showHeader : true,
-    showLogo: layoutData?.showLogo !== undefined ? layoutData.showLogo : true,
-    showWatermark: layoutData?.showWatermark || false
+    sections: ['client', 'alert', 'debt', 'payment', 'fees', 'total'],
+    showHeader: true,
+    showLogo: true,
+    showWatermark: false
   };
 
   const handlePrint = () => {
@@ -111,7 +105,7 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
     });
     
     try {
-      // Direct use of the element to capture exact screen appearance
+      // Use the updated function to capture exact screen appearance
       await generateProposalPng(proposalRef.current, data);
       
       toast({

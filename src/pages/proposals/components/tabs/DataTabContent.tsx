@@ -1,6 +1,10 @@
 
+import React, { useEffect } from 'react';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { ExtractedData } from "@/lib/types/proposals";
-import DataForm from "@/components/proposals/DataForm";
+import { ClientInfoSection, FinancialInfoSection } from "@/components/proposals/data-form";
+import { ArrowRight } from "lucide-react";
 
 interface DataTabContentProps {
   formData: Partial<ExtractedData>;
@@ -17,14 +21,37 @@ const DataTabContent = ({
   onGenerateProposal,
   setProcessingStatus
 }: DataTabContentProps) => {
+  useEffect(() => {
+    setProcessingStatus("Dados extraídos com sucesso!");
+  }, [setProcessingStatus]);
+
   return (
-    <DataForm
-      formData={formData}
-      processing={processing}
-      onInputChange={onInputChange}
-      onGenerateProposal={onGenerateProposal}
-      setProcessingStatus={setProcessingStatus}
-    />
+    <div className="space-y-6">
+      <Card>
+        <CardContent className="pt-6">
+          <ClientInfoSection
+            formData={formData}
+            onInputChange={onInputChange}
+          />
+          
+          <FinancialInfoSection
+            formData={formData}
+            onInputChange={onInputChange}
+          />
+          
+          <div className="flex justify-end mt-6">
+            <Button 
+              className="flex items-center gap-2"
+              onClick={onGenerateProposal} 
+              disabled={processing}
+            >
+              Gerar Proposta
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

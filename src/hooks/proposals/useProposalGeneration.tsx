@@ -2,7 +2,6 @@
 import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 import { fetchCnpjData } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import { generateProposalPdf, generateProposalPng } from "@/lib/pdfUtils";
 
 interface UseProposalGenerationProps {
   formData: Partial<ExtractedData>;
@@ -94,7 +93,6 @@ export const useProposalGeneration = ({
     
     // Parse template data if stored as strings
     let templateColors = proposal.data.templateColors;
-    let templateLayout = proposal.data.templateLayout;
     
     // Importante: Preservar os dados do cliente da proposta
     setFormData({
@@ -104,20 +102,7 @@ export const useProposalGeneration = ({
       specialistName: proposal.data.specialistName || proposal.specialistName || user?.name,
       clientName: proposal.data.clientName || '',
       clientEmail: proposal.data.clientEmail || '',
-      clientPhone: proposal.data.clientPhone || '',
-      templateId: proposal.data.templateId || 'default',
-      templateColors: templateColors || JSON.stringify({
-        primary: '#3B82F6',
-        secondary: '#1E40AF',
-        accent: '#10B981',
-        background: '#F8FAFC'
-      }),
-      templateLayout: templateLayout || JSON.stringify({
-        sections: ['client', 'debt', 'payment', 'fees'],
-        showHeader: true,
-        showLogo: true,
-        showWatermark: false
-      })
+      clientPhone: proposal.data.clientPhone || ''
     });
     
     setImagePreview(proposal.imageUrl);
@@ -133,8 +118,6 @@ export const useProposalGeneration = ({
       }).catch(err => console.error("Error fetching company data:", err));
     }
   };
-  
-  // Function removed as it's now handled directly in ProposalCard
   
   return {
     handleGenerateProposal,
