@@ -33,7 +33,7 @@ export const useProposalGeneration = ({
 }: UseProposalGenerationProps) => {
   const { toast } = useToast();
 
-  const handleGenerateProposal = async () => {
+  const handleGenerateProposal = async (): Promise<void> => {
     setGeneratedProposal(true);
 
     // Ensure fees and other values have proper formatting
@@ -62,18 +62,29 @@ export const useProposalGeneration = ({
 
     // Save the proposal to Supabase
     if (processedData) {
-      const proposal = await saveProposal(processedData as ExtractedData, imagePreview || undefined);
-      if (proposal) {
-        // On success, update the proposals list
-        fetchProposals();
-        setSelectedProposal(proposal);
+      try {
+        const proposal = await saveProposal(processedData as ExtractedData, imagePreview || undefined);
+        if (proposal) {
+          // On success, update the proposals list
+          await fetchProposals();
+          setSelectedProposal(proposal);
+          toast({
+            title: "Proposta gerada",
+            description: "Sua proposta foi gerada e armazenada com sucesso!"
+          });
+        }
+      } catch (error) {
+        console.error("Error saving proposal:", error);
         toast({
-          title: "Proposta gerada",
-          description: "Sua proposta foi gerada e armazenada com sucesso!"
+          title: "Erro ao gerar proposta",
+          description: "Ocorreu um erro ao gerar a proposta. Por favor, tente novamente.",
+          variant: "destructive"
         });
       }
     }
+    
     setActiveTab("proposal");
+    return Promise.resolve();
   };
   
   const handleViewProposal = (proposal: Proposal) => {
@@ -122,14 +133,14 @@ export const useProposalGeneration = ({
   };
   
   // Função para exportar proposta como PDF
-  const handleExportProposalToPdf = async (proposalRef: React.RefObject<HTMLDivElement>) => {
+  const handleExportProposalToPdf = async (proposalRef: React.RefObject<HTMLDivElement>): Promise<void> => {
     if (!proposalRef.current) {
       toast({
         title: "Erro",
         description: "Não foi possível gerar o PDF. Tente novamente.",
         variant: "destructive",
       });
-      return;
+      return Promise.reject("Proposal element not found");
     }
     
     toast({
@@ -144,6 +155,7 @@ export const useProposalGeneration = ({
         title: "Sucesso",
         description: "PDF gerado com sucesso em uma página!",
       });
+      return Promise.resolve();
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
       toast({
@@ -151,6 +163,7 @@ export const useProposalGeneration = ({
         description: "Não foi possível gerar o PDF. Tente novamente.",
         variant: "destructive",
       });
+      return Promise.reject(error);
     }
   };
 

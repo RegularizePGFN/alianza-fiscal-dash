@@ -23,7 +23,7 @@ interface ProposalsTabsProps {
   proposals: Proposal[];
   loadingProposals: boolean;
   onInputChange: (nameOrEvent: string | ChangeEvent<HTMLInputElement>, value?: string) => void;
-  onGenerateProposal: () => void;
+  onGenerateProposal: () => Promise<void>;
   onViewProposal: (proposal: Proposal) => void;
   onDeleteProposal: (id: string) => Promise<boolean>;
   onProcessComplete: (data: Partial<ExtractedData>, preview: string) => void;

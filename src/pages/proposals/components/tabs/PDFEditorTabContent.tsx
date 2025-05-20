@@ -24,7 +24,7 @@ const DEFAULT_TEMPLATE: PDFTemplate = {
 interface PDFEditorTabContentProps {
   formData: Partial<ExtractedData>;
   onInputChange: (name: string, value: string) => void;
-  onGenerateProposal: () => void;
+  onGenerateProposal: () => Promise<void>;
   imagePreview: string | null;
   companyData?: CompanyData | null;
 }
