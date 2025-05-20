@@ -115,6 +115,8 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       </html>
     `;
     
+    console.log('Sending HTML to API for PDF generation...');
+    
     // Make API call to the PDF generation endpoint
     const response = await fetch('/api/propostas/pdf', {
       method: 'POST',
@@ -131,6 +133,8 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       const errorData = await response.json();
       throw new Error(`API error: ${errorData.error || response.statusText}`);
     }
+    
+    console.log('PDF generated successfully, creating download...');
     
     // Get the binary data
     const blob = await response.blob();

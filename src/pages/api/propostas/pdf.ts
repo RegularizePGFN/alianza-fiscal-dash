@@ -14,16 +14,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'HTML content is required' });
     }
 
+    console.log('Starting PDF generation process...');
+
     // Launch a new browser instance with proper settings
     const browser = await puppeteer.launch({
-      headless: "new",
+      headless: 'new',
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
 
+    console.log('Browser launched successfully');
+    
     const page = await browser.newPage();
     
     // Set the content and wait for network idle (ensure all resources are loaded)
     await page.setContent(html, { waitUntil: 'networkidle0' });
+    console.log('Content loaded in browser page');
     
     // Set viewport to A4 size with better scaling for higher quality
     await page.setViewport({
@@ -45,7 +50,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       preferCSSPageSize: true,
     });
     
+    console.log('PDF generated successfully');
     await browser.close();
+    console.log('Browser closed');
     
     // Set appropriate headers for PDF download
     res.setHeader('Content-Type', 'application/pdf');
