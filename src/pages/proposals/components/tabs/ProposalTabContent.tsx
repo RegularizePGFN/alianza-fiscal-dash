@@ -1,5 +1,5 @@
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { ProposalCard } from "@/components/proposals/card";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
 import { PDFTemplatePreview } from "@/components/proposals/pdf-editor";
-import { EditorTabs } from "@/components/proposals/pdf-editor";
 
 interface ProposalTabContentProps {
   formData: Partial<ExtractedData>;
@@ -25,6 +24,8 @@ const ProposalTabContent = ({
   onInputChange
 }: ProposalTabContentProps) => {
   const proposalRef = useRef<HTMLDivElement>(null);
+  // Add state to track active tab
+  const [activeTab, setActiveTab] = useState("preview");
   
   const handlePrint = useReactToPrint({
     content: () => proposalRef.current,
@@ -46,10 +47,40 @@ const ProposalTabContent = ({
               <div className="space-y-6">
                 <h3 className="text-lg font-medium">Personalização da Proposta</h3>
                 
-                <EditorTabs 
-                  formData={formData}
-                  onInputChange={onInputChange}
-                />
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium">Detalhes da Proposta</h4>
+                  
+                  {/* Simple form fields instead of complex EditorTabs */}
+                  <div className="space-y-3">
+                    <div>
+                      <label htmlFor="companyName" className="text-sm font-medium block mb-1">
+                        Nome da Empresa
+                      </label>
+                      <input
+                        type="text"
+                        id="companyName"
+                        className="w-full p-2 border rounded"
+                        value={formData.companyName || ''}
+                        onChange={e => onInputChange(e)}
+                        name="companyName"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="specialistName" className="text-sm font-medium block mb-1">
+                        Especialista
+                      </label>
+                      <input
+                        type="text"
+                        id="specialistName"
+                        className="w-full p-2 border rounded"
+                        value={formData.specialistName || ''}
+                        onChange={e => onInputChange(e)}
+                        name="specialistName"
+                      />
+                    </div>
+                  </div>
+                </div>
                 
                 <Button 
                   variant="outline" 
