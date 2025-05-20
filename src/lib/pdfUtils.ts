@@ -5,10 +5,8 @@ import { ExtractedData } from './types/proposals';
 
 export async function generateProposalPng(proposalElement: HTMLElement, data: Partial<ExtractedData>): Promise<void> {
   try {
-    // Wait for a complete render cycle
-    await new Promise(resolve => requestAnimationFrame(resolve));
-    
-    // Wait for all fonts to load for accurate rendering
+    // Wait for a complete render cycle and fonts to load
+    await new Promise(resolve => setTimeout(resolve, 300));
     await document.fonts.ready;
     
     // Get seller name for filename
@@ -18,24 +16,31 @@ export async function generateProposalPng(proposalElement: HTMLElement, data: Pa
     // File name
     const fileName = `proposta_pgfn_${data.cnpj?.replace(/\D/g, '') || 'cliente'}_${seller}.png`;
 
-    // Remover elementos que não devem aparecer na exportação
+    // Store original styles to restore them later
+    const originalStyles = new Map();
+    
+    // Temporarily hide elements that shouldn't be in the export
     const elementsToHide = proposalElement.querySelectorAll('[data-pdf-remove="true"]');
-    elementsToHide.forEach(el => {
+    elementsToHide.forEach((el, index) => {
       if (el instanceof HTMLElement) {
+        originalStyles.set(`hide-${index}`, {
+          element: el,
+          display: el.style.display
+        });
         el.style.display = 'none';
       }
     });
 
-    // Capture the content exactly as it appears on screen without modifications
+    // Take the screenshot at high resolution - exactly as shown in browser
     const canvas = await html2canvas(proposalElement, {
-      scale: 2, // Melhor balanço entre qualidade e tamanho de arquivo
-      useCORS: true, // Enable CORS for any images
+      scale: 4, // Higher scale for better quality
+      useCORS: true,
       logging: false,
       allowTaint: true,
-      backgroundColor: '#ffffff', // Usar fundo branco para evitar transparência
-      imageTimeout: 0, // No timeout for image loading
+      backgroundColor: '#ffffff',
+      imageTimeout: 0,
       onclone: (documentClone) => {
-        // Encontrar e esconder botões de ação no clone
+        // Find and hide buttons of action in the clone
         const actionButtons = documentClone.querySelectorAll('button, [data-pdf-remove="true"]');
         actionButtons.forEach(button => {
           if (button instanceof HTMLElement) {
@@ -45,10 +50,10 @@ export async function generateProposalPng(proposalElement: HTMLElement, data: Pa
       }
     });
     
-    // Restaurar a visibilidade dos elementos escondidos
-    elementsToHide.forEach(el => {
-      if (el instanceof HTMLElement) {
-        el.style.display = '';
+    // Restore original styles
+    originalStyles.forEach((style, key) => {
+      if (key.startsWith('hide-')) {
+        style.element.style.display = style.display;
       }
     });
     

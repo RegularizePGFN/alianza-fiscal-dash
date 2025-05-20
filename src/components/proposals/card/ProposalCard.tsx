@@ -101,7 +101,7 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
     
     toast({
       title: "Processando",
-      description: "Gerando imagem PNG de alta qualidade, aguarde...",
+      description: "Gerando imagem PNG exatamente como aparece na tela...",
     });
     
     try {

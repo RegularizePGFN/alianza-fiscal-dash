@@ -59,10 +59,11 @@ const ActionButtons = ({ onPrint, proposalData, proposalRef }: ActionButtonsProp
     
     toast({
       title: "Processando",
-      description: "Gerando imagem PNG, aguarde um momento...",
+      description: "Capturando imagem PNG em alta qualidade...",
     });
     
     try {
+      // Use improved PNG generation that captures exactly what's shown in the browser
       await generateProposalPng(proposalRef.current, proposalData);
       
       toast({
