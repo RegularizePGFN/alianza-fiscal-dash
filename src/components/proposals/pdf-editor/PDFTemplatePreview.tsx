@@ -76,16 +76,16 @@ const PDFTemplatePreview = ({
       {layout.showHeader && (
         <div className="relative overflow-hidden rounded-t-lg">
           <div className="absolute inset-0 opacity-10 bg-gradient-to-br from-slate-400 to-slate-100"></div>
-          <div className="relative p-4 flex justify-between items-center">
-            <div className="flex items-center gap-2">
+          <div className="relative p-6 flex justify-between items-center">
+            <div className="flex items-center gap-4">
               {layout.showLogo && (
                 <img 
                   src="/lovable-uploads/d939ccfc-a061-45e8-97e0-1fa1b82d3df2.png" 
                   alt="Logo" 
-                  className="h-8 w-auto"
+                  className="h-12 w-auto"
                 />
               )}
-              <h2 className="text-lg font-medium" style={{ color: colors.secondary }}>
+              <h2 className="text-xl font-medium" style={{ color: colors.secondary }}>
                 Proposta de Parcelamento PGFN
               </h2>
             </div>
@@ -98,7 +98,6 @@ const PDFTemplatePreview = ({
         data={formData}
         companyData={companyData}
         isPreview={true}
-        className="p-4 space-y-2" // Reduzir espaçamento para preview
       />
     </Card>
   );

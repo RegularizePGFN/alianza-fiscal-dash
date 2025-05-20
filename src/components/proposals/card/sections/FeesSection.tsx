@@ -1,29 +1,39 @@
 
 import React from 'react';
 import { ExtractedData } from "@/lib/types/proposals";
-import { SectionContainer } from './index';
-import DataField from './DataField';
 
 interface FeesSectionProps {
   data: Partial<ExtractedData>;
   colors: {
-    primary: string;
     secondary: string;
     accent: string;
-    background: string;
   };
 }
 
 const FeesSection = ({ data, colors }: FeesSectionProps) => {
+  if (!data.feesValue) return null;
+  
   return (
-    <SectionContainer title="Custos e Honorários" colors={colors}>
-      <div className="grid grid-cols-1 gap-1 text-sm">
-        <div className="flex justify-between items-center border-b pb-1">
-          <span>Honorários Aliança Fiscal:</span>
-          <span className="font-medium text-green-600">{`R$ ${data.feesValue || "0,00"}`}</span>
+    <div className="mb-6">
+      <h3 className="text-base font-semibold pb-2 mb-3 border-b border-gray-200"
+          style={{ color: colors.secondary }}>
+        Custos e Honorários
+      </h3>
+      <div className="bg-gray-50 p-3 rounded border-l-4" style={{ borderLeftColor: colors.accent }}>
+        <div className="flex justify-between items-center">
+          <div>
+            <span className="text-sm font-medium text-gray-700">
+              Honorários Aliança Fiscal:
+            </span>
+          </div>
+          <div className="text-right">
+            <p className="text-lg font-medium" style={{ color: colors.accent }}>
+              R$ {data.feesValue}
+            </p>
+          </div>
         </div>
       </div>
-    </SectionContainer>
+    </div>
   );
 };
 
