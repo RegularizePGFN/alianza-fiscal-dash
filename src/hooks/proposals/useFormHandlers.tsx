@@ -46,15 +46,15 @@ export const useFormHandlers = ({
         }
       }
       
-      // MODIFICAÇÃO IMPORTANTE: Manter dados do cliente existentes, mas NÃO usar o nome do usuário como razão social
+      // IMPORTANTE: Preservar os dados da empresa vindos do CNPJ, NÃO usar dados do usuário
       return {
         ...prev,
         ...data,
-        // Manter clientName apenas se já existir, caso contrário usar o dado da imagem processada
-        clientName: prev.clientName || data.clientName || '',
-        clientEmail: prev.clientEmail || data.clientEmail || user?.email || '',
-        clientPhone: prev.clientPhone || data.clientPhone || '',
-        businessActivity: prev.businessActivity || data.businessActivity || '',
+        // PRESERVAR os dados do cliente obtidos: nome, email, telefone, etc.
+        clientName: data.clientName || prev.clientName || '',
+        clientEmail: data.clientEmail || prev.clientEmail || '',
+        clientPhone: data.clientPhone || prev.clientPhone || '',
+        businessActivity: data.businessActivity || prev.businessActivity || '',
         feesValue: feesValue || prev.feesValue || '0,00',
         // Make sure entryInstallments is set, defaulting to '1' if not provided
         entryInstallments: data.entryInstallments || prev.entryInstallments || '1',
@@ -85,11 +85,10 @@ export const useFormHandlers = ({
       fetchCnpjData(data.cnpj).then(companyData => {
         if (companyData) {
           setCompanyData(companyData);
-          // Importante: Usar o nome da empresa dos dados do CNPJ como razão social
+          // Usar dados da empresa consultada para preencher os campos
           setFormData(prev => {
             return {
               ...prev,
-              // Usar o nome da empresa como clientName
               clientName: companyData.company?.name || prev.clientName || '',
               clientEmail: prev.clientEmail || companyData.emails?.[0]?.address || '',
               clientPhone: prev.clientPhone || (companyData.phones?.[0] ? `${companyData.phones[0].area}${companyData.phones[0].number}` : ''),
@@ -106,15 +105,15 @@ export const useFormHandlers = ({
     setActiveTab("data");
   };
   
-  // Handle form input changes 
+  // Handle form input changes - preserving company email and phone data
   const handleInputChange = (nameOrEvent: string | ChangeEvent<HTMLInputElement>, value?: string) => {
     // If it's an event (from a form element)
     if (typeof nameOrEvent !== 'string') {
       const { name, value } = nameOrEvent.target;
       
-      // Ajuste especial para atualizar o valor da parcela de entrada quando a entrada ou número de parcelas mudar
-      if (name === 'entryValue' || name === 'entryInstallments') {
-        setFormData(prev => {
+      setFormData(prev => {
+        // Ajuste especial para atualizar o valor da parcela de entrada quando a entrada ou número de parcelas mudar
+        if (name === 'entryValue' || name === 'entryInstallments') {
           // Atualizar o campo atual
           const updatedData = {
             ...prev,
@@ -135,8 +134,6 @@ export const useFormHandlers = ({
                 : parseInt(prev.entryInstallments || '1');
                 
               if (!isNaN(entryValue) && !isNaN(installments) && installments > 0) {
-                // Esta parte apenas calcula, mas não atualiza nenhum campo específico,
-                // pois o cálculo é feito sob demanda nos componentes
                 console.log(`Valor calculado: ${(entryValue / installments).toLocaleString('pt-BR')}`);
               }
             }
@@ -145,21 +142,20 @@ export const useFormHandlers = ({
           }
           
           return updatedData;
-        });
-      } else {
-        setFormData(prev => ({
-          ...prev,
-          [name]: value
-        }));
-      }
+        } else {
+          return {
+            ...prev,
+            [name]: value
+          };
+        }
+      });
     } 
-    // If it's a direct name/value pair (as used in PDFEditorTabContent)
+    // If it's a direct name/value pair
     else if (typeof value !== 'undefined') {
       const name = nameOrEvent;
       
-      // Similar ao tratamento acima, mas para o caso de uso direto de nome/valor
-      if (name === 'entryValue' || name === 'entryInstallments') {
-        setFormData(prev => {
+      setFormData(prev => {
+        if (name === 'entryValue' || name === 'entryInstallments') {
           const updatedData = {
             ...prev,
             [name]: value
@@ -186,13 +182,13 @@ export const useFormHandlers = ({
           }
           
           return updatedData;
-        });
-      } else {
-        setFormData(prev => ({
-          ...prev,
-          [name]: value
-        }));
-      }
+        } else {
+          return {
+            ...prev,
+            [name]: value
+          };
+        }
+      });
     }
   };
 

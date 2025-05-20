@@ -83,11 +83,15 @@ export const useProposalGeneration = ({
     let templateColors = proposal.data.templateColors;
     let templateLayout = proposal.data.templateLayout;
     
+    // Importante: Preservar os dados do cliente da proposta
     setFormData({
       ...proposal.data,
       creationDate: proposal.data.creationDate || proposal.creationDate,
       validityDate: proposal.data.validityDate || proposal.validityDate,
       specialistName: proposal.data.specialistName || proposal.specialistName || user?.name,
+      clientName: proposal.data.clientName || '',
+      clientEmail: proposal.data.clientEmail || '',
+      clientPhone: proposal.data.clientPhone || '',
       templateId: proposal.data.templateId || 'default',
       templateColors: templateColors || JSON.stringify({
         primary: '#3B82F6',

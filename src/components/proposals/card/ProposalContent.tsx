@@ -77,20 +77,22 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
     showWatermark: layoutData?.showWatermark || false
   };
 
-  // Add "company" section to layout sections if not already there
-  const layoutSections = layout?.sections || [];
-  const sectionsToRender = [...layoutSections];
-  if (companyData && !sectionsToRender.includes('company')) {
-    // Add company after client section if it exists
+  // Define sections to render - don't duplicate client/company sections
+  const sectionsToRender = [...(layout?.sections || [])];
+  
+  // If companyData exists, replace 'client' with 'company' if client exists
+  if (companyData) {
     const clientIndex = sectionsToRender.indexOf('client');
     if (clientIndex !== -1) {
-      sectionsToRender.splice(clientIndex + 1, 0, 'company');
-    } else {
+      // Replace 'client' with 'company' 
+      sectionsToRender.splice(clientIndex, 1, 'company');
+    } else if (!sectionsToRender.includes('company')) {
+      // If client doesn't exist and company isn't already in the list, add company
       sectionsToRender.unshift('company');
     }
   }
 
-  // Prepare companyInfo for ClientSection with email and phone
+  // Prepare complete companyInfo for ClientSection with email and phone
   const companyInfo = {
     name: data.clientName,
     phones: data.clientPhone ? [data.clientPhone] : [],
@@ -104,13 +106,18 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
       case 'metadata':
         return <MetadataSection creationDate={data.creationDate} validityDate={data.validityDate} />;
       case 'client':
-        return <ClientSection 
-          data={data} 
-          colors={colors} 
-          companyInfo={companyInfo} // Pass companyInfo with phones and emails
-        />;
+        // Only show client section if there's no company data (fallback)
+        return !companyData ? (
+          <ClientSection 
+            data={data} 
+            colors={colors} 
+            companyInfo={companyInfo}
+          />
+        ) : null;
       case 'company':
-        return companyData ? <CompanyInfoSection companyData={companyData} colors={colors} /> : null;
+        return companyData ? (
+          <CompanyInfoSection companyData={companyData} colors={colors} />
+        ) : null;
       case 'alert':
         return <AlertSection />;
       case 'debt':
@@ -130,7 +137,7 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
 
   return (
     <div className={`p-6 space-y-0 font-['Roboto',sans-serif] ${className}`}>
-      {/* Render all sections based on the layout configuration */}
+      {/* Render sections based on the layout configuration */}
       {sectionsToRender.map((section, index) => (
         <React.Fragment key={index}>
           {renderSection(section)}
@@ -144,8 +151,6 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
       
       {/* Signature is always shown */}
       <SignatureSection data={data} />
-      
-      {/* No footer needed since signature is always shown */}
     </div>
   );
 };
