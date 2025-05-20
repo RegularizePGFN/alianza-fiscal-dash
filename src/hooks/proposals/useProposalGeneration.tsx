@@ -117,7 +117,7 @@ export const useProposalGeneration = ({
     }
   };
   
-  // Função para exportar proposta como PDF
+  // Function to export proposal as PDF
   const handleExportProposalToPdf = async (proposalRef: React.RefObject<HTMLDivElement>) => {
     if (!proposalRef.current) {
       toast({
@@ -138,7 +138,7 @@ export const useProposalGeneration = ({
       
       toast({
         title: "Sucesso",
-        description: "PDF gerado com sucesso em uma página!",
+        description: "PDF gerado com sucesso em uma única página!",
       });
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
