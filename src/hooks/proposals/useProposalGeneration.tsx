@@ -130,7 +130,7 @@ export const useProposalGeneration = ({
     
     toast({
       title: "Processando",
-      description: "Gerando PDF em uma única página, aguarde...",
+      description: "Gerando PDF com alta fidelidade visual, aguarde...",
     });
     
     try {
@@ -138,7 +138,7 @@ export const useProposalGeneration = ({
       
       toast({
         title: "Sucesso",
-        description: "PDF gerado com sucesso em uma página!",
+        description: "PDF gerado com sucesso e com alta qualidade visual!",
       });
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);

@@ -26,7 +26,7 @@ const ActionButtons = ({ proposalRef, data }: ActionButtonsProps) => {
     
     toast({
       title: "Processando",
-      description: "Gerando PDF, aguarde um momento...",
+      description: "Gerando PDF com alta qualidade, aguarde um momento...",
     });
     
     try {
@@ -34,7 +34,7 @@ const ActionButtons = ({ proposalRef, data }: ActionButtonsProps) => {
       
       toast({
         title: "Sucesso",
-        description: "PDF gerado com sucesso!",
+        description: "PDF gerado com sucesso e com alta fidelidade visual!",
       });
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
