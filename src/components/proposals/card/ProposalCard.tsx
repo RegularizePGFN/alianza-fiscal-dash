@@ -1,5 +1,5 @@
 
-import React, { useRef, useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
 import { HeaderSection } from './sections';
@@ -12,14 +12,18 @@ interface ProposalCardProps {
   data: Partial<ExtractedData>;
   imageUrl?: string;
   companyData?: CompanyData | null;
+  proposalRef?: React.RefObject<HTMLDivElement>;
 }
 
-const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
-  const proposalRef = useRef<HTMLDivElement>(null);
+const ProposalCard = ({ data, companyData, proposalRef: externalRef }: ProposalCardProps) => {
+  // Use the external ref if provided, otherwise create a local one
+  const localRef = React.useRef<HTMLDivElement>(null);
+  const proposalRef = externalRef || localRef;
+  
   const { toast } = useToast();
   
   // Effect to verify when fonts are loaded
-  useEffect(() => {
+  React.useEffect(() => {
     document.fonts.ready.then(() => {
       console.log('All fonts loaded for proposal rendering');
     });
@@ -54,71 +58,6 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
 
   const handlePrint = () => {
     window.print();
-  };
-
-  const handleGeneratePdf = async () => {
-    if (!proposalRef.current) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível gerar o PDF. Tente novamente.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    toast({
-      title: "Processando",
-      description: "Gerando PDF, aguarde um momento...",
-    });
-    
-    try {
-      await generateProposalPdf(proposalRef.current, data);
-      
-      toast({
-        title: "Sucesso",
-        description: "PDF gerado com sucesso!",
-      });
-    } catch (error) {
-      console.error("Erro ao gerar PDF:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível gerar o PDF. Tente novamente.",
-        variant: "destructive",
-      });
-    }
-  };
-  
-  const handleGeneratePng = async () => {
-    if (!proposalRef.current) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível gerar a imagem PNG. Tente novamente.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    toast({
-      title: "Processando",
-      description: "Gerando imagem PNG exatamente como aparece na tela...",
-    });
-    
-    try {
-      // Use the updated function to capture exact screen appearance
-      await generateProposalPng(proposalRef.current, data);
-      
-      toast({
-        title: "Sucesso",
-        description: "Imagem PNG da proposta completa gerada com sucesso!",
-      });
-    } catch (error) {
-      console.error("Erro ao gerar PNG:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível gerar a imagem PNG. Tente novamente.",
-        variant: "destructive",
-      });
-    }
   };
 
   return (
