@@ -12,3 +12,12 @@ export { default as SignatureSection } from './SignatureSection';
 export { default as FooterSection } from './FooterSection';
 export { default as HeaderSection } from './HeaderSection';
 export { default as ActionButtons } from './ActionButtons';
+
+// Add the new component exports
+export { default as ProposalHeader } from './ProposalHeader';
+export { default as ProposalDataSection } from './ProposalDataSection';
+export { default as NegotiationDataSection } from './NegotiationDataSection';
+export { default as FeesDisplaySection } from './FeesDisplaySection';
+export { default as TotalValueDisplay } from './TotalValueDisplay';
+export { default as PaymentOptionsDisplay } from './PaymentOptionsDisplay';
+export { default as ActionButtonsSection } from './ActionButtonsSection';
