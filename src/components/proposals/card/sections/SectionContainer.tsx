@@ -25,7 +25,7 @@ const SectionContainer = ({
   style = {}
 }: SectionContainerProps) => {
   return (
-    <div className={cn("mb-6", className)} style={style}>
+    <div className={cn("mb-6", className)} style={style} data-section-title={title}>
       <h3 
         className="text-base font-semibold pb-2 mb-3 border-b border-gray-200 flex items-center" 
         style={{ color, ...style }}

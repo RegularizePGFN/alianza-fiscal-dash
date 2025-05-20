@@ -33,6 +33,7 @@ const DataField = ({
         className
       )}
       style={style}
+      data-field-label={label}
     >
       <span className="text-sm font-medium text-gray-500 flex items-center">
         {icon && <span className="h-3 w-3 mr-1">{icon}</span>}

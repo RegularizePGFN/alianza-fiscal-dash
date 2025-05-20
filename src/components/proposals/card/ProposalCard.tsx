@@ -6,8 +6,7 @@ import { HeaderSection } from './sections';
 import ProposalContent from './ProposalContent';
 import { useToast } from "@/hooks/use-toast";
 import { generateProposalPdf, generateProposalPng } from "@/lib/pdfUtils";
-import { Button } from "@/components/ui/button";
-import { Printer, Download, FileImage } from "lucide-react";
+import ActionButtons from './ActionButtons';
 
 interface ProposalCardProps {
   data: Partial<ExtractedData>;
@@ -110,7 +109,7 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
       
       toast({
         title: "Sucesso",
-        description: "Imagem PNG gerada com sucesso!",
+        description: "Imagem PNG da proposta completa gerada com sucesso!",
       });
     } catch (error) {
       console.error("Erro ao gerar PNG:", error);
@@ -124,8 +123,8 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
 
   return (
     <div className="flex flex-col items-center space-y-4">
-      {/* Main proposal card - action buttons moved outside */}
-      <Card ref={proposalRef} className="max-w-3xl mx-auto shadow border overflow-hidden font-['Roboto',sans-serif] w-full"
+      {/* Main proposal card with correct ref for PNG generation */}
+      <Card ref={proposalRef} className="max-w-3xl mx-auto shadow border overflow-hidden font-['Roboto',sans-serif] w-full print:shadow-none"
             style={{ backgroundColor: colors.background }}>
         
         {/* Header with Logo */}
@@ -144,23 +143,14 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
             companyData={companyData}
           />
         </CardContent>
+        
+        {/* Action buttons INSIDE the card to ensure proper PNG capture */}
+        <ActionButtons
+          onPrint={handlePrint}
+          proposalData={data}
+          proposalRef={proposalRef}
+        />
       </Card>
-      
-      {/* Action buttons - now outside the proposal card, centered below */}
-      <div className="flex justify-center gap-3 py-4 w-full" data-pdf-remove="true">
-        <Button variant="outline" onClick={handlePrint} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
-          <Printer className="mr-2 h-4 w-4" />
-          Imprimir
-        </Button>
-        <Button variant="outline" onClick={handleGeneratePng} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
-          <FileImage className="mr-2 h-4 w-4" />
-          Baixar PNG
-        </Button>
-        <Button onClick={handleGeneratePdf} className="bg-af-blue-600 hover:bg-af-blue-700">
-          <Download className="mr-2 h-4 w-4" />
-          Baixar PDF
-        </Button>
-      </div>
     </div>
   );
 };

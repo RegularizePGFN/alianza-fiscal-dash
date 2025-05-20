@@ -68,7 +68,7 @@ const ActionButtons = ({ onPrint, proposalData, proposalRef }: ActionButtonsProp
       
       toast({
         title: "Sucesso",
-        description: "Imagem PNG gerada com sucesso!",
+        description: "Imagem PNG da proposta completa gerada com sucesso!",
       });
     } catch (error) {
       console.error("Erro ao gerar PNG:", error);
@@ -86,9 +86,13 @@ const ActionButtons = ({ onPrint, proposalData, proposalRef }: ActionButtonsProp
         <Printer className="mr-2 h-4 w-4" />
         Imprimir
       </Button>
-      <Button variant="outline" onClick={onGeneratePng} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
+      <Button 
+        variant="outline" 
+        onClick={onGeneratePng} 
+        className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50 relative"
+      >
         <FileImage className="mr-2 h-4 w-4" />
-        Baixar PNG
+        <span>Baixar PNG da Proposta Completa</span>
       </Button>
       <Button onClick={onGeneratePdf} className="bg-af-blue-600 hover:bg-af-blue-700">
         <Download className="mr-2 h-4 w-4" />

@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, Printer, Eye, FileText, Briefcase, AlertTriangle, CheckSquare, DollarSign, Percent, CreditCard, Calendar, User, MessageSquare, CircleCheck } from "lucide-react";
 import { ExtractedData } from "@/lib/types/proposals";
-import { generateProposalPdf, generateProposalPng } from "@/lib/pdfUtils";
+import { generateProposalPdf } from "@/lib/pdfUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from 'react-router-dom';
 
@@ -48,38 +48,6 @@ const MiniProposalCard = ({ data, imageUrl }: MiniProposalCardProps) => {
       toast({
         title: "Erro",
         description: "Não foi possível gerar o PDF. Tente novamente.",
-        variant: "destructive",
-      });
-    }
-  };
-  
-  const generatePng = async () => {
-    if (!proposalRef.current) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível gerar a imagem PNG. Tente novamente.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    toast({
-      title: "Processando",
-      description: "Gerando imagem PNG em alta qualidade...",
-    });
-    
-    try {
-      await generateProposalPng(proposalRef.current, data);
-      
-      toast({
-        title: "Sucesso",
-        description: "Imagem PNG gerada com sucesso!",
-      });
-    } catch (error) {
-      console.error("Erro ao gerar PNG:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível gerar a imagem PNG. Tente novamente.",
         variant: "destructive",
       });
     }
@@ -332,11 +300,11 @@ const MiniProposalCard = ({ data, imageUrl }: MiniProposalCardProps) => {
           <p>Especialista Tributário: {specialistName}</p>
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Buttons - Modified to remove PNG button */}
         <div className="pt-2 flex justify-between pdf-action-buttons" data-pdf-remove="true">
           <Button variant="outline" onClick={onViewFullProposal} size="sm" className="h-8 text-[11px]">
             <Eye className="h-3 w-3 mr-1" />
-            Ver Detalhes
+            Ver Proposta Completa
           </Button>
           <div className="flex gap-2">
             <Button variant="outline" onClick={printProposal} size="sm" className="h-8 text-[11px]">
@@ -346,10 +314,6 @@ const MiniProposalCard = ({ data, imageUrl }: MiniProposalCardProps) => {
             <Button onClick={generatePdf} className="bg-gray-800 hover:bg-gray-900 h-8 text-[11px]">
               <Download className="h-3 w-3 mr-1" />
               Baixar PDF
-            </Button>
-            <Button onClick={generatePng} className="bg-gray-800 hover:bg-gray-900 h-8 text-[11px]">
-              <FileText className="h-3 w-3 mr-1" />
-              Baixar PNG
             </Button>
           </div>
         </div>
