@@ -1,5 +1,5 @@
 
-import React, { useRef } from 'react';
+import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Printer, Download } from "lucide-react";
 import { ExtractedData } from "@/lib/types/proposals";
@@ -19,7 +19,7 @@ const ActionButtons = ({ onPrint, proposalData, proposalRef }: ActionButtonsProp
     if (!proposalRef.current) {
       toast({
         title: "Erro",
-        description: "Não foi possível gerar o PDF. Tente novamente.",
+        description: "Não foi possível gerar o PDF. Referência de proposta não encontrada.",
         variant: "destructive",
       });
       return;
@@ -39,9 +39,14 @@ const ActionButtons = ({ onPrint, proposalData, proposalRef }: ActionButtonsProp
       });
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
+      // Extract and display the detailed error message
+      const errorMessage = error instanceof Error ? 
+        error.message.replace('API error: ', '') : 
+        "Não foi possível gerar o PDF. Tente novamente.";
+      
       toast({
-        title: "Erro",
-        description: "Não foi possível gerar o PDF. Tente novamente.",
+        title: "Erro na geração do PDF",
+        description: errorMessage,
         variant: "destructive",
       });
     }

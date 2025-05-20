@@ -131,7 +131,8 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(`API error: ${errorData.error || response.statusText}`);
+      const errorMessage = errorData.details || errorData.error || response.statusText;
+      throw new Error(`API error: ${errorMessage}`);
     }
     
     console.log('PDF generated successfully, creating download...');
