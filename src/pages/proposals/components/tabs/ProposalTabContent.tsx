@@ -1,5 +1,5 @@
 
-import React, { useRef } from 'react';
+import React from 'react';
 import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 import { ProposalCard } from "@/components/proposals/card";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,6 @@ const ProposalTabContent = ({
   onInputChange
 }: ProposalTabContentProps) => {
   const [isEditing, setIsEditing] = React.useState(false);
-  const proposalRef = useRef<HTMLDivElement>(null);
 
   return (
     <div className="space-y-6">
@@ -189,7 +188,6 @@ const ProposalTabContent = ({
           data={formData}
           imageUrl={imagePreview || undefined}
           companyData={companyData}
-          proposalRef={proposalRef}
         />
       )}
     </div>

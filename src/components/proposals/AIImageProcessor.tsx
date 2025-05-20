@@ -30,8 +30,7 @@ const AIImageProcessor = ({
     imagePreview,
     processingStatus,
     error,
-    handleImageChange,
-    handleRetry
+    handleImageChange
   } = useImageProcessor({
     onProcessComplete,
     setProcessing,
@@ -54,7 +53,7 @@ const AIImageProcessor = ({
             disabled={processing} 
           />
           
-          <ErrorAlert error={error} onRetry={handleRetry} />
+          <ErrorAlert error={error} />
           
           <ProgressIndicator 
             processing={processing}
