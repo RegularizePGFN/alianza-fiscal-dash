@@ -55,10 +55,10 @@ const PDFTemplatePreview = ({
     };
   })();
 
-  // Dimensões de um A4 (210mm x 297mm) aproximadas para pixels com uma escala de 0.75
+  // Dimensões exatas de um A4 (210mm x 297mm) em pixels com uma escala de 0.65
   // para se ajustar bem à tela (usando proporção aproximada de 3.7795 pixels por mm)
-  const a4Width = 210 * 3.7795 * 0.75;
-  const a4Height = 297 * 3.7795 * 0.75;
+  const a4Width = 210 * 3.7795 * 0.65;
+  const a4Height = 297 * 3.7795 * 0.65;
 
   return (
     <Card 
