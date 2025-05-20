@@ -6,11 +6,14 @@ import { ExtractedData } from "@/lib/types/proposals";
 
 interface TotalSectionProps {
   data: Partial<ExtractedData>;
+  economyValue?: string;
 }
 
-const TotalSection = ({ data }: TotalSectionProps) => {
-  // Calculate the actual economy value (savings)
+const TotalSection = ({ data, economyValue: propEconomyValue }: TotalSectionProps) => {
+  // Calculate the actual economy value (savings) if not provided as prop
   const calculateEconomyValue = (): string => {
+    if (propEconomyValue) return propEconomyValue;
+    
     if (!data.totalDebt || !data.discountedValue) return '0,00';
     
     try {
@@ -30,7 +33,7 @@ const TotalSection = ({ data }: TotalSectionProps) => {
   const economyValue = calculateEconomyValue();
 
   return (
-    <div className="mt-8 bg-gradient-to-r from-af-blue-700 to-af-blue-800 p-6 rounded-lg text-white shadow-md">
+    <div className="mb-6 bg-gradient-to-r from-af-blue-700 to-af-blue-800 p-6 rounded-lg text-white shadow-md">
       <div className="flex justify-between items-center">
         <div>
           <h3 className="text-lg font-semibold mb-1 flex items-center">
