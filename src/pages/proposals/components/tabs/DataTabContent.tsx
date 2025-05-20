@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ExtractedData } from "@/lib/types/proposals";
+import { ExtractedData, CompanyData } from "@/lib/types/proposals";
 import { ClientInfoSection, FinancialInfoSection } from "@/components/proposals/data-form";
 import { ArrowRight } from "lucide-react";
 
@@ -21,6 +21,18 @@ const DataTabContent = ({
   onGenerateProposal,
   setProcessingStatus
 }: DataTabContentProps) => {
+  // State para rastrear se estamos buscando um CNPJ
+  const [isSearchingCnpj, setIsSearchingCnpj] = React.useState(false);
+  // Estado para armazenar dados da empresa (temporariamente)
+  const [companyData, setCompanyData] = React.useState<CompanyData | null>(null);
+  
+  // Função para lidar com a busca de CNPJ
+  const handleSearchCnpj = () => {
+    setIsSearchingCnpj(true);
+    // Após tempo suficiente para simular busca, desabilitar
+    setTimeout(() => setIsSearchingCnpj(false), 1000);
+  };
+  
   useEffect(() => {
     setProcessingStatus("Dados extraídos com sucesso!");
   }, [setProcessingStatus]);
@@ -32,11 +44,16 @@ const DataTabContent = ({
           <ClientInfoSection
             formData={formData}
             onInputChange={onInputChange}
+            isSearchingCnpj={isSearchingCnpj}
+            handleSearchCnpj={handleSearchCnpj}
+            companyData={companyData}
           />
           
           <FinancialInfoSection
             formData={formData}
             onInputChange={onInputChange}
+            disabled={false}
+            entryInstallmentValue={formData.entryValue || "0,00"}
           />
           
           <div className="flex justify-end mt-6">

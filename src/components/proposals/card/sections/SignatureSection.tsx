@@ -8,7 +8,7 @@ interface SignatureSectionProps {
 
 const SignatureSection = ({ data }: SignatureSectionProps) => {
   // Get seller name or use a default
-  const sellerName = data.sellerName || 'Vendedor';
+  const sellerName = data.sellerName || 'Nome do Especialista';
   const sellerPhone = data.sellerPhone || '';
   const sellerEmail = data.sellerEmail || '';
   
@@ -19,7 +19,7 @@ const SignatureSection = ({ data }: SignatureSectionProps) => {
         <p className="text-sm font-medium text-gray-700">
           {sellerName}
         </p>
-        <p className="text-sm text-gray-500">Vendedor</p>
+        <p className="text-sm text-gray-500">Especialista Tributário</p>
         
         {(sellerPhone || sellerEmail) && (
           <div className="text-xs text-gray-500 mt-1 text-center">
