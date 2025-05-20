@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,7 @@ type PasswordChangeForm = z.infer<typeof passwordChangeSchema>;
 type ProfileUpdateForm = z.infer<typeof profileUpdateSchema>;
 
 const ProfilePage = () => {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
@@ -56,13 +56,13 @@ const ProfilePage = () => {
   });
 
   // Update profile form when user changes
-  useState(() => {
+  useEffect(() => {
     if (user) {
       profileForm.reset({
         name: user.name || "",
       });
     }
-  });
+  }, [user, profileForm]);
 
   const onSubmitPassword = async (data: PasswordChangeForm) => {
     if (!user) return;
@@ -135,8 +135,9 @@ const ProfilePage = () => {
         });
         return;
       }
-
-      // Update local user state through auth context (this will happen automatically through onAuthStateChange)
+      
+      // Refresh user data to update state in AuthContext
+      await refreshUser();
       
       toast({
         title: "Perfil atualizado",

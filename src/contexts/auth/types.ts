@@ -1,23 +1,25 @@
 
 import { User, UserRole } from '@/lib/types';
+import { ReactNode } from 'react';
 
-// Auth state interface
+// Auth state
 export interface AuthState {
   isAuthenticated: boolean;
   user: User | null;
   isLoading: boolean;
 }
 
-// Auth context interface
+// Auth context props
 export interface AuthContextProps extends AuthState {
   login: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
   impersonateUser: (userId: string) => Promise<boolean>;
   stopImpersonating: () => Promise<boolean>;
   isImpersonating: boolean;
+  refreshUser: () => Promise<boolean>; // Add refreshUser function
 }
 
 // Auth provider props
 export interface AuthProviderProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }

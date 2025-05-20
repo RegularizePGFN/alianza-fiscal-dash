@@ -88,6 +88,53 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
+  // Add refreshUser function to update user data
+  const refreshUser = useCallback(async () => {
+    if (!authState.user) return false;
+    
+    try {
+      // Get current session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) return false;
+      
+      // Get updated profile data from profiles table
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('name, email, role')
+        .eq('id', authState.user.id)
+        .single();
+      
+      if (profileError) {
+        console.error("Error fetching updated user profile:", profileError);
+        return false;
+      }
+      
+      const email = profileData?.email || session.user.email || '';
+      
+      // Create updated user object
+      const updatedUser: User = {
+        ...authState.user,
+        name: profileData?.name || authState.user.name,
+        email: email,
+        role: mapUserRole(profileData?.role, email),
+      };
+      
+      console.log("Refreshing user data:", updatedUser);
+      
+      // Update auth state with refreshed user data
+      setAuthState(prevState => ({
+        ...prevState,
+        user: updatedUser
+      }));
+      
+      return true;
+    } catch (error) {
+      console.error("Error refreshing user data:", error);
+      return false;
+    }
+  }, [authState.user]);
+
   // Check for existing session on mount and listen for auth changes
   useEffect(() => {
     // Set up auth state listener first with debouncing to prevent excessive calls
@@ -282,7 +329,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         logout,
         impersonateUser,
         stopImpersonating,
-        isImpersonating: !!authState.user?.isImpersonated
+        isImpersonating: !!authState.user?.isImpersonated,
+        refreshUser // Add the refreshUser function to the context
       }}
     >
       {children}
