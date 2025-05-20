@@ -29,6 +29,12 @@ export const analyzeImageWithAI = async (
     // Send the image to the API
     const data = await sendImageToAnalysis(imageBase64);
     
+    // Check for error response from the edge function
+    if (data.error) {
+      console.error('Erro retornado pela API:', data.error);
+      throw new Error(data.error);
+    }
+    
     if (!data.jsonContent) {
       console.error('Resposta sem JSON:', data);
       throw new Error('A resposta não contém dados estruturados');
@@ -47,7 +53,20 @@ export const analyzeImageWithAI = async (
     
   } catch (error) {
     console.error('Erro na análise da imagem com IA:', error);
-    throw error;
+    // Mensagem de erro mais amigável e informativa
+    if (error instanceof Error) {
+      // Tratar erros específicos de forma amigável
+      if (error.message.includes('API key')) {
+        throw new Error('Chave de API da OpenAI não configurada ou inválida. Verifique as configurações.');
+      } else if (error.message.includes('timeout') || error.message.includes('demorou')) {
+        throw new Error('A análise demorou muito tempo. Tente novamente com uma imagem menor ou mais clara.');
+      } else if (error.message.includes('content_policy')) {
+        throw new Error('A imagem não parece ser uma proposta PGFN válida.');
+      } else {
+        throw new Error(`Erro na análise com IA: ${error.message}`);
+      }
+    }
+    throw new Error('Erro desconhecido na análise da imagem. Você pode continuar com a entrada manual de dados.');
   }
 };
 

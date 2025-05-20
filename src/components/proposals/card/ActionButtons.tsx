@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Printer, Download, FileImage, Sparkles } from "lucide-react";
 import { ExtractedData } from "@/lib/types/proposals";
@@ -15,6 +15,7 @@ interface ActionButtonsProps {
 
 const ActionButtons = ({ onPrint, proposalData, proposalRef }: ActionButtonsProps) => {
   const { toast } = useToast();
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   
   const onGeneratePdf = async () => {
     if (!proposalRef.current) {
@@ -82,6 +83,7 @@ const ActionButtons = ({ onPrint, proposalData, proposalRef }: ActionButtonsProp
   };
 
   const onGenerateAIImage = async () => {
+    setIsGeneratingAI(true);
     toast({
       title: "Processando",
       description: "Gerando imagem com Inteligência Artificial, aguarde...",
@@ -139,6 +141,8 @@ const ActionButtons = ({ onPrint, proposalData, proposalRef }: ActionButtonsProp
         description: `Não foi possível gerar a imagem com IA: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
         variant: "destructive",
       });
+    } finally {
+      setIsGeneratingAI(false);
     }
   };
 
@@ -159,10 +163,11 @@ const ActionButtons = ({ onPrint, proposalData, proposalRef }: ActionButtonsProp
       <Button 
         variant="outline" 
         onClick={onGenerateAIImage} 
+        disabled={isGeneratingAI}
         className="border-purple-300 text-purple-700 hover:bg-purple-50 relative"
       >
-        <Sparkles className="mr-2 h-4 w-4" />
-        <span>Baixar PNG (IA)</span>
+        <Sparkles className={`mr-2 h-4 w-4 ${isGeneratingAI ? 'animate-pulse' : ''}`} />
+        <span>{isGeneratingAI ? 'Gerando imagem...' : 'Baixar PNG (IA)'}</span>
       </Button>
       <Button onClick={onGeneratePdf} className="bg-af-blue-600 hover:bg-af-blue-700">
         <Download className="mr-2 h-4 w-4" />
