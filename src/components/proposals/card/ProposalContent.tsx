@@ -59,20 +59,23 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
     };
   })();
 
-  // Get layout settings or use defaults
-  const layout = (() => {
+  // Get layout settings or use defaults without self-referencing
+  const layoutData = (() => {
     if (data.templateLayout && typeof data.templateLayout === 'string') {
       try {
         return JSON.parse(data.templateLayout);
       } catch (e) {}
     }
-    return {
-      sections: ['client', 'alert', 'debt', 'payment', 'fees', 'total'],
-      showHeader: true,
-      showLogo: true,
-      showWatermark: false
-    };
+    return null;
   })();
+
+  // Parse layout settings or use defaults
+  const layout = {
+    sections: layoutData?.sections || ['client', 'alert', 'debt', 'payment', 'fees', 'total'],
+    showHeader: layoutData?.showHeader !== undefined ? layoutData.showHeader : true,
+    showLogo: layoutData?.showLogo !== undefined ? layoutData.showLogo : true,
+    showWatermark: layoutData?.showWatermark || false
+  };
 
   // Add "company" section to layout sections if not already there
   const layoutSections = layout?.sections || [];
@@ -87,13 +90,25 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
     }
   }
 
+  // Prepare companyInfo for ClientSection with email and phone
+  const companyInfo = {
+    name: data.clientName,
+    phones: data.clientPhone ? [data.clientPhone] : [],
+    emails: data.clientEmail ? [data.clientEmail] : [],
+    businessActivity: data.businessActivity
+  };
+
   // Map section IDs to their corresponding components
   const renderSection = (sectionId: string) => {
     switch (sectionId) {
       case 'metadata':
         return <MetadataSection creationDate={data.creationDate} validityDate={data.validityDate} />;
       case 'client':
-        return <ClientSection data={data} colors={colors} />;
+        return <ClientSection 
+          data={data} 
+          colors={colors} 
+          companyInfo={companyInfo} // Pass companyInfo with phones and emails
+        />;
       case 'company':
         return companyData ? <CompanyInfoSection companyData={companyData} colors={colors} /> : null;
       case 'alert':

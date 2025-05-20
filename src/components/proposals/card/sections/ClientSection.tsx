@@ -1,17 +1,26 @@
 
 import React from 'react';
 import { ExtractedData } from "@/lib/types/proposals";
+import { Phone, Mail } from 'lucide-react';
+
+interface CompanyInfo {
+  name?: string;
+  phones?: string[];
+  emails?: string[];
+  businessActivity?: string;
+}
 
 interface ClientSectionProps {
   data: Partial<ExtractedData>;
   colors: {
     secondary: string;
   };
+  companyInfo?: CompanyInfo;
 }
 
-const ClientSection = ({ data, colors }: ClientSectionProps) => {
-  // Usar apenas o valor específico de clientName vindo dos dados da proposta, sem usar o usuário logado
-  const clientName = data.clientName;
+const ClientSection = ({ data, colors, companyInfo }: ClientSectionProps) => {
+  // Get client name from data or companyInfo
+  const clientName = data.clientName || companyInfo?.name;
   
   return (
     <div className="mb-6">
@@ -32,6 +41,34 @@ const ClientSection = ({ data, colors }: ClientSectionProps) => {
           <div className="bg-gray-50 p-3 rounded col-span-2">
             <span className="text-sm font-medium text-gray-500">Razão Social:</span>
             <p className="text-base mt-1">{clientName}</p>
+          </div>
+        )}
+        
+        {/* Display phone if available */}
+        {companyInfo?.phones && companyInfo.phones.length > 0 && companyInfo.phones[0] && (
+          <div className="bg-gray-50 p-3 rounded">
+            <span className="text-sm font-medium text-gray-500 flex items-center">
+              <Phone className="h-3 w-3 mr-1" /> Telefone:
+            </span>
+            <p className="text-base mt-1">{companyInfo.phones[0]}</p>
+          </div>
+        )}
+        
+        {/* Display email if available */}
+        {companyInfo?.emails && companyInfo.emails.length > 0 && companyInfo.emails[0] && (
+          <div className="bg-gray-50 p-3 rounded">
+            <span className="text-sm font-medium text-gray-500 flex items-center">
+              <Mail className="h-3 w-3 mr-1" /> Email:
+            </span>
+            <p className="text-base mt-1 break-all">{companyInfo.emails[0]}</p>
+          </div>
+        )}
+        
+        {/* Display business activity if available */}
+        {data.businessActivity && (
+          <div className="bg-gray-50 p-3 rounded col-span-2">
+            <span className="text-sm font-medium text-gray-500">Ramo de Atividade:</span>
+            <p className="text-base mt-1">{data.businessActivity}</p>
           </div>
         )}
       </div>
