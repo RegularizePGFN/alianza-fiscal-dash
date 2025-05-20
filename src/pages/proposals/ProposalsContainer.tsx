@@ -68,7 +68,7 @@ const ProposalsContainer = () => {
         onInputChange={handlers.handleInputChange} 
         onGenerateProposal={handlers.handleGenerateProposal} 
         onViewProposal={handlers.handleViewProposal} 
-        onDeleteProposal={handlers.handleDeleteProposal} 
+        onDeleteProposal={(id: string) => proposalsState.deleteProposal(id)} 
         onProcessComplete={handlers.handleProcessComplete} 
         onReset={handlers.handleReset}
         setProcessingStatus={proposalsState.setProcessingStatus}
