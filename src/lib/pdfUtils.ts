@@ -3,6 +3,69 @@ import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { ExtractedData } from './types/proposals';
 
+export async function generateProposalPng(proposalElement: HTMLElement, data: Partial<ExtractedData>): Promise<void> {
+  try {
+    // Get specialist name for filename
+    const specialist = data.specialistName ? 
+      data.specialistName.replace(/[^\w]/g, '_').toLowerCase() : 'especialista';
+    
+    // File name
+    const fileName = `proposta_pgfn_${data.cnpj?.replace(/\D/g, '') || 'cliente'}_${specialist}.png`;
+
+    // Clone the element to avoid modifying the original
+    const clonedElement = proposalElement.cloneNode(true) as HTMLElement;
+    
+    // Create a temporary container for the PNG content with all necessary styles
+    const tempContainer = document.createElement('div');
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.left = '-9999px';
+    tempContainer.style.width = '210mm'; // A4 width
+    tempContainer.style.padding = '0';
+    tempContainer.style.margin = '0';
+    tempContainer.style.backgroundColor = 'white';
+    
+    // Hide action buttons
+    const actionButtons = clonedElement.querySelectorAll('.pdf-action-buttons, [data-pdf-remove="true"], button');
+    actionButtons.forEach(button => {
+      if (button instanceof HTMLElement) {
+        button.style.display = 'none';
+      }
+    });
+    
+    // Append the element to the temporary container
+    tempContainer.appendChild(clonedElement);
+    document.body.appendChild(tempContainer);
+    
+    try {
+      // Create PNG using html2canvas
+      const scale = 2; // Higher scale for better quality
+      
+      // Capture the content as canvas
+      const canvas = await html2canvas(clonedElement, {
+        scale: scale,
+        useCORS: true,
+        logging: false,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
+      
+      // Create a download link for the PNG
+      const link = document.createElement('a');
+      link.download = fileName;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      
+      return Promise.resolve();
+    } finally {
+      // Clean up the temporary DOM element
+      document.body.removeChild(tempContainer);
+    }
+  } catch (error) {
+    console.error('Error generating PNG:', error);
+    return Promise.reject(error);
+  }
+}
+
 export async function generateProposalPdf(proposalElement: HTMLElement, data: Partial<ExtractedData>): Promise<void> {
   try {
     // Get specialist name for filename

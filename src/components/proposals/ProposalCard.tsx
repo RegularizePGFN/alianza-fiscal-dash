@@ -3,7 +3,7 @@ import React, { useRef } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ExtractedData } from "@/lib/types/proposals";
-import { generateProposalPdf } from "@/lib/pdfUtils";
+import { generateProposalPdf, generateProposalPng } from "@/lib/pdfUtils";
 import { useToast } from "@/hooks/use-toast";
 
 // Import the new component sections
@@ -55,6 +55,38 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
       });
     }
   };
+  
+  const generatePng = async () => {
+    if (!proposalRef.current) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar a imagem PNG. Tente novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    toast({
+      title: "Processando",
+      description: "Gerando imagem PNG, aguarde um momento...",
+    });
+    
+    try {
+      await generateProposalPng(proposalRef.current, data);
+      
+      toast({
+        title: "Sucesso",
+        description: "Imagem PNG gerada com sucesso!",
+      });
+    } catch (error) {
+      console.error("Erro ao gerar PNG:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar a imagem PNG. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const printProposal = () => {
     window.print();
@@ -89,6 +121,7 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
         {/* Action Buttons */}
         <ActionButtonsSection 
           onGeneratePdf={generatePdf}
+          onGeneratePng={generatePng}
           onPrint={printProposal}
         />
       </CardContent>
