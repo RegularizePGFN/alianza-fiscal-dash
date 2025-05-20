@@ -105,7 +105,6 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
     });
     
     try {
-      // Use the updated function to capture exact screen appearance
       await generateProposalPng(proposalRef.current, data);
       
       toast({

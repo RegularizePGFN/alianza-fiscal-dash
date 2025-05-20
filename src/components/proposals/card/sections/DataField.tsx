@@ -9,6 +9,7 @@ interface DataFieldProps {
   fullWidth?: boolean;
   highlight?: boolean;
   className?: string;
+  compact?: boolean;
 }
 
 /**
@@ -20,22 +21,24 @@ const DataField = ({
   icon,
   fullWidth = false,
   highlight = false,
-  className
+  className,
+  compact = false
 }: DataFieldProps) => {
   return (
     <div 
       className={cn(
-        "bg-gray-50 p-3 rounded", 
+        "bg-gray-50 rounded", 
+        compact ? "p-2" : "p-3",
         fullWidth && "md:col-span-2",
         highlight && "bg-gradient-to-br from-green-50 to-white",
         className
       )}
     >
-      <span className="text-sm font-medium text-gray-500 flex items-center">
-        {icon && <span className="h-3 w-3 mr-1">{icon}</span>}
+      <span className={cn("font-medium text-gray-500 flex items-center", compact ? "text-xs" : "text-sm")}>
+        {icon && <span className={cn("mr-1", compact ? "h-2.5 w-2.5" : "h-3 w-3")}>{icon}</span>}
         {label}:
       </span>
-      <div className="text-base mt-1">
+      <div className={cn("mt-1", compact ? "text-sm" : "text-base")}>
         {typeof value === 'string' ? (value || '-') : value}
       </div>
     </div>

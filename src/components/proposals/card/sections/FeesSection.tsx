@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { ExtractedData } from "@/lib/types/proposals";
+import { SectionContainer, DataField } from './index';
 
 interface FeesSectionProps {
   data: Partial<ExtractedData>;
@@ -8,32 +9,27 @@ interface FeesSectionProps {
     secondary: string;
     accent: string;
   };
+  compact?: boolean;
 }
 
-const FeesSection = ({ data, colors }: FeesSectionProps) => {
+const FeesSection = ({ data, colors, compact = false }: FeesSectionProps) => {
   if (!data.feesValue) return null;
   
   return (
-    <div className="mb-6">
-      <h3 className="text-base font-semibold pb-2 mb-3 border-b border-gray-200"
-          style={{ color: colors.secondary }}>
-        Custos e Honorários
-      </h3>
-      <div className="bg-gray-50 p-3 rounded border-l-4" style={{ borderLeftColor: colors.accent }}>
-        <div className="flex justify-between items-center">
-          <div>
-            <span className="text-sm font-medium text-gray-700">
-              Honorários Aliança Fiscal:
-            </span>
-          </div>
-          <div className="text-right">
-            <p className="text-lg font-medium" style={{ color: colors.accent }}>
-              R$ {data.feesValue}
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
+    <SectionContainer 
+      title="Custos e Honorários" 
+      color={colors.secondary}
+      compact={compact}
+    >
+      <DataField 
+        label="Honorários Aliança Fiscal" 
+        value={`R$ ${data.feesValue}`}
+        fullWidth={true}
+        className="border-l-4"
+        style={{ borderLeftColor: colors.accent }}
+        compact={compact}
+      />
+    </SectionContainer>
   );
 };
 

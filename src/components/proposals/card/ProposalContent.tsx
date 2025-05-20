@@ -20,9 +20,16 @@ interface ProposalContentProps {
   companyData?: CompanyData | null;
   className?: string;
   isPreview?: boolean;
+  compact?: boolean;
 }
 
-const ProposalContent = ({ data, companyData, className = "", isPreview = false }: ProposalContentProps) => {
+const ProposalContent = ({ 
+  data, 
+  companyData, 
+  className = "", 
+  isPreview = false,
+  compact = false
+}: ProposalContentProps) => {
   // Get colors from template settings or use defaults
   const colors = (() => {
     if (data.templateColors && typeof data.templateColors === 'string') {
@@ -82,20 +89,25 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
               emails: data.clientEmail ? [data.clientEmail] : [],
               businessActivity: data.businessActivity
             }}
+            compact={compact}
           />
         ) : null;
       case 'company':
         return companyData ? (
-          <CompanyInfoSection companyData={companyData} colors={colors} />
+          <CompanyInfoSection 
+            companyData={companyData} 
+            colors={colors}
+            compact={compact} 
+          />
         ) : null;
       case 'alert':
         return null; // Não renderizar a seção de alerta (removida)
       case 'debt':
-        return <NegotiationSection data={data} colors={colors} />;
+        return <NegotiationSection data={data} colors={colors} compact={compact} />;
       case 'payment':
-        return <PaymentSection data={data} colors={colors} />;
+        return <PaymentSection data={data} colors={colors} compact={compact} />;
       case 'fees':
-        return <FeesSection data={data} colors={colors} />;
+        return <FeesSection data={data} colors={colors} compact={compact} />;
       case 'total':
         return null; // Não renderizar a seção de total (removida)
       case 'comments':
@@ -123,8 +135,10 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
   // Remover 'total' e 'alert' do array de seções
   const filteredSections = sectionOrder.filter(section => section !== 'total' && section !== 'alert');
 
+  const paddingClass = compact ? "p-3 space-y-0" : "p-6 space-y-0";
+
   return (
-    <div className={`p-6 space-y-0 font-['Roboto',sans-serif] ${className}`}>
+    <div className={`${paddingClass} font-['Roboto',sans-serif] ${className}`}>
       {/* Render sections based on the adjusted section order */}
       {filteredSections.map((section, index) => (
         <React.Fragment key={index}>
@@ -138,7 +152,7 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
       }
       
       {/* Signature is always shown */}
-      <SignatureSection data={data} />
+      <SignatureSection data={data} compact={compact} />
     </div>
   );
 };

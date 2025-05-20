@@ -12,6 +12,8 @@ export { default as SignatureSection } from './SignatureSection';
 export { default as FooterSection } from './FooterSection';
 export { default as HeaderSection } from './HeaderSection';
 export { default as ActionButtons } from './ActionButtons';
+export { default as SectionContainer } from './SectionContainer';
+export { default as DataField } from './DataField';
 
 // Add the new component exports
 export { default as ProposalHeader } from './ProposalHeader';

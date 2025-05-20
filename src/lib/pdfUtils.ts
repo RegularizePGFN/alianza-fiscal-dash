@@ -3,12 +3,11 @@ import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { ExtractedData } from './types/proposals';
 
+// Separate function for PNG generation with high quality
 export async function generateProposalPng(proposalElement: HTMLElement, data: Partial<ExtractedData>): Promise<void> {
   try {
-    // Wait for a complete render cycle
-    await new Promise(resolve => requestAnimationFrame(resolve));
-    
-    // Wait for all fonts to load for accurate rendering
+    // Wait for a complete render cycle and all fonts to load
+    await new Promise(resolve => setTimeout(resolve, 100));
     await document.fonts.ready;
     
     // Get seller name for filename
@@ -18,21 +17,20 @@ export async function generateProposalPng(proposalElement: HTMLElement, data: Pa
     // File name
     const fileName = `proposta_pgfn_${data.cnpj?.replace(/\D/g, '') || 'cliente'}_${seller}.png`;
 
-    // Capture the content exactly as it appears on screen without modifications
+    // Capture the element with high resolution
     const canvas = await html2canvas(proposalElement, {
-      scale: 2, // Bom balanço entre qualidade e tamanho do arquivo
-      useCORS: true, // Enable CORS for any images
+      scale: 2.5, // Higher scale for better quality
+      useCORS: true,
       logging: false,
       allowTaint: true,
-      backgroundColor: '#ffffff', // Fundo branco para consistência
-      imageTimeout: 0, // No timeout for image loading
-      // Não aplicamos transformações para manter exatamente como está na tela
+      backgroundColor: '#ffffff',
+      imageTimeout: 0,
     });
     
-    // Create a download link for the PNG with maximum quality
+    // Create a download link for the PNG
     const link = document.createElement('a');
     link.download = fileName;
-    link.href = canvas.toDataURL('image/png', 1.0); // Maximum quality (1.0)
+    link.href = canvas.toDataURL('image/png', 1.0); // Maximum quality
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -44,123 +42,57 @@ export async function generateProposalPng(proposalElement: HTMLElement, data: Pa
   }
 }
 
+// PDF generation with optimizations to fit on one page
 export async function generateProposalPdf(proposalElement: HTMLElement, data: Partial<ExtractedData>): Promise<void> {
   try {
+    // Wait for fonts to load
+    await document.fonts.ready;
+    
     // Get specialist name for filename
-    const specialist = data.specialistName ? 
-      data.specialistName.replace(/[^\w]/g, '_').toLowerCase() : 'especialista';
+    const specialist = data.specialistName || data.sellerName ? 
+      (data.specialistName || data.sellerName).replace(/[^\w]/g, '_').toLowerCase() : 'especialista';
     
     // File name
     const fileName = `proposta_pgfn_${data.cnpj?.replace(/\D/g, '') || 'cliente'}_${specialist}.pdf`;
 
-    // Clone the element to avoid modifying the original
-    const clonedElement = proposalElement.cloneNode(true) as HTMLElement;
+    // Create a scaled-down, compact version of the proposal for PDF
+    const pdfContainer = document.createElement('div');
+    pdfContainer.style.width = '210mm'; // A4 width
+    pdfContainer.style.position = 'absolute';
+    pdfContainer.style.left = '-9999px';
+    pdfContainer.style.top = '-9999px';
+    pdfContainer.style.backgroundColor = 'white';
     
-    // Create a temporary container for the PDF content with all necessary styles
-    const tempContainer = document.createElement('div');
-    tempContainer.style.position = 'absolute';
-    tempContainer.style.left = '-9999px';
-    tempContainer.style.width = '210mm'; // A4 width
-    tempContainer.style.padding = '0';
-    tempContainer.style.margin = '0';
-    tempContainer.style.backgroundColor = 'white';
-    tempContainer.style.fontSize = '10px'; // Reduzir tamanho da fonte para otimizar espaço
+    // Clone the proposal element
+    const clonedProposal = proposalElement.cloneNode(true) as HTMLElement;
     
-    // Hide action buttons
-    const actionButtons = clonedElement.querySelectorAll('.pdf-action-buttons, [data-pdf-remove="true"], button');
-    actionButtons.forEach(button => {
-      if (button instanceof HTMLElement) {
-        button.style.display = 'none';
+    // Add compact class to the cloned element
+    clonedProposal.querySelectorAll('[class*="p-6"]').forEach(el => {
+      if (el instanceof HTMLElement) {
+        el.classList.remove('p-6');
+        el.classList.add('p-3');
       }
     });
     
-    // Reduzir espaçamento entre elementos
-    const sections = clonedElement.querySelectorAll('div.space-y-4, div.mb-6, div.mt-8');
-    sections.forEach(section => {
-      if (section instanceof HTMLElement) {
-        section.style.marginTop = '8px';
-        section.style.marginBottom = '8px';
-        section.classList.remove('space-y-4', 'mb-6', 'mt-8');
-        section.classList.add('space-y-2', 'mb-3', 'mt-2');
+    // Reduce spacing between elements
+    clonedProposal.querySelectorAll('.space-y-4, .gap-4, .mb-6, .mt-8, .pb-6').forEach(el => {
+      if (el instanceof HTMLElement) {
+        el.classList.remove('space-y-4', 'gap-4', 'mb-6', 'mt-8', 'pb-6');
+        el.classList.add('space-y-2', 'gap-2', 'mb-3', 'mt-4', 'pb-3');
       }
     });
     
-    // Comprimir elementos e grids para economizar espaço
-    const grids = clonedElement.querySelectorAll('.grid');
-    grids.forEach(grid => {
-      if (grid instanceof HTMLElement) {
-        grid.style.gap = '8px';
+    // Hide elements that should not be in PDF
+    clonedProposal.querySelectorAll('[data-pdf-remove="true"]').forEach(el => {
+      if (el instanceof HTMLElement) {
+        el.style.display = 'none';
       }
     });
     
-    // Append styles for PDF rendering
-    const styleElement = document.createElement('style');
-    styleElement.textContent = `
-      /* Ensure Roboto font is loaded */
-      @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
-      
-      /* Make sure all content fits on page */
-      * {
-        box-sizing: border-box;
-        font-family: 'Roboto', sans-serif !important;
-        margin-block: 0;
-      }
-      
-      /* Reduce spacing */
-      p, h1, h2, h3, h4, h5, h6 {
-        margin-block: 2px !important;
-      }
-      
-      /* Hide button elements */
-      button, [data-pdf-remove="true"] {
-        display: none !important;
-      }
-      
-      /* Optimize padding and spacing */
-      .p-6, .p-5, .p-4 {
-        padding: 8px !important;
-      }
-      
-      .p-3 {
-        padding: 6px !important;
-      }
-      
-      .space-y-4 {
-        margin-top: 8px !important;
-        margin-bottom: 8px !important;
-      }
-      
-      /* Optimize grids for space */
-      .grid {
-        gap: 8px !important;
-      }
-      
-      /* Compress header */
-      [class*="rounded-t-lg"] {
-        padding-top: 8px !important;
-        padding-bottom: 8px !important;
-      }
-      
-      /* Preserve colors and backgrounds */
-      body {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-        background-color: white;
-      }
-    `;
-    
-    // Add the element to the temporary container
-    tempContainer.appendChild(styleElement);
-    tempContainer.appendChild(clonedElement);
-    
-    // Append to document body temporarily
-    document.body.appendChild(tempContainer);
+    pdfContainer.appendChild(clonedProposal);
+    document.body.appendChild(pdfContainer);
     
     try {
-      // Wait a moment to ensure fonts and styles are loaded
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
       // Initialize PDF with A4 dimensions
       const pdf = new jsPDF({
         orientation: 'portrait',
@@ -169,9 +101,9 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
         compress: true
       });
       
-      // Create PDF using html2canvas
-      const canvas = await html2canvas(clonedElement, {
-        scale: 2,
+      // Capture the element
+      const canvas = await html2canvas(clonedProposal, {
+        scale: 1.5,
         useCORS: true,
         logging: false,
         allowTaint: true,
@@ -182,13 +114,13 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       const imgWidth = 210; // A4 width in mm
       const pageHeight = 297; // A4 height in mm
       
-      // Calcular altura proporcional para manter proporção do conteúdo
+      // Calculate height proportionally
       const contentRatio = canvas.height / canvas.width;
       const imgHeight = imgWidth * contentRatio;
       
-      // Se o conteúdo for maior que uma página A4, vamos dividi-lo em múltiplas páginas
+      // Check if content fits on one page
       if (imgHeight <= pageHeight) {
-        // Conteúdo cabe em uma única página
+        // Content fits on a single page
         pdf.addImage(
           canvas.toDataURL('image/jpeg', 0.95), 
           'JPEG', 
@@ -198,40 +130,26 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
           imgHeight // height
         );
       } else {
-        // Conteúdo precisa de várias páginas
-        let heightLeft = imgHeight;
-        let position = 0;
-        let page = 0;
+        // If content is too tall, scale it to fit on one page
+        const scale = pageHeight / imgHeight;
+        const scaledWidth = imgWidth * scale * 0.95; // 95% of width to add some margin
         
-        while (heightLeft > 0) {
-          // Adicionar nova página se não for a primeira
-          if (page > 0) {
-            pdf.addPage();
-          }
-          
-          // Adicionar parte da imagem correspondente a esta página
-          pdf.addImage(
-            canvas.toDataURL('image/jpeg', 0.95),
-            'JPEG',
-            0, // x
-            position > 0 ? -position : 0, // Posição vertical negativa para "recortar" a parte certa
-            imgWidth,
-            imgHeight
-          );
-          
-          // Reduzir altura restante e incrementar posição
-          heightLeft -= pageHeight;
-          position += pageHeight;
-          page++;
-        }
+        pdf.addImage(
+          canvas.toDataURL('image/jpeg', 0.95),
+          'JPEG',
+          (imgWidth - scaledWidth) / 2, // center horizontally
+          0,
+          scaledWidth,
+          pageHeight * 0.95 // 95% of height to add some margin
+        );
       }
       
       // Save the PDF
       pdf.save(fileName);
       
     } finally {
-      // Clean up the temporary DOM element
-      document.body.removeChild(tempContainer);
+      // Clean up
+      document.body.removeChild(pdfContainer);
     }
     
     return Promise.resolve();
@@ -241,4 +159,3 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     return Promise.reject(error);
   }
 }
-
