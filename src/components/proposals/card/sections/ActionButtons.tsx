@@ -18,7 +18,7 @@ const ActionButtons = ({ proposalRef, data }: ActionButtonsProps) => {
     if (!proposalRef.current) {
       toast({
         title: "Erro",
-        description: "Não foi possível gerar o PDF. Referência de proposta não encontrada.",
+        description: "Não foi possível gerar o PDF. Tente novamente.",
         variant: "destructive",
       });
       return;
@@ -26,7 +26,7 @@ const ActionButtons = ({ proposalRef, data }: ActionButtonsProps) => {
     
     toast({
       title: "Processando",
-      description: "Gerando PDF com alta qualidade, aguarde um momento...",
+      description: "Gerando PDF, aguarde um momento...",
     });
     
     try {
@@ -34,18 +34,13 @@ const ActionButtons = ({ proposalRef, data }: ActionButtonsProps) => {
       
       toast({
         title: "Sucesso",
-        description: "PDF gerado com sucesso e com alta fidelidade visual!",
+        description: "PDF gerado com sucesso!",
       });
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
-      // Extract and display the detailed error message
-      const errorMessage = error instanceof Error ? 
-        error.message.replace('API error: ', '') : 
-        "Não foi possível gerar o PDF. Tente novamente.";
-      
       toast({
-        title: "Erro na geração do PDF",
-        description: errorMessage,
+        title: "Erro",
+        description: "Não foi possível gerar o PDF. Tente novamente.",
         variant: "destructive",
       });
     }
