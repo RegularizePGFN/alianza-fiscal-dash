@@ -6,6 +6,8 @@ import { HeaderSection, ActionButtons } from './sections';
 import ProposalContent from './ProposalContent';
 import { useToast } from "@/hooks/use-toast";
 import { generateProposalPdf, generateProposalPng } from "@/lib/pdfUtils";
+import { Button } from "@/components/ui/button";
+import { Printer, Download, FileImage } from "lucide-react";
 
 interface ProposalCardProps {
   data: Partial<ExtractedData>;
