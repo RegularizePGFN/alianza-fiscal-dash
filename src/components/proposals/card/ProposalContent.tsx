@@ -1,20 +1,13 @@
 
 import React from 'react';
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
-import { formatBrazilianCurrency } from '@/lib/utils';
-import { 
-  MetadataSection,
-  ClientSection,
-  CompanyInfoSection,
-  AlertSection, 
-  NegotiationSection,
-  PaymentSection,
-  FeesSection,
-  TotalSection,
-  CommentsSection,
-  SignatureSection,
-  FooterSection
-} from './sections';
+import { SignatureSection, FooterSection } from './sections';
+import {
+  ThemeManager,
+  EconomyValueCalculator,
+  SectionOrderManager,
+  SectionRenderer
+} from './content';
 
 interface ProposalContentProps {
   data: Partial<ExtractedData>;
@@ -24,139 +17,53 @@ interface ProposalContentProps {
 }
 
 const ProposalContent = ({ data, companyData, className = "", isPreview = false }: ProposalContentProps) => {
-  // Calculate the economy value
-  const calculateEconomyValue = (): string => {
-    if (!data.totalDebt || !data.discountedValue) return '0,00';
-    
-    try {
-      const totalDebtValue = parseFloat(data.totalDebt.replace(/\./g, '').replace(',', '.'));
-      const discountedVal = parseFloat(data.discountedValue.replace(/\./g, '').replace(',', '.'));
-      
-      if (isNaN(totalDebtValue) || isNaN(discountedVal)) return '0,00';
-      
-      const economyValue = totalDebtValue - discountedVal;
-      return formatBrazilianCurrency(economyValue);
-    } catch (e) {
-      console.error('Error calculating economy value:', e);
-      return '0,00';
-    }
-  };
-  
-  const economyValue = calculateEconomyValue();
-  
-  // Get colors from template settings or use defaults
-  const colors = (() => {
-    if (data.templateColors && typeof data.templateColors === 'string') {
-      try {
-        return JSON.parse(data.templateColors);
-      } catch (e) {}
-    }
-    return {
-      primary: '#3B82F6',
-      secondary: '#1E40AF',
-      accent: '#10B981',
-      background: '#F8FAFC'
-    };
-  })();
-
-  // Get layout settings or use defaults without self-referencing
-  const layoutData = (() => {
-    if (data.templateLayout && typeof data.templateLayout === 'string') {
-      try {
-        return JSON.parse(data.templateLayout);
-      } catch (e) {}
-    }
-    return null;
-  })();
-
-  // Parse layout settings or use defaults
-  const layout = {
-    sections: layoutData?.sections || ['company', 'alert', 'debt', 'payment', 'fees', 'total'],
-    showHeader: layoutData?.showHeader !== undefined ? layoutData.showHeader : true,
-    showLogo: layoutData?.showLogo !== undefined ? layoutData.showLogo : true,
-    showWatermark: layoutData?.showWatermark || false
-  };
-
   // We'll use a set to track which sections we've rendered to avoid duplicates
-  const renderedSections = new Set();
-
-  // Map section IDs to their corresponding components
-  const renderSection = (sectionId: string) => {
-    // If we've already rendered this section, don't render it again
-    if (renderedSections.has(sectionId)) return null;
-    
-    // Mark this section as rendered
-    renderedSections.add(sectionId);
-    
-    switch (sectionId) {
-      case 'metadata':
-        return <MetadataSection creationDate={data.creationDate} validityDate={data.validityDate} />;
-      case 'client':
-        // Only show client section if there's no company data (fallback)
-        return !companyData ? (
-          <ClientSection 
-            data={data} 
-            colors={colors} 
-            companyInfo={{
-              name: data.clientName,
-              phones: data.clientPhone ? [data.clientPhone] : [],
-              emails: data.clientEmail ? [data.clientEmail] : [],
-              businessActivity: data.businessActivity
-            }}
-          />
-        ) : null;
-      case 'company':
-        return companyData ? (
-          <CompanyInfoSection companyData={companyData} colors={colors} />
-        ) : null;
-      case 'alert':
-        return <AlertSection />;
-      case 'debt':
-        return <NegotiationSection data={data} colors={colors} />;
-      case 'payment':
-        return <PaymentSection data={data} colors={colors} />;
-      case 'fees':
-        return <FeesSection data={data} colors={colors} />;
-      case 'total':
-        return <TotalSection data={data} economyValue={economyValue} />;
-      case 'comments':
-        return <CommentsSection data={data} colors={colors} />;
-      default:
-        return null;
-    }
-  };
-
-  // Make sure company data is shown first if available
-  const sectionOrder = [...layout.sections];
-  if (companyData && !sectionOrder.includes('company')) {
-    // If there's company data but no company section, add it at the beginning
-    sectionOrder.unshift('company');
-  }
-  
-  // Remove client section if we have company data to prevent duplication
-  if (companyData) {
-    const clientIndex = sectionOrder.indexOf('client');
-    if (clientIndex !== -1) {
-      sectionOrder.splice(clientIndex, 1);
-    }
-  }
+  const renderedSections = new Set<string>();
 
   return (
     <div className={`p-6 space-y-0 font-['Roboto',sans-serif] ${className}`}>
-      {/* Render sections based on the adjusted section order */}
-      {sectionOrder.map((section, index) => (
-        <React.Fragment key={index}>
-          {renderSection(section)}
-        </React.Fragment>
-      ))}
-      
-      {/* Always show comments at the end if they exist and aren't already in the sections */}
-      {data.additionalComments && !renderedSections.has('comments') && 
-        <CommentsSection data={data} colors={colors} />
-      }
-      
-      {/* Signature is always shown */}
-      <SignatureSection data={data} />
+      <ThemeManager data={data}>
+        {(colors, layout) => (
+          <EconomyValueCalculator data={data}>
+            {(economyValue) => (
+              <SectionOrderManager layout={layout} companyData={companyData}>
+                {(sectionOrder) => (
+                  <>
+                    {/* Render sections based on the adjusted section order */}
+                    {sectionOrder.map((section, index) => (
+                      <React.Fragment key={index}>
+                        <SectionRenderer 
+                          sectionId={section}
+                          data={data}
+                          companyData={companyData}
+                          colors={colors}
+                          economyValue={economyValue}
+                          renderedSections={renderedSections}
+                        />
+                      </React.Fragment>
+                    ))}
+                    
+                    {/* Always show comments at the end if they exist and aren't already in the sections */}
+                    {data.additionalComments && !renderedSections.has('comments') && (
+                      <SectionRenderer
+                        sectionId="comments"
+                        data={data}
+                        companyData={companyData}
+                        colors={colors}
+                        economyValue={economyValue}
+                        renderedSections={renderedSections}
+                      />
+                    )}
+                    
+                    {/* Signature is always shown */}
+                    <SignatureSection data={data} />
+                  </>
+                )}
+              </SectionOrderManager>
+            )}
+          </EconomyValueCalculator>
+        )}
+      </ThemeManager>
     </div>
   );
 };
