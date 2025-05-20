@@ -71,8 +71,6 @@ const PDFTemplatePreview = ({ formData, template, imagePreview }: PDFTemplatePre
                 Proposta de Parcelamento PGFN
               </h2>
             </div>
-            
-            {/* Economy badge will be handled by shared component */}
           </div>
         </div>
       )}
