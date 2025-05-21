@@ -81,29 +81,34 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     // File name
     const fileName = `proposta_pgfn_${data.cnpj?.replace(/\D/g, '') || 'cliente'}_${seller}.pdf`;
 
-    // Apply PDF-specific styling for a more simple and clean layout
+    // Apply PDF-specific styling
     const pdfStyle = document.createElement('style');
     pdfStyle.textContent = `
-      @page { margin: 15mm; }
-      body { 
-        font-family: Arial, sans-serif; 
-        line-height: 1.3;
-      }
-      p { margin: 0.5em 0; }
+      @page { margin: 10mm; }
+      body { font-family: 'Roboto', Arial, sans-serif; }
+      p { margin: 0; padding: 0; }
       .page-break { page-break-after: always; }
       button, [data-pdf-remove="true"] { display: none !important; }
-      table { page-break-inside: avoid; width: 100%; border-collapse: collapse; }
-      td, th { padding: 4px; }
-      .section { page-break-inside: avoid; margin-bottom: 10px; }
-      h3, h4 { margin: 0.7em 0 0.3em 0; page-break-after: avoid; }
-      .gradient-bg { background: none !important; }
-      .border { border: 1px solid #ddd; }
-      .rounded { border-radius: 0; }
-      .shadow { box-shadow: none; }
-      /* Simplify all visual elements */
-      .bg-gradient-to-br, .hover\\:bg-af-blue-50 { background: none !important; }
+      table { page-break-inside: avoid; }
+      .section { page-break-inside: avoid; }
     `;
     document.head.appendChild(pdfStyle);
+
+    // Create a PDF with A4 dimensions
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+      compress: true
+    });
+    
+    // Set PDF document properties
+    pdf.setProperties({
+      title: `Proposta PGFN - ${data.clientName || data.cnpj || 'Cliente'}`,
+      subject: 'Proposta de Parcelamento PGFN',
+      author: 'Aliança Fiscal',
+      creator: 'Sistema de Propostas'
+    });
 
     // Hide elements that shouldn't appear in the PDF
     const elementsToHide = proposalElement.querySelectorAll('[data-pdf-remove="true"]');
@@ -114,25 +119,9 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     });
     
     try {
-      // Create a PDF with A4 dimensions
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-        compress: true
-      });
-      
-      // Set PDF document properties
-      pdf.setProperties({
-        title: `Proposta PGFN - ${data.clientName || data.cnpj || 'Cliente'}`,
-        subject: 'Proposta de Parcelamento PGFN',
-        author: 'Aliança Fiscal',
-        creator: 'Sistema de Propostas'
-      });
-
       // Calculate the dimensions
-      const contentWidth = 180; // A4 width minus margins in mm
-      const contentHeight = 267; // A4 height minus margins in mm
+      const contentWidth = 210 - 20; // A4 width minus margins in mm
+      const contentHeight = 297 - 20; // A4 height minus margins in mm
 
       // First, calculate the total height to determine number of pages
       const initialCanvas = await html2canvas(proposalElement, {
@@ -150,21 +139,11 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
             }
           });
 
-          // Add page break markers to section headers
-          const sectionHeaders = documentClone.querySelectorAll('.section-header, h3, h4, table');
+          // Mark section headers for page breaks if needed
+          const sectionHeaders = documentClone.querySelectorAll('.section-header, h3, table');
           sectionHeaders.forEach(header => {
             if (header instanceof HTMLElement) {
               header.dataset.pdfSectionHeader = 'true';
-              header.style.pageBreakBefore = 'auto';
-              header.style.pageBreakAfter = 'avoid';
-            }
-          });
-          
-          // Mark table rows to stay together
-          const tableRows = documentClone.querySelectorAll('tr');
-          tableRows.forEach(row => {
-            if (row instanceof HTMLElement) {
-              row.style.pageBreakInside = 'avoid';
             }
           });
         }
@@ -188,8 +167,8 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
         pdf.addImage(
           initialCanvas, 
           'PNG',
-          15, // X position (margin)
-          15, // Y position (margin)
+          10, // X position (margin)
+          10, // Y position (margin)
           contentWidth,
           (sourceHeight * contentWidth) / initialCanvas.width
         );
@@ -197,7 +176,7 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
         // Add page number
         pdf.setFontSize(8);
         pdf.setTextColor(128, 128, 128);
-        pdf.text(`Página ${i + 1} de ${totalPages}`, contentWidth / 2, contentHeight + 10, { align: 'center' });
+        pdf.text(`Página ${i + 1} de ${totalPages}`, contentWidth / 2 + 10, contentHeight + 10, { align: 'center' });
       }
       
       // Save the PDF
