@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { format } from "date-fns";
+import { format, isValid, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface MetadataSectionProps {
@@ -20,12 +19,40 @@ const MetadataSection = ({
   sellerPhone,
   sellerEmail
 }: MetadataSectionProps) => {
+  // Enhanced safe date formatting function to work with already formatted dates
   const formatDateTime = (dateStr?: string) => {
     if (!dateStr) return "-";
+    
     try {
-      return format(new Date(dateStr), "dd/MM/yyyy", { locale: ptBR });
+      // If the date is already in dd/MM/yyyy format, return it as is
+      if (dateStr.includes('/') && dateStr.split('/').length === 3) {
+        return dateStr;
+      }
+      
+      // Otherwise try to parse and format it
+      let dateObj;
+      try {
+        // Try to parse as ISO string first
+        dateObj = parseISO(dateStr);
+        
+        // If the result is not valid, try as regular date
+        if (!isValid(dateObj)) {
+          dateObj = new Date(dateStr);
+        }
+        
+        // Final validity check
+        if (!isValid(dateObj)) {
+          console.warn("Invalid date format:", dateStr);
+          return dateStr; // Return original string if parsing fails
+        }
+        
+        return format(dateObj, "dd/MM/yyyy", { locale: ptBR });
+      } catch (e) {
+        console.error("Error formatting date:", e);
+        return dateStr; // Return original string on error
+      }
     } catch (e) {
-      console.error("Error formatting date:", e);
+      console.error("Error in formatDateTime:", e);
       return dateStr;
     }
   };
