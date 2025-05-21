@@ -1,144 +1,95 @@
 
 import React from 'react';
+import { Separator } from "@/components/ui/separator";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
-import { formatBrazilianCurrency } from '@/lib/utils';
-import { 
-  MetadataSection,
-  ClientSection,
-  CompanyInfoSection,
-  AlertSection, 
-  NegotiationSection,
-  PaymentSection,
-  FeesSection,
-  CommentsSection,
-  SignatureSection,
-  FooterSection
-} from './sections';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import ClientSection from './client/ClientSimpleInfo';
+import { HeaderSection, MetadataSection, ProposalDataSection, NegotiationDataSection, 
+         FeesDisplaySection, PaymentOptionsDisplay, AlertSection, FooterSection,
+         SignatureSection, CommentsSection } from './sections';
 
 interface ProposalContentProps {
   data: Partial<ExtractedData>;
   companyData?: CompanyData | null;
-  className?: string;
   isPreview?: boolean;
 }
 
-const ProposalContent = ({ data, companyData, className = "", isPreview = false }: ProposalContentProps) => {
-  // Get colors from template settings or use defaults
-  const colors = (() => {
-    if (data.templateColors && typeof data.templateColors === 'string') {
-      try {
-        return JSON.parse(data.templateColors);
-      } catch (e) {}
-    }
-    return {
-      primary: '#3B82F6',
-      secondary: '#1E40AF',
-      accent: '#10B981',
-      background: '#F8FAFC'
-    };
-  })();
-
-  // Get layout settings or use defaults without self-referencing
-  const layoutData = (() => {
+const ProposalContent: React.FC<ProposalContentProps> = ({ 
+  data, 
+  companyData,
+  isPreview = false
+}) => {
+  // Get the layout from template settings or use default
+  const layout = (() => {
     if (data.templateLayout && typeof data.templateLayout === 'string') {
       try {
         return JSON.parse(data.templateLayout);
-      } catch (e) {}
+      } catch (e) {
+        console.error('Failed to parse template layout', e);
+      }
     }
-    return null;
+    return {
+      sections: ['client', 'debt', 'alert', 'negotiation', 'payment', 'fees'],
+      showHeader: true,
+      showLogo: true,
+      showWatermark: false
+    };
   })();
 
-  // Parse layout settings or use defaults
-  const layout = {
-    sections: layoutData?.sections || ['company', 'debt', 'payment', 'fees'],
-    showHeader: layoutData?.showHeader !== undefined ? layoutData.showHeader : true,
-    showLogo: layoutData?.showLogo !== undefined ? layoutData.showLogo : true,
-    showWatermark: layoutData?.showWatermark || false
-  };
-
-  // We'll use a set to track which sections we've rendered to avoid duplicates
-  const renderedSections = new Set();
-
-  // Map section IDs to their corresponding components
-  const renderSection = (sectionId: string) => {
-    // If we've already rendered this section, don't render it again
-    if (renderedSections.has(sectionId)) return null;
+  // Format dates for display
+  const creationDate = data.creationDate 
+    ? format(new Date(data.creationDate), 'dd/MM/yyyy', { locale: ptBR })
+    : format(new Date(), 'dd/MM/yyyy', { locale: ptBR });
     
-    // Mark this section as rendered
-    renderedSections.add(sectionId);
-    
-    switch (sectionId) {
-      case 'metadata':
-        return <MetadataSection creationDate={data.creationDate} validityDate={data.validityDate} />;
-      case 'client':
-        // Only show client section if there's no company data (fallback)
-        return !companyData ? (
-          <ClientSection 
-            data={data} 
-            colors={colors} 
-            companyInfo={{
-              name: data.clientName,
-              phones: data.clientPhone ? [data.clientPhone] : [],
-              emails: data.clientEmail ? [data.clientEmail] : [],
-              businessActivity: data.businessActivity
-            }}
-          />
-        ) : null;
-      case 'company':
-        return companyData ? (
-          <CompanyInfoSection companyData={companyData} colors={colors} />
-        ) : null;
-      case 'alert':
-        return null; // Não renderizar a seção de alerta (removida)
-      case 'debt':
-        return <NegotiationSection data={data} colors={colors} />;
-      case 'payment':
-        return <PaymentSection data={data} colors={colors} />;
-      case 'fees':
-        return <FeesSection data={data} colors={colors} />;
-      case 'total':
-        return null; // Não renderizar a seção de total (removida)
-      case 'comments':
-        return <CommentsSection data={data} colors={colors} />;
-      default:
-        return null;
-    }
+  const validityDate = data.validityDate
+    ? format(new Date(data.validityDate), 'dd/MM/yyyy', { locale: ptBR })
+    : format(new Date(new Date().setDate(new Date().getDate() + 7)), 'dd/MM/yyyy', { locale: ptBR });
+
+  // Render sections based on layout
+  const renderSections = () => {
+    return layout.sections.map((section: string) => {
+      switch (section) {
+        case 'client':
+          return <ProposalDataSection key="client" data={data} />;
+        case 'debt':
+          return <NegotiationDataSection key="debt" data={data} />;
+        case 'alert':
+          return <AlertSection key="alert" />;
+        case 'payment':
+          return <PaymentOptionsDisplay key="payment" data={data} />;
+        case 'fees':
+          return data.feesValue ? <FeesDisplaySection key="fees" data={data} /> : null;
+        case 'comments':
+          return data.additionalComments ? <CommentsSection key="comments" comments={data.additionalComments} /> : null;
+        case 'signature':
+          return data.showSignature === 'true' ? <SignatureSection key="signature" specialistName={data.specialistName || ''} /> : null;
+        default:
+          return null;
+      }
+    });
   };
-
-  // Make sure company data is shown first if available
-  const sectionOrder = [...layout.sections];
-  if (companyData && !sectionOrder.includes('company')) {
-    // If there's company data but no company section, add it at the beginning
-    sectionOrder.unshift('company');
-  }
-  
-  // Remove client section if we have company data to prevent duplication
-  if (companyData) {
-    const clientIndex = sectionOrder.indexOf('client');
-    if (clientIndex !== -1) {
-      sectionOrder.splice(clientIndex, 1);
-    }
-  }
-
-  // Remover 'total' e 'alert' do array de seções
-  const filteredSections = sectionOrder.filter(section => section !== 'total' && section !== 'alert');
 
   return (
-    <div className={`p-6 space-y-0 font-['Roboto',sans-serif] ${className}`}>
-      {/* Render sections based on the adjusted section order */}
-      {filteredSections.map((section, index) => (
-        <React.Fragment key={index}>
-          {renderSection(section)}
-        </React.Fragment>
-      ))}
-      
-      {/* Always show comments at the end if they exist and aren't already in the sections */}
-      {data.additionalComments && !renderedSections.has('comments') && 
-        <CommentsSection data={data} colors={colors} />
-      }
-      
-      {/* Signature is always shown */}
-      <SignatureSection data={data} />
+    <div className="p-6 space-y-6">
+      {/* Metadata - Always show */}
+      <MetadataSection 
+        creationDate={creationDate}
+        validityDate={validityDate}
+        specialistName={data.specialistName || 'Especialista Tributário'}
+        sellerName={data.sellerName}
+        sellerPhone={data.sellerPhone}
+        sellerEmail={data.sellerEmail}
+      />
+
+      {/* Dynamic Sections */}
+      {renderSections()}
+
+      {/* Fixed Footer (always present) */}
+      <Separator className="my-4" />
+      <FooterSection 
+        specialistName={data.specialistName || 'Especialista Tributário'} 
+      />
     </div>
   );
 };

@@ -10,7 +10,7 @@ const corsHeaders = {
 };
 
 // Get environment variables
-const browserlessUrl = Deno.env.get('BROWSERLESS_URL') || 'https://chrome.browserless.io/function?token=2SLjpxsvtsm7AsIa5bbcb243a24b3d97ee0aee5bc840cb7ed';
+const browserlessBaseUrl = Deno.env.get('BROWSERLESS_URL') || 'https://production-sfo.browserless.io';
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -38,99 +38,56 @@ serve(async (req) => {
       .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove scripts
       .replace(/data-lov-id="[^"]*"/g, ''); // Remove data-lov-id attributes
     
-    // Create a proper function string for Browserless - this is KEY!
-    // Using a JavaScript object with a function property instead of a raw function string
-    const payload = {
-      code: `
-        async function run(context) {
-          try {
-            console.log("Starting rendering in Browserless");
-            const { page } = context;
-            
-            // Set viewport to A4 size at higher DPI for better quality
-            await page.setViewport({
-              width: 1240, // A4 width at higher DPI (roughly 1.5x standard 794px)
-              height: 1754, // A4 height at higher DPI (roughly 1.5x standard 1123px)
-              deviceScaleFactor: 2
-            });
-            
-            console.log("Waiting for fonts and images to load");
-            // Wait for fonts and images to load completely
-            await page.evaluate(async () => {
-              await document.fonts.ready;
-              const imgPromises = Array.from(document.querySelectorAll('img'))
-                .filter(img => !img.complete)
-                .map(img => new Promise(resolve => {
-                  img.onload = img.onerror = resolve;
-                }));
-              await Promise.all(imgPromises);
-              return true;
-            });
-            
-            // Additional wait time to ensure everything renders properly
-            await page.waitForTimeout(2000);
-            
-            console.log("All content loaded, preparing to generate ${format}");
-
-            // For PDF generation
-            if ('${format}' === 'pdf') {
-              try {
-                const pdf = await page.pdf({
-                  format: 'A4',
-                  printBackground: true,
-                  preferCSSPageSize: true,
-                  margin: {
-                    top: '10mm',
-                    right: '10mm',
-                    bottom: '10mm',
-                    left: '10mm',
-                  }
-                });
-                console.log("PDF generation successful");
-                return pdf.toString('base64');
-              } catch (pdfError) {
-                console.error("PDF generation error:", pdfError);
-                throw new Error('PDF generation failed: ' + pdfError.message);
-              }
-            } 
-            // For PNG generation
-            else {
-              try {
-                const screenshot = await page.screenshot({
-                  type: 'png',
-                  fullPage: true,
-                  omitBackground: false
-                });
-                console.log("PNG generation successful");
-                return screenshot.toString('base64');
-              } catch (pngError) {
-                console.error("PNG generation error:", pngError);
-                throw new Error('PNG generation failed: ' + pngError.message);
-              }
-            }
-          } catch (error) {
-            console.error('Puppeteer error:', error);
-            throw new Error('Failed to render: ' + error.message);
-          }
-        }
-
-        module.exports = run;
-      `,
-      context: {
+    // Choose the correct endpoint based on format
+    const endpoint = format === 'pdf' ? '/pdf' : '/screenshot';
+    const browserlessUrl = `${browserlessBaseUrl}${endpoint}`;
+    
+    if (!browserlessUrl.includes('token=')) {
+      console.log('Warning: Browserless URL does not contain a token');
+    }
+    
+    // Prepare the payload based on the format
+    let payload;
+    
+    if (format === 'pdf') {
+      payload = {
         html: simplifiedHtml,
-        stealth: true, // Better compatibility
-        flags: ['--no-sandbox', '--disable-setuid-sandbox', '--font-render-hinting=none'],
-        defaultViewport: {
+        options: {
+          printBackground: true,
+          format: 'A4',
+          margin: {
+            top: '10mm',
+            right: '10mm',
+            bottom: '10mm',
+            left: '10mm'
+          }
+        },
+        gotoOptions: {
+          waitUntil: 'networkidle2',
+          timeout: 30000
+        }
+      };
+    } else { // PNG format
+      payload = {
+        html: simplifiedHtml,
+        options: {
+          type: 'png',
+          fullPage: true,
+          omitBackground: false
+        },
+        gotoOptions: {
+          waitUntil: 'networkidle2',
+          timeout: 30000
+        },
+        viewport: {
           width: 1240, // A4 width at higher DPI
           height: 1754, // A4 height at higher DPI
           deviceScaleFactor: 2
-        },
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        timeout: 60000, // Increased to 60 seconds for better reliability
-      }
-    };
+        }
+      };
+    }
     
-    console.log('Sending request to Browserless with improved configuration...');
+    console.log(`Sending request to Browserless endpoint ${endpoint}...`);
     
     // Add retry logic for Browserless API calls
     let response;
@@ -139,7 +96,7 @@ serve(async (req) => {
     
     while (retries <= maxRetries) {
       try {
-        // Call Browserless.io API with the properly formatted function
+        // Call Browserless.io API with the properly formatted payload
         response = await fetch(browserlessUrl, {
           method: 'POST',
           headers: {
@@ -187,48 +144,42 @@ serve(async (req) => {
       );
     }
     
-    // Try to parse response as text first to debug any issues
-    const responseText = await response.text();
-    console.log('Response text length:', responseText.length);
-    console.log('Response preview:', responseText.substring(0, 200) + '...');
-    
-    let result;
-    try {
-      // Parse the text as JSON
-      result = JSON.parse(responseText);
+    // For PDF endpoint, we get a buffer directly
+    if (format === 'pdf') {
+      const pdfBuffer = await response.arrayBuffer();
+      const pdfBase64 = btoa(
+        new Uint8Array(pdfBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+      );
       
-      if (!result || !result.data) {
-        console.error('No data in parsed response:', result);
-        return new Response(
-          JSON.stringify({ 
-            error: "No data returned from rendering service", 
-            details: result ? JSON.stringify(result).substring(0, 500) : "Empty response" 
-          }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-    } catch (parseError) {
-      console.error('Error parsing response:', parseError, 'Response text:', responseText.substring(0, 500));
+      console.log(`Successfully rendered PDF file`);
       return new Response(
         JSON.stringify({ 
-          error: "Failed to parse rendering service response",
-          details: parseError.message
+          data: pdfBase64,
+          format: 'pdf',
+          contentType: 'application/pdf',
+          filename: `${filename}.pdf`
         }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    } 
+    // For screenshot endpoint
+    else {
+      const imageBuffer = await response.arrayBuffer();
+      const imageBase64 = btoa(
+        new Uint8Array(imageBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+      );
+      
+      console.log(`Successfully rendered PNG file`);
+      return new Response(
+        JSON.stringify({ 
+          data: imageBase64,
+          format: 'png',
+          contentType: 'image/png',
+          filename: `${filename}.png`
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-    
-    // Return the base64 data
-    console.log(`Successfully rendered ${format} file`);
-    return new Response(
-      JSON.stringify({ 
-        data: result.data,
-        format: format,
-        contentType: format === 'pdf' ? 'application/pdf' : 'image/png',
-        filename: `${filename}.${format}`
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
     
   } catch (error) {
     console.error("Error rendering proposal:", error);
