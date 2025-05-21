@@ -24,10 +24,10 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
   const { toast } = useToast();
   
   const generatePdf = async () => {
-    if (!proposalRef.current) {
+    if (!data) {
       toast({
         title: "Erro",
-        description: "Não foi possível gerar o PDF. Tente novamente.",
+        description: "Não foi possível gerar o PDF. Dados da proposta não encontrados.",
         variant: "destructive",
       });
       return;
@@ -39,7 +39,7 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
     });
     
     try {
-      await generateProposalPdf(proposalRef.current, data);
+      await generateProposalPdf(data);
       
       toast({
         title: "Sucesso",
@@ -56,10 +56,10 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
   };
   
   const generatePng = async () => {
-    if (!proposalRef.current) {
+    if (!data) {
       toast({
         title: "Erro",
-        description: "Não foi possível gerar a imagem PNG. Tente novamente.",
+        description: "Não foi possível gerar a imagem PNG. Dados da proposta não encontrados.",
         variant: "destructive",
       });
       return;
@@ -71,7 +71,7 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
     });
     
     try {
-      await generateProposalPng(proposalRef.current, data);
+      await generateProposalPng(data);
       
       toast({
         title: "Sucesso",

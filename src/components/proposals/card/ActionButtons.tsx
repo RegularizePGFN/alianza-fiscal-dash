@@ -16,10 +16,10 @@ const ActionButtons = ({ onPrint, proposalData, proposalRef }: ActionButtonsProp
   const { toast } = useToast();
   
   const onGeneratePdf = async () => {
-    if (!proposalRef.current) {
+    if (!proposalData) {
       toast({
         title: "Erro",
-        description: "Não foi possível gerar o PDF. Tente novamente.",
+        description: "Não foi possível gerar o PDF. Dados da proposta não encontrados.",
         variant: "destructive",
       });
       return;
@@ -31,7 +31,7 @@ const ActionButtons = ({ onPrint, proposalData, proposalRef }: ActionButtonsProp
     });
     
     try {
-      await generateProposalPdf(proposalRef.current, proposalData);
+      const pdfUrl = await generateProposalPdf(proposalData);
       
       toast({
         title: "Sucesso",
@@ -48,10 +48,10 @@ const ActionButtons = ({ onPrint, proposalData, proposalRef }: ActionButtonsProp
   };
   
   const onGeneratePng = async () => {
-    if (!proposalRef.current) {
+    if (!proposalData) {
       toast({
         title: "Erro",
-        description: "Não foi possível gerar a imagem PNG. Tente novamente.",
+        description: "Não foi possível gerar a imagem PNG. Dados da proposta não encontrados.",
         variant: "destructive",
       });
       return;
@@ -63,7 +63,7 @@ const ActionButtons = ({ onPrint, proposalData, proposalRef }: ActionButtonsProp
     });
     
     try {
-      await generateProposalPng(proposalRef.current, proposalData);
+      const pngUrl = await generateProposalPng(proposalData);
       
       toast({
         title: "Sucesso",

@@ -12,7 +12,7 @@ import ProfilePage from './pages/ProfilePage';
 import ProposalsContainer from './pages/proposals/ProposalsContainer';
 import PrintProposalPage from './pages/proposals/PrintProposalPage';
 import { AuthProvider } from './contexts/auth';
-import AppLayout from './components/layout/AppLayout';
+import { AppLayout } from './components/layout/AppLayout';
 import { Toaster } from './components/ui/toaster';
 import './App.css';
 import './styles/index.css';

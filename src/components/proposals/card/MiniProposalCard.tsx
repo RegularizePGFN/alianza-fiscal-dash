@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,10 +22,10 @@ const MiniProposalCard = ({ data, imageUrl }: MiniProposalCardProps) => {
   };
   
   const generatePdf = async () => {
-    if (!proposalRef.current) {
+    if (!data) {
       toast({
         title: "Erro",
-        description: "Não foi possível gerar o PDF. Tente novamente.",
+        description: "Não foi possível gerar o PDF. Dados da proposta não encontrados.",
         variant: "destructive",
       });
       return;
@@ -38,7 +37,7 @@ const MiniProposalCard = ({ data, imageUrl }: MiniProposalCardProps) => {
     });
     
     try {
-      await generateProposalPdf(proposalRef.current, data);
+      await generateProposalPdf(data);
       
       toast({
         title: "Sucesso",
