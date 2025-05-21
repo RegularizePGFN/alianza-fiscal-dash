@@ -3,7 +3,7 @@ import React from 'react';
 import { ExtractedData } from '@/lib/types/proposals';
 import SectionContainer from './SectionContainer';
 import DataField from './DataField';
-import { CreditCard, Calendar } from 'lucide-react';
+import { CreditCard } from 'lucide-react';
 
 interface FeesSectionProps {
   data: Partial<ExtractedData>;
@@ -17,8 +17,9 @@ const FeesSection = ({ data, colors }: FeesSectionProps) => {
   // Payment method display name
   const paymentMethod = data.feesPaymentMethod === 'cartao' ? 'no cartão' : 'via boleto';
   
-  // Display installment fees if available
+  // Display installment fees if available and showInstallmentFees is true
   const showInstallmentFees = 
+    data.showFeesInstallments === 'true' && 
     data.feesInstallmentValue && 
     data.feesInstallments && 
     parseInt(data.feesInstallments) > 1;
@@ -34,7 +35,6 @@ const FeesSection = ({ data, colors }: FeesSectionProps) => {
         value={`R$ ${data.feesValue || '0,00'}`}
         highlight={true}
         className="bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/20 dark:to-gray-800/50"
-        description="Valor calculado em 20% da economia obtida"
       />
       
       {showInstallmentFees && (
@@ -43,7 +43,7 @@ const FeesSection = ({ data, colors }: FeesSectionProps) => {
           value={`${data.feesInstallments}x de R$ ${data.feesInstallmentValue} ${paymentMethod}`}
           highlight={true}
           className="bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/20 dark:to-gray-800/50"
-          description={`Total: R$ ${data.feesTotalInstallmentValue || data.feesValue || '0,00'}`}
+          description={`Total: R$ ${data.feesTotalInstallmentValue || '0,00'}`}
         />
       )}
     </SectionContainer>

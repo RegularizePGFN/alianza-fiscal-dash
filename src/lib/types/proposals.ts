@@ -34,6 +34,8 @@ export interface ExtractedData {
   // Payment dates
   entryDates?: string; // JSON string representation of entry payment dates
   installmentDates?: string; // JSON string representation of installment payment dates
+  // Show installment fees option
+  showFeesInstallments?: string; // Whether to show installment fees in the proposal ("true" or "false")
 }
 
 export interface Proposal {

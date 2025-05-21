@@ -126,8 +126,8 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
   // Remover 'total' e 'alert' do array de seções
   const filteredSections = sectionOrder.filter(section => section !== 'total' && section !== 'alert');
   
-  // Add paymentSchedule section if not present, but only once
-  if (!filteredSections.includes('paymentSchedule')) {
+  // Add paymentSchedule section after payment if not already present in the layout
+  if (!filteredSections.includes('paymentSchedule') && filteredSections.includes('payment')) {
     const paymentIndex = filteredSections.indexOf('payment');
     if (paymentIndex !== -1) {
       filteredSections.splice(paymentIndex + 1, 0, 'paymentSchedule');

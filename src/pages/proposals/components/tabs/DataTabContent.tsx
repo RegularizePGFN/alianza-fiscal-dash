@@ -32,6 +32,19 @@ const DataTabContent = ({
     // Após tempo suficiente para simular busca, desabilitar
     setTimeout(() => setIsSearchingCnpj(false), 1000);
   };
+
+  // Calculate entry installment value
+  const calculateEntryInstallmentValue = () => {
+    if (formData.entryValue && formData.entryInstallments) {
+      try {
+        // Entry value is already per installment, so just return it
+        return formData.entryValue;
+      } catch (error) {
+        console.error("Erro ao calcular o valor da parcela de entrada:", error);
+      }
+    }
+    return "0,00";
+  };
   
   useEffect(() => {
     setProcessingStatus("Dados extraídos com sucesso!");
@@ -53,7 +66,7 @@ const DataTabContent = ({
             formData={formData}
             onInputChange={onInputChange}
             disabled={false}
-            entryInstallmentValue={formData.entryValue || "0,00"}
+            entryInstallmentValue={calculateEntryInstallmentValue()}
           />
           
           <div className="flex justify-end mt-6">

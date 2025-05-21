@@ -3,7 +3,6 @@ import React from 'react';
 import { ExtractedData } from '@/lib/types/proposals';
 import SectionContainer from './SectionContainer';
 import DataField from './DataField';
-import PaymentScheduleSection from './PaymentScheduleSection';
 import { CreditCard } from 'lucide-react';
 
 interface PaymentSectionProps {
@@ -28,7 +27,7 @@ const PaymentSection = ({ data, colors }: PaymentSectionProps) => {
       <DataField 
         label="Parcelado" 
         value={`${data.installments || '0'}x de R$ ${data.installmentValue || '0,00'}`}
-        description={`Entrada: ${data.entryInstallments || '1'}x de R$ ${data.entryValue || '0,00'}`}
+        description={`Entrada: ${data.entryInstallments || '1'}x de R$ ${data.entryValue || '0,00'} por parcela`}
       />
     </SectionContainer>
   );

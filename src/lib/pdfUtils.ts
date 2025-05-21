@@ -3,6 +3,11 @@ import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { ExtractedData } from './types/proposals';
 
+// Helper function to format dates as dd/mm/yyyy
+const formatDate = (date: Date): string => {
+  return date.toLocaleDateString('pt-BR');
+};
+
 export async function generateProposalPng(proposalElement: HTMLElement, data: Partial<ExtractedData>): Promise<void> {
   try {
     // Wait for a complete render cycle
@@ -18,7 +23,7 @@ export async function generateProposalPng(proposalElement: HTMLElement, data: Pa
     // File name
     const fileName = `proposta_pgfn_${data.cnpj?.replace(/\D/g, '') || 'cliente'}_${seller}.png`;
 
-    // Remover elementos que não devem aparecer na exportação
+    // Hide elements that shouldn't appear in the export
     const elementsToHide = proposalElement.querySelectorAll('[data-pdf-remove="true"]');
     elementsToHide.forEach(el => {
       if (el instanceof HTMLElement) {
@@ -26,16 +31,16 @@ export async function generateProposalPng(proposalElement: HTMLElement, data: Pa
       }
     });
 
-    // Capture the content exactly as it appears on screen without modifications
+    // Capture the content with high quality
     const canvas = await html2canvas(proposalElement, {
-      scale: 2, // Melhor balanço entre qualidade e tamanho de arquivo
-      useCORS: true, // Enable CORS for any images
+      scale: 2, // Better balance between quality and file size
+      useCORS: true,
       logging: false,
       allowTaint: true,
-      backgroundColor: '#ffffff', // Usar fundo branco para evitar transparência
-      imageTimeout: 0, // No timeout for image loading
+      backgroundColor: '#ffffff',
+      imageTimeout: 0,
       onclone: (documentClone) => {
-        // Encontrar e esconder botões de ação no clone
+        // Find and hide action buttons in the clone
         const actionButtons = documentClone.querySelectorAll('button, [data-pdf-remove="true"]');
         actionButtons.forEach(button => {
           if (button instanceof HTMLElement) {
@@ -45,17 +50,17 @@ export async function generateProposalPng(proposalElement: HTMLElement, data: Pa
       }
     });
     
-    // Restaurar a visibilidade dos elementos escondidos
+    // Restore visibility of hidden elements
     elementsToHide.forEach(el => {
       if (el instanceof HTMLElement) {
         el.style.display = '';
       }
     });
     
-    // Create a download link for the PNG with maximum quality
+    // Create download link for PNG
     const link = document.createElement('a');
     link.download = fileName;
-    link.href = canvas.toDataURL('image/png', 1.0); // Maximum quality (1.0)
+    link.href = canvas.toDataURL('image/png', 1.0); // Maximum quality
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -76,180 +81,119 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     // File name
     const fileName = `proposta_pgfn_${data.cnpj?.replace(/\D/g, '') || 'cliente'}_${seller}.pdf`;
 
-    // Clone the element to avoid modifying the original
-    const clonedElement = proposalElement.cloneNode(true) as HTMLElement;
+    // Apply PDF-specific styling
+    const pdfStyle = document.createElement('style');
+    pdfStyle.textContent = `
+      @page { margin: 10mm; }
+      body { font-family: 'Roboto', Arial, sans-serif; }
+      p { margin: 0; padding: 0; }
+      .page-break { page-break-after: always; }
+      button, [data-pdf-remove="true"] { display: none !important; }
+      table { page-break-inside: avoid; }
+      .section { page-break-inside: avoid; }
+    `;
+    document.head.appendChild(pdfStyle);
+
+    // Create a PDF with A4 dimensions
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+      compress: true
+    });
     
-    // Create a temporary container for the PDF content
-    const tempContainer = document.createElement('div');
-    tempContainer.style.position = 'absolute';
-    tempContainer.style.left = '-9999px';
-    
-    // Hide action buttons and items that shouldn't be in PDF
-    const actionButtons = clonedElement.querySelectorAll('.pdf-action-buttons, [data-pdf-remove="true"], button');
-    actionButtons.forEach(button => {
-      if (button instanceof HTMLElement) {
-        button.style.display = 'none';
+    // Set PDF document properties
+    pdf.setProperties({
+      title: `Proposta PGFN - ${data.clientName || data.cnpj || 'Cliente'}`,
+      subject: 'Proposta de Parcelamento PGFN',
+      author: 'Aliança Fiscal',
+      creator: 'Sistema de Propostas'
+    });
+
+    // Hide elements that shouldn't appear in the PDF
+    const elementsToHide = proposalElement.querySelectorAll('[data-pdf-remove="true"]');
+    elementsToHide.forEach(el => {
+      if (el instanceof HTMLElement) {
+        el.style.display = 'none';
       }
     });
     
-    // Scale and optimize content for PDF
-    const styleElement = document.createElement('style');
-    styleElement.textContent = `
-      @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
-      
-      * {
-        box-sizing: border-box;
-        font-family: 'Roboto', sans-serif !important;
-        margin-block: 0;
-      }
-      
-      p, h1, h2, h3, h4, h5, h6 {
-        margin-block: 2px !important;
-      }
-      
-      button, [data-pdf-remove="true"] {
-        display: none !important;
-      }
-      
-      .p-6, .p-5, .p-4 {
-        padding: 8px !important;
-      }
-      
-      .p-3 {
-        padding: 6px !important;
-      }
-      
-      /* Page break utilities */
-      .pdf-page-break {
-        page-break-after: always;
-        break-after: page;
-      }
-      
-      /* Ensure tables don't break across pages */
-      table {
-        page-break-inside: avoid;
-        break-inside: avoid;
-      }
-      
-      /* Ensure sections don't break in the middle */
-      .border-l-4 {
-        page-break-inside: avoid;
-        break-inside: avoid;
-      }
-      
-      body {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-        background-color: white;
-      }
-    `;
-    
-    tempContainer.appendChild(styleElement);
-    tempContainer.appendChild(clonedElement);
-    document.body.appendChild(tempContainer);
-    
     try {
-      // Wait to ensure fonts and styles are loaded
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Initialize PDF with A4 dimensions
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-        compress: true
-      });
-      
-      // Set PDF properties
-      pdf.setProperties({
-        title: `Proposta PGFN - ${data.clientName || data.cnpj || 'Cliente'}`,
-        subject: 'Proposta de Parcelamento PGFN',
-        author: 'Aliança Fiscal',
-        keywords: 'proposta, pgfn, parcelamento',
-        creator: 'Sistema de Propostas Aliança Fiscal'
-      });
-      
-      // Add a function to insert page numbers
-      const totalPages = 1; // Will be updated later
-      
-      // Create PDF using html2canvas with better page break handling
-      // First, calculate total height to determine number of pages
-      const contentWidth = 210; // A4 width in mm
+      // Calculate the dimensions
+      const contentWidth = 210 - 20; // A4 width minus margins in mm
       const contentHeight = 297 - 20; // A4 height minus margins in mm
-      
-      // Get sections that might need page breaks
-      const sections = clonedElement.querySelectorAll('.border-l-4, table, .mb-6');
-      
-      // First pass: render the entire document to a large canvas
-      const fullCanvas = await html2canvas(clonedElement, {
+
+      // First, calculate the total height to determine number of pages
+      const initialCanvas = await html2canvas(proposalElement, {
         scale: 2,
         useCORS: true,
         logging: false,
         allowTaint: true,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        onclone: (documentClone) => {
+          // Find and hide action buttons in the clone
+          const actionButtons = documentClone.querySelectorAll('button, [data-pdf-remove="true"]');
+          actionButtons.forEach(button => {
+            if (button instanceof HTMLElement) {
+              button.style.display = 'none';
+            }
+          });
+
+          // Mark section headers for page breaks if needed
+          const sectionHeaders = documentClone.querySelectorAll('.section-header, h3, table');
+          sectionHeaders.forEach(header => {
+            if (header instanceof HTMLElement) {
+              header.dataset.pdfSectionHeader = 'true';
+            }
+          });
+        }
       });
+
+      // Determine the number of pages needed
+      const pageHeight = contentHeight * initialCanvas.width / contentWidth;
+      const totalPages = Math.ceil(initialCanvas.height / pageHeight);
       
-      // Calculate dimensions for A4
-      const imgWidth = contentWidth; // A4 width in mm
-      const imgHeight = (fullCanvas.height * imgWidth) / fullCanvas.width;
-      
-      // Calculate number of pages
-      const pagesCount = Math.ceil(imgHeight / contentHeight);
-      
-      // Add content page by page with proper breaks
-      for (let i = 0; i < pagesCount; i++) {
+      // Process each page
+      for (let i = 0; i < totalPages; i++) {
         if (i > 0) {
           pdf.addPage();
         }
         
-        // Calculate position to start capturing from
-        const sourceY = i * (fullCanvas.height / pagesCount);
-        const sourceHeight = fullCanvas.height / pagesCount;
+        // Calculate the portion of the canvas for this page
+        const sourceY = i * pageHeight;
+        const sourceHeight = Math.min(pageHeight, initialCanvas.height - sourceY);
         
-        // Create a new canvas for this page
-        const pageCanvas = document.createElement('canvas');
-        pageCanvas.width = fullCanvas.width;
-        pageCanvas.height = sourceHeight;
-        
-        const context = pageCanvas.getContext('2d');
-        if (!context) continue;
-        
-        // Copy portion of the full canvas to this page canvas
-        context.drawImage(
-          fullCanvas, 
-          0, sourceY, // Source x, y
-          fullCanvas.width, sourceHeight, // Source width, height
-          0, 0, // Destination x, y
-          fullCanvas.width, sourceHeight // Destination width, height
-        );
-        
-        // Add to PDF
+        // Add page content
         pdf.addImage(
-          pageCanvas.toDataURL('image/jpeg', 0.95),
-          'JPEG',
-          0, // x
-          10, // y (add some margin)
-          imgWidth,
-          contentHeight
+          initialCanvas, 
+          'PNG',
+          10, // X position (margin)
+          10, // Y position (margin)
+          contentWidth,
+          (sourceHeight * contentWidth) / initialCanvas.width
         );
         
-        // Add page number at the bottom
+        // Add page number
         pdf.setFontSize(8);
-        pdf.setTextColor(100, 100, 100);
-        pdf.text(`Página ${i + 1}/${pagesCount}`, imgWidth / 2, contentHeight + 15, { align: 'center' });
+        pdf.setTextColor(128, 128, 128);
+        pdf.text(`Página ${i + 1} de ${totalPages}`, contentWidth / 2 + 10, contentHeight + 10, { align: 'center' });
       }
       
       // Save the PDF
       pdf.save(fileName);
-      
     } finally {
-      // Clean up the temporary DOM element
-      document.body.removeChild(tempContainer);
+      // Restore visibility of hidden elements
+      elementsToHide.forEach(el => {
+        if (el instanceof HTMLElement) {
+          el.style.display = '';
+        }
+      });
+      
+      // Remove the temporary style
+      document.head.removeChild(pdfStyle);
     }
     
     return Promise.resolve();
-    
   } catch (error) {
     console.error('Error generating PDF:', error);
     return Promise.reject(error);
