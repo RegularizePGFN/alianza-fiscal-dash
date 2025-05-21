@@ -128,7 +128,11 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
       <Card 
         ref={proposalRef} 
         className="max-w-3xl mx-auto shadow border overflow-hidden font-['Roboto',sans-serif] w-full print:shadow-none print:border-0"
-        style={{ backgroundColor: colors.background }}
+        style={{ 
+          backgroundColor: colors.background,
+          margin: 0,
+          padding: 0
+        }}
       >
         {/* Header with Logo */}
         <HeaderSection 

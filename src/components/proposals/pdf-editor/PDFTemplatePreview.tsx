@@ -55,37 +55,36 @@ const PDFTemplatePreview = ({
     };
   })();
 
-  // Dimensões exatas de um A4 (210mm x 297mm) em pixels com uma escala de 0.65
-  // para se ajustar bem à tela (usando proporção aproximada de 3.7795 pixels por mm)
+  // A4 dimensions with 0.65 scale (using 3.7795 pixels per mm)
   const a4Width = 210 * 3.7795 * 0.65;
   const a4Height = 297 * 3.7795 * 0.65;
 
   return (
     <Card 
       ref={previewRef} 
-      className="border p-0 overflow-hidden shadow-md preview-proposal font-['Roboto',sans-serif] transition-colors mx-auto"
+      className="border-0 p-0 overflow-hidden shadow-md preview-proposal font-['Roboto',sans-serif] transition-colors mx-auto"
       style={{ 
         backgroundColor: colors.background,
         width: `${a4Width}px`,
         height: `${a4Height}px`,
         maxHeight: '100%',
-        aspectRatio: '210/297', // Proporção A4
+        aspectRatio: '210/297', // A4 ratio
         overflow: 'auto'
       }}
     >
       {layout.showHeader && (
         <div className="relative overflow-hidden rounded-t-lg print:break-after-avoid">
           <div className="absolute inset-0 opacity-10 bg-gradient-to-br from-slate-400 to-slate-100"></div>
-          <div className="relative p-6 flex justify-between items-center">
-            <div className="flex items-center gap-4">
+          <div className="relative p-4 flex justify-between items-center">
+            <div className="flex items-center gap-3">
               {layout.showLogo && (
                 <img 
                   src="/lovable-uploads/d939ccfc-a061-45e8-97e0-1fa1b82d3df2.png" 
                   alt="Logo" 
-                  className="h-12 w-auto"
+                  className="h-10 w-auto"
                 />
               )}
-              <h2 className="text-xl font-medium" style={{ color: colors.secondary }}>
+              <h2 className="text-lg font-medium" style={{ color: colors.secondary }}>
                 Proposta de Parcelamento PGFN
               </h2>
             </div>

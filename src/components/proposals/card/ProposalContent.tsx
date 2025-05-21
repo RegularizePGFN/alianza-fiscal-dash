@@ -90,7 +90,7 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
           <CompanyInfoSection companyData={companyData} colors={colors} />
         ) : null;
       case 'alert':
-        return null; // Não renderizar a seção de alerta (removida)
+        return null; // Removed alert section
       case 'debt':
         return <NegotiationSection data={data} colors={colors} />;
       case 'payment':
@@ -100,7 +100,7 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
       case 'fees':
         return <FeesSection data={data} colors={colors} />;
       case 'total':
-        return null; // Não renderizar a seção de total (removida)
+        return null; // Removed total section
       case 'comments':
         return <CommentsSection data={data} colors={colors} />;
       default:
@@ -123,7 +123,7 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
     }
   }
 
-  // Remover 'total' e 'alert' do array de seções
+  // Remove 'total' and 'alert' from the sections array
   const filteredSections = sectionOrder.filter(section => section !== 'total' && section !== 'alert');
   
   // Add paymentSchedule section once after payment if needed and not already present
@@ -135,7 +135,7 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
   }
 
   return (
-    <div className={`p-6 space-y-0 font-['Roboto',sans-serif] ${className}`}>
+    <div className={`p-4 space-y-0 font-['Roboto',sans-serif] ${className}`}>
       {/* Main content sections */}
       <div className="print:break-after-avoid">
         {/* Render initial sections based on the adjusted section order (except payment schedule) */}
