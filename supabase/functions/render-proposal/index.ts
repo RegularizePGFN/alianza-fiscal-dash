@@ -10,7 +10,7 @@ const corsHeaders = {
 };
 
 // Get environment variables
-const browserlessUrl = Deno.env.get('BROWSERLESS_URL') || 'https://chrome.browserless.io?token=2SLjpxsvtsm7AsIa5bbcb243a24b3d97ee0aee5bc840cb7ed';
+const browserlessUrl = Deno.env.get('BROWSERLESS_URL') || 'https://chrome.browserless.io/function?token=2SLjpxsvtsm7AsIa5bbcb243a24b3d97ee0aee5bc840cb7ed';
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -39,18 +39,20 @@ serve(async (req) => {
       `async () => {
         // Wait for fonts and images to load
         await document.fonts.ready;
-        await new Promise(r => setTimeout(r, 1000));
+        await new Promise(r => setTimeout(r, 2000));
         
-        // Generate PDF
+        // Generate PDF - Adjusting format and settings for better output
         const pdf = await page.pdf({
           format: 'A4',
           printBackground: true,
           margin: {
-            top: '10mm',
-            right: '10mm',
-            bottom: '10mm',
-            left: '10mm',
-          }
+            top: '5mm',
+            right: '5mm',
+            bottom: '5mm',
+            left: '5mm',
+          },
+          scale: 0.9, // Scale down slightly to ensure fit on one page
+          preferCSSPageSize: true
         });
         return pdf.toString('base64');
       }` :
@@ -58,7 +60,7 @@ serve(async (req) => {
       `async () => {
         // Wait for fonts and images to load
         await document.fonts.ready;
-        await new Promise(r => setTimeout(r, 1000));
+        await new Promise(r => setTimeout(r, 2000));
         
         // Generate screenshot
         const screenshot = await page.screenshot({
@@ -70,7 +72,9 @@ serve(async (req) => {
         return screenshot.toString('base64');
       }`;
     
-    // Call Browserless.io API
+    console.log('Sending request to Browserless...');
+    
+    // Call Browserless.io API with the corrected URL format
     const response = await fetch(browserlessUrl, {
       method: 'POST',
       headers: {
@@ -82,14 +86,18 @@ serve(async (req) => {
         context: {
           html: html,
           viewport: {
-            width: 1200,
-            height: 1600,
+            width: 794, // A4 width in pixels at 96 DPI
+            height: 1123, // A4 height in pixels at 96 DPI
             deviceScaleFactor: 2,
           },
-          waitFor: 2000, // Increased wait time to ensure full render
+          waitFor: 3000, // Increased wait time to ensure full render
+          cookies: [],
+          stealth: true, // Use stealth mode for better compatibility
         }
       }),
     });
+    
+    console.log('Browserless response status:', response.status);
     
     if (!response.ok) {
       const errorText = await response.text();
@@ -101,10 +109,11 @@ serve(async (req) => {
     }
     
     const result = await response.json();
+    console.log('Browserless result:', JSON.stringify(result).substring(0, 100) + '...');
     
     if (!result.data) {
       return new Response(
-        JSON.stringify({ error: "Failed to generate file" }),
+        JSON.stringify({ error: "Failed to generate file", details: result }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

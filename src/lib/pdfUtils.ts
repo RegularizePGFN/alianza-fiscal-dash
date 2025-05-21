@@ -211,7 +211,7 @@ export const generateHighQualityFile = async (
       })
       .join('\n');
     
-    // Create a full HTML document with inline styles
+    // Create a full HTML document with inline styles optimized for printing
     const fullHtml = `
       <!DOCTYPE html>
       <html>
@@ -220,17 +220,32 @@ export const generateHighQualityFile = async (
           <title>Proposta</title>
           <style>
             ${styles}
-            body { 
-              margin: 0; 
-              padding: 20px;
+            @page {
+              size: A4;
+              margin: 0;
+            }
+            html, body {
+              margin: 0;
+              padding: 0;
+              width: 210mm;
+              height: 297mm;
               font-family: 'Roboto', sans-serif;
               background-color: white;
             }
             .print-container {
-              max-width: 100%;
+              width: 100%;
+              max-width: 210mm;
               margin: 0 auto;
+              padding: 10mm;
+              box-sizing: border-box;
               background-color: white;
               box-shadow: none;
+              overflow: hidden;
+            }
+            /* Ensure all content fits in one page */
+            .card-content {
+              transform-origin: top left;
+              transform: scale(0.95);
             }
             @media print {
               body { background-color: white; }
