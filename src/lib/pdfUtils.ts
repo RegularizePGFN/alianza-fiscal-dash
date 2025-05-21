@@ -67,6 +67,10 @@ export const generateProposalPng = async (
         const clonedElement = clonedDoc.body.querySelector('div') as HTMLElement;
         if (clonedElement) {
           clonedElement.style.overflow = 'visible';
+          // Remove data-lov-id attributes that might cause issues
+          clonedElement.querySelectorAll('[data-lov-id]').forEach(el => {
+            el.removeAttribute('data-lov-id');
+          });
         }
       }
     });
@@ -129,6 +133,11 @@ export const generateProposalPdf = async (
         if (clonedElement) {
           clonedElement.style.overflow = 'visible';
           
+          // Remove data-lov-id attributes that might cause issues
+          clonedElement.querySelectorAll('[data-lov-id]').forEach(el => {
+            el.removeAttribute('data-lov-id');
+          });
+          
           // Apply additional styles to ensure content fits on one page
           const contentElements = clonedElement.querySelectorAll('.card-content, section');
           contentElements.forEach(el => {
@@ -188,6 +197,9 @@ export const generateHighQualityFile = async (
     // Get the HTML content of the element
     const elementHTML = element.outerHTML;
     
+    // Clean up HTML by removing data-lov-id attributes
+    const cleanHTML = elementHTML.replace(/data-lov-id="[^"]*"/g, '');
+    
     // Get the styles from the document
     const styles = Array.from(document.styleSheets)
       .filter(sheet => {
@@ -228,8 +240,8 @@ export const generateHighQualityFile = async (
             html, body {
               margin: 0;
               padding: 0;
-              width: 210mm;
-              height: 297mm;
+              width: 100%;
+              height: 100%;
               font-family: 'Roboto', sans-serif;
               background-color: white;
             }
@@ -272,7 +284,7 @@ export const generateHighQualityFile = async (
         </head>
         <body>
           <div class="print-container">
-            ${elementHTML}
+            ${cleanHTML}
           </div>
         </body>
       </html>
@@ -285,74 +297,102 @@ export const generateHighQualityFile = async (
     // Generate a filename
     const filename = `proposta-${data.clientName || 'Cliente'}-${data.cnpj || ''}`;
     
-    // Call the Edge Function with specific content type and format
-    const { data: responseData, error } = await supabase.functions.invoke('render-proposal', {
-      body: {
-        html: fullHtml,
-        format: format,
-        filename: filename
+    // Add some retry logic for better resilience
+    let retryCount = 0;
+    const maxRetries = 2;
+    let success = false;
+    let lastError = null;
+    
+    while (retryCount <= maxRetries && !success) {
+      try {
+        toast.loading(`Tentativa ${retryCount + 1} de ${maxRetries + 1}: Renderizando ${format.toUpperCase()}...`, { id: toastId });
+        
+        // Call the Edge Function with specific content type and format
+        const { data: responseData, error } = await supabase.functions.invoke('render-proposal', {
+          body: {
+            html: fullHtml,
+            format: format,
+            filename: filename
+          }
+        });
+        
+        if (error) {
+          console.error('Error calling render function:', error);
+          lastError = error;
+          throw new Error(`Erro na comunicação: ${error.message || 'Erro desconhecido'}`);
+        }
+        
+        // Improved error checking and handling
+        if (!responseData) {
+          console.error('No response data received from the render function');
+          throw new Error('Não foi possível obter dados do serviço de renderização');
+        }
+        
+        if (responseData.error) {
+          console.error('Error returned by render function:', responseData.error);
+          throw new Error(`Erro na renderização: ${responseData.error}`);
+        }
+        
+        // Check if we got proper response data
+        if (!responseData.data) {
+          const errorMsg = responseData.error || 'Nenhum dado retornado do serviço de renderização';
+          console.error('No data returned from render function:', responseData);
+          throw new Error(errorMsg);
+        }
+        
+        // Show processing message
+        toast.loading(`Processando arquivo ${format.toUpperCase()} para download...`, { id: toastId });
+        
+        // Convert base64 to Blob with appropriate content type
+        const byteCharacters = atob(responseData.data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        
+        // Set proper content type
+        const contentType = format === 'pdf' ? 'application/pdf' : 'image/png';
+        const blob = new Blob([byteArray], { type: contentType });
+        
+        // Create object URL and trigger download
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${filename}.${format}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Clean up the object URL
+        setTimeout(() => URL.revokeObjectURL(url), 100);
+        
+        // Success message
+        toast.success(`${format.toUpperCase()} de alta qualidade gerado com sucesso!`, { id: toastId });
+        
+        console.log(`High quality ${format} generated successfully`);
+        success = true;
+        break;
+      } catch (error) {
+        console.error(`Error on attempt ${retryCount + 1}:`, error);
+        lastError = error;
+        
+        if (retryCount < maxRetries) {
+          // Show retry message
+          toast.loading(`Falha na tentativa ${retryCount + 1}. Tentando novamente em ${(retryCount + 1) * 2} segundos...`, { id: toastId });
+          
+          // Wait before retrying (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 2000));
+          retryCount++;
+        } else {
+          throw error; // Throw the last error to be caught outside the loop
+        }
       }
-    });
-    
-    if (error) {
-      console.error('Error calling render function:', error);
-      // Update the toast with error message
-      toast.error('Erro ao renderizar: ' + error.message, { id: toastId });
-      throw new Error(`Error calling render function: ${error.message || 'Unknown error'}`);
     }
     
-    // Improved error checking and handling
-    if (!responseData) {
-      console.error('No response data received from the render function');
-      toast.error('Não foi possível obter dados do serviço de renderização', { id: toastId });
-      throw new Error('No response data received from the render function');
+    if (!success) {
+      throw new Error(lastError?.message || 'Falha após múltiplas tentativas');
     }
-    
-    if (responseData.error) {
-      console.error('Error returned by render function:', responseData.error);
-      toast.error(`Erro na renderização: ${responseData.error}`, { id: toastId });
-      throw new Error(`Error from render function: ${responseData.error}`);
-    }
-    
-    // Check if we got proper response data
-    if (!responseData.data) {
-      const errorMsg = responseData.error || 'Nenhum dado retornado do serviço de renderização';
-      console.error('No data returned from render function:', responseData);
-      toast.error(errorMsg, { id: toastId });
-      throw new Error(errorMsg);
-    }
-    
-    // Show processing message
-    toast.loading(`Processando arquivo ${format.toUpperCase()} para download...`, { id: toastId });
-    
-    // Convert base64 to Blob with appropriate content type
-    const byteCharacters = atob(responseData.data);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    
-    // Set proper content type
-    const contentType = format === 'pdf' ? 'application/pdf' : 'image/png';
-    const blob = new Blob([byteArray], { type: contentType });
-    
-    // Create object URL and trigger download
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${filename}.${format}`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    // Clean up the object URL
-    setTimeout(() => URL.revokeObjectURL(url), 100);
-    
-    // Success message
-    toast.success(`${format.toUpperCase()} de alta qualidade gerado com sucesso!`, { id: toastId });
-    
-    console.log(`High quality ${format} generated successfully`);
   } catch (error) {
     console.error(`Error generating high quality ${format}:`, error);
     
@@ -369,6 +409,8 @@ export const generateHighQualityFile = async (
         errorMessage = `O servidor de renderização retornou um erro ao gerar ${format.toUpperCase()}. Tente novamente mais tarde.`;
       } else if (error.message.includes('No response data')) {
         errorMessage = `Não foi possível obter uma resposta do serviço de renderização para ${format.toUpperCase()}.`;
+      } else if (error.message.includes('Failed to parse')) {
+        errorMessage = `Erro ao processar a resposta do serviço de renderização. Tente novamente.`;
       } else {
         errorMessage += `: ${error.message}`;
       }

@@ -32,6 +32,11 @@ serve(async (req) => {
     }
     
     console.log(`Rendering proposal in ${format} format`);
+
+    // Simplify the HTML to reduce complexity
+    const simplifiedHtml = html
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove scripts
+      .replace(/data-lov-id="[^"]*"/g, ''); // Remove data-lov-id attributes
     
     // Create a proper function string for Browserless - this is KEY!
     // Using a JavaScript object with a function property instead of a raw function string
@@ -39,6 +44,7 @@ serve(async (req) => {
       code: `
         async function run(context) {
           try {
+            console.log("Starting rendering in Browserless");
             const { page } = context;
             
             // Set viewport to A4 size at higher DPI for better quality
@@ -48,6 +54,7 @@ serve(async (req) => {
               deviceScaleFactor: 2
             });
             
+            console.log("Waiting for fonts and images to load");
             // Wait for fonts and images to load completely
             await page.evaluate(async () => {
               await document.fonts.ready;
@@ -57,36 +64,49 @@ serve(async (req) => {
                   img.onload = img.onerror = resolve;
                 }));
               await Promise.all(imgPromises);
-              console.log('All fonts and images loaded');
               return true;
             });
             
             // Additional wait time to ensure everything renders properly
             await page.waitForTimeout(2000);
             
+            console.log("All content loaded, preparing to generate ${format}");
+
             // For PDF generation
             if ('${format}' === 'pdf') {
-              const pdf = await page.pdf({
-                format: 'A4',
-                printBackground: true,
-                margin: {
-                  top: '10mm',
-                  right: '10mm',
-                  bottom: '10mm',
-                  left: '10mm',
-                },
-                preferCSSPageSize: true
-              });
-              return pdf.toString('base64');
+              try {
+                const pdf = await page.pdf({
+                  format: 'A4',
+                  printBackground: true,
+                  preferCSSPageSize: true,
+                  margin: {
+                    top: '10mm',
+                    right: '10mm',
+                    bottom: '10mm',
+                    left: '10mm',
+                  }
+                });
+                console.log("PDF generation successful");
+                return pdf.toString('base64');
+              } catch (pdfError) {
+                console.error("PDF generation error:", pdfError);
+                throw new Error('PDF generation failed: ' + pdfError.message);
+              }
             } 
             // For PNG generation
             else {
-              const screenshot = await page.screenshot({
-                type: 'png',
-                fullPage: true,
-                omitBackground: false
-              });
-              return screenshot.toString('base64');
+              try {
+                const screenshot = await page.screenshot({
+                  type: 'png',
+                  fullPage: true,
+                  omitBackground: false
+                });
+                console.log("PNG generation successful");
+                return screenshot.toString('base64');
+              } catch (pngError) {
+                console.error("PNG generation error:", pngError);
+                throw new Error('PNG generation failed: ' + pngError.message);
+              }
             }
           } catch (error) {
             console.error('Puppeteer error:', error);
@@ -97,7 +117,7 @@ serve(async (req) => {
         module.exports = run;
       `,
       context: {
-        html: html,
+        html: simplifiedHtml,
         stealth: true, // Better compatibility
         flags: ['--no-sandbox', '--disable-setuid-sandbox', '--font-render-hinting=none'],
         defaultViewport: {
@@ -106,62 +126,93 @@ serve(async (req) => {
           deviceScaleFactor: 2
         },
         userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        timeout: 30000, // 30 seconds, increased timeout
+        timeout: 60000, // Increased to 60 seconds for better reliability
       }
     };
     
     console.log('Sending request to Browserless with improved configuration...');
     
-    // Call Browserless.io API with the properly formatted function
-    const response = await fetch(browserlessUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache',
-      },
-      body: JSON.stringify(payload),
-    });
+    // Add retry logic for Browserless API calls
+    let response;
+    let retries = 0;
+    const maxRetries = 2;
     
-    console.log('Browserless response status:', response.status);
+    while (retries <= maxRetries) {
+      try {
+        // Call Browserless.io API with the properly formatted function
+        response = await fetch(browserlessUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache',
+          },
+          body: JSON.stringify(payload),
+        });
+        
+        console.log('Browserless response status:', response.status);
+        
+        if (response.ok) {
+          break; // Success, exit retry loop
+        } else {
+          // Wait before retrying (exponential backoff)
+          const waitTime = Math.min(1000 * Math.pow(2, retries), 10000);
+          console.log(`Attempt ${retries + 1} failed. Waiting ${waitTime}ms before retry...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          retries++;
+        }
+      } catch (fetchError) {
+        console.error('Fetch error:', fetchError);
+        if (retries >= maxRetries) {
+          return new Response(
+            JSON.stringify({ 
+              error: "Failed to connect to rendering service", 
+              details: fetchError.message 
+            }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        retries++;
+      }
+    }
     
-    if (!response.ok) {
-      const errorText = await response.text();
+    if (!response || !response.ok) {
+      const errorText = response ? await response.text() : "No response from Browserless";
       console.error('Browserless error:', errorText);
       return new Response(
         JSON.stringify({ 
-          error: `Browserless API error: ${response.status}`, 
+          error: `Rendering service error: ${response ? response.status : 'No response'}`, 
           details: errorText 
         }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
     
+    // Try to parse response as text first to debug any issues
+    const responseText = await response.text();
+    console.log('Response text length:', responseText.length);
+    console.log('Response preview:', responseText.substring(0, 200) + '...');
+    
     let result;
     try {
-      result = await response.json();
-      console.log('Browserless result type:', typeof result);
-      if (result && result.data) {
-        console.log('Received successful response with data');
-      } else {
-        console.error('Received response but no data field:', JSON.stringify(result).substring(0, 200));
+      // Parse the text as JSON
+      result = JSON.parse(responseText);
+      
+      if (!result || !result.data) {
+        console.error('No data in parsed response:', result);
+        return new Response(
+          JSON.stringify({ 
+            error: "No data returned from rendering service", 
+            details: result ? JSON.stringify(result).substring(0, 500) : "Empty response" 
+          }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
-    } catch (error) {
-      console.error('Error parsing Browserless response:', error);
+    } catch (parseError) {
+      console.error('Error parsing response:', parseError, 'Response text:', responseText.substring(0, 500));
       return new Response(
         JSON.stringify({ 
-          error: "Failed to parse Browserless response",
-          details: error.message 
-        }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-    
-    if (!result || !result.data) {
-      console.error('No data in Browserless response:', result);
-      return new Response(
-        JSON.stringify({ 
-          error: "No data returned from Browserless", 
-          details: result 
+          error: "Failed to parse rendering service response",
+          details: parseError.message
         }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
