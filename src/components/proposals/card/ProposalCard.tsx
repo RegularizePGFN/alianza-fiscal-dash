@@ -1,12 +1,12 @@
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
 import { HeaderSection } from './sections';
 import ProposalContent from './ProposalContent';
 import { useToast } from "@/hooks/use-toast";
-import { generateProposalPdf, generateProposalPng, generateHighQualityFile } from "@/lib/pdfUtils";
-import ActionButtonsSection from './sections/ActionButtonsSection';
+import { generateProposalPdf, generateProposalPng } from "@/lib/pdfUtils";
+import ActionButtons from './ActionButtons';
 
 interface ProposalCardProps {
   data: Partial<ExtractedData>;
@@ -17,22 +17,32 @@ interface ProposalCardProps {
 const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
   const proposalRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  const [isGeneratingHighQuality, setIsGeneratingHighQuality] = useState(false);
   
   // Effect to verify when fonts are loaded
-  React.useEffect(() => {
+  useEffect(() => {
     document.fonts.ready.then(() => {
       console.log('All fonts loaded for proposal rendering');
     });
   }, []);
   
   // Get colors from template settings or use defaults
-  const colors = {
-    primary: '#3B82F6',
-    secondary: '#1E40AF',
-    accent: '#10B981',
-    background: '#F8FAFC'
-  };
+  const colors = (() => {
+    try {
+      return {
+        primary: '#3B82F6',
+        secondary: '#1E40AF',
+        accent: '#10B981',
+        background: '#F8FAFC'
+      };
+    } catch (e) {
+      return {
+        primary: '#3B82F6',
+        secondary: '#1E40AF',
+        accent: '#10B981',
+        background: '#F8FAFC'
+      };
+    }
+  })();
 
   // Default layout settings
   const layout = {
@@ -45,7 +55,7 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
   const handlePrint = () => {
     window.print();
   };
-  
+
   const handleGeneratePdf = async () => {
     if (!proposalRef.current) {
       toast({
@@ -90,15 +100,16 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
     
     toast({
       title: "Processando",
-      description: "Capturando imagem PNG...",
+      description: "Gerando imagem PNG exatamente como aparece na tela...",
     });
     
     try {
+      // Use the updated function to capture exact screen appearance
       await generateProposalPng(proposalRef.current, data);
       
       toast({
         title: "Sucesso",
-        description: "Imagem PNG da proposta gerada com sucesso!",
+        description: "Imagem PNG da proposta completa gerada com sucesso!",
       });
     } catch (error) {
       console.error("Erro ao gerar PNG:", error);
@@ -107,54 +118,6 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
         description: "Não foi possível gerar a imagem PNG. Tente novamente.",
         variant: "destructive",
       });
-    }
-  };
-
-  const handleGenerateHighQuality = async () => {
-    if (!proposalRef.current) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível gerar a imagem de alta qualidade. Tente novamente.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsGeneratingHighQuality(true);
-    
-    try {
-      // Generate high-quality PNG using the Edge Function
-      await generateHighQualityFile(proposalRef.current, data, 'png');
-      // Toast is handled within the function itself
-    } catch (error) {
-      console.error("Erro ao gerar PNG de alta qualidade:", error);
-      // Error toasts are now handled in the generateHighQualityFile function
-    } finally {
-      setIsGeneratingHighQuality(false);
-    }
-  };
-  
-  const handleGenerateHighQualityPdf = async () => {
-    if (!proposalRef.current) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível gerar o PDF de alta qualidade. Tente novamente.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsGeneratingHighQuality(true);
-    
-    try {
-      // Generate high-quality PDF using the Edge Function
-      await generateHighQualityFile(proposalRef.current, data, 'pdf');
-      // Toast is handled within the function itself
-    } catch (error) {
-      console.error("Erro ao gerar PDF de alta qualidade:", error);
-      // Error toasts are now handled in the generateHighQualityFile function
-    } finally {
-      setIsGeneratingHighQuality(false);
     }
   };
 
@@ -180,18 +143,14 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
             companyData={companyData}
           />
         </CardContent>
+        
+        {/* Action buttons INSIDE the card to ensure proper PNG capture */}
+        <ActionButtons
+          onPrint={handlePrint}
+          proposalData={data}
+          proposalRef={proposalRef}
+        />
       </Card>
-      
-      {/* Action buttons OUTSIDE the card to ensure they're not captured in PNG/PDF */}
-      <ActionButtonsSection
-        onPrint={handlePrint}
-        onGeneratePdf={handleGeneratePdf}
-        onGeneratePng={handleGeneratePng}
-        onGenerateHighQuality={handleGenerateHighQuality}
-        onGenerateHighQualityPdf={handleGenerateHighQualityPdf}
-        isGeneratingHighQuality={isGeneratingHighQuality}
-        className="max-w-3xl w-full mx-auto bg-white shadow rounded-md mt-2 border"
-      />
     </div>
   );
 };

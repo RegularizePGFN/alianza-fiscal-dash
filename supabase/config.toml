@@ -44,5 +44,4 @@ site_url = "http://localhost:3000"
 enabled = true
 [functions.analyze-image]
 verify_jwt = false
-[functions.render-proposal]
-verify_jwt = false
+
