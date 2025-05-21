@@ -1,3 +1,4 @@
+
 import React, { useRef } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -86,10 +87,6 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
     }
   };
 
-  const printProposal = () => {
-    window.print();
-  };
-
   return (
     <Card ref={proposalRef} className="border-border max-w-4xl mx-auto shadow-lg bg-gradient-to-br from-af-blue-50 to-white overflow-hidden">
       {/* Header with Logo */}
@@ -117,7 +114,7 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
         <ActionButtonsSection 
           onGeneratePdf={generatePdf}
           onGeneratePng={generatePng}
-          onPrint={printProposal}
+          data={data}
         />
       </CardContent>
     </Card>

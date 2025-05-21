@@ -6,8 +6,7 @@ import { HeaderSection } from './sections';
 import ProposalContent from './ProposalContent';
 import { useToast } from "@/hooks/use-toast";
 import { generateProposalPdf, generateProposalPng } from "@/lib/pdfUtils";
-import { Button } from "@/components/ui/button";
-import { Printer, Download, FileImage } from "lucide-react";
+import { ActionButtonsSection } from './sections';
 
 interface ProposalCardProps {
   data: Partial<ExtractedData>;
@@ -51,10 +50,6 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
     showHeader: true,
     showLogo: true,
     showWatermark: false
-  };
-
-  const handlePrint = () => {
-    window.print();
   };
 
   const handleGeneratePdf = async () => {
@@ -125,20 +120,12 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
   return (
     <div className="flex flex-col items-center space-y-4">
       {/* Action buttons - agora acima do card da proposta */}
-      <div className="flex justify-center gap-3 py-4 w-full print:hidden" data-pdf-remove="true">
-        <Button variant="outline" onClick={handlePrint} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
-          <Printer className="mr-2 h-4 w-4" />
-          Imprimir
-        </Button>
-        <Button variant="outline" onClick={handleGeneratePng} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
-          <FileImage className="mr-2 h-4 w-4" />
-          Baixar PNG
-        </Button>
-        <Button onClick={handleGeneratePdf} className="bg-af-blue-600 hover:bg-af-blue-700">
-          <Download className="mr-2 h-4 w-4" />
-          Baixar PDF
-        </Button>
-      </div>
+      <ActionButtonsSection 
+        onGeneratePdf={handleGeneratePdf} 
+        onGeneratePng={handleGeneratePng}
+        data={data}
+        companyData={companyData}
+      />
 
       {/* Main proposal card */}
       <Card 

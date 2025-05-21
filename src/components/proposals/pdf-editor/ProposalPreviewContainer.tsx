@@ -1,11 +1,12 @@
 
 import React, { useRef } from 'react';
 import { Button } from "@/components/ui/button";
-import { FileCheck, Download, Printer, FileImage } from "lucide-react";
+import { FileCheck } from "lucide-react";
 import { PDFTemplatePreview } from "@/components/proposals/pdf-editor";
 import { ExtractedData, PDFTemplate, CompanyData } from "@/lib/types/proposals";
 import { generateProposalPdf, generateProposalPng } from "@/lib/pdfUtils";
 import { useToast } from "@/hooks/use-toast";
+import { ActionButtonsSection } from "@/components/proposals/card/sections";
 
 interface ProposalPreviewContainerProps {
   formData: Partial<ExtractedData>;
@@ -70,20 +71,12 @@ export const ProposalPreviewContainer = ({
     <div ref={previewRef} className="flex flex-col">
       <div className="sticky top-4 mb-4">
         {/* Botões de ação acima do preview da proposta */}
-        <div className="flex justify-center gap-3 mb-4 print:hidden">
-          <Button variant="outline" onClick={handlePrint} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
-            <Printer className="mr-2 h-4 w-4" />
-            Imprimir
-          </Button>
-          <Button variant="outline" onClick={handleGeneratePng} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
-            <FileImage className="mr-2 h-4 w-4" />
-            Baixar PNG
-          </Button>
-          <Button onClick={handleGeneratePdf} className="bg-af-blue-600 hover:bg-af-blue-700">
-            <Download className="mr-2 h-4 w-4" />
-            Baixar PDF
-          </Button>
-        </div>
+        <ActionButtonsSection 
+          onGeneratePdf={handleGeneratePdf}
+          onGeneratePng={handleGeneratePng}
+          data={formData}
+          companyData={companyData}
+        />
         
         <PDFTemplatePreview 
           formData={formData}
