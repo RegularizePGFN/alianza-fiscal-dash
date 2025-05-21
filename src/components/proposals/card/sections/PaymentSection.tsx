@@ -16,26 +16,21 @@ const PaymentSection = ({ data, colors }: PaymentSectionProps) => {
   const sectionColor = colors?.secondary || '#1E40AF';
 
   return (
-    <>
-      <SectionContainer 
-        title="Opções de Pagamento" 
-        icon={<CreditCard className="h-4 w-4" />}
-        color={sectionColor}
-      >
-        <DataField 
-          label="À Vista" 
-          value={`R$ ${data.discountedValue || '0,00'}`}
-        />
-        <DataField 
-          label="Parcelado" 
-          value={`${data.installments || '0'}x de R$ ${data.installmentValue || '0,00'}`}
-          description={`Entrada: ${data.entryInstallments || '1'}x de R$ ${data.entryValue || '0,00'}`}
-        />
-      </SectionContainer>
-      
-      {/* Display payment schedule with due dates */}
-      <PaymentScheduleSection data={data} colors={colors} />
-    </>
+    <SectionContainer 
+      title="Opções de Pagamento" 
+      icon={<CreditCard className="h-4 w-4" />}
+      color={sectionColor}
+    >
+      <DataField 
+        label="À Vista" 
+        value={`R$ ${data.discountedValue || '0,00'}`}
+      />
+      <DataField 
+        label="Parcelado" 
+        value={`${data.installments || '0'}x de R$ ${data.installmentValue || '0,00'}`}
+        description={`Entrada: ${data.entryInstallments || '1'}x de R$ ${data.entryValue || '0,00'}`}
+      />
+    </SectionContainer>
   );
 };
 

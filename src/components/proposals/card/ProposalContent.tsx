@@ -51,7 +51,7 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
 
   // Parse layout settings or use defaults
   const layout = {
-    sections: layoutData?.sections || ['company', 'debt', 'payment', 'paymentSchedule', 'fees'],
+    sections: layoutData?.sections || ['company', 'debt', 'payment', 'fees'],
     showHeader: layoutData?.showHeader !== undefined ? layoutData.showHeader : true,
     showLogo: layoutData?.showLogo !== undefined ? layoutData.showLogo : true,
     showWatermark: layoutData?.showWatermark || false
@@ -126,13 +126,11 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
   // Remover 'total' e 'alert' do array de seções
   const filteredSections = sectionOrder.filter(section => section !== 'total' && section !== 'alert');
   
-  // Add paymentSchedule section if not present
+  // Add paymentSchedule section if not present, but only once
   if (!filteredSections.includes('paymentSchedule')) {
     const paymentIndex = filteredSections.indexOf('payment');
     if (paymentIndex !== -1) {
       filteredSections.splice(paymentIndex + 1, 0, 'paymentSchedule');
-    } else {
-      filteredSections.push('paymentSchedule');
     }
   }
 

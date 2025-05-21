@@ -69,27 +69,22 @@ export async function generateProposalPng(proposalElement: HTMLElement, data: Pa
 
 export async function generateProposalPdf(proposalElement: HTMLElement, data: Partial<ExtractedData>): Promise<void> {
   try {
-    // Get specialist name for filename
-    const specialist = data.specialistName ? 
-      data.specialistName.replace(/[^\w]/g, '_').toLowerCase() : 'especialista';
+    // Get seller name for filename
+    const seller = data.sellerName ? 
+      data.sellerName.replace(/[^\w]/g, '_').toLowerCase() : 'vendedor';
     
     // File name
-    const fileName = `proposta_pgfn_${data.cnpj?.replace(/\D/g, '') || 'cliente'}_${specialist}.pdf`;
+    const fileName = `proposta_pgfn_${data.cnpj?.replace(/\D/g, '') || 'cliente'}_${seller}.pdf`;
 
     // Clone the element to avoid modifying the original
     const clonedElement = proposalElement.cloneNode(true) as HTMLElement;
     
-    // Create a temporary container for the PDF content with all necessary styles
+    // Create a temporary container for the PDF content
     const tempContainer = document.createElement('div');
     tempContainer.style.position = 'absolute';
     tempContainer.style.left = '-9999px';
-    tempContainer.style.width = '210mm'; // A4 width
-    tempContainer.style.padding = '0';
-    tempContainer.style.margin = '0';
-    tempContainer.style.backgroundColor = 'white';
-    tempContainer.style.fontSize = '10px'; // Reduzir tamanho da fonte para otimizar espaço
     
-    // Hide action buttons
+    // Hide action buttons and items that shouldn't be in PDF
     const actionButtons = clonedElement.querySelectorAll('.pdf-action-buttons, [data-pdf-remove="true"], button');
     actionButtons.forEach(button => {
       if (button instanceof HTMLElement) {
@@ -97,49 +92,25 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       }
     });
     
-    // Reduzir espaçamento entre elementos
-    const sections = clonedElement.querySelectorAll('div.space-y-4, div.mb-6, div.mt-8');
-    sections.forEach(section => {
-      if (section instanceof HTMLElement) {
-        section.style.marginTop = '8px';
-        section.style.marginBottom = '8px';
-        section.classList.remove('space-y-4', 'mb-6', 'mt-8');
-        section.classList.add('space-y-2', 'mb-3', 'mt-2');
-      }
-    });
-    
-    // Comprimir elementos e grids para economizar espaço
-    const grids = clonedElement.querySelectorAll('.grid');
-    grids.forEach(grid => {
-      if (grid instanceof HTMLElement) {
-        grid.style.gap = '8px';
-      }
-    });
-    
-    // Append styles for PDF rendering
+    // Scale and optimize content for PDF
     const styleElement = document.createElement('style');
     styleElement.textContent = `
-      /* Ensure Roboto font is loaded */
       @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
       
-      /* Make sure all content fits on page */
       * {
         box-sizing: border-box;
         font-family: 'Roboto', sans-serif !important;
         margin-block: 0;
       }
       
-      /* Reduce spacing */
       p, h1, h2, h3, h4, h5, h6 {
         margin-block: 2px !important;
       }
       
-      /* Hide button elements */
       button, [data-pdf-remove="true"] {
         display: none !important;
       }
       
-      /* Optimize padding and spacing */
       .p-6, .p-5, .p-4 {
         padding: 8px !important;
       }
@@ -148,23 +119,24 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
         padding: 6px !important;
       }
       
-      .space-y-4 {
-        margin-top: 8px !important;
-        margin-bottom: 8px !important;
+      /* Page break utilities */
+      .pdf-page-break {
+        page-break-after: always;
+        break-after: page;
       }
       
-      /* Optimize grids for space */
-      .grid {
-        gap: 8px !important;
+      /* Ensure tables don't break across pages */
+      table {
+        page-break-inside: avoid;
+        break-inside: avoid;
       }
       
-      /* Compress header */
-      [class*="rounded-t-lg"] {
-        padding-top: 8px !important;
-        padding-bottom: 8px !important;
+      /* Ensure sections don't break in the middle */
+      .border-l-4 {
+        page-break-inside: avoid;
+        break-inside: avoid;
       }
       
-      /* Preserve colors and backgrounds */
       body {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
@@ -173,15 +145,12 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       }
     `;
     
-    // Add the element to the temporary container
     tempContainer.appendChild(styleElement);
     tempContainer.appendChild(clonedElement);
-    
-    // Append to document body temporarily
     document.body.appendChild(tempContainer);
     
     try {
-      // Wait a moment to ensure fonts and styles are loaded
+      // Wait to ensure fonts and styles are loaded
       await new Promise(resolve => setTimeout(resolve, 500));
       
       // Initialize PDF with A4 dimensions
@@ -192,8 +161,28 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
         compress: true
       });
       
-      // Create PDF using html2canvas
-      const canvas = await html2canvas(clonedElement, {
+      // Set PDF properties
+      pdf.setProperties({
+        title: `Proposta PGFN - ${data.clientName || data.cnpj || 'Cliente'}`,
+        subject: 'Proposta de Parcelamento PGFN',
+        author: 'Aliança Fiscal',
+        keywords: 'proposta, pgfn, parcelamento',
+        creator: 'Sistema de Propostas Aliança Fiscal'
+      });
+      
+      // Add a function to insert page numbers
+      const totalPages = 1; // Will be updated later
+      
+      // Create PDF using html2canvas with better page break handling
+      // First, calculate total height to determine number of pages
+      const contentWidth = 210; // A4 width in mm
+      const contentHeight = 297 - 20; // A4 height minus margins in mm
+      
+      // Get sections that might need page breaks
+      const sections = clonedElement.querySelectorAll('.border-l-4, table, .mb-6');
+      
+      // First pass: render the entire document to a large canvas
+      const fullCanvas = await html2canvas(clonedElement, {
         scale: 2,
         useCORS: true,
         logging: false,
@@ -202,51 +191,53 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       });
       
       // Calculate dimensions for A4
-      const imgWidth = 210; // A4 width in mm
-      const pageHeight = 297; // A4 height in mm
+      const imgWidth = contentWidth; // A4 width in mm
+      const imgHeight = (fullCanvas.height * imgWidth) / fullCanvas.width;
       
-      // Calcular altura proporcional para manter proporção do conteúdo
-      const contentRatio = canvas.height / canvas.width;
-      const imgHeight = imgWidth * contentRatio;
+      // Calculate number of pages
+      const pagesCount = Math.ceil(imgHeight / contentHeight);
       
-      // Se o conteúdo for maior que uma página A4, vamos dividi-lo em múltiplas páginas
-      if (imgHeight <= pageHeight) {
-        // Conteúdo cabe em uma única página
-        pdf.addImage(
-          canvas.toDataURL('image/jpeg', 0.95), 
-          'JPEG', 
-          0, // x
-          0, // y
-          imgWidth, // width
-          imgHeight // height
-        );
-      } else {
-        // Conteúdo precisa de várias páginas
-        let heightLeft = imgHeight;
-        let position = 0;
-        let page = 0;
-        
-        while (heightLeft > 0) {
-          // Adicionar nova página se não for a primeira
-          if (page > 0) {
-            pdf.addPage();
-          }
-          
-          // Adicionar parte da imagem correspondente a esta página
-          pdf.addImage(
-            canvas.toDataURL('image/jpeg', 0.95),
-            'JPEG',
-            0, // x
-            position > 0 ? -position : 0, // Posição vertical negativa para "recortar" a parte certa
-            imgWidth,
-            imgHeight
-          );
-          
-          // Reduzir altura restante e incrementar posição
-          heightLeft -= pageHeight;
-          position += pageHeight;
-          page++;
+      // Add content page by page with proper breaks
+      for (let i = 0; i < pagesCount; i++) {
+        if (i > 0) {
+          pdf.addPage();
         }
+        
+        // Calculate position to start capturing from
+        const sourceY = i * (fullCanvas.height / pagesCount);
+        const sourceHeight = fullCanvas.height / pagesCount;
+        
+        // Create a new canvas for this page
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width = fullCanvas.width;
+        pageCanvas.height = sourceHeight;
+        
+        const context = pageCanvas.getContext('2d');
+        if (!context) continue;
+        
+        // Copy portion of the full canvas to this page canvas
+        context.drawImage(
+          fullCanvas, 
+          0, sourceY, // Source x, y
+          fullCanvas.width, sourceHeight, // Source width, height
+          0, 0, // Destination x, y
+          fullCanvas.width, sourceHeight // Destination width, height
+        );
+        
+        // Add to PDF
+        pdf.addImage(
+          pageCanvas.toDataURL('image/jpeg', 0.95),
+          'JPEG',
+          0, // x
+          10, // y (add some margin)
+          imgWidth,
+          contentHeight
+        );
+        
+        // Add page number at the bottom
+        pdf.setFontSize(8);
+        pdf.setTextColor(100, 100, 100);
+        pdf.text(`Página ${i + 1}/${pagesCount}`, imgWidth / 2, contentHeight + 15, { align: 'center' });
       }
       
       // Save the PDF
