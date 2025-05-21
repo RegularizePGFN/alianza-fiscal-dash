@@ -32,6 +32,29 @@ const PaymentScheduleSection = ({ data, colors }: PaymentScheduleSectionProps) =
     return null; // Don't render if no dates available
   }
 
+  // Calculate entry installment value per installment
+  const calculateEntryInstallmentValue = () => {
+    if (data.entryValue && data.entryInstallments && parseInt(data.entryInstallments) > 1) {
+      try {
+        const entryValue = parseFloat(data.entryValue.replace(/\./g, '').replace(',', '.'));
+        const installments = parseInt(data.entryInstallments);
+        
+        if (!isNaN(entryValue) && !isNaN(installments) && installments > 0) {
+          const installmentValue = entryValue / installments;
+          return installmentValue.toLocaleString('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          });
+        }
+      } catch (error) {
+        console.error("Error calculating entry installment value:", error);
+      }
+    }
+    return data.entryValue || "0,00";
+  };
+
+  const entryInstallmentValue = calculateEntryInstallmentValue();
+
   return (
     <SectionContainer 
       title="Cronograma de Pagamento" 
@@ -60,7 +83,7 @@ const PaymentScheduleSection = ({ data, colors }: PaymentScheduleSectionProps) =
                     <tr key={`entry-${index}`} className="odd:bg-blue-50 even:bg-white">
                       <td className="pr-4 py-1">{item.installment}ª</td>
                       <td className="pr-4 py-1">{item.formattedDate}</td>
-                      <td className="text-right py-1">R$ {data.entryValue}</td>
+                      <td className="text-right py-1">R$ {entryInstallmentValue}</td>
                     </tr>
                   ))}
                 </tbody>

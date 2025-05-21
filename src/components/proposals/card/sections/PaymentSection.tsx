@@ -13,6 +13,27 @@ interface PaymentSectionProps {
 const PaymentSection = ({ data, colors }: PaymentSectionProps) => {
   // Default color if not provided
   const sectionColor = colors?.secondary || '#1E40AF';
+  
+  // Calculate entry installment value if multiple installments
+  const entryInstallmentValue = () => {
+    if (data.entryValue && data.entryInstallments && parseInt(data.entryInstallments) > 1) {
+      try {
+        const entryValue = parseFloat(data.entryValue.replace(/\./g, '').replace(',', '.'));
+        const installments = parseInt(data.entryInstallments);
+        
+        if (!isNaN(entryValue) && !isNaN(installments) && installments > 0) {
+          const installmentValue = entryValue / installments;
+          return installmentValue.toLocaleString('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          });
+        }
+      } catch (error) {
+        console.error("Error calculating entry installment value:", error);
+      }
+    }
+    return data.entryValue || "0,00";
+  };
 
   return (
     <SectionContainer 

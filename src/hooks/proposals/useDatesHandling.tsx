@@ -46,7 +46,24 @@ export const useDatesHandling = ({ activeTab, formData, setFormData }: UseDatesH
       // Parse values
       const entryInstallments = parseInt(formData.entryInstallments || '1', 10);
       const installments = parseInt(formData.installments, 10);
-      const entryValue = formData.entryValue.replace(/\./g, '').replace(',', '.');
+      
+      // Calculate entry installment value per installment
+      let entryInstallmentValue = formData.entryValue;
+      if (entryInstallments > 1) {
+        try {
+          const entryValueNum = parseFloat(formData.entryValue.replace(/\./g, '').replace(',', '.'));
+          if (!isNaN(entryValueNum) && entryInstallments > 0) {
+            const installmentVal = entryValueNum / entryInstallments;
+            entryInstallmentValue = installmentVal.toLocaleString('pt-BR', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            });
+          }
+        } catch (error) {
+          console.error('Error calculating entry installment value:', error);
+        }
+      }
+      
       const installmentValue = formData.installmentValue.replace(/\./g, '').replace(',', '.');
       
       // Start with current date
@@ -63,7 +80,7 @@ export const useDatesHandling = ({ activeTab, formData, setFormData }: UseDatesH
           installment: i + 1,
           date: paymentDate,
           formattedDate: formatDateBR(paymentDate),
-          value: entryValue
+          value: entryInstallmentValue
         });
         
         // Move to next month
