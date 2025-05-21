@@ -2,7 +2,7 @@
 import React from 'react';
 import { Separator } from "@/components/ui/separator";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
-import { format } from 'date-fns';
+import { isValid, parseISO, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import ClientSection from './client/ClientSimpleInfo';
 import { HeaderSection, MetadataSection, ProposalDataSection, NegotiationDataSection, 
@@ -37,14 +37,42 @@ const ProposalContent: React.FC<ProposalContentProps> = ({
     };
   })();
 
-  // Format dates for display
-  const creationDate = data.creationDate 
-    ? format(new Date(data.creationDate), 'dd/MM/yyyy', { locale: ptBR })
-    : format(new Date(), 'dd/MM/yyyy', { locale: ptBR });
+  // Função segura para formatar datas
+  const safeFormatDate = (dateStr?: string) => {
+    if (!dateStr) return format(new Date(), 'dd/MM/yyyy', { locale: ptBR });
     
-  const validityDate = data.validityDate
-    ? format(new Date(data.validityDate), 'dd/MM/yyyy', { locale: ptBR })
-    : format(new Date(new Date().setDate(new Date().getDate() + 7)), 'dd/MM/yyyy', { locale: ptBR });
+    try {
+      // Primeiro, vamos verificar se é já um formato de data válido
+      let dateObj;
+      
+      if (typeof dateStr === 'string') {
+        if (dateStr.includes('/')) {
+          // Se já está formatado como dd/MM/yyyy, usamos como está
+          return dateStr;
+        } else {
+          // Tentamos interpretar como ISO
+          dateObj = parseISO(dateStr);
+        }
+      } else {
+        dateObj = new Date(dateStr);
+      }
+      
+      // Verifica se a data é válida
+      if (!isValid(dateObj)) {
+        console.warn("Data inválida:", dateStr);
+        return format(new Date(), 'dd/MM/yyyy', { locale: ptBR });
+      }
+      
+      return format(dateObj, 'dd/MM/yyyy', { locale: ptBR });
+    } catch (e) {
+      console.error("Erro ao formatar data:", e, dateStr);
+      return format(new Date(), 'dd/MM/yyyy', { locale: ptBR });
+    }
+  };
+
+  // Formata as datas com segurança
+  const creationDate = safeFormatDate(data.creationDate);
+  const validityDate = safeFormatDate(data.validityDate);
 
   // Render sections based on layout
   const renderSections = () => {
