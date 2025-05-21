@@ -1,12 +1,12 @@
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
 import { HeaderSection } from './sections';
 import ProposalContent from './ProposalContent';
 import { useToast } from "@/hooks/use-toast";
 import { generateProposalPdf, generateProposalPng } from "@/lib/pdfUtils";
-import ActionButtons from './ActionButtons';
+import ActionButtonsSection from './sections/ActionButtonsSection';
 
 interface ProposalCardProps {
   data: Partial<ExtractedData>;
@@ -19,7 +19,7 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
   const { toast } = useToast();
   
   // Effect to verify when fonts are loaded
-  useEffect(() => {
+  React.useEffect(() => {
     document.fonts.ready.then(() => {
       console.log('All fonts loaded for proposal rendering');
     });
@@ -43,6 +43,70 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
 
   const handlePrint = () => {
     window.print();
+  };
+  
+  const handleGeneratePdf = async () => {
+    if (!proposalRef.current) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar o PDF. Tente novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    toast({
+      title: "Processando",
+      description: "Gerando PDF, aguarde um momento...",
+    });
+    
+    try {
+      await generateProposalPdf(proposalRef.current, data);
+      
+      toast({
+        title: "Sucesso",
+        description: "PDF gerado com sucesso!",
+      });
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar o PDF. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const handleGeneratePng = async () => {
+    if (!proposalRef.current) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar a imagem PNG. Tente novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    toast({
+      title: "Processando",
+      description: "Capturando imagem PNG em alta qualidade...",
+    });
+    
+    try {
+      await generateProposalPng(proposalRef.current, data);
+      
+      toast({
+        title: "Sucesso",
+        description: "Imagem PNG da proposta completa gerada com sucesso!",
+      });
+    } catch (error) {
+      console.error("Erro ao gerar PNG:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar a imagem PNG. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -69,10 +133,10 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
         </CardContent>
         
         {/* Action buttons INSIDE the card to ensure proper PNG capture */}
-        <ActionButtons
+        <ActionButtonsSection
           onPrint={handlePrint}
-          proposalData={data}
-          proposalRef={proposalRef}
+          onGeneratePdf={handleGeneratePdf}
+          onGeneratePng={handleGeneratePng}
         />
       </Card>
     </div>

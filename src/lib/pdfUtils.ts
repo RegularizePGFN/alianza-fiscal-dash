@@ -38,7 +38,7 @@ const ensureAllAssetsLoaded = async (): Promise<void> => {
   await Promise.all(imgPromises);
   
   // Small delay to ensure CSS animations/transitions complete
-  await new Promise(resolve => setTimeout(resolve, 200));
+  await new Promise(resolve => setTimeout(resolve, 500));
 };
 
 /**
@@ -52,13 +52,6 @@ export const generateProposalPng = async (
     // Ensure all fonts and images are loaded before capturing
     await ensureAllAssetsLoaded();
     
-    // Create a clone of the element to avoid modifying the original
-    const clone = element.cloneNode(true) as HTMLElement;
-    
-    // Set explicit dimensions to ensure consistent capture
-    clone.style.width = element.offsetWidth + 'px';
-    clone.style.height = element.offsetHeight + 'px';
-    
     // Improved html2canvas options for higher quality
     const canvas = await html2canvas(element, {
       scale: 4, // Higher scale for better quality
@@ -66,7 +59,7 @@ export const generateProposalPng = async (
       allowTaint: true, // Allow potentially tainted images
       logging: false, // Disable logging
       backgroundColor: '#ffffff', // Ensure white background
-      imageTimeout: 0, // No timeout for images
+      imageTimeout: 15000, // Longer timeout for images
       onclone: (clonedDoc) => {
         // Any additional manipulations on cloned document if needed
         const clonedElement = clonedDoc.body.querySelector('div') as HTMLElement;
@@ -121,14 +114,14 @@ export const generateProposalPdf = async (
     // Scale factor to fit the width of the PDF
     const scaleFactor = pageWidth / elementWidth;
     
-    // Render the element to canvas
+    // Render the element to canvas with improved settings
     const canvas = await html2canvas(element, {
       scale: 3, // Higher scale for PDF quality
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#ffffff',
       logging: false,
-      imageTimeout: 0,
+      imageTimeout: 15000,
       onclone: (clonedDoc) => {
         const clonedElement = clonedDoc.body.querySelector('div') as HTMLElement;
         if (clonedElement) {

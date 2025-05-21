@@ -81,7 +81,7 @@ const ActionButtons = ({ onPrint, proposalData, proposalRef }: ActionButtonsProp
   };
 
   return (
-    <div className="pt-4 flex justify-end gap-3 px-6 pb-6">
+    <div className="pt-4 flex flex-col md:flex-row justify-end gap-3 px-6 pb-6">
       <Button variant="outline" onClick={onPrint} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
         <Printer className="mr-2 h-4 w-4" />
         Imprimir
@@ -92,7 +92,7 @@ const ActionButtons = ({ onPrint, proposalData, proposalRef }: ActionButtonsProp
         className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50"
       >
         <FileImage className="mr-2 h-4 w-4" />
-        <span>Baixar PNG da Proposta Completa</span>
+        <span>Baixar PNG de Alta Qualidade</span>
       </Button>
       <Button onClick={onGeneratePdf} className="bg-af-blue-600 hover:bg-af-blue-700">
         <Download className="mr-2 h-4 w-4" />
