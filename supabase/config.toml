@@ -46,4 +46,3 @@ enabled = true
 verify_jwt = false
 [functions.render-proposal]
 verify_jwt = false
-

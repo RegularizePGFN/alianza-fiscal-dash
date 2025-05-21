@@ -10,7 +10,7 @@ const corsHeaders = {
 };
 
 // Get environment variables
-const browserlessUrl = Deno.env.get('BROWSERLESS_URL');
+const browserlessUrl = Deno.env.get('BROWSERLESS_URL') || 'https://chrome.browserless.io?token=2SLjpxsvtsm7AsIa5bbcb243a24b3d97ee0aee5bc840cb7ed';
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -28,13 +28,6 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "HTML content is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-    
-    if (!browserlessUrl) {
-      return new Response(
-        JSON.stringify({ error: "BROWSERLESS_URL environment variable is not set" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
     
@@ -77,7 +70,7 @@ serve(async (req) => {
       }`;
     
     // Call Browserless.io API
-    const response = await fetch(`${browserlessUrl}/function`, {
+    const response = await fetch(browserlessUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
