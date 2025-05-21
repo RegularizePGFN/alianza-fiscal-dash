@@ -80,12 +80,11 @@ serve(async (req) => {
               });
               return pdf.toString('base64');
             } 
-            // For PNG generation
+            // For PNG generation - REMOVED quality parameter which is not supported for PNG
             else {
               const screenshot = await page.screenshot({
                 type: 'png',
                 fullPage: true,
-                quality: 100,
                 omitBackground: false
               });
               return screenshot.toString('base64');

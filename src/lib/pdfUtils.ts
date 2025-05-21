@@ -176,10 +176,13 @@ export const generateHighQualityFile = async (
   data: Partial<ExtractedData>,
   format: 'pdf' | 'png' = 'png'
 ): Promise<void> => {
+  // Use a unique ID to track this specific toast
+  const toastId = `high-quality-${format}-${Date.now()}`;
+  
   try {
-    // Add a toast to indicate the process has started
-    const toastId = toast.loading('Preparando seu documento para renderização...', {
-      duration: 10000
+    // Show initial loading toast
+    toast.loading('Preparando seu documento para renderização...', {
+      id: toastId
     });
     
     // Get the HTML content of the element
@@ -276,8 +279,7 @@ export const generateHighQualityFile = async (
     `;
     
     console.log('Preparing to call render-proposal function...');
-    // Use Sonner toast dismiss instead of update since update is not available
-    toast.dismiss(toastId);
+    // Use Sonner compatible method
     toast.loading('Conectando ao serviço de renderização...', { id: toastId });
     
     // Generate a filename
@@ -294,18 +296,20 @@ export const generateHighQualityFile = async (
     
     if (error) {
       console.error('Error calling render function:', error);
-      toast.error('Erro ao renderizar: ' + error.message);
+      // Update the toast with error message
+      toast.error('Erro ao renderizar: ' + error.message, { id: toastId });
       throw new Error(`Error calling render function: ${error.message || 'Unknown error'}`);
     }
     
+    // Check if we got proper response data
     if (!responseData || !responseData.data) {
+      const errorMsg = responseData?.error || 'Nenhum dado retornado do serviço de renderização';
       console.error('No data returned from render function:', responseData);
-      toast.error('Nenhum dado retornado do serviço de renderização');
-      throw new Error('No data returned from render function');
+      toast.error(errorMsg, { id: toastId });
+      throw new Error(errorMsg);
     }
     
-    // Dismiss loading toast and show processing message
-    toast.dismiss(toastId);
+    // Show processing message
     toast.loading('Processando arquivo para download...', { id: toastId });
     
     // Convert base64 to Blob
@@ -330,13 +334,28 @@ export const generateHighQualityFile = async (
     setTimeout(() => URL.revokeObjectURL(url), 100);
     
     // Success message
-    toast.dismiss(toastId);
-    toast.success(`${format.toUpperCase()} de alta qualidade gerado com sucesso!`);
+    toast.success(`${format.toUpperCase()} de alta qualidade gerado com sucesso!`, { id: toastId });
     
     console.log(`High quality ${format} generated successfully`);
   } catch (error) {
     console.error(`Error generating high quality ${format}:`, error);
-    toast.error(`Falha ao gerar ${format.toUpperCase()}: ${error.message}`);
+    
+    // Determine a more specific error message if possible
+    let errorMessage = `Falha ao gerar ${format.toUpperCase()}`;
+    
+    if (error instanceof Error) {
+      // Check for specific error patterns
+      if (error.message.includes('png screenshots do not support')) {
+        errorMessage = `Erro de configuração na geração de ${format.toUpperCase()}: Parâmetro inválido`;
+      } else if (error.message.includes('timeout')) {
+        errorMessage = `Tempo esgotado na geração do ${format.toUpperCase()}. Tente novamente com uma proposta menos complexa.`;
+      } else {
+        errorMessage += `: ${error.message}`;
+      }
+    }
+    
+    // Show error toast with the specific message
+    toast.error(errorMessage, { id: toastId });
     throw error;
   }
 };
