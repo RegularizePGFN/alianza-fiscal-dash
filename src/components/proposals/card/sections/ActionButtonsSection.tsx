@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Eye, FileImage, FileText } from "lucide-react";
+import { Eye, FileImage, FileText, Printer } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import ProposalPreview from "@/components/proposals/card/ProposalPreview";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
@@ -23,8 +23,8 @@ const ActionButtonsSection = ({
   const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
   
   const handleGeneratePdf = async () => {
-    // Find the dialog content element with the proposal
-    const previewElement = document.querySelector('.proposal-preview-container');
+    // Find the proposal pages container
+    const previewElement = document.querySelector('.paginated-proposal-container');
     
     if (!previewElement) {
       toast({
@@ -58,8 +58,8 @@ const ActionButtonsSection = ({
   };
 
   const handleGeneratePng = async () => {
-    // Find the dialog content element with the proposal
-    const previewElement = document.querySelector('.proposal-preview-container');
+    // Find the proposal pages container
+    const previewElement = document.querySelector('.paginated-proposal-container');
     
     if (!previewElement) {
       toast({
@@ -92,6 +92,11 @@ const ActionButtonsSection = ({
     }
   };
 
+  // Handle browser print functionality
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="flex justify-center gap-3 mb-6 print:hidden" data-pdf-remove="true">
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
@@ -101,11 +106,19 @@ const ActionButtonsSection = ({
             Visualizar | Baixar
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogTitle className="sr-only">Visualização da Proposta</DialogTitle>
           
           {/* Export buttons positioned at the top of the dialog */}
           <div className="flex justify-end gap-3 mb-4 print:hidden" data-pdf-remove="true">
+            <Button 
+              variant="outline" 
+              onClick={handlePrint}
+              className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50"
+            >
+              <Printer className="mr-2 h-4 w-4" />
+              Exportar com Visual do Navegador
+            </Button>
             <Button variant="outline" onClick={handleGeneratePng} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
               <FileImage className="mr-2 h-4 w-4" />
               Baixar PNG
