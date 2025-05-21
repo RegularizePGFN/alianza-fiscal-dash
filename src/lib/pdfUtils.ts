@@ -285,7 +285,7 @@ export const generateHighQualityFile = async (
     // Generate a filename
     const filename = `proposta-${data.clientName || 'Cliente'}-${data.cnpj || ''}`;
     
-    // Call the Edge Function
+    // Call the Edge Function with specific content type and format
     const { data: responseData, error } = await supabase.functions.invoke('render-proposal', {
       body: {
         html: fullHtml,
@@ -301,31 +301,47 @@ export const generateHighQualityFile = async (
       throw new Error(`Error calling render function: ${error.message || 'Unknown error'}`);
     }
     
+    // Improved error checking and handling
+    if (!responseData) {
+      console.error('No response data received from the render function');
+      toast.error('Não foi possível obter dados do serviço de renderização', { id: toastId });
+      throw new Error('No response data received from the render function');
+    }
+    
+    if (responseData.error) {
+      console.error('Error returned by render function:', responseData.error);
+      toast.error(`Erro na renderização: ${responseData.error}`, { id: toastId });
+      throw new Error(`Error from render function: ${responseData.error}`);
+    }
+    
     // Check if we got proper response data
-    if (!responseData || !responseData.data) {
-      const errorMsg = responseData?.error || 'Nenhum dado retornado do serviço de renderização';
+    if (!responseData.data) {
+      const errorMsg = responseData.error || 'Nenhum dado retornado do serviço de renderização';
       console.error('No data returned from render function:', responseData);
       toast.error(errorMsg, { id: toastId });
       throw new Error(errorMsg);
     }
     
     // Show processing message
-    toast.loading('Processando arquivo para download...', { id: toastId });
+    toast.loading(`Processando arquivo ${format.toUpperCase()} para download...`, { id: toastId });
     
-    // Convert base64 to Blob
+    // Convert base64 to Blob with appropriate content type
     const byteCharacters = atob(responseData.data);
     const byteNumbers = new Array(byteCharacters.length);
     for (let i = 0; i < byteCharacters.length; i++) {
       byteNumbers[i] = byteCharacters.charCodeAt(i);
     }
     const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: responseData.contentType });
+    
+    // Set proper content type
+    const contentType = format === 'pdf' ? 'application/pdf' : 'image/png';
+    const blob = new Blob([byteArray], { type: contentType });
     
     // Create object URL and trigger download
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = responseData.filename;
+    link.download = `${filename}.${format}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -349,6 +365,10 @@ export const generateHighQualityFile = async (
         errorMessage = `Erro de configuração na geração de ${format.toUpperCase()}: Parâmetro inválido`;
       } else if (error.message.includes('timeout')) {
         errorMessage = `Tempo esgotado na geração do ${format.toUpperCase()}. Tente novamente com uma proposta menos complexa.`;
+      } else if (error.message.includes('non-2xx status code')) {
+        errorMessage = `O servidor de renderização retornou um erro ao gerar ${format.toUpperCase()}. Tente novamente mais tarde.`;
+      } else if (error.message.includes('No response data')) {
+        errorMessage = `Não foi possível obter uma resposta do serviço de renderização para ${format.toUpperCase()}.`;
       } else {
         errorMessage += `: ${error.message}`;
       }

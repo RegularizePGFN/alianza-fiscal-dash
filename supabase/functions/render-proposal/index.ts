@@ -75,12 +75,11 @@ serve(async (req) => {
                   bottom: '10mm',
                   left: '10mm',
                 },
-                scale: 0.75, // Scale to fit content on page
                 preferCSSPageSize: true
               });
               return pdf.toString('base64');
             } 
-            // For PNG generation - REMOVED quality parameter which is not supported for PNG
+            // For PNG generation
             else {
               const screenshot = await page.screenshot({
                 type: 'png',

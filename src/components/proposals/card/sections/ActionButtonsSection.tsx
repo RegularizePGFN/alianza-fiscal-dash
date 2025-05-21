@@ -8,6 +8,7 @@ interface ActionButtonsSectionProps {
   onGeneratePng: () => void;
   onPrint: () => void;
   onGenerateHighQuality?: () => void;
+  onGenerateHighQualityPdf?: () => void;
   isGeneratingHighQuality?: boolean;
   className?: string; // Added className prop for flexible positioning
 }
@@ -17,11 +18,12 @@ const ActionButtonsSection = ({
   onGeneratePng, 
   onPrint, 
   onGenerateHighQuality,
+  onGenerateHighQualityPdf,
   isGeneratingHighQuality = false,
   className = ""
 }: ActionButtonsSectionProps) => {
   return (
-    <div className={`pt-4 flex flex-col md:flex-row gap-3 px-6 pb-6 justify-end ${className}`}>
+    <div className={`pt-4 flex flex-col md:flex-row flex-wrap gap-3 px-6 pb-6 justify-end ${className}`}>
       <Button variant="outline" onClick={onPrint} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
         <Printer className="mr-2 h-4 w-4" />
         Imprimir
@@ -48,6 +50,17 @@ const ActionButtonsSection = ({
         <FileIcon className="mr-2 h-4 w-4" />
         Baixar PDF
       </Button>
+      
+      {onGenerateHighQualityPdf && (
+        <Button 
+          onClick={onGenerateHighQualityPdf}
+          disabled={isGeneratingHighQuality}
+          className="bg-af-blue-800 hover:bg-af-blue-900 text-white"
+        >
+          <FileUp className={`mr-2 h-4 w-4 ${isGeneratingHighQuality ? 'animate-pulse' : ''}`} />
+          {isGeneratingHighQuality ? 'Processando...' : 'PDF Alta Qualidade'}
+        </Button>
+      )}
     </div>
   );
 };

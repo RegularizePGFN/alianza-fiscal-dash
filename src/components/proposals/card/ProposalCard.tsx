@@ -133,6 +133,30 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
       setIsGeneratingHighQuality(false);
     }
   };
+  
+  const handleGenerateHighQualityPdf = async () => {
+    if (!proposalRef.current) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar o PDF de alta qualidade. Tente novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsGeneratingHighQuality(true);
+    
+    try {
+      // Generate high-quality PDF using the Edge Function
+      await generateHighQualityFile(proposalRef.current, data, 'pdf');
+      // Toast is handled within the function itself
+    } catch (error) {
+      console.error("Erro ao gerar PDF de alta qualidade:", error);
+      // Error toasts are now handled in the generateHighQualityFile function
+    } finally {
+      setIsGeneratingHighQuality(false);
+    }
+  };
 
   return (
     <div className="flex flex-col items-center space-y-4">
@@ -164,6 +188,7 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
         onGeneratePdf={handleGeneratePdf}
         onGeneratePng={handleGeneratePng}
         onGenerateHighQuality={handleGenerateHighQuality}
+        onGenerateHighQualityPdf={handleGenerateHighQualityPdf}
         isGeneratingHighQuality={isGeneratingHighQuality}
         className="max-w-3xl w-full mx-auto bg-white shadow rounded-md mt-2 border"
       />
