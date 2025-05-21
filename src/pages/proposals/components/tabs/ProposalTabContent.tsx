@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 import { ProposalCard } from "@/components/proposals/card";
@@ -25,20 +26,18 @@ const ProposalTabContent = ({
   onInputChange
 }: ProposalTabContentProps) => {
   const [isEditing, setIsEditing] = useState(false);
-  
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between mb-4">
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => setIsEditing(!isEditing)}
-            className="gap-2"
-          >
-            <Edit2 className="h-4 w-4" />
-            {isEditing ? "Visualizar Proposta" : "Editar Dados"}
-          </Button>
-        </div>
+        <Button 
+          variant="outline" 
+          onClick={() => setIsEditing(!isEditing)}
+          className="gap-2"
+        >
+          <Edit2 className="h-4 w-4" />
+          {isEditing ? "Visualizar Proposta" : "Editar Dados"}
+        </Button>
         
         <Button variant="outline" onClick={onReset} className="gap-2">
           <RotateCcw className="h-4 w-4" />
@@ -185,13 +184,11 @@ const ProposalTabContent = ({
           </CardContent>
         </Card>
       ) : (
-        <div className="proposal-preview-container">
-          <ProposalCard
-            data={formData}
-            imageUrl={imagePreview || undefined}
-            companyData={companyData}
-          />
-        </div>
+        <ProposalCard
+          data={formData}
+          imageUrl={imagePreview || undefined}
+          companyData={companyData}
+        />
       )}
     </div>
   );
