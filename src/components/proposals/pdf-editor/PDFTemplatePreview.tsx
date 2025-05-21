@@ -74,7 +74,7 @@ const PDFTemplatePreview = ({
       }}
     >
       {layout.showHeader && (
-        <div className="relative overflow-hidden rounded-t-lg">
+        <div className="relative overflow-hidden rounded-t-lg print:break-after-avoid">
           <div className="absolute inset-0 opacity-10 bg-gradient-to-br from-slate-400 to-slate-100"></div>
           <div className="relative p-6 flex justify-between items-center">
             <div className="flex items-center gap-4">

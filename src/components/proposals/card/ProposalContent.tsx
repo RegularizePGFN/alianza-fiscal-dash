@@ -96,7 +96,7 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
       case 'payment':
         return <PaymentSection data={data} colors={colors} />;
       case 'paymentSchedule':
-        return <div data-section="payment-schedule"><PaymentScheduleSection data={data} colors={colors} /></div>;
+        return <div data-section="payment-schedule" className="print:break-before-page"><PaymentScheduleSection data={data} colors={colors} /></div>;
       case 'fees':
         return <FeesSection data={data} colors={colors} />;
       case 'total':
@@ -136,17 +136,23 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
 
   return (
     <div className={`p-6 space-y-0 font-['Roboto',sans-serif] ${className}`}>
-      {/* Render sections based on the adjusted section order */}
-      {filteredSections.map((section, index) => (
-        <React.Fragment key={index}>
-          {renderSection(section)}
-        </React.Fragment>
-      ))}
+      {/* Main content sections */}
+      <div className="print:break-after-avoid">
+        {/* Render initial sections based on the adjusted section order (except payment schedule) */}
+        {filteredSections.filter(section => section !== 'paymentSchedule').map((section, index) => (
+          <React.Fragment key={index}>
+            {renderSection(section)}
+          </React.Fragment>
+        ))}
+        
+        {/* Always show comments here if they exist and aren't already in the sections */}
+        {data.additionalComments && !renderedSections.has('comments') && 
+          <CommentsSection data={data} colors={colors} />
+        }
+      </div>
       
-      {/* Always show comments at the end if they exist and aren't already in the sections */}
-      {data.additionalComments && !renderedSections.has('comments') && 
-        <CommentsSection data={data} colors={colors} />
-      }
+      {/* Payment Schedule section on its own page */}
+      {filteredSections.includes('paymentSchedule') && renderSection('paymentSchedule')}
       
       {/* Signature is always shown */}
       <SignatureSection data={data} />

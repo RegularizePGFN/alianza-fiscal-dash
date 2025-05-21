@@ -25,7 +25,7 @@ const SectionContainer = ({
   subtitle
 }: SectionContainerProps) => {
   return (
-    <div className={cn("mb-6", className)}>
+    <div className={cn("mb-6 print:break-inside-avoid", className)}>
       <h3 
         className="text-base font-semibold pb-2 mb-3 border-b border-gray-200 flex items-center" 
         style={{ color }}

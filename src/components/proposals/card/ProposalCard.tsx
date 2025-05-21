@@ -125,9 +125,11 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
   return (
     <div className="flex flex-col items-center space-y-4">
       {/* Main proposal card - action buttons moved outside */}
-      <Card ref={proposalRef} className="max-w-3xl mx-auto shadow border overflow-hidden font-['Roboto',sans-serif] w-full"
-            style={{ backgroundColor: colors.background }}>
-        
+      <Card 
+        ref={proposalRef} 
+        className="max-w-3xl mx-auto shadow border overflow-hidden font-['Roboto',sans-serif] w-full print:shadow-none print:border-0"
+        style={{ backgroundColor: colors.background }}
+      >
         {/* Header with Logo */}
         <HeaderSection 
           showHeader={layout.showHeader} 
@@ -147,7 +149,7 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
       </Card>
       
       {/* Action buttons - now outside the proposal card, centered below */}
-      <div className="flex justify-center gap-3 py-4 w-full" data-pdf-remove="true">
+      <div className="flex justify-center gap-3 py-4 w-full print:hidden" data-pdf-remove="true">
         <Button variant="outline" onClick={handlePrint} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
           <Printer className="mr-2 h-4 w-4" />
           Imprimir

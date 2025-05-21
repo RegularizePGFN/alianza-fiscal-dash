@@ -40,6 +40,7 @@ const PaymentSection = ({ data, colors }: PaymentSectionProps) => {
       title="Opções de Pagamento" 
       icon={<CreditCard className="h-4 w-4" />}
       color={sectionColor}
+      className="print:break-inside-avoid"
     >
       <DataField 
         label="À Vista" 

@@ -122,14 +122,6 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       }
     });
     
-    // Add manual page breaks before sections that should start on a new page
-    const paymentSchedule = proposalClone.querySelector('[data-section="payment-schedule"]');
-    if (paymentSchedule && paymentSchedule instanceof HTMLElement) {
-      const pageBreak = document.createElement('div');
-      pageBreak.className = 'page-break';
-      paymentSchedule.parentNode?.insertBefore(pageBreak, paymentSchedule);
-    }
-    
     // Create PDF with A4 dimensions
     const pdf = new jsPDF({
       orientation: 'portrait',
@@ -140,9 +132,6 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     
     // Wait for content to be properly styled
     await new Promise(resolve => setTimeout(resolve, 300));
-    
-    // Get the computed height after styling (should reflect the full scrollHeight)
-    const contentHeight = proposalClone.scrollHeight;
     
     // Set PDF document properties
     pdf.setProperties({
