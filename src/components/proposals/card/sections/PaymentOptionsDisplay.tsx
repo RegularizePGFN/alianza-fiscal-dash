@@ -47,8 +47,15 @@ const PaymentOptionsDisplay = ({ data }: PaymentOptionsDisplayProps) => {
         <div className="border border-af-blue-100 rounded p-4 hover:bg-af-blue-50 transition-colors">
           <p className="font-medium text-af-blue-700">Parcelado</p>
           <p className="text-lg font-bold">{data.installments || '0'}x de R$ {data.installmentValue || '0,00'}</p>
-          {parseInt(data.entryInstallments || '1') > 1 && (
-            <p className="text-sm text-af-blue-600 mt-1">Entrada: {entryDisplay}</p>
+          {parseInt(data.entryInstallments || '1') >= 1 && (
+            <div className="mt-1">
+              <p className="text-sm text-gray-500 leading-tight">
+                Entrada em {entryDisplay}
+                {parseInt(data.installments || '0') > 0 && (
+                  <><br />Mais → {data.installments || '0'}x de R$ {data.installmentValue || '0,00'}</>
+                )}
+              </p>
+            </div>
           )}
         </div>
       </div>

@@ -35,6 +35,11 @@ const PaymentSection = ({ data, colors }: PaymentSectionProps) => {
     return data.entryValue || "0,00";
   };
 
+  // Format entry display
+  const entryDisplay = parseInt(data.entryInstallments || '1') > 1 
+    ? `${data.entryInstallments}x de R$ ${entryInstallmentValue()}`
+    : `R$ ${data.entryValue || '0,00'}`;
+
   return (
     <SectionContainer 
       title="Opções de Pagamento" 
@@ -46,10 +51,20 @@ const PaymentSection = ({ data, colors }: PaymentSectionProps) => {
         label="À Vista" 
         value={`R$ ${data.discountedValue || '0,00'}`}
       />
-      <DataField 
-        label="Parcelado" 
-        value={`${data.installments || '0'}x de R$ ${data.installmentValue || '0,00'}`}
-      />
+      <div>
+        <DataField 
+          label="Parcelado" 
+          value={`${data.installments || '0'}x de R$ ${data.installmentValue || '0,00'}`}
+        />
+        {parseInt(data.entryInstallments || '1') >= 1 && (
+          <div className="text-xs text-gray-500 -mt-1 ml-4">
+            Entrada em {entryDisplay}
+            {parseInt(data.installments || '0') > 0 && (
+              <><br />Mais → {data.installments || '0'}x de R$ {data.installmentValue || '0,00'}</>
+            )}
+          </div>
+        )}
+      </div>
     </SectionContainer>
   );
 };
