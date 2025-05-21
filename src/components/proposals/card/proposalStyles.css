@@ -1,0 +1,67 @@
+
+/* Proposal styles with page break support */
+
+/* Page break styles - visible in preview & print */
+.page-break-before {
+  break-before: page;
+  page-break-before: always;
+}
+
+.page-break-after {
+  break-after: page;
+  page-break-after: always;
+}
+
+.page-break-avoid {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* Proposal pages */
+.proposal-page {
+  position: relative;
+  padding-bottom: 1rem;
+}
+
+/* Print-specific styles */
+@media print {
+  .proposal-content {
+    font-family: 'Roboto', Arial, sans-serif !important;
+  }
+
+  [data-pdf-page] {
+    break-before: page;
+    page-break-before: always;
+    position: relative;
+  }
+  
+  [data-pdf-page]:first-child {
+    break-before: auto;
+    page-break-before: auto;
+  }
+  
+  h3, h4, table, th, td {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  
+  table {
+    width: 100%;
+  }
+  
+  /* Hide buttons and actions when printing */
+  button, [data-pdf-remove="true"] {
+    display: none !important;
+  }
+}
+
+/* Helper to visibly identify page breaks in development */
+.show-page-breaks .page-break-before::before {
+  content: "—— Page Break ——";
+  display: block;
+  text-align: center;
+  font-size: 10px;
+  color: #999;
+  border-top: 1px dashed #ccc;
+  margin: 10px 0;
+}
