@@ -4,8 +4,6 @@ import { Button } from "@/components/ui/button";
 import { FileCheck } from "lucide-react";
 import { PDFTemplatePreview } from "@/components/proposals/pdf-editor";
 import { ExtractedData, PDFTemplate, CompanyData } from "@/lib/types/proposals";
-import { generateProposalPdf, generateProposalPng } from "@/lib/pdfUtils";
-import { useToast } from "@/hooks/use-toast";
 import { ActionButtonsSection } from "@/components/proposals/card/sections";
 
 interface ProposalPreviewContainerProps {
@@ -23,57 +21,11 @@ export const ProposalPreviewContainer = ({
   companyData,
   onGeneratePDF
 }: ProposalPreviewContainerProps) => {
-  const previewRef = useRef<HTMLDivElement | null>(null);
-  const { toast } = useToast();
-  
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const handleGeneratePdf = async () => {
-    await onGeneratePDF();
-  };
-  
-  const handleGeneratePng = async () => {
-    if (!previewRef.current) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível gerar a imagem PNG. Tente novamente.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    toast({
-      title: "Processando",
-      description: "Gerando imagem PNG de alta qualidade, aguarde...",
-    });
-    
-    try {
-      // Use the updated function to capture exact screen appearance
-      await generateProposalPng(previewRef.current, formData);
-      
-      toast({
-        title: "Sucesso",
-        description: "Imagem PNG gerada com sucesso!",
-      });
-    } catch (error) {
-      console.error("Erro ao gerar PNG:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível gerar a imagem PNG. Tente novamente.",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
-    <div ref={previewRef} className="flex flex-col">
+    <div className="flex flex-col">
       <div className="sticky top-4 mb-4">
         {/* Botões de ação acima do preview da proposta */}
         <ActionButtonsSection 
-          onGeneratePdf={handleGeneratePdf}
-          onGeneratePng={handleGeneratePng}
           data={formData}
           companyData={companyData}
         />
