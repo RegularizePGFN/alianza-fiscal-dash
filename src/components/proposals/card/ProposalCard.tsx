@@ -124,7 +124,23 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
 
   return (
     <div className="flex flex-col items-center space-y-4">
-      {/* Main proposal card - action buttons moved outside */}
+      {/* Action buttons - agora acima do card da proposta */}
+      <div className="flex justify-center gap-3 py-4 w-full print:hidden" data-pdf-remove="true">
+        <Button variant="outline" onClick={handlePrint} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
+          <Printer className="mr-2 h-4 w-4" />
+          Imprimir
+        </Button>
+        <Button variant="outline" onClick={handleGeneratePng} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
+          <FileImage className="mr-2 h-4 w-4" />
+          Baixar PNG
+        </Button>
+        <Button onClick={handleGeneratePdf} className="bg-af-blue-600 hover:bg-af-blue-700">
+          <Download className="mr-2 h-4 w-4" />
+          Baixar PDF
+        </Button>
+      </div>
+
+      {/* Main proposal card */}
       <Card 
         ref={proposalRef} 
         className="max-w-3xl mx-auto shadow border overflow-hidden font-['Roboto',sans-serif] w-full print:shadow-none print:border-0"
@@ -151,22 +167,6 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
           />
         </CardContent>
       </Card>
-      
-      {/* Action buttons - now outside the proposal card, centered below */}
-      <div className="flex justify-center gap-3 py-4 w-full print:hidden" data-pdf-remove="true">
-        <Button variant="outline" onClick={handlePrint} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
-          <Printer className="mr-2 h-4 w-4" />
-          Imprimir
-        </Button>
-        <Button variant="outline" onClick={handleGeneratePng} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
-          <FileImage className="mr-2 h-4 w-4" />
-          Baixar PNG
-        </Button>
-        <Button onClick={handleGeneratePdf} className="bg-af-blue-600 hover:bg-af-blue-700">
-          <Download className="mr-2 h-4 w-4" />
-          Baixar PDF
-        </Button>
-      </div>
     </div>
   );
 };
