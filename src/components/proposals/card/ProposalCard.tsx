@@ -122,23 +122,16 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
     
     setIsGeneratingHighQuality(true);
     
-    toast({
-      title: "Processando",
-      description: "Gerando imagem de alta qualidade via Browserless...",
-    });
-    
     try {
+      // Generate high-quality PNG using the Edge Function
       await generateHighQualityFile(proposalRef.current, data, 'png');
       
-      toast({
-        title: "Sucesso",
-        description: "Imagem PNG de alta qualidade gerada com sucesso!",
-      });
+      // We won't show the toast here as the function already handles it
     } catch (error) {
       console.error("Erro ao gerar PNG de alta qualidade:", error);
       toast({
         title: "Erro",
-        description: "Não foi possível gerar a imagem PNG de alta qualidade. Tente novamente.",
+        description: `Não foi possível gerar a imagem PNG de alta qualidade: ${error.message}`,
         variant: "destructive",
       });
     } finally {

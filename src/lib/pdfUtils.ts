@@ -5,6 +5,7 @@ import { ExtractedData } from './types/proposals';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from 'sonner';
 
 // Helper function to format the filename based on the proposal data
 const getProposalFilename = (data: Partial<ExtractedData>, extension: string): string => {
@@ -127,6 +128,21 @@ export const generateProposalPdf = async (
         const clonedElement = clonedDoc.body.querySelector('div') as HTMLElement;
         if (clonedElement) {
           clonedElement.style.overflow = 'visible';
+          
+          // Apply additional styles to ensure content fits on one page
+          const contentElements = clonedElement.querySelectorAll('.card-content, section');
+          contentElements.forEach(el => {
+            (el as HTMLElement).style.transform = 'scale(0.9)';
+            (el as HTMLElement).style.transformOrigin = 'top left';
+            (el as HTMLElement).style.margin = '0';
+            (el as HTMLElement).style.padding = '10px';
+          });
+          
+          // Reduce spacing between sections
+          const sections = clonedElement.querySelectorAll('section');
+          sections.forEach(section => {
+            (section as HTMLElement).style.marginBottom = '5px';
+          });
         }
       }
     });
@@ -134,34 +150,11 @@ export const generateProposalPdf = async (
     // Convert canvas to image data
     const imgData = canvas.toDataURL('image/png', 1.0);
     
-    // Calculate the height of the image in the PDF
-    const imgHeight = elementHeight * scaleFactor;
+    // Calculate the scaled height (but ensure it fits on one page if possible)
+    const imgHeight = Math.min(elementHeight * scaleFactor * 0.85, pdf.internal.pageSize.getHeight());
     
     // Add the image to the PDF (fitting to page width)
     pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, imgHeight);
-    
-    // If content spans multiple pages, add new pages
-    if (imgHeight > pdf.internal.pageSize.getHeight()) {
-      let pageCount = Math.ceil(imgHeight / pdf.internal.pageSize.getHeight());
-      let currentHeight = 0;
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      
-      // Add each page
-      for (let i = 1; i < pageCount; i++) {
-        pdf.addPage();
-        currentHeight += pageHeight;
-        
-        // Add the same image but with offset to show the appropriate portion
-        pdf.addImage(
-          imgData,
-          'PNG',
-          0,
-          -currentHeight,
-          pageWidth,
-          imgHeight
-        );
-      }
-    }
     
     // Save the PDF with a formatted filename
     const filename = getProposalFilename(data, 'pdf');
@@ -184,6 +177,11 @@ export const generateHighQualityFile = async (
   format: 'pdf' | 'png' = 'png'
 ): Promise<void> => {
   try {
+    // Add a toast to indicate the process has started
+    const toastId = toast.loading('Preparando seu documento para renderização...', {
+      duration: 10000
+    });
+    
     // Get the HTML content of the element
     const elementHTML = element.outerHTML;
     
@@ -236,7 +234,7 @@ export const generateHighQualityFile = async (
               width: 100%;
               max-width: 210mm;
               margin: 0 auto;
-              padding: 10mm;
+              padding: 5mm;
               box-sizing: border-box;
               background-color: white;
               box-shadow: none;
@@ -245,11 +243,26 @@ export const generateHighQualityFile = async (
             /* Ensure all content fits in one page */
             .card-content {
               transform-origin: top left;
-              transform: scale(0.95);
+              transform: scale(0.90);
+            }
+            section {
+              margin-bottom: 5px !important;
+              padding: 5px !important;
+            }
+            /* Optimize spacing */
+            .space-y-4, .space-y-6, .space-y-8 {
+              margin-top: 5px !important;
+              margin-bottom: 5px !important;
+            }
+            p {
+              margin-top: 2px !important;
+              margin-bottom: 2px !important;
             }
             @media print {
               body { background-color: white; }
               .print-container { box-shadow: none; }
+              .pt-4, .pt-6, .pt-8 { padding-top: 2px !important; }
+              .pb-4, .pb-6, .pb-8 { padding-bottom: 2px !important; }
             }
           </style>
           <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -263,6 +276,9 @@ export const generateHighQualityFile = async (
     `;
     
     console.log('Preparing to call render-proposal function...');
+    toast.update(toastId, { 
+      description: 'Conectando ao serviço de renderização...'
+    });
     
     // Generate a filename
     const filename = `proposta-${data.clientName || 'Cliente'}-${data.cnpj || ''}`;
@@ -278,13 +294,19 @@ export const generateHighQualityFile = async (
     
     if (error) {
       console.error('Error calling render function:', error);
+      toast.error('Erro ao renderizar: ' + error.message);
       throw new Error(`Error calling render function: ${error.message || 'Unknown error'}`);
     }
     
     if (!responseData || !responseData.data) {
       console.error('No data returned from render function:', responseData);
+      toast.error('Nenhum dado retornado do serviço de renderização');
       throw new Error('No data returned from render function');
     }
+    
+    toast.update(toastId, { 
+      description: 'Processando arquivo para download...'
+    });
     
     // Convert base64 to Blob
     const byteCharacters = atob(responseData.data);
@@ -307,9 +329,14 @@ export const generateHighQualityFile = async (
     // Clean up the object URL
     setTimeout(() => URL.revokeObjectURL(url), 100);
     
+    // Success message
+    toast.dismiss(toastId);
+    toast.success(`${format.toUpperCase()} de alta qualidade gerado com sucesso!`);
+    
     console.log(`High quality ${format} generated successfully`);
   } catch (error) {
     console.error(`Error generating high quality ${format}:`, error);
+    toast.error(`Falha ao gerar ${format.toUpperCase()}: ${error.message}`);
     throw error;
   }
 };

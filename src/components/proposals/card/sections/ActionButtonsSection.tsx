@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Download, Printer, FileImage, FileUp } from "lucide-react";
+import { Download, Printer, FileImage, FileUp, FileIcon } from "lucide-react";
 
 interface ActionButtonsSectionProps {
   onGeneratePdf: () => void;
@@ -37,13 +37,13 @@ const ActionButtonsSection = ({
           disabled={isGeneratingHighQuality}
           className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50"
         >
-          <FileUp className="mr-2 h-4 w-4" />
+          <FileUp className={`mr-2 h-4 w-4 ${isGeneratingHighQuality ? 'animate-pulse' : ''}`} />
           {isGeneratingHighQuality ? 'Processando...' : 'PNG Alta Qualidade'}
         </Button>
       )}
       
       <Button onClick={onGeneratePdf} className="bg-af-blue-600 hover:bg-af-blue-700">
-        <Download className="mr-2 h-4 w-4" />
+        <FileIcon className="mr-2 h-4 w-4" />
         Baixar PDF
       </Button>
     </div>
