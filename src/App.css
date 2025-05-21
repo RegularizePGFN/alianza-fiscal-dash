@@ -1,3 +1,4 @@
+
 /* Corrige problemas de z-index e empilhamento com o Dialog */
 #root {
   width: 100%;
@@ -48,4 +49,43 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* Estilos específicos para impressão e geração de PDF */
+.print-proposal {
+  box-sizing: border-box;
+  background-color: white;
+  font-family: 'Roboto', sans-serif;
+}
+
+/* Hide elements that shouldn't appear in the PDF */
+.print-proposal [data-pdf-remove="true"] {
+  display: none !important;
+}
+
+/* A4 size for PDF rendering: 210mm x 297mm */
+@media print {
+  body {
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
+  
+  .print-proposal {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 !important;
+    padding: 0 !important;
+    page-break-after: always;
+  }
+  
+  /* Ensure page breaks don't happen in the middle of sections */
+  .print-proposal [data-section] {
+    page-break-inside: avoid;
+  }
+  
+  /* Force a page break before certain sections */
+  .print-proposal [data-section="payment-schedule"] {
+    page-break-before: always;
+  }
 }
