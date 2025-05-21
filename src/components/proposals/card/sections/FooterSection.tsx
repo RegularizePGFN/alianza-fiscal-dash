@@ -1,14 +1,16 @@
 
 import React from 'react';
-import { ExtractedData } from "@/lib/types/proposals";
 
 interface FooterSectionProps {
-  data: Partial<ExtractedData>;
+  specialistName: string;
 }
 
-const FooterSection = ({ data }: FooterSectionProps) => {
-  // Don't show footer at all since signature is always shown
-  return null;
+const FooterSection = ({ specialistName }: FooterSectionProps) => {
+  return (
+    <div className="text-center text-xs text-gray-400 mt-4">
+      <p>Proposta gerada por {specialistName || 'Especialista Tributário'}</p>
+    </div>
+  );
 };
 
 export default FooterSection;
