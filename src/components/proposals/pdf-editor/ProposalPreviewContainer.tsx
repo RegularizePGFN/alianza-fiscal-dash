@@ -1,5 +1,5 @@
 
-import React, { useRef } from 'react';
+import React from 'react';
 import { Button } from "@/components/ui/button";
 import { FileCheck } from "lucide-react";
 import { PDFTemplatePreview } from "@/components/proposals/pdf-editor";
@@ -24,7 +24,7 @@ export const ProposalPreviewContainer = ({
   return (
     <div className="flex flex-col">
       <div className="sticky top-4 mb-4">
-        {/* Botões de ação acima do preview da proposta */}
+        {/* Botões de visualização e exportação acima do preview */}
         <ActionButtonsSection 
           data={formData}
           companyData={companyData}

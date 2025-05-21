@@ -1,5 +1,5 @@
 
-import React, { useRef } from 'react';
+import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
 import { HeaderSection } from './sections';
@@ -42,7 +42,7 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
 
   return (
     <div className="flex flex-col items-center space-y-4">
-      {/* Action buttons - agora acima do card da proposta */}
+      {/* Action buttons - acima do card da proposta */}
       <ActionButtonsSection 
         data={data}
         companyData={companyData}

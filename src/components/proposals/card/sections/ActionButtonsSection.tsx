@@ -1,8 +1,8 @@
 
-import React, { useRef } from 'react';
+import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Download, Eye, FileImage } from "lucide-react";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Eye, FileImage, FileText } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import ProposalPreview from "@/components/proposals/card/ProposalPreview";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
 import { generateProposalPdf, generateProposalPng } from "@/lib/pdfUtils";
@@ -16,13 +16,11 @@ interface ActionButtonsSectionProps {
 }
 
 const ActionButtonsSection = ({ 
-  onGeneratePdf, 
-  onGeneratePng, 
   data, 
   companyData 
 }: ActionButtonsSectionProps) => {
-  const previewRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
   
   const handleGeneratePdf = async () => {
     // Find the dialog content element with the proposal
@@ -96,7 +94,7 @@ const ActionButtonsSection = ({
 
   return (
     <div className="flex justify-center gap-3 mb-6 print:hidden" data-pdf-remove="true">
-      <Dialog>
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
         <DialogTrigger asChild>
           <Button variant="outline" className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
             <Eye className="mr-2 h-4 w-4" />
@@ -104,6 +102,21 @@ const ActionButtonsSection = ({
           </Button>
         </DialogTrigger>
         <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
+          <DialogTitle className="sr-only">Visualização da Proposta</DialogTitle>
+          
+          {/* Export buttons positioned at the top of the dialog */}
+          <div className="flex justify-end gap-3 mb-4 print:hidden" data-pdf-remove="true">
+            <Button variant="outline" onClick={handleGeneratePng} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
+              <FileImage className="mr-2 h-4 w-4" />
+              Baixar PNG
+            </Button>
+            <Button onClick={handleGeneratePdf} className="bg-af-blue-600 hover:bg-af-blue-700">
+              <FileText className="mr-2 h-4 w-4" />
+              Baixar PDF
+            </Button>
+          </div>
+          
+          {/* The proposal preview container with a specific class for targeting */}
           <div className="proposal-preview-container">
             <ProposalPreview 
               data={data}
@@ -112,14 +125,6 @@ const ActionButtonsSection = ({
           </div>
         </DialogContent>
       </Dialog>
-      <Button variant="outline" onClick={handleGeneratePng} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
-        <FileImage className="mr-2 h-4 w-4" />
-        Baixar PNG
-      </Button>
-      <Button onClick={handleGeneratePdf} className="bg-af-blue-600 hover:bg-af-blue-700">
-        <Download className="mr-2 h-4 w-4" />
-        Baixar PDF
-      </Button>
     </div>
   );
 };
