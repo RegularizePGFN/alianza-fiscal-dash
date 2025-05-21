@@ -124,16 +124,10 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
 
   return (
     <div className="flex flex-col items-center space-y-4">
-      {/* Main proposal card with A4-sized preview */}
-      <Card 
-        ref={proposalRef} 
-        className="max-w-3xl mx-auto shadow border overflow-hidden font-['Roboto',sans-serif] w-full proposal-container"
-        style={{ 
-          backgroundColor: colors.background,
-          maxHeight: '842px', // Approximately A4 height for preview
-          overflow: 'auto'
-        }}
-      >
+      {/* Main proposal card - action buttons moved outside */}
+      <Card ref={proposalRef} className="max-w-3xl mx-auto shadow border overflow-hidden font-['Roboto',sans-serif] w-full"
+            style={{ backgroundColor: colors.background }}>
+        
         {/* Header with Logo */}
         <HeaderSection 
           showHeader={layout.showHeader} 

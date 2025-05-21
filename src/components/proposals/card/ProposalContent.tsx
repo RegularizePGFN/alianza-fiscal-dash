@@ -16,9 +16,6 @@ import {
   PaymentScheduleSection
 } from './sections';
 
-// Add CSS for page breaks
-import './proposalStyles.css';
-
 interface ProposalContentProps {
   data: Partial<ExtractedData>;
   companyData?: CompanyData | null;
@@ -97,13 +94,9 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
       case 'debt':
         return <NegotiationSection data={data} colors={colors} />;
       case 'payment':
-        return (
-          <div data-pdf-page="payment">
-            <PaymentSection data={data} colors={colors} />
-          </div>
-        );
+        return <PaymentSection data={data} colors={colors} />;
       case 'paymentSchedule':
-        return <PaymentScheduleSection data={data} colors={colors} />;
+        return <div data-section="payment-schedule"><PaymentScheduleSection data={data} colors={colors} /></div>;
       case 'fees':
         return <FeesSection data={data} colors={colors} />;
       case 'total':
@@ -142,35 +135,21 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
   }
 
   return (
-    <div className={`p-6 space-y-4 font-['Roboto',sans-serif] proposal-content ${className}`}>
-      {/* Main content without payment schedule */}
-      <div data-pdf-page="main" className="proposal-page">
-        {/* Render first sections (excluding payment schedule) */}
-        {filteredSections
-          .filter(section => section !== 'paymentSchedule')
-          .map((section, index) => (
-            <React.Fragment key={index}>
-              {renderSection(section)}
-            </React.Fragment>
-          ))}
-        
-        {/* Always show comments if they exist and aren't already in the sections */}
-        {data.additionalComments && !renderedSections.has('comments') && 
-          <CommentsSection data={data} colors={colors} />
-        }
-      </div>
+    <div className={`p-6 space-y-0 font-['Roboto',sans-serif] ${className}`}>
+      {/* Render sections based on the adjusted section order */}
+      {filteredSections.map((section, index) => (
+        <React.Fragment key={index}>
+          {renderSection(section)}
+        </React.Fragment>
+      ))}
       
-      {/* Payment schedule on its own page */}
-      {filteredSections.includes('paymentSchedule') && (
-        <div className="page-break-before">
-          {renderSection('paymentSchedule')}
-        </div>
-      )}
+      {/* Always show comments at the end if they exist and aren't already in the sections */}
+      {data.additionalComments && !renderedSections.has('comments') && 
+        <CommentsSection data={data} colors={colors} />
+      }
       
-      {/* Signature is always shown on the last page */}
-      <div className="mt-auto">
-        <SignatureSection data={data} />
-      </div>
+      {/* Signature is always shown */}
+      <SignatureSection data={data} />
     </div>
   );
 };

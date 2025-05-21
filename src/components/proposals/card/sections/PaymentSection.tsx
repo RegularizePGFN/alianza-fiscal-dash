@@ -35,11 +35,6 @@ const PaymentSection = ({ data, colors }: PaymentSectionProps) => {
     return data.entryValue || "0,00";
   };
 
-  // Calculate the entry display value
-  const entryDisplay = data.entryInstallments && parseInt(data.entryInstallments) > 1 
-    ? `${data.entryInstallments}x de R$ ${entryInstallmentValue()}`
-    : `R$ ${data.entryValue || '0,00'}`;
-
   return (
     <SectionContainer 
       title="Opções de Pagamento" 
@@ -54,12 +49,6 @@ const PaymentSection = ({ data, colors }: PaymentSectionProps) => {
         label="Parcelado" 
         value={`${data.installments || '0'}x de R$ ${data.installmentValue || '0,00'}`}
       />
-      {parseInt(data.entryInstallments || '1') > 1 && (
-        <DataField 
-          label="Entrada" 
-          value={entryDisplay}
-        />
-      )}
     </SectionContainer>
   );
 };

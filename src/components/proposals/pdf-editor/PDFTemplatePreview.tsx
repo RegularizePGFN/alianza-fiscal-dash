@@ -63,10 +63,11 @@ const PDFTemplatePreview = ({
   return (
     <Card 
       ref={previewRef} 
-      className="border p-0 overflow-hidden shadow-md preview-proposal font-['Roboto',sans-serif] transition-colors mx-auto show-page-breaks"
+      className="border p-0 overflow-hidden shadow-md preview-proposal font-['Roboto',sans-serif] transition-colors mx-auto"
       style={{ 
         backgroundColor: colors.background,
         width: `${a4Width}px`,
+        height: `${a4Height}px`,
         maxHeight: '100%',
         aspectRatio: '210/297', // Proporção A4
         overflow: 'auto'
