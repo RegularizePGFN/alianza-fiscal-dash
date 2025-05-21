@@ -226,14 +226,28 @@ export const generateHighQualityFile = async (
               font-family: 'Roboto', sans-serif;
               background-color: white;
             }
+            .print-container {
+              max-width: 100%;
+              margin: 0 auto;
+              background-color: white;
+              box-shadow: none;
+            }
+            @media print {
+              body { background-color: white; }
+              .print-container { box-shadow: none; }
+            }
           </style>
           <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
         </head>
         <body>
-          ${elementHTML}
+          <div class="print-container">
+            ${elementHTML}
+          </div>
         </body>
       </html>
     `;
+    
+    console.log('Preparing to call render-proposal function...');
     
     // Generate a filename
     const filename = `proposta-${data.clientName || 'Cliente'}-${data.cnpj || ''}`;
@@ -248,10 +262,12 @@ export const generateHighQualityFile = async (
     });
     
     if (error) {
-      throw new Error(`Error calling render function: ${error.message}`);
+      console.error('Error calling render function:', error);
+      throw new Error(`Error calling render function: ${error.message || 'Unknown error'}`);
     }
     
     if (!responseData || !responseData.data) {
+      console.error('No data returned from render function:', responseData);
       throw new Error('No data returned from render function');
     }
     

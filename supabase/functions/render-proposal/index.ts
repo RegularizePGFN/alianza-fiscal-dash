@@ -39,7 +39,7 @@ serve(async (req) => {
       `async () => {
         // Wait for fonts and images to load
         await document.fonts.ready;
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise(r => setTimeout(r, 1000));
         
         // Generate PDF
         const pdf = await page.pdf({
@@ -58,13 +58,14 @@ serve(async (req) => {
       `async () => {
         // Wait for fonts and images to load
         await document.fonts.ready;
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise(r => setTimeout(r, 1000));
         
         // Generate screenshot
         const screenshot = await page.screenshot({
           type: 'png',
           fullPage: true,
-          quality: 100
+          quality: 100,
+          omitBackground: false
         });
         return screenshot.toString('base64');
       }`;
@@ -85,7 +86,7 @@ serve(async (req) => {
             height: 1600,
             deviceScaleFactor: 2,
           },
-          waitFor: 1000, // Wait 1 second to ensure full render
+          waitFor: 2000, // Increased wait time to ensure full render
         }
       }),
     });
