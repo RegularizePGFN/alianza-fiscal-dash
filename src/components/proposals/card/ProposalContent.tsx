@@ -21,18 +21,9 @@ interface ProposalContentProps {
   companyData?: CompanyData | null;
   className?: string;
   isPreview?: boolean;
-  paginationMode?: 'single-page' | 'first-page' | 'additional-page';
-  pageNumber?: number;
 }
 
-const ProposalContent = ({ 
-  data, 
-  companyData, 
-  className = "", 
-  isPreview = false,
-  paginationMode = 'single-page',
-  pageNumber = 1
-}: ProposalContentProps) => {
+const ProposalContent = ({ data, companyData, className = "", isPreview = false }: ProposalContentProps) => {
   // Get colors from template settings or use defaults
   const colors = (() => {
     if (data.templateColors && typeof data.templateColors === 'string') {
@@ -143,59 +134,28 @@ const ProposalContent = ({
     }
   }
 
-  // Determine which sections to render based on pagination mode
-  const getPageSections = () => {
-    if (paginationMode === 'single-page') {
-      // Render all sections for single page mode
-      return filteredSections;
-    } else if (paginationMode === 'first-page') {
-      // For first page, show the first 3 sections (or half if fewer)
-      const firstPageCount = Math.min(3, Math.ceil(filteredSections.length / 2));
-      return filteredSections.slice(0, firstPageCount);
-    } else if (paginationMode === 'additional-page') {
-      // For additional pages, determine which sections to show based on page number
-      const firstPageCount = Math.min(3, Math.ceil(filteredSections.length / 2));
-      
-      if (pageNumber === 2) {
-        // Second page gets next set of sections
-        const remainingSections = filteredSections.slice(firstPageCount);
-        return remainingSections.filter(section => section !== 'paymentSchedule');
-      } else if (pageNumber === 3) {
-        // Third page gets payment schedule if present
-        return filteredSections.filter(section => section === 'paymentSchedule');
-      }
-      
-      return [];
-    }
-    
-    return filteredSections;
-  };
-  
-  const pageSections = getPageSections();
-
   return (
     <div className={`p-4 space-y-0 font-['Roboto',sans-serif] ${className}`}>
       {/* Main content sections */}
       <div className="print:break-after-avoid">
-        {/* Render sections based on pagination mode */}
-        {pageSections.map((section, index) => (
+        {/* Render initial sections based on the adjusted section order (except payment schedule) */}
+        {filteredSections.filter(section => section !== 'paymentSchedule').map((section, index) => (
           <React.Fragment key={index}>
             {renderSection(section)}
           </React.Fragment>
         ))}
         
-        {/* Show comments on first page if they exist and aren't already in the sections */}
-        {(paginationMode === 'single-page' || paginationMode === 'first-page') && 
-         data.additionalComments && !renderedSections.has('comments') && 
+        {/* Always show comments here if they exist and aren't already in the sections */}
+        {data.additionalComments && !renderedSections.has('comments') && 
           <CommentsSection data={data} colors={colors} />
         }
       </div>
       
-      {/* Signature is shown on the last page or single page */}
-      {(paginationMode === 'single-page' || 
-        (paginationMode === 'additional-page' && pageNumber === Math.min(3, Math.ceil(filteredSections.length / 2) + 1))) && 
-        <SignatureSection data={data} />
-      }
+      {/* Payment Schedule section on its own page */}
+      {filteredSections.includes('paymentSchedule') && renderSection('paymentSchedule')}
+      
+      {/* Signature is always shown */}
+      <SignatureSection data={data} />
     </div>
   );
 };

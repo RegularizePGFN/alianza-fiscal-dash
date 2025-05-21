@@ -1,4 +1,3 @@
-
 /* Corrige problemas de z-index e empilhamento com o Dialog */
 #root {
   width: 100%;
@@ -11,94 +10,6 @@
 [data-radix-popper-content-wrapper],
 [data-state="open"] {
   z-index: 9999 !important;
-}
-
-/* Estilos para a visualização paginada da proposta */
-.paginated-proposal-container {
-  width: 100%;
-}
-
-.proposal-page {
-  width: 100%;
-  background-color: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  min-height: 297mm;
-  position: relative;
-  border: 1px solid #ddd;
-  margin-bottom: 20px;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.pages-container {
-  width: 100%;
-  overflow: hidden;
-}
-
-.pages-wrapper {
-  display: flex;
-  transition: transform 0.3s ease;
-}
-
-/* A4 Paper size styling for pages */
-@media screen {
-  .proposal-page {
-    width: 210mm;
-    max-width: 100%;
-    aspect-ratio: 1/1.414; /* A4 ratio */
-    margin: 0 auto;
-  }
-  
-  .pdf-template-preview .proposal-page {
-    transform: scale(0.65);
-    transform-origin: top center;
-    margin-bottom: -20%;
-  }
-}
-
-/* Print specific styles */
-@media print {
-  /* Hide all UI elements, show only proposal content */
-  body * {
-    visibility: hidden;
-  }
-  
-  .proposal-page-content * {
-    visibility: visible;
-  }
-  
-  .proposal-page {
-    visibility: visible;
-    position: relative;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    box-shadow: none;
-    border: none;
-    margin: 0;
-    padding: 0;
-  }
-  
-  /* Force page breaks between proposal pages */
-  .proposal-page {
-    page-break-after: always;
-    page-break-inside: avoid;
-  }
-  
-  /* Hide navigation controls when printing */
-  [data-pdf-remove="true"] {
-    display: none !important;
-  }
-  
-  /* Center content on page */
-  .proposal-page-content {
-    position: absolute;
-    left: 0;
-    right: 0;
-    margin: auto;
-    max-width: 90%;
-  }
 }
 
 /* Estilo padrão do projeto */
