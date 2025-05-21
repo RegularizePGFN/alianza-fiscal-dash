@@ -98,7 +98,7 @@ const ActionButtonsSection = ({
         <DialogTrigger asChild>
           <Button variant="outline" className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
             <Eye className="mr-2 h-4 w-4" />
-            Visualizar
+            Visualizar | Baixar
           </Button>
         </DialogTrigger>
         <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
