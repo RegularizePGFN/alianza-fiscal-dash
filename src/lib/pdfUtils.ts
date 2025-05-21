@@ -2,270 +2,180 @@
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { ExtractedData } from './types/proposals';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
-export async function generateProposalPng(proposalElement: HTMLElement, data: Partial<ExtractedData>): Promise<void> {
+// Helper function to format the filename based on the proposal data
+const getProposalFilename = (data: Partial<ExtractedData>, extension: string): string => {
+  const clientName = data.clientName || 'Cliente';
+  const cnpj = data.cnpj || '';
+  const dateStr = format(new Date(), 'dd-MM-yyyy', { locale: ptBR });
+  
+  // Convert to a filename-friendly format (no spaces, accents, or special characters)
+  const safeClientName = clientName
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]/g, '-')
+    .replace(/-+/g, '-');
+
+  return `proposta-${safeClientName}-${cnpj}-${dateStr}.${extension}`;
+};
+
+// Function to ensure all fonts and images are loaded before capturing
+const ensureAllAssetsLoaded = async (): Promise<void> => {
+  // Wait for fonts to load
+  await document.fonts.ready;
+  
+  // Create a promise for each image element that isn't loaded yet
+  const imgPromises = Array.from(document.querySelectorAll('img'))
+    .filter(img => !img.complete)
+    .map(img => new Promise<void>(resolve => {
+      img.onload = () => resolve();
+      img.onerror = () => resolve(); // Don't block on error, just continue
+    }));
+  
+  // Wait for all images to load
+  await Promise.all(imgPromises);
+  
+  // Small delay to ensure CSS animations/transitions complete
+  await new Promise(resolve => setTimeout(resolve, 200));
+};
+
+/**
+ * Generate a PNG image from the proposal
+ */
+export const generateProposalPng = async (
+  element: HTMLElement,
+  data: Partial<ExtractedData>
+): Promise<void> => {
   try {
-    // Wait for a complete render cycle and fonts to load
-    await new Promise(resolve => setTimeout(resolve, 300));
-    await document.fonts.ready;
+    // Ensure all fonts and images are loaded before capturing
+    await ensureAllAssetsLoaded();
     
-    // Get seller name for filename
-    const seller = data.sellerName ? 
-      data.sellerName.replace(/[^\w]/g, '_').toLowerCase() : 'vendedor';
+    // Create a clone of the element to avoid modifying the original
+    const clone = element.cloneNode(true) as HTMLElement;
     
-    // File name
-    const fileName = `proposta_pgfn_${data.cnpj?.replace(/\D/g, '') || 'cliente'}_${seller}.png`;
-
-    // Store original styles to restore them later
-    const originalStyles = new Map();
+    // Set explicit dimensions to ensure consistent capture
+    clone.style.width = element.offsetWidth + 'px';
+    clone.style.height = element.offsetHeight + 'px';
     
-    // Temporarily hide elements that shouldn't be in the export
-    const elementsToHide = proposalElement.querySelectorAll('[data-pdf-remove="true"]');
-    elementsToHide.forEach((el, index) => {
-      if (el instanceof HTMLElement) {
-        originalStyles.set(`hide-${index}`, {
-          element: el,
-          display: el.style.display
-        });
-        el.style.display = 'none';
-      }
-    });
-
-    // Take the screenshot at high resolution - exactly as shown in browser
-    const canvas = await html2canvas(proposalElement, {
+    // Improved html2canvas options for higher quality
+    const canvas = await html2canvas(element, {
       scale: 4, // Higher scale for better quality
-      useCORS: true,
-      logging: false,
-      allowTaint: true,
-      backgroundColor: '#ffffff',
-      imageTimeout: 0,
-      onclone: (documentClone) => {
-        // Find and hide buttons of action in the clone
-        const actionButtons = documentClone.querySelectorAll('button, [data-pdf-remove="true"]');
-        actionButtons.forEach(button => {
-          if (button instanceof HTMLElement) {
-            button.style.display = 'none';
-          }
-        });
+      useCORS: true, // Allow cross-origin images
+      allowTaint: true, // Allow potentially tainted images
+      logging: false, // Disable logging
+      backgroundColor: '#ffffff', // Ensure white background
+      imageTimeout: 0, // No timeout for images
+      onclone: (clonedDoc) => {
+        // Any additional manipulations on cloned document if needed
+        const clonedElement = clonedDoc.body.querySelector('div') as HTMLElement;
+        if (clonedElement) {
+          clonedElement.style.overflow = 'visible';
+        }
       }
     });
     
-    // Restore original styles
-    originalStyles.forEach((style, key) => {
-      if (key.startsWith('hide-')) {
-        style.element.style.display = style.display;
-      }
-    });
+    // Get the data URL and trigger download
+    const imageData = canvas.toDataURL('image/png', 1.0);
+    const filename = getProposalFilename(data, 'png');
     
-    // Create a download link for the PNG with maximum quality
+    // Create a download link and trigger it
     const link = document.createElement('a');
-    link.download = fileName;
-    link.href = canvas.toDataURL('image/png', 1.0); // Maximum quality (1.0)
+    link.href = imageData;
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     
-    return Promise.resolve();
+    console.log('PNG generated successfully');
   } catch (error) {
     console.error('Error generating PNG:', error);
-    return Promise.reject(error);
+    throw error;
   }
-}
+};
 
-export async function generateProposalPdf(proposalElement: HTMLElement, data: Partial<ExtractedData>): Promise<void> {
+/**
+ * Generate a PDF from the proposal
+ */
+export const generateProposalPdf = async (
+  element: HTMLElement,
+  data: Partial<ExtractedData>
+): Promise<void> => {
   try {
-    // Get specialist name for filename
-    const specialist = data.specialistName ? 
-      data.specialistName.replace(/[^\w]/g, '_').toLowerCase() : 'especialista';
+    // Ensure all fonts and images are loaded before capturing
+    await ensureAllAssetsLoaded();
     
-    // File name
-    const fileName = `proposta_pgfn_${data.cnpj?.replace(/\D/g, '') || 'cliente'}_${specialist}.pdf`;
-
-    // Clone the element to avoid modifying the original
-    const clonedElement = proposalElement.cloneNode(true) as HTMLElement;
-    
-    // Create a temporary container for the PDF content with all necessary styles
-    const tempContainer = document.createElement('div');
-    tempContainer.style.position = 'absolute';
-    tempContainer.style.left = '-9999px';
-    tempContainer.style.width = '210mm'; // A4 width
-    tempContainer.style.padding = '0';
-    tempContainer.style.margin = '0';
-    tempContainer.style.backgroundColor = 'white';
-    tempContainer.style.fontSize = '10px'; // Reduzir tamanho da fonte para otimizar espaço
-    
-    // Hide action buttons
-    const actionButtons = clonedElement.querySelectorAll('.pdf-action-buttons, [data-pdf-remove="true"], button');
-    actionButtons.forEach(button => {
-      if (button instanceof HTMLElement) {
-        button.style.display = 'none';
-      }
+    // Create PDF with appropriate dimensions
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
     });
     
-    // Reduzir espaçamento entre elementos
-    const sections = clonedElement.querySelectorAll('div.space-y-4, div.mb-6, div.mt-8');
-    sections.forEach(section => {
-      if (section instanceof HTMLElement) {
-        section.style.marginTop = '8px';
-        section.style.marginBottom = '8px';
-        section.classList.remove('space-y-4', 'mb-6', 'mt-8');
-        section.classList.add('space-y-2', 'mb-3', 'mt-2');
-      }
-    });
+    // Get width and height in mm (assuming 96 DPI)
+    const elementWidth = element.offsetWidth;
+    const elementHeight = element.offsetHeight;
+    const pageWidth = pdf.internal.pageSize.getWidth();
     
-    // Comprimir elementos e grids para economizar espaço
-    const grids = clonedElement.querySelectorAll('.grid');
-    grids.forEach(grid => {
-      if (grid instanceof HTMLElement) {
-        grid.style.gap = '8px';
-      }
-    });
+    // Scale factor to fit the width of the PDF
+    const scaleFactor = pageWidth / elementWidth;
     
-    // Append styles for PDF rendering
-    const styleElement = document.createElement('style');
-    styleElement.textContent = `
-      /* Ensure Roboto font is loaded */
-      @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
-      
-      /* Make sure all content fits on page */
-      * {
-        box-sizing: border-box;
-        font-family: 'Roboto', sans-serif !important;
-        margin-block: 0;
-      }
-      
-      /* Reduce spacing */
-      p, h1, h2, h3, h4, h5, h6 {
-        margin-block: 2px !important;
-      }
-      
-      /* Hide button elements */
-      button, [data-pdf-remove="true"] {
-        display: none !important;
-      }
-      
-      /* Optimize padding and spacing */
-      .p-6, .p-5, .p-4 {
-        padding: 8px !important;
-      }
-      
-      .p-3 {
-        padding: 6px !important;
-      }
-      
-      .space-y-4 {
-        margin-top: 8px !important;
-        margin-bottom: 8px !important;
-      }
-      
-      /* Optimize grids for space */
-      .grid {
-        gap: 8px !important;
-      }
-      
-      /* Compress header */
-      [class*="rounded-t-lg"] {
-        padding-top: 8px !important;
-        padding-bottom: 8px !important;
-      }
-      
-      /* Preserve colors and backgrounds */
-      body {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-        background-color: white;
-      }
-    `;
-    
-    // Add the element to the temporary container
-    tempContainer.appendChild(styleElement);
-    tempContainer.appendChild(clonedElement);
-    
-    // Append to document body temporarily
-    document.body.appendChild(tempContainer);
-    
-    try {
-      // Wait a moment to ensure fonts and styles are loaded
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Initialize PDF with A4 dimensions
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-        compress: true
-      });
-      
-      // Create PDF using html2canvas
-      const canvas = await html2canvas(clonedElement, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        allowTaint: true,
-        backgroundColor: '#ffffff'
-      });
-      
-      // Calculate dimensions for A4
-      const imgWidth = 210; // A4 width in mm
-      const pageHeight = 297; // A4 height in mm
-      
-      // Calcular altura proporcional para manter proporção do conteúdo
-      const contentRatio = canvas.height / canvas.width;
-      const imgHeight = imgWidth * contentRatio;
-      
-      // Se o conteúdo for maior que uma página A4, vamos dividi-lo em múltiplas páginas
-      if (imgHeight <= pageHeight) {
-        // Conteúdo cabe em uma única página
-        pdf.addImage(
-          canvas.toDataURL('image/jpeg', 0.95), 
-          'JPEG', 
-          0, // x
-          0, // y
-          imgWidth, // width
-          imgHeight // height
-        );
-      } else {
-        // Conteúdo precisa de várias páginas
-        let heightLeft = imgHeight;
-        let position = 0;
-        let page = 0;
-        
-        while (heightLeft > 0) {
-          // Adicionar nova página se não for a primeira
-          if (page > 0) {
-            pdf.addPage();
-          }
-          
-          // Adicionar parte da imagem correspondente a esta página
-          pdf.addImage(
-            canvas.toDataURL('image/jpeg', 0.95),
-            'JPEG',
-            0, // x
-            position > 0 ? -position : 0, // Posição vertical negativa para "recortar" a parte certa
-            imgWidth,
-            imgHeight
-          );
-          
-          // Reduzir altura restante e incrementar posição
-          heightLeft -= pageHeight;
-          position += pageHeight;
-          page++;
+    // Render the element to canvas
+    const canvas = await html2canvas(element, {
+      scale: 3, // Higher scale for PDF quality
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      imageTimeout: 0,
+      onclone: (clonedDoc) => {
+        const clonedElement = clonedDoc.body.querySelector('div') as HTMLElement;
+        if (clonedElement) {
+          clonedElement.style.overflow = 'visible';
         }
       }
+    });
+    
+    // Convert canvas to image data
+    const imgData = canvas.toDataURL('image/png', 1.0);
+    
+    // Calculate the height of the image in the PDF
+    const imgHeight = elementHeight * scaleFactor;
+    
+    // Add the image to the PDF (fitting to page width)
+    pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, imgHeight);
+    
+    // If content spans multiple pages, add new pages
+    if (imgHeight > pdf.internal.pageSize.getHeight()) {
+      let pageCount = Math.ceil(imgHeight / pdf.internal.pageSize.getHeight());
+      let currentHeight = 0;
+      const pageHeight = pdf.internal.pageSize.getHeight();
       
-      // Save the PDF
-      pdf.save(fileName);
-      
-    } finally {
-      // Clean up the temporary DOM element
-      document.body.removeChild(tempContainer);
+      // Add each page
+      for (let i = 1; i < pageCount; i++) {
+        pdf.addPage();
+        currentHeight += pageHeight;
+        
+        // Add the same image but with offset to show the appropriate portion
+        pdf.addImage(
+          imgData,
+          'PNG',
+          0,
+          -currentHeight,
+          pageWidth,
+          imgHeight
+        );
+      }
     }
     
-    return Promise.resolve();
+    // Save the PDF with a formatted filename
+    const filename = getProposalFilename(data, 'pdf');
+    pdf.save(filename);
     
+    console.log('PDF generated successfully');
   } catch (error) {
     console.error('Error generating PDF:', error);
-    return Promise.reject(error);
+    throw error;
   }
-}
+};

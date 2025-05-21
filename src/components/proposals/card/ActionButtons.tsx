@@ -63,7 +63,7 @@ const ActionButtons = ({ onPrint, proposalData, proposalRef }: ActionButtonsProp
     });
     
     try {
-      // Use improved PNG generation that captures exactly what's shown in the browser
+      // Use improved PNG generation with higher scale factor and font loading
       await generateProposalPng(proposalRef.current, proposalData);
       
       toast({
@@ -89,7 +89,7 @@ const ActionButtons = ({ onPrint, proposalData, proposalRef }: ActionButtonsProp
       <Button 
         variant="outline" 
         onClick={onGeneratePng} 
-        className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50 relative"
+        className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50"
       >
         <FileImage className="mr-2 h-4 w-4" />
         <span>Baixar PNG da Proposta Completa</span>

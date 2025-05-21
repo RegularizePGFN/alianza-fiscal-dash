@@ -18,7 +18,7 @@ const ActionButtonsSection = ({ onGeneratePdf, onGeneratePng, onPrint }: ActionB
       </Button>
       <Button variant="outline" onClick={onGeneratePng} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
         <FileImage className="mr-2 h-4 w-4" />
-        Baixar PNG
+        Baixar PNG da Proposta Completa
       </Button>
       <Button onClick={onGeneratePdf} className="bg-af-blue-600 hover:bg-af-blue-700">
         <Download className="mr-2 h-4 w-4" />

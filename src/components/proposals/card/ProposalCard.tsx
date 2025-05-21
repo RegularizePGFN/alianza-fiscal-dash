@@ -26,23 +26,12 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
   }, []);
   
   // Get colors from template settings or use defaults
-  const colors = (() => {
-    try {
-      return {
-        primary: '#3B82F6',
-        secondary: '#1E40AF',
-        accent: '#10B981',
-        background: '#F8FAFC'
-      };
-    } catch (e) {
-      return {
-        primary: '#3B82F6',
-        secondary: '#1E40AF',
-        accent: '#10B981',
-        background: '#F8FAFC'
-      };
-    }
-  })();
+  const colors = {
+    primary: '#3B82F6',
+    secondary: '#1E40AF',
+    accent: '#10B981',
+    background: '#F8FAFC'
+  };
 
   // Default layout settings
   const layout = {
@@ -54,71 +43,6 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
 
   const handlePrint = () => {
     window.print();
-  };
-
-  const handleGeneratePdf = async () => {
-    if (!proposalRef.current) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível gerar o PDF. Tente novamente.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    toast({
-      title: "Processando",
-      description: "Gerando PDF, aguarde um momento...",
-    });
-    
-    try {
-      await generateProposalPdf(proposalRef.current, data);
-      
-      toast({
-        title: "Sucesso",
-        description: "PDF gerado com sucesso!",
-      });
-    } catch (error) {
-      console.error("Erro ao gerar PDF:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível gerar o PDF. Tente novamente.",
-        variant: "destructive",
-      });
-    }
-  };
-  
-  const handleGeneratePng = async () => {
-    if (!proposalRef.current) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível gerar a imagem PNG. Tente novamente.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    toast({
-      title: "Processando",
-      description: "Gerando imagem PNG exatamente como aparece na tela...",
-    });
-    
-    try {
-      // Use the updated function to capture exact screen appearance
-      await generateProposalPng(proposalRef.current, data);
-      
-      toast({
-        title: "Sucesso",
-        description: "Imagem PNG da proposta completa gerada com sucesso!",
-      });
-    } catch (error) {
-      console.error("Erro ao gerar PNG:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível gerar a imagem PNG. Tente novamente.",
-        variant: "destructive",
-      });
-    }
   };
 
   return (
