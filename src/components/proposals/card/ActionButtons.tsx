@@ -1,20 +1,18 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Printer, Download, FileImage, Wand2 } from "lucide-react";
-import { ExtractedData, CompanyData } from "@/lib/types/proposals";
+import { Printer, Download, FileImage } from "lucide-react";
+import { ExtractedData } from "@/lib/types/proposals";
 import { generateProposalPdf, generateProposalPng } from "@/lib/pdfUtils";
 import { useToast } from "@/hooks/use-toast";
-import { AIProposalGenerator } from '@/components/proposals/AIProposalGenerator';
 
 interface ActionButtonsProps {
   onPrint: () => void;
   proposalData: Partial<ExtractedData>;
   proposalRef: React.RefObject<HTMLDivElement>;
-  companyData?: CompanyData | null;
 }
 
-const ActionButtons = ({ onPrint, proposalData, proposalRef, companyData }: ActionButtonsProps) => {
+const ActionButtons = ({ onPrint, proposalData, proposalRef }: ActionButtonsProps) => {
   const { toast } = useToast();
   
   const onGeneratePdf = async () => {
@@ -83,27 +81,19 @@ const ActionButtons = ({ onPrint, proposalData, proposalRef, companyData }: Acti
   };
 
   return (
-    <div className="pt-4 flex flex-wrap justify-end gap-3 px-6 pb-6">
+    <div className="pt-4 flex justify-end gap-3 px-6 pb-6">
       <Button variant="outline" onClick={onPrint} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
         <Printer className="mr-2 h-4 w-4" />
         Imprimir
       </Button>
-      
       <Button 
         variant="outline" 
         onClick={onGeneratePng} 
-        className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50"
+        className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50 relative"
       >
         <FileImage className="mr-2 h-4 w-4" />
-        <span>Baixar PNG</span>
+        <span>Baixar PNG da Proposta Completa</span>
       </Button>
-      
-      <AIProposalGenerator 
-        proposalData={proposalData}
-        companyData={companyData} 
-        className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50"
-      />
-      
       <Button onClick={onGeneratePdf} className="bg-af-blue-600 hover:bg-af-blue-700">
         <Download className="mr-2 h-4 w-4" />
         Baixar PDF
