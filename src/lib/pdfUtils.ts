@@ -81,26 +81,68 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     // File name
     const fileName = `proposta_pgfn_${data.cnpj?.replace(/\D/g, '') || 'cliente'}_${seller}.pdf`;
 
-    // Apply PDF-specific styling
+    // Create a temporary clone of the proposal element for PDF generation
+    const proposalClone = proposalElement.cloneNode(true) as HTMLElement;
+    document.body.appendChild(proposalClone);
+    proposalClone.style.position = 'absolute';
+    proposalClone.style.left = '-9999px';
+    proposalClone.style.width = '210mm'; // A4 width
+    
+    // Apply PDF-specific styling to the clone
     const pdfStyle = document.createElement('style');
     pdfStyle.textContent = `
       @page { margin: 10mm; }
       body { font-family: 'Roboto', Arial, sans-serif; }
+      * { box-sizing: border-box; }
       p { margin: 0; padding: 0; }
       .page-break { page-break-after: always; }
       button, [data-pdf-remove="true"] { display: none !important; }
-      table { page-break-inside: avoid; }
+      table { width: 100%; border-collapse: collapse; page-break-inside: avoid; }
+      tr { page-break-inside: avoid; }
+      td, th { padding: 4px; }
+      h3, h4 { margin-top: 8px; margin-bottom: 4px; }
       .section { page-break-inside: avoid; }
+      
+      /* Simple styling for cleaner PDF output */
+      .card { border: 1px solid #e0e0e0; margin-bottom: 12px; }
+      .card-content { padding: 8px; }
+      
+      /* Override any complex gradients or shadows */
+      .shadow, .shadow-sm, .shadow-md, .shadow-lg { box-shadow: none !important; }
+      .bg-gradient-to-br { background: white !important; }
     `;
-    document.head.appendChild(pdfStyle);
-
-    // Create a PDF with A4 dimensions
+    
+    proposalClone.appendChild(pdfStyle);
+    
+    // Hide elements that shouldn't appear in the PDF
+    const elementsToHide = proposalClone.querySelectorAll('button, [data-pdf-remove="true"]');
+    elementsToHide.forEach(el => {
+      if (el instanceof HTMLElement) {
+        el.style.display = 'none';
+      }
+    });
+    
+    // Add manual page breaks before sections that should start on a new page
+    const paymentSchedule = proposalClone.querySelector('[data-section="payment-schedule"]');
+    if (paymentSchedule && paymentSchedule instanceof HTMLElement) {
+      const pageBreak = document.createElement('div');
+      pageBreak.className = 'page-break';
+      paymentSchedule.parentNode?.insertBefore(pageBreak, paymentSchedule);
+    }
+    
+    // Create PDF with A4 dimensions
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
       format: 'a4',
       compress: true
     });
+    
+    // Wait for content to be properly styled
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // Get the computed height after styling (should reflect the full scrollHeight)
+    const contentHeight = proposalClone.scrollHeight;
     
     // Set PDF document properties
     pdf.setProperties({
@@ -109,90 +151,65 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       author: 'Aliança Fiscal',
       creator: 'Sistema de Propostas'
     });
-
-    // Hide elements that shouldn't appear in the PDF
-    const elementsToHide = proposalElement.querySelectorAll('[data-pdf-remove="true"]');
-    elementsToHide.forEach(el => {
-      if (el instanceof HTMLElement) {
-        el.style.display = 'none';
-      }
-    });
     
-    try {
-      // Calculate the dimensions
-      const contentWidth = 210 - 20; // A4 width minus margins in mm
-      const contentHeight = 297 - 20; // A4 height minus margins in mm
-
-      // First, calculate the total height to determine number of pages
-      const initialCanvas = await html2canvas(proposalElement, {
+    // Function to add content to PDF page by page
+    const renderPDF = async () => {
+      // A4 dimensions in pixels (assuming 96 DPI)
+      const a4Width = 210; // mm
+      const a4Height = 297; // mm
+      const pdfWidth = a4Width - 20; // subtract margins
+      const pdfHeight = a4Height - 20; // subtract margins
+      
+      // Use html2canvas to render the clone element
+      const canvas = await html2canvas(proposalClone, {
         scale: 2,
         useCORS: true,
         logging: false,
         allowTaint: true,
-        backgroundColor: '#ffffff',
-        onclone: (documentClone) => {
-          // Find and hide action buttons in the clone
-          const actionButtons = documentClone.querySelectorAll('button, [data-pdf-remove="true"]');
-          actionButtons.forEach(button => {
-            if (button instanceof HTMLElement) {
-              button.style.display = 'none';
-            }
-          });
-
-          // Mark section headers for page breaks if needed
-          const sectionHeaders = documentClone.querySelectorAll('.section-header, h3, table');
-          sectionHeaders.forEach(header => {
-            if (header instanceof HTMLElement) {
-              header.dataset.pdfSectionHeader = 'true';
-            }
-          });
-        }
+        backgroundColor: '#ffffff'
       });
-
-      // Determine the number of pages needed
-      const pageHeight = contentHeight * initialCanvas.width / contentWidth;
-      const totalPages = Math.ceil(initialCanvas.height / pageHeight);
       
-      // Process each page
-      for (let i = 0; i < totalPages; i++) {
-        if (i > 0) {
-          pdf.addPage();
-        }
-        
-        // Calculate the portion of the canvas for this page
-        const sourceY = i * pageHeight;
-        const sourceHeight = Math.min(pageHeight, initialCanvas.height - sourceY);
-        
-        // Add page content
-        pdf.addImage(
-          initialCanvas, 
-          'PNG',
-          10, // X position (margin)
-          10, // Y position (margin)
-          contentWidth,
-          (sourceHeight * contentWidth) / initialCanvas.width
-        );
-        
-        // Add page number
-        pdf.setFontSize(8);
-        pdf.setTextColor(128, 128, 128);
-        pdf.text(`Página ${i + 1} de ${totalPages}`, contentWidth / 2 + 10, contentHeight + 10, { align: 'center' });
+      // Calculate how many pages we need
+      const imgData = canvas.toDataURL('image/png');
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfImgWidth = pdfWidth;
+      const pdfImgHeight = (imgProps.height * pdfImgWidth) / imgProps.width;
+      
+      // Add the image to the PDF, splitting across multiple pages as needed
+      let heightLeft = pdfImgHeight;
+      let position = 0;
+      let page = 1;
+      
+      // Add first page
+      pdf.addImage(imgData, 'PNG', 10, 10, pdfImgWidth, pdfImgHeight, '', 'FAST');
+      heightLeft -= pdfHeight;
+      
+      // Add additional pages if needed
+      while (heightLeft > 0) {
+        position += pdfHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 10, -(position - 10), pdfImgWidth, pdfImgHeight, '', 'FAST');
+        heightLeft -= pdfHeight;
+        page++;
       }
+      
+      // Add page numbers
+      const totalPages = page;
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(8);
+        pdf.setTextColor(100, 100, 100);
+        pdf.text(`Página ${i} de ${totalPages}`, a4Width / 2, a4Height - 5, { align: 'center' });
+      }
+      
+      // Clean up
+      document.body.removeChild(proposalClone);
       
       // Save the PDF
       pdf.save(fileName);
-    } finally {
-      // Restore visibility of hidden elements
-      elementsToHide.forEach(el => {
-        if (el instanceof HTMLElement) {
-          el.style.display = '';
-        }
-      });
-      
-      // Remove the temporary style
-      document.head.removeChild(pdfStyle);
-    }
+    };
     
+    await renderPDF();
     return Promise.resolve();
   } catch (error) {
     console.error('Error generating PDF:', error);

@@ -96,7 +96,7 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
       case 'payment':
         return <PaymentSection data={data} colors={colors} />;
       case 'paymentSchedule':
-        return <PaymentScheduleSection data={data} colors={colors} />;
+        return <div data-section="payment-schedule"><PaymentScheduleSection data={data} colors={colors} /></div>;
       case 'fees':
         return <FeesSection data={data} colors={colors} />;
       case 'total':
@@ -126,7 +126,7 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
   // Remover 'total' e 'alert' do array de seções
   const filteredSections = sectionOrder.filter(section => section !== 'total' && section !== 'alert');
   
-  // Add paymentSchedule section after payment if not already present in the layout
+  // Add paymentSchedule section once after payment if needed and not already present
   if (!filteredSections.includes('paymentSchedule') && filteredSections.includes('payment')) {
     const paymentIndex = filteredSections.indexOf('payment');
     if (paymentIndex !== -1) {
