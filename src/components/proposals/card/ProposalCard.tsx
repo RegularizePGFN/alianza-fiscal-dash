@@ -161,16 +161,17 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
             companyData={companyData}
           />
         </CardContent>
-        
-        {/* Action buttons INSIDE the card to ensure proper PNG capture */}
-        <ActionButtonsSection
-          onPrint={handlePrint}
-          onGeneratePdf={handleGeneratePdf}
-          onGeneratePng={handleGeneratePng}
-          onGenerateHighQuality={handleGenerateHighQuality}
-          isGeneratingHighQuality={isGeneratingHighQuality}
-        />
       </Card>
+      
+      {/* Action buttons OUTSIDE the card to ensure they're not captured in PNG/PDF */}
+      <ActionButtonsSection
+        onPrint={handlePrint}
+        onGeneratePdf={handleGeneratePdf}
+        onGeneratePng={handleGeneratePng}
+        onGenerateHighQuality={handleGenerateHighQuality}
+        isGeneratingHighQuality={isGeneratingHighQuality}
+        className="max-w-3xl w-full mx-auto bg-white shadow rounded-md mt-2 border"
+      />
     </div>
   );
 };

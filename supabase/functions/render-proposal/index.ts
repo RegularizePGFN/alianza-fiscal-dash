@@ -34,55 +34,85 @@ serve(async (req) => {
     console.log(`Rendering proposal in ${format} format`);
     
     // Create a proper function string for Browserless - this is KEY!
-    // The function must be properly formatted as a string that Browserless can execute
-    const renderFunction = `
-      async function() {
-        try {
-          // Wait for fonts and images to load completely
-          await document.fonts.ready;
-          await new Promise(r => setTimeout(r, 3000));
-          
-          // Wait for any images to load
-          const imgPromises = Array.from(document.querySelectorAll('img'))
-            .filter(img => !img.complete)
-            .map(img => new Promise(resolve => {
-              img.onload = img.onerror = resolve;
-            }));
-          await Promise.all(imgPromises);
-          
-          ${format === 'pdf' ? `
-          // PDF generation with precise A4 settings
-          const pdf = await page.pdf({
-            format: 'A4',
-            printBackground: true,
-            margin: {
-              top: '5mm',
-              right: '5mm',
-              bottom: '5mm',
-              left: '5mm',
-            },
-            scale: 0.85, // Scale down to ensure fit on one page
-            preferCSSPageSize: true
-          });
-          return pdf.toString('base64');
-          ` : `
-          // PNG generation with high quality settings
-          const screenshot = await page.screenshot({
-            type: 'png',
-            fullPage: true,
-            quality: 100,
-            omitBackground: false
-          });
-          return screenshot.toString('base64');
-          `}
-        } catch (error) {
-          console.error('Error in Browserless function:', error);
-          throw new Error('Failed to render: ' + error.message);
+    // Using a JavaScript object with a function property instead of a raw function string
+    const payload = {
+      code: `
+        async function run(context) {
+          try {
+            const { page } = context;
+            
+            // Set viewport to A4 size at higher DPI for better quality
+            await page.setViewport({
+              width: 1240, // A4 width at higher DPI (roughly 1.5x standard 794px)
+              height: 1754, // A4 height at higher DPI (roughly 1.5x standard 1123px)
+              deviceScaleFactor: 2
+            });
+            
+            // Wait for fonts and images to load completely
+            await page.evaluate(async () => {
+              await document.fonts.ready;
+              const imgPromises = Array.from(document.querySelectorAll('img'))
+                .filter(img => !img.complete)
+                .map(img => new Promise(resolve => {
+                  img.onload = img.onerror = resolve;
+                }));
+              await Promise.all(imgPromises);
+              console.log('All fonts and images loaded');
+              return true;
+            });
+            
+            // Additional wait time to ensure everything renders properly
+            await page.waitForTimeout(2000);
+            
+            // For PDF generation
+            if ('${format}' === 'pdf') {
+              const pdf = await page.pdf({
+                format: 'A4',
+                printBackground: true,
+                margin: {
+                  top: '10mm',
+                  right: '10mm',
+                  bottom: '10mm',
+                  left: '10mm',
+                },
+                scale: 0.75, // Scale to fit content on page
+                preferCSSPageSize: true
+              });
+              return pdf.toString('base64');
+            } 
+            // For PNG generation
+            else {
+              const screenshot = await page.screenshot({
+                type: 'png',
+                fullPage: true,
+                quality: 100,
+                omitBackground: false
+              });
+              return screenshot.toString('base64');
+            }
+          } catch (error) {
+            console.error('Puppeteer error:', error);
+            throw new Error('Failed to render: ' + error.message);
+          }
         }
+
+        module.exports = run;
+      `,
+      context: {
+        html: html,
+        stealth: true, // Better compatibility
+        flags: ['--no-sandbox', '--disable-setuid-sandbox', '--font-render-hinting=none'],
+        defaultViewport: {
+          width: 1240, // A4 width at higher DPI
+          height: 1754, // A4 height at higher DPI
+          deviceScaleFactor: 2
+        },
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        timeout: 30000, // 30 seconds, increased timeout
       }
-    `;
+    };
     
-    console.log('Sending request to Browserless...');
+    console.log('Sending request to Browserless with improved configuration...');
     
     // Call Browserless.io API with the properly formatted function
     const response = await fetch(browserlessUrl, {
@@ -91,20 +121,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
         'Cache-Control': 'no-cache',
       },
-      body: JSON.stringify({
-        code: renderFunction,
-        context: {
-          html: html,
-          viewport: {
-            width: 794, // A4 width in pixels at 96 DPI
-            height: 1123, // A4 height in pixels at 96 DPI
-            deviceScaleFactor: 2,
-          },
-          waitFor: 3000, // Increased wait time to ensure full render
-          cookies: [],
-          stealth: true, // Use stealth mode for better compatibility
-        }
-      }),
+      body: JSON.stringify(payload),
     });
     
     console.log('Browserless response status:', response.status);
@@ -125,7 +142,11 @@ serve(async (req) => {
     try {
       result = await response.json();
       console.log('Browserless result type:', typeof result);
-      console.log('Browserless result preview:', JSON.stringify(result).substring(0, 200) + '...');
+      if (result && result.data) {
+        console.log('Received successful response with data');
+      } else {
+        console.error('Received response but no data field:', JSON.stringify(result).substring(0, 200));
+      }
     } catch (error) {
       console.error('Error parsing Browserless response:', error);
       return new Response(

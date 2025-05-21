@@ -9,6 +9,7 @@ interface ActionButtonsSectionProps {
   onPrint: () => void;
   onGenerateHighQuality?: () => void;
   isGeneratingHighQuality?: boolean;
+  className?: string; // Added className prop for flexible positioning
 }
 
 const ActionButtonsSection = ({ 
@@ -16,10 +17,11 @@ const ActionButtonsSection = ({
   onGeneratePng, 
   onPrint, 
   onGenerateHighQuality,
-  isGeneratingHighQuality = false
+  isGeneratingHighQuality = false,
+  className = ""
 }: ActionButtonsSectionProps) => {
   return (
-    <div className="pt-4 flex flex-col md:flex-row gap-3 px-6 pb-6 justify-end">
+    <div className={`pt-4 flex flex-col md:flex-row gap-3 px-6 pb-6 justify-end ${className}`}>
       <Button variant="outline" onClick={onPrint} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
         <Printer className="mr-2 h-4 w-4" />
         Imprimir

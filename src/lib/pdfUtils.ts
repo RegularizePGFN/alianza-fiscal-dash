@@ -276,9 +276,9 @@ export const generateHighQualityFile = async (
     `;
     
     console.log('Preparing to call render-proposal function...');
-    toast.update(toastId, { 
-      description: 'Conectando ao serviço de renderização...'
-    });
+    // Use Sonner toast dismiss instead of update since update is not available
+    toast.dismiss(toastId);
+    toast.loading('Conectando ao serviço de renderização...', { id: toastId });
     
     // Generate a filename
     const filename = `proposta-${data.clientName || 'Cliente'}-${data.cnpj || ''}`;
@@ -304,9 +304,9 @@ export const generateHighQualityFile = async (
       throw new Error('No data returned from render function');
     }
     
-    toast.update(toastId, { 
-      description: 'Processando arquivo para download...'
-    });
+    // Dismiss loading toast and show processing message
+    toast.dismiss(toastId);
+    toast.loading('Processando arquivo para download...', { id: toastId });
     
     // Convert base64 to Blob
     const byteCharacters = atob(responseData.data);
