@@ -9,7 +9,6 @@ interface DataFieldProps {
   fullWidth?: boolean;
   highlight?: boolean;
   className?: string;
-  style?: React.CSSProperties;
 }
 
 /**
@@ -21,8 +20,7 @@ const DataField = ({
   icon,
   fullWidth = false,
   highlight = false,
-  className,
-  style = {}
+  className
 }: DataFieldProps) => {
   return (
     <div 
@@ -32,8 +30,6 @@ const DataField = ({
         highlight && "bg-gradient-to-br from-green-50 to-white",
         className
       )}
-      style={style}
-      data-field-label={label}
     >
       <span className="text-sm font-medium text-gray-500 flex items-center">
         {icon && <span className="h-3 w-3 mr-1">{icon}</span>}

@@ -1,3 +1,4 @@
+
 import React, { useRef } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -300,11 +301,11 @@ const MiniProposalCard = ({ data, imageUrl }: MiniProposalCardProps) => {
           <p>Especialista Tributário: {specialistName}</p>
         </div>
 
-        {/* Action Buttons - Modified to remove PNG button */}
+        {/* Action Buttons */}
         <div className="pt-2 flex justify-between pdf-action-buttons" data-pdf-remove="true">
           <Button variant="outline" onClick={onViewFullProposal} size="sm" className="h-8 text-[11px]">
             <Eye className="h-3 w-3 mr-1" />
-            Ver Proposta Completa
+            Ver Detalhes
           </Button>
           <div className="flex gap-2">
             <Button variant="outline" onClick={printProposal} size="sm" className="h-8 text-[11px]">

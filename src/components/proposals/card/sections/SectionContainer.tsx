@@ -9,7 +9,6 @@ interface SectionContainerProps {
   className?: string;
   color?: string;
   fullWidth?: boolean;
-  style?: React.CSSProperties;
 }
 
 /**
@@ -21,14 +20,13 @@ const SectionContainer = ({
   icon, 
   className, 
   color = '#1E40AF',
-  fullWidth = false,
-  style = {}
+  fullWidth = false
 }: SectionContainerProps) => {
   return (
-    <div className={cn("mb-6", className)} style={style} data-section-title={title}>
+    <div className={cn("mb-6", className)}>
       <h3 
         className="text-base font-semibold pb-2 mb-3 border-b border-gray-200 flex items-center" 
-        style={{ color, ...style }}
+        style={{ color }}
       >
         {icon && <span className="mr-2">{icon}</span>}
         {title}
