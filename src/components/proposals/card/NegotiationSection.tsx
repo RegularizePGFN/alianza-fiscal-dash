@@ -6,8 +6,6 @@ interface NegotiationSectionProps {
   totalDebt: string;
   discountedValue: string;
   discountPercentage: string;
-  entryValue: string;
-  entryInstallments: string;
   installments: string;
   installmentValue: string;
 }
@@ -16,8 +14,6 @@ const NegotiationSection = ({
   totalDebt, 
   discountedValue, 
   discountPercentage, 
-  entryValue,
-  entryInstallments,
   installments, 
   installmentValue 
 }: NegotiationSectionProps) => {
@@ -51,13 +47,6 @@ const NegotiationSection = ({
           <p className="text-[11px]">{discountPercentage || '-'}%</p>
         </div>
         <div className="bg-white p-1 rounded border border-af-blue-100 flex flex-col">
-          <span className="text-[10px] font-medium text-af-blue-700 flex items-center">
-            <Calendar className="mr-0.5 h-2.5 w-2.5 flex-shrink-0 text-af-blue-600" />
-            Entrada:
-          </span>
-          <p className="text-[11px]">{entryInstallments || '1'}x de R$ {entryValue || '-'}</p>
-        </div>
-        <div className="bg-white p-1 rounded border border-af-blue-100 flex flex-col col-span-2">
           <span className="text-[10px] font-medium text-af-blue-700 flex items-center">
             <Calendar className="mr-0.5 h-2.5 w-2.5 flex-shrink-0 text-af-blue-600" />
             Parcelas:

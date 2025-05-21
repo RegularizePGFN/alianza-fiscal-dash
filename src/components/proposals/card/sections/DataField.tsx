@@ -9,6 +9,7 @@ interface DataFieldProps {
   fullWidth?: boolean;
   highlight?: boolean;
   className?: string;
+  description?: string;
 }
 
 /**
@@ -20,7 +21,8 @@ const DataField = ({
   icon,
   fullWidth = false,
   highlight = false,
-  className
+  className,
+  description
 }: DataFieldProps) => {
   return (
     <div 
@@ -38,6 +40,9 @@ const DataField = ({
       <div className="text-base mt-1">
         {typeof value === 'string' ? (value || '-') : value}
       </div>
+      {description && (
+        <p className="text-xs text-gray-500 mt-1 italic">{description}</p>
+      )}
     </div>
   );
 };

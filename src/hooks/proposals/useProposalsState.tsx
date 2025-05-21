@@ -25,7 +25,13 @@ export const useProposalsState = () => {
   const [activeTab, setActiveTab] = useState("upload");
   const [processing, setProcessing] = useState(false);
   const [progressPercent, setProgressPercent] = useState(0);
-  const [formData, setFormData] = useState<Partial<ExtractedData>>({});
+  const [formData, setFormData] = useState<Partial<ExtractedData>>({
+    // Default values for the new fields
+    feesAdditionalPercentage: '30',
+    feesInstallments: '6',
+    feesPaymentMethod: 'cartao',
+    entryInstallments: '1'
+  });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [generatedProposal, setGeneratedProposal] = useState<boolean>(false);
   const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
@@ -37,7 +43,7 @@ export const useProposalsState = () => {
     fetchProposals();
   }, []);
   
-  // Use our new custom hooks
+  // Use our custom hooks
   const { fetchCompanyDataByCnpj } = useFetchCompanyData({ 
     formData, 
     setFormData, 
@@ -45,8 +51,8 @@ export const useProposalsState = () => {
     setProcessingStatus 
   });
   
-  useFeesCalculation({ formData, setFormData });
-  useDatesHandling({ activeTab, formData, setFormData });
+  const { calculateFees, calculateInstallmentFees } = useFeesCalculation({ formData, setFormData });
+  const { generatePaymentDates } = useDatesHandling({ activeTab, formData, setFormData });
   useTemplateDefaults({ setFormData });
   useUserData({ user, setFormData });
   
@@ -56,6 +62,20 @@ export const useProposalsState = () => {
       fetchCompanyDataByCnpj(formData.cnpj);
     }
   }, [formData.cnpj]);
+  
+  // Recalculate installment fees when needed
+  useEffect(() => {
+    if (formData.feesValue && formData.feesAdditionalPercentage && formData.feesInstallments) {
+      calculateInstallmentFees();
+    }
+  }, [formData.feesValue, formData.feesAdditionalPercentage, formData.feesInstallments]);
+  
+  // Generate payment dates when needed
+  useEffect(() => {
+    if (activeTab === 'proposal' && formData.entryValue && formData.installmentValue && formData.installments) {
+      generatePaymentDates();
+    }
+  }, [activeTab, formData.entryValue, formData.entryInstallments, formData.installmentValue, formData.installments]);
 
   return {
     // State

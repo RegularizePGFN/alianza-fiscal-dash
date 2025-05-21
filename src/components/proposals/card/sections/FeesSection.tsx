@@ -1,39 +1,52 @@
 
 import React from 'react';
-import { ExtractedData } from "@/lib/types/proposals";
+import { ExtractedData } from '@/lib/types/proposals';
+import SectionContainer from './SectionContainer';
+import DataField from './DataField';
+import { CreditCard, Calendar } from 'lucide-react';
 
 interface FeesSectionProps {
   data: Partial<ExtractedData>;
-  colors: {
-    secondary: string;
-    accent: string;
-  };
+  colors?: any;
 }
 
 const FeesSection = ({ data, colors }: FeesSectionProps) => {
-  if (!data.feesValue) return null;
+  // Default color if not provided
+  const sectionColor = colors?.secondary || '#1E40AF';
   
+  // Payment method display name
+  const paymentMethod = data.feesPaymentMethod === 'cartao' ? 'no cartão' : 'via boleto';
+  
+  // Display installment fees if available
+  const showInstallmentFees = 
+    data.feesInstallmentValue && 
+    data.feesInstallments && 
+    parseInt(data.feesInstallments) > 1;
+
   return (
-    <div className="mb-6">
-      <h3 className="text-base font-semibold pb-2 mb-3 border-b border-gray-200"
-          style={{ color: colors.secondary }}>
-        Custos e Honorários
-      </h3>
-      <div className="bg-gray-50 p-3 rounded border-l-4" style={{ borderLeftColor: colors.accent }}>
-        <div className="flex justify-between items-center">
-          <div>
-            <span className="text-sm font-medium text-gray-700">
-              Honorários Aliança Fiscal:
-            </span>
-          </div>
-          <div className="text-right">
-            <p className="text-lg font-medium" style={{ color: colors.accent }}>
-              R$ {data.feesValue}
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
+    <SectionContainer 
+      title="Honorários" 
+      icon={<CreditCard className="h-4 w-4" />}
+      color={sectionColor}
+    >
+      <DataField 
+        label="Honorários à Vista" 
+        value={`R$ ${data.feesValue || '0,00'}`}
+        highlight={true}
+        className="bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/20 dark:to-gray-800/50"
+        description="Valor calculado em 20% da economia obtida"
+      />
+      
+      {showInstallmentFees && (
+        <DataField 
+          label={`Honorários Parcelados (${data.feesInstallments}x)`}
+          value={`${data.feesInstallments}x de R$ ${data.feesInstallmentValue} ${paymentMethod}`}
+          highlight={true}
+          className="bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/20 dark:to-gray-800/50"
+          description={`Total: R$ ${data.feesTotalInstallmentValue || data.feesValue || '0,00'}`}
+        />
+      )}
+    </SectionContainer>
   );
 };
 

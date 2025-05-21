@@ -9,6 +9,7 @@ interface SectionContainerProps {
   className?: string;
   color?: string;
   fullWidth?: boolean;
+  subtitle?: string;
 }
 
 /**
@@ -20,7 +21,8 @@ const SectionContainer = ({
   icon, 
   className, 
   color = '#1E40AF',
-  fullWidth = false
+  fullWidth = false,
+  subtitle
 }: SectionContainerProps) => {
   return (
     <div className={cn("mb-6", className)}>
@@ -31,6 +33,9 @@ const SectionContainer = ({
         {icon && <span className="mr-2">{icon}</span>}
         {title}
       </h3>
+      {subtitle && (
+        <p className="text-sm text-gray-600 mb-3 italic">{subtitle}</p>
+      )}
       <div className={`grid grid-cols-1 ${fullWidth ? '' : 'md:grid-cols-2'} gap-4`}>
         {children}
       </div>

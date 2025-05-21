@@ -25,6 +25,15 @@ export interface ExtractedData {
   sellerName?: string;
   sellerPhone?: string;
   sellerEmail?: string;
+  // New installment fees fields
+  feesAdditionalPercentage?: string; // Additional percentage for installment fees
+  feesInstallments?: string; // Number of installments for fees
+  feesPaymentMethod?: string; // Payment method for fees (cartao or boleto)
+  feesInstallmentValue?: string; // Value of each installment for fees
+  feesTotalInstallmentValue?: string; // Total value of installment fees
+  // Payment dates
+  entryDates?: string; // JSON string representation of entry payment dates
+  installmentDates?: string; // JSON string representation of installment payment dates
 }
 
 export interface Proposal {
