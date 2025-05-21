@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Eye, FileImage, FileText } from "lucide-react";
+import { Eye, FileImage, FileText, Printer } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import ProposalPreview from "@/components/proposals/card/ProposalPreview";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
@@ -92,6 +92,22 @@ const ActionButtonsSection = ({
     }
   };
 
+  const handlePrint = () => {
+    // Add a temporary class to the body to enable print styles
+    document.body.classList.add('printing-proposal');
+    
+    // Wait a moment for the class to be applied
+    setTimeout(() => {
+      // Trigger the print dialog
+      window.print();
+      
+      // Remove the class after printing dialog is closed
+      setTimeout(() => {
+        document.body.classList.remove('printing-proposal');
+      }, 500);
+    }, 100);
+  };
+
   return (
     <div className="flex justify-center gap-3 mb-6 print:hidden" data-pdf-remove="true">
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
@@ -106,6 +122,10 @@ const ActionButtonsSection = ({
           
           {/* Export buttons positioned at the top of the dialog */}
           <div className="flex justify-end gap-3 mb-4 print:hidden" data-pdf-remove="true">
+            <Button variant="outline" onClick={handlePrint} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
+              <Printer className="mr-2 h-4 w-4" />
+              Exportar com Visual do Navegador
+            </Button>
             <Button variant="outline" onClick={handleGeneratePng} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
               <FileImage className="mr-2 h-4 w-4" />
               Baixar PNG

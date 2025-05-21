@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { RotateCcw, Edit2, User, Building, Phone, Mail, FileText } from "lucide-react";
+import { RotateCcw, Edit2, User, Building, Phone, Mail, FileText, Printer } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 interface ProposalTabContentProps {
@@ -26,18 +26,47 @@ const ProposalTabContent = ({
   onInputChange
 }: ProposalTabContentProps) => {
   const [isEditing, setIsEditing] = useState(false);
+  
+  const handlePrint = () => {
+    // Add a temporary class to the body to enable print styles
+    document.body.classList.add('printing-proposal');
+    
+    // Wait a moment for the class to be applied
+    setTimeout(() => {
+      // Trigger the print dialog
+      window.print();
+      
+      // Remove the class after printing dialog is closed
+      setTimeout(() => {
+        document.body.classList.remove('printing-proposal');
+      }, 500);
+    }, 100);
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between mb-4">
-        <Button 
-          variant="outline" 
-          onClick={() => setIsEditing(!isEditing)}
-          className="gap-2"
-        >
-          <Edit2 className="h-4 w-4" />
-          {isEditing ? "Visualizar Proposta" : "Editar Dados"}
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => setIsEditing(!isEditing)}
+            className="gap-2"
+          >
+            <Edit2 className="h-4 w-4" />
+            {isEditing ? "Visualizar Proposta" : "Editar Dados"}
+          </Button>
+          
+          {!isEditing && (
+            <Button 
+              variant="outline" 
+              onClick={handlePrint} 
+              className="gap-2 border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50"
+            >
+              <Printer className="h-4 w-4" />
+              Exportar com Visual do Navegador
+            </Button>
+          )}
+        </div>
         
         <Button variant="outline" onClick={onReset} className="gap-2">
           <RotateCcw className="h-4 w-4" />
@@ -184,11 +213,13 @@ const ProposalTabContent = ({
           </CardContent>
         </Card>
       ) : (
-        <ProposalCard
-          data={formData}
-          imageUrl={imagePreview || undefined}
-          companyData={companyData}
-        />
+        <div className="proposal-preview-container">
+          <ProposalCard
+            data={formData}
+            imageUrl={imagePreview || undefined}
+            companyData={companyData}
+          />
+        </div>
       )}
     </div>
   );

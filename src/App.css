@@ -1,3 +1,4 @@
+
 /* Corrige problemas de z-index e empilhamento com o Dialog */
 #root {
   width: 100%;
@@ -10,6 +11,50 @@
 [data-radix-popper-content-wrapper],
 [data-state="open"] {
   z-index: 9999 !important;
+}
+
+/* Estilos para impressão */
+@media print {
+  /* Ocultar tudo por padrão */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Mostrar apenas o conteúdo da proposta */
+  body.printing-proposal .proposal-preview-container,
+  body.printing-proposal .proposal-preview-container * {
+    visibility: visible;
+  }
+
+  /* Centralizar a proposta e ajustar ao tamanho A4 */
+  body.printing-proposal .proposal-preview-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+
+  /* Remover elementos não desejados na impressão */
+  [data-pdf-remove="true"],
+  button,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Garantir que as quebras de página sejam respeitadas */
+  .print\:break-before-page {
+    break-before: page;
+  }
+  
+  .print\:break-inside-avoid {
+    break-inside: avoid;
+  }
+
+  .print\:break-after-avoid {
+    break-after: avoid;
+  }
 }
 
 /* Estilo padrão do projeto */
