@@ -1,11 +1,11 @@
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
 import { HeaderSection } from './sections';
 import ProposalContent from './ProposalContent';
 import { useToast } from "@/hooks/use-toast";
-import { generateProposalPdf, generateProposalPng } from "@/lib/pdfUtils";
+import { generateProposalPdf, generateProposalPng, generateHighQualityFile } from "@/lib/pdfUtils";
 import ActionButtonsSection from './sections/ActionButtonsSection';
 
 interface ProposalCardProps {
@@ -17,6 +17,7 @@ interface ProposalCardProps {
 const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
   const proposalRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const [isGeneratingHighQuality, setIsGeneratingHighQuality] = useState(false);
   
   // Effect to verify when fonts are loaded
   React.useEffect(() => {
@@ -89,7 +90,7 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
     
     toast({
       title: "Processando",
-      description: "Capturando imagem PNG em alta qualidade...",
+      description: "Capturando imagem PNG...",
     });
     
     try {
@@ -97,7 +98,7 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
       
       toast({
         title: "Sucesso",
-        description: "Imagem PNG da proposta completa gerada com sucesso!",
+        description: "Imagem PNG da proposta gerada com sucesso!",
       });
     } catch (error) {
       console.error("Erro ao gerar PNG:", error);
@@ -106,6 +107,42 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
         description: "Não foi possível gerar a imagem PNG. Tente novamente.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleGenerateHighQuality = async () => {
+    if (!proposalRef.current) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar a imagem de alta qualidade. Tente novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsGeneratingHighQuality(true);
+    
+    toast({
+      title: "Processando",
+      description: "Gerando imagem de alta qualidade via Browserless...",
+    });
+    
+    try {
+      await generateHighQualityFile(proposalRef.current, data, 'png');
+      
+      toast({
+        title: "Sucesso",
+        description: "Imagem PNG de alta qualidade gerada com sucesso!",
+      });
+    } catch (error) {
+      console.error("Erro ao gerar PNG de alta qualidade:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar a imagem PNG de alta qualidade. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingHighQuality(false);
     }
   };
 
@@ -137,6 +174,8 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
           onPrint={handlePrint}
           onGeneratePdf={handleGeneratePdf}
           onGeneratePng={handleGeneratePng}
+          onGenerateHighQuality={handleGenerateHighQuality}
+          isGeneratingHighQuality={isGeneratingHighQuality}
         />
       </Card>
     </div>
