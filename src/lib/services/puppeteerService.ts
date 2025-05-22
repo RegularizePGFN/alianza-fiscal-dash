@@ -96,8 +96,8 @@ export const fallbackGenerateProposalFiles = async (
     const { generateProposalPdf, generateProposalPng } = await import('@/lib/pdfUtils');
     
     // Use existing PDF and PNG generation methods
-    const pdfBlob = await generateProposalPdf(element, data, true);
-    const pngBlob = await generateProposalPng(element, data, true);
+    const pdfBlob = await generateProposalPdf(element, data, true) as Blob;
+    const pngBlob = await generateProposalPng(element, data, true) as Blob;
     
     // Convert blobs to Uint8Array
     const pdfArray = new Uint8Array(await pdfBlob.arrayBuffer());

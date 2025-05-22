@@ -1,8 +1,8 @@
 
-import { createClient } from 'minio';
+import { Client } from 'minio';
 
 // MinIO client configuration
-const minioClient = createClient({
+const minioClient = new Client({
   endPoint: 'minio.neumo.com.br',
   port: 443,
   useSSL: true,
@@ -50,7 +50,7 @@ export const uploadFileToMinio = async (
     );
     
     return signedUrl;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error uploading to MinIO:', error);
     throw new Error(`Failed to upload file to MinIO: ${error.message}`);
   }
@@ -78,7 +78,7 @@ export const getSignedUrl = async (
       604800
     );
     return signedUrl;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating signed URL:', error);
     throw new Error(`Failed to generate signed URL: ${error.message}`);
   }
