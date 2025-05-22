@@ -204,7 +204,7 @@ const ActionButtonsSection = ({
             </Button>
           </div>
           
-          {/* The proposal preview container with a specific class for targeting */}
+          {/* The proposal preview container with proper styling for PDF export */}
           <div className="proposal-preview-container" ref={previewRef}>
             <ProposalPreview 
               data={data}

@@ -28,8 +28,9 @@ const PaymentScheduleSection = ({ data, colors }: PaymentScheduleSectionProps) =
     console.error('Error parsing payment dates:', error);
   }
   
+  // Skip rendering this section if no dates available
   if (entryDates.length === 0 && installmentDates.length === 0) {
-    return null; // Don't render if no dates available
+    return null;
   }
 
   // Calculate entry installment value per installment
@@ -61,17 +62,17 @@ const PaymentScheduleSection = ({ data, colors }: PaymentScheduleSectionProps) =
       icon={<Calendar className="h-4 w-4" />}
       color={sectionColor}
       fullWidth
-      className="print:break-before-page print:mt-0"
+      className="print:page-break-before"
     >
       <div className="col-span-2 space-y-4">
         {/* Entry payments */}
         {entryDates.length > 0 && (
-          <div className="border-l-4 border-blue-500 pl-4 py-2 print:break-inside-avoid">
+          <div className="border-l-4 border-blue-500 pl-4 py-2">
             <h4 className="text-sm font-medium text-blue-700 mb-2">
               Entrada:
             </h4>
             <div className="bg-white p-3 rounded-md border border-blue-100 overflow-x-auto">
-              <table className="w-full text-sm print:break-inside-avoid">
+              <table className="w-full text-sm">
                 <thead className="text-xs text-gray-500">
                   <tr>
                     <th className="text-left pr-4 py-1">Parcela</th>
@@ -95,12 +96,12 @@ const PaymentScheduleSection = ({ data, colors }: PaymentScheduleSectionProps) =
         
         {/* Regular installments */}
         {installmentDates.length > 0 && (
-          <div className="border-l-4 border-green-500 pl-4 py-2 print:break-inside-avoid">
+          <div className="border-l-4 border-green-500 pl-4 py-2">
             <h4 className="text-sm font-medium text-green-700 mb-2">
               Após o pagamento da entrada você pagará o restante em {installmentDates.length} parcelas:
             </h4>
             <div className="bg-white p-3 rounded-md border border-green-100 overflow-x-auto">
-              <table className="w-full text-sm print:break-inside-avoid">
+              <table className="w-full text-sm">
                 <thead className="text-xs text-gray-500">
                   <tr>
                     <th className="text-left pr-4 py-1">Parcela</th>

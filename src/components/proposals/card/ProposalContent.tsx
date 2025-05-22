@@ -51,7 +51,7 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
 
   // Parse layout settings or use defaults
   const layout = {
-    sections: layoutData?.sections || ['company', 'debt', 'payment', 'fees'],
+    sections: layoutData?.sections || ['company', 'debt', 'payment', 'fees', 'paymentSchedule'],
     showHeader: layoutData?.showHeader !== undefined ? layoutData.showHeader : true,
     showLogo: layoutData?.showLogo !== undefined ? layoutData.showLogo : true,
     showWatermark: layoutData?.showWatermark || false
@@ -96,7 +96,7 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
       case 'payment':
         return <PaymentSection data={data} colors={colors} />;
       case 'paymentSchedule':
-        return <div data-section="payment-schedule" className="print:break-before-page"><PaymentScheduleSection data={data} colors={colors} /></div>;
+        return <PaymentScheduleSection data={data} colors={colors} />;
       case 'fees':
         return <FeesSection data={data} colors={colors} />;
       case 'total':
@@ -126,19 +126,23 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
   // Remove 'total' and 'alert' from the sections array
   const filteredSections = sectionOrder.filter(section => section !== 'total' && section !== 'alert');
   
-  // Add paymentSchedule section once after payment if needed and not already present
-  if (!filteredSections.includes('paymentSchedule') && filteredSections.includes('payment')) {
+  // Make sure paymentSchedule is included in the sections if not already present
+  if (!filteredSections.includes('paymentSchedule')) {
+    // Add paymentSchedule after payment section
     const paymentIndex = filteredSections.indexOf('payment');
     if (paymentIndex !== -1) {
       filteredSections.splice(paymentIndex + 1, 0, 'paymentSchedule');
+    } else {
+      // If payment section doesn't exist, add paymentSchedule at the end
+      filteredSections.push('paymentSchedule');
     }
   }
 
   return (
-    <div className={`p-4 space-y-0 font-['Roboto',sans-serif] ${className}`}>
+    <div className={`p-4 space-y-6 font-['Roboto',sans-serif] ${className}`}>
       {/* Main content sections */}
-      <div className="print:break-after-avoid">
-        {/* Render initial sections based on the adjusted section order (except payment schedule) */}
+      <div className="space-y-6">
+        {/* Render all sections except payment schedule */}
         {filteredSections.filter(section => section !== 'paymentSchedule').map((section, index) => (
           <React.Fragment key={index}>
             {renderSection(section)}
@@ -151,8 +155,10 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
         }
       </div>
       
-      {/* Payment Schedule section on its own page */}
-      {filteredSections.includes('paymentSchedule') && renderSection('paymentSchedule')}
+      {/* Payment Schedule section on its own page for PDF */}
+      <div className="page-break-before">
+        {renderSection('paymentSchedule')}
+      </div>
       
       {/* Signature is always shown */}
       <SignatureSection data={data} />

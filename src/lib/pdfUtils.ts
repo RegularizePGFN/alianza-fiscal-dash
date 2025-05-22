@@ -13,6 +13,18 @@ export const generateProposalPdf = async (
     // Get element dimensions
     const { offsetWidth, offsetHeight } = element;
     
+    // Add a temporary style to handle page breaks in PDF
+    const style = document.createElement('style');
+    style.textContent = `
+      .page-break-before { page-break-before: always; }
+      .print:break-before-page { page-break-before: always; }
+      @media print { 
+        .page-break-before { page-break-before: always; }
+        .print\\:break-before-page { page-break-before: always; }
+      }
+    `;
+    document.head.appendChild(style);
+    
     // Create a canvas from the element
     const canvas = await html2canvas(element, {
       scale: 2, // Higher scale for better quality
@@ -23,6 +35,9 @@ export const generateProposalPdf = async (
       windowHeight: offsetHeight,
       logging: false, // Set to true for debugging
     });
+    
+    // Remove the temporary style
+    document.head.removeChild(style);
     
     // Create PDF
     const pdf = new jsPDF({
@@ -73,6 +88,8 @@ export const generateProposalPng = async (
       allowTaint: true,
       scrollY: -window.scrollY,
       logging: false,
+      width: element.offsetWidth,
+      height: element.scrollHeight || element.offsetHeight,
     });
     
     if (returnBlob) {
@@ -120,6 +137,12 @@ export const getProposalHtml = (element: HTMLElement): string => {
     @page {
       size: A4;
       margin: 0;
+    }
+    .page-break-before { 
+      page-break-before: always; 
+    }
+    .print\\:break-before-page { 
+      page-break-before: always; 
     }
   `;
   
