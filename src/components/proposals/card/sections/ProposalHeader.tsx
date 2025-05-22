@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,8 +28,8 @@ const ProposalHeader = ({
   return <CardHeader className="bg-gradient-to-r from-af-blue-600 to-af-blue-800 text-white pb-8">
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-4">
-          <img src="/lovable-uploads/d939ccfc-a061-45e8-97e0-1fa1b82d3df2.png" alt="Logo" className="h-10 w-auto" />
-          <CardTitle className="font-bold text-white text-lg">Proposta de Regularização PGFN</CardTitle>
+          
+          <CardTitle className="font-bold text-white text-lg">Proposta de Regularização | Procuradoria Geral • Aliança Fiscal</CardTitle>
         </div>
         
       </div>
