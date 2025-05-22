@@ -5,10 +5,15 @@ import ProposalsHeader from "./components/ProposalsHeader";
 import ProposalsTabs from "./components/ProposalsTabs";
 import { useProposalsState } from "@/hooks/proposals";
 import { useProposalHandlers } from "@/hooks/proposals";
+import { ProposalsDashboard } from "@/components/proposals/ProposalsDashboard";
+import { useAuth } from "@/contexts/auth";
+import { UserRole } from "@/lib/types";
 
 const ProposalsContainer = () => {
   // Get state from our custom hook
   const proposalsState = useProposalsState();
+  const { user } = useAuth();
+  const isAdmin = user?.role === UserRole.ADMIN;
   
   // Get handlers from our custom hook
   const handlers = useProposalHandlers({
@@ -73,6 +78,9 @@ const ProposalsContainer = () => {
         onReset={handlers.handleReset}
         setProcessingStatus={proposalsState.setProcessingStatus}
       />
+      
+      {/* Add the dashboard section for admins only */}
+      {isAdmin && <ProposalsDashboard />}
     </div>
   );
 };

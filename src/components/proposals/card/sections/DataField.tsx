@@ -1,53 +1,31 @@
 
-import React, { ReactNode } from 'react';
-import { cn } from '@/lib/utils';
+import React from 'react';
 
-interface DataFieldProps {
+export interface DataFieldProps {
   label: string;
-  value: string | ReactNode;
-  icon?: React.ReactNode;
-  fullWidth?: boolean;
+  value: string;
   highlight?: boolean;
   className?: string;
   description?: string;
   additionalText?: string;
 }
 
-/**
- * Reusable data field component for proposal sections
- */
-const DataField = ({
-  label,
-  value,
-  icon,
-  fullWidth = false,
-  highlight = false,
-  className,
-  description,
-  additionalText
-}: DataFieldProps) => {
+const DataField: React.FC<DataFieldProps> = ({ 
+  label, 
+  value, 
+  highlight = false, 
+  className = "", 
+  description = "",
+  additionalText = ""
+}) => {
   return (
-    <div 
-      className={cn(
-        "bg-gray-50 p-3 rounded", 
-        fullWidth && "md:col-span-2",
-        highlight && "bg-gradient-to-br from-green-50 to-white",
-        className
-      )}
-    >
-      <span className="text-sm font-medium text-gray-500 flex items-center">
-        {icon && <span className="h-3 w-3 mr-1">{icon}</span>}
-        {label}:
-      </span>
-      <div className="text-base mt-1">
-        {typeof value === 'string' ? (value || '-') : value}
+    <div className={`py-2 ${className}`}>
+      <div className="text-xs text-af-dark-500">{label}</div>
+      <div className={`text-af-dark-800 ${highlight ? 'text-lg font-bold' : 'text-sm'}`}>
+        {value}
+        {additionalText && <span className="text-xs ml-1 text-gray-500">{additionalText}</span>}
       </div>
-      {description && (
-        <p className="text-xs text-gray-500 mt-1 italic">{description}</p>
-      )}
-      {additionalText && (
-        <p className="text-xs text-gray-600 mt-1 font-medium">{additionalText}</p>
-      )}
+      {description && <div className="text-xs text-gray-500">{description}</div>}
     </div>
   );
 };

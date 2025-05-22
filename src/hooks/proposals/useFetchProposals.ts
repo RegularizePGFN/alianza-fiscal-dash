@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { UserRole } from '@/lib/types';
 
 export const useFetchProposals = () => {
   const [proposals, setProposals] = useState<Proposal[]>([]);
@@ -27,15 +28,40 @@ export const useFetchProposals = () => {
     setIsLoading(true);
     
     try {
-      const { data, error } = await supabase
-        .from('proposals')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      // Check if user is admin to fetch all proposals or just their own
+      const isAdmin = user.role === UserRole.ADMIN;
+      
+      // Query based on user role
+      let query = supabase.from('proposals').select('*');
+      
+      // Only filter by user_id if not an admin
+      if (!isAdmin) {
+        query = query.eq('user_id', user.id);
+      }
+      
+      // Order by created_at desc
+      query = query.order('created_at', { ascending: false });
+      
+      const { data, error } = await query;
       
       if (error) {
         throw new Error(error.message);
       }
+      
+      // Fetch all users for mapping names to proposals (especially for admins)
+      const { data: usersData, error: usersError } = await supabase
+        .from('profiles')
+        .select('id, name');
+      
+      if (usersError) {
+        console.error('Error fetching users:', usersError);
+      }
+      
+      // Create a map of user IDs to names for quick lookup
+      const userMap = (usersData || []).reduce((acc, user) => {
+        acc[user.id] = user.name;
+        return acc;
+      }, {} as Record<string, string>);
       
       const formattedProposals = data.map((item: any): Proposal => {
         // Calculate fees if not present but we have the necessary values
@@ -47,10 +73,13 @@ export const useFetchProposals = () => {
           feesValue = economyValue * 0.2; // 20% of the savings
         }
         
+        // Get user name from the map or fallback to user's own name
+        const userName = userMap[item.user_id] || user.name || 'Unknown User';
+        
         return {
           id: item.id,
           userId: item.user_id,
-          userName: user.name || 'Unknown User',
+          userName: userName,
           createdAt: item.created_at,
           creationDate: item.creation_date,
           validityDate: item.validity_date,
