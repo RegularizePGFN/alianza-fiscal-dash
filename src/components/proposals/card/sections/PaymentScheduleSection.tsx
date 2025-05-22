@@ -33,7 +33,7 @@ const PaymentScheduleSection = ({ data, colors, showHeader = true }: PaymentSche
   }
 
   const content = (
-    <div className="col-span-2 space-y-4">
+    <div className="space-y-6">
       {/* Entry payments */}
       {entryDates.length > 0 && (
         <div className="border-l-4 border-blue-500 pl-4 py-2">

@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { generateProposalPdf, generateProposalPng } from "@/lib/pdfUtils";
 import { Button } from "@/components/ui/button";
 import { Printer, Download, FileImage, ArrowLeft, ArrowRight } from "lucide-react";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink } from "@/components/ui/pagination";
 
 interface ProposalCardProps {
   data: Partial<ExtractedData>;
@@ -153,50 +154,74 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
     setCurrentPage(prev => Math.max(prev - 1, 0));
   };
 
+  // Calculate A4 dimensions for the preview
+  const a4Width = 210 * 3.7795 * 0.5; // A4 width in pixels with 0.5 scale
+  const a4Height = 297 * 3.7795 * 0.5; // A4 height in pixels with 0.5 scale
+
   return (
     <div className="flex flex-col items-center space-y-4">
       {/* Page navigation above the proposal */}
-      <div className="flex justify-between w-full max-w-3xl px-4" data-pdf-remove="true">
+      <div className="flex justify-between items-center w-full max-w-3xl px-4" data-pdf-remove="true">
         <p className="text-sm text-gray-500">
           Página {currentPage + 1} de {totalPages}
         </p>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={prevPage} 
-            disabled={currentPage === 0}
-            className="px-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span className="sr-only">Página anterior</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={nextPage} 
-            disabled={currentPage === totalPages - 1}
-            className="px-2"
-          >
-            <ArrowRight className="h-4 w-4" />
-            <span className="sr-only">Próxima página</span>
-          </Button>
-        </div>
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationLink 
+                onClick={prevPage} 
+                disabled={currentPage === 0}
+                className="cursor-pointer"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Anterior
+              </PaginationLink>
+            </PaginationItem>
+            {totalPages > 2 && Array.from({length: totalPages}).map((_, i) => (
+              <PaginationItem key={i}>
+                <PaginationLink 
+                  onClick={() => setCurrentPage(i)} 
+                  isActive={currentPage === i}
+                  className="cursor-pointer"
+                >
+                  {i + 1}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+            <PaginationItem>
+              <PaginationLink 
+                onClick={nextPage} 
+                disabled={currentPage === totalPages - 1}
+                className="cursor-pointer"
+              >
+                Próxima
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </PaginationLink>
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </div>
 
       {/* Main proposal card - action buttons moved outside */}
       <Card 
         ref={proposalRef} 
         className="max-w-3xl mx-auto shadow border overflow-hidden font-['Roboto',sans-serif] w-full print:w-full print:max-w-none"
-        style={{ backgroundColor: colors.background, maxHeight: '842px', height: '100%' }}
+        style={{ 
+          backgroundColor: colors.background,
+          width: `${a4Width}px`, 
+          height: `${a4Height}px`,
+          maxHeight: '100%'
+        }}
       >
-        <CardContent className="p-0">
-          {/* Use the shared ProposalContent component with page prop */}
-          <ProposalContent 
-            data={data}
-            companyData={companyData}
-            currentPage={currentPage}
-          />
+        <CardContent className="p-0 h-full">
+          <div className="overflow-auto h-full">
+            {/* Use the shared ProposalContent component with page prop */}
+            <ProposalContent 
+              data={data}
+              companyData={companyData}
+              currentPage={currentPage}
+            />
+          </div>
         </CardContent>
       </Card>
       

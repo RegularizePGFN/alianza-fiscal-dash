@@ -5,6 +5,7 @@ import { ExtractedData, PDFTemplate, CompanyData } from '@/lib/types/proposals';
 import ProposalContent from '../card/ProposalContent';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink } from '@/components/ui/pagination';
 
 interface PDFTemplatePreviewProps {
   formData: Partial<ExtractedData>;
@@ -99,32 +100,45 @@ const PDFTemplatePreview = ({
   return (
     <div className="flex flex-col items-center">
       {/* Page navigation */}
-      <div className="flex justify-between w-full max-w-full mb-2">
+      <div className="flex justify-between items-center w-full max-w-full mb-2">
         <p className="text-sm text-gray-500">
           Página {currentPage + 1} de {totalPages}
         </p>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={prevPage} 
-            disabled={currentPage === 0}
-            className="px-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span className="sr-only">Página anterior</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={nextPage} 
-            disabled={currentPage === totalPages - 1}
-            className="px-2"
-          >
-            <ArrowRight className="h-4 w-4" />
-            <span className="sr-only">Próxima página</span>
-          </Button>
-        </div>
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationLink 
+                onClick={prevPage} 
+                disabled={currentPage === 0}
+                className="cursor-pointer"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Anterior
+              </PaginationLink>
+            </PaginationItem>
+            {totalPages > 2 && Array.from({length: totalPages}).map((_, i) => (
+              <PaginationItem key={i}>
+                <PaginationLink 
+                  onClick={() => setCurrentPage(i)} 
+                  isActive={currentPage === i}
+                  className="cursor-pointer"
+                >
+                  {i + 1}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+            <PaginationItem>
+              <PaginationLink 
+                onClick={nextPage} 
+                disabled={currentPage === totalPages - 1}
+                className="cursor-pointer"
+              >
+                Próxima
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </PaginationLink>
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </div>
       
       <Card 
@@ -136,16 +150,17 @@ const PDFTemplatePreview = ({
           height: `${a4Height}px`,
           maxHeight: '100%',
           aspectRatio: '210/297', // Proporção A4
-          overflow: 'auto'
         }}
       >
         {/* Use the shared ProposalContent component for consistency, with current page */}
-        <ProposalContent 
-          data={formData}
-          companyData={companyData}
-          isPreview={true}
-          currentPage={currentPage}
-        />
+        <div className="overflow-auto h-full">
+          <ProposalContent 
+            data={formData}
+            companyData={companyData}
+            isPreview={true}
+            currentPage={currentPage}
+          />
+        </div>
       </Card>
     </div>
   );

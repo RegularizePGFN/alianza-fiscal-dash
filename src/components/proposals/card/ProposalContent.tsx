@@ -131,7 +131,7 @@ const ProposalContent = ({
     const filteredSections = sectionOrder.filter(section => section !== 'alert');
 
     return (
-      <div className={`p-6 space-y-0 font-['Roboto',sans-serif] ${className}`}>
+      <div className={`p-6 space-y-4 h-full font-['Roboto',sans-serif] ${className}`}>
         {/* Show header on first page */}
         {layout.showHeader && (
           <HeaderSection 
@@ -144,7 +144,7 @@ const ProposalContent = ({
         )}
 
         {/* Main content for page 1 */}
-        <div className="main-content">
+        <div className="main-content space-y-4">
           {/* Render main sections based on the adjusted section order */}
           {filteredSections.map((section, index) => (
             <React.Fragment key={index}>
@@ -160,12 +160,16 @@ const ProposalContent = ({
           {/* Signature is always shown on the main page */}
           <SignatureSection data={data} />
         </div>
+        
+        <div className="absolute bottom-4 right-6 text-xs text-gray-500 print:block hidden">
+          Página 1 de {data.entryDates || data.installmentDates ? '2' : '1'}
+        </div>
       </div>
     );
   } else {
     // Payment schedule page (page 1+)
     return (
-      <div className={`p-6 space-y-0 font-['Roboto',sans-serif] ${className}`}>
+      <div className={`p-6 space-y-4 h-full font-['Roboto',sans-serif] ${className}`}>
         {/* Simple header for payment schedule */}
         <div className="border-b border-gray-200 pb-4 mb-6">
           <h2 className="text-xl font-semibold text-center" style={{ color: colors.secondary }}>
@@ -173,12 +177,18 @@ const ProposalContent = ({
           </h2>
         </div>
         
-        {/* Payment schedule content */}
-        <PaymentScheduleSection 
-          data={data} 
-          colors={colors} 
-          showHeader={false} 
-        />
+        {/* Payment schedule content - make it scrollable if needed */}
+        <div className="overflow-auto pb-8">
+          <PaymentScheduleSection 
+            data={data} 
+            colors={colors} 
+            showHeader={false} 
+          />
+        </div>
+        
+        <div className="absolute bottom-4 right-6 text-xs text-gray-500 print:block hidden">
+          Página 2 de 2
+        </div>
       </div>
     );
   }
