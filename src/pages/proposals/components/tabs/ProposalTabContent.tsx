@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { RotateCcw, Edit2, User, Building, Phone, Mail, FileText } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
@@ -26,6 +27,18 @@ const ProposalTabContent = ({
   onInputChange
 }: ProposalTabContentProps) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [showObservations, setShowObservations] = useState(!!formData.additionalComments);
+
+  const handleObservationsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    onInputChange('additionalComments', e.target.value);
+  };
+
+  const handleShowObservationsChange = (checked: boolean) => {
+    setShowObservations(checked);
+    if (!checked) {
+      onInputChange('additionalComments', '');
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -52,8 +65,7 @@ const ProposalTabContent = ({
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-4">
-              <h3 className="text-md font-medium flex items-center gap-2">
-                <User className="h-4 w-4" /> 
+              <h3 className="text-md font-medium">
                 Dados do Cliente
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -95,8 +107,7 @@ const ProposalTabContent = ({
             <Separator />
             
             <div className="space-y-4">
-              <h3 className="text-md font-medium flex items-center gap-2">
-                <Building className="h-4 w-4" /> 
+              <h3 className="text-md font-medium">
                 Dados da Negociação
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -152,18 +163,29 @@ const ProposalTabContent = ({
             </div>
             
             <Separator />
-            
-            <div className="space-y-2">
-              <Label htmlFor="additionalComments" className="flex items-center gap-2">
-                <FileText className="h-4 w-4" /> 
-                Observações Adicionais
-              </Label>
-              <Textarea 
-                id="additionalComments" 
-                value={formData.additionalComments || ''} 
-                onChange={(e) => onInputChange('additionalComments', e.target.value)}
-                className="min-h-[100px]"
-              />
+
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="showObservations" 
+                  checked={showObservations} 
+                  onCheckedChange={handleShowObservationsChange}
+                />
+                <Label htmlFor="showObservations">Adicionar observações</Label>
+              </div>
+              
+              {showObservations && (
+                <div className="space-y-2">
+                  <Label htmlFor="additionalComments">Observações</Label>
+                  <Textarea 
+                    id="additionalComments" 
+                    value={formData.additionalComments || ''} 
+                    onChange={handleObservationsChange}
+                    className="min-h-[100px]"
+                    placeholder="Digite as observações que devem aparecer na proposta..."
+                  />
+                </div>
+              )}
             </div>
             
             <div className="space-y-2">

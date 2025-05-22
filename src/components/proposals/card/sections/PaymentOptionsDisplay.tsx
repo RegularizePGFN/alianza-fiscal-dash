@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { CreditCard } from "lucide-react";
 import { ExtractedData } from "@/lib/types/proposals";
 
 interface PaymentOptionsDisplayProps {
@@ -35,8 +34,7 @@ const PaymentOptionsDisplay = ({ data }: PaymentOptionsDisplayProps) => {
 
   return (
     <div className="bg-white p-5 rounded-lg border border-af-blue-200 shadow-sm">
-      <h3 className="text-lg font-semibold text-af-blue-800 mb-4 flex items-center">
-        <CreditCard className="mr-2 h-5 w-5 text-af-blue-600" />
+      <h3 className="text-lg font-semibold text-af-blue-800 mb-4">
         Opções de Pagamento
       </h3>
       <div className="grid grid-cols-2 gap-4">

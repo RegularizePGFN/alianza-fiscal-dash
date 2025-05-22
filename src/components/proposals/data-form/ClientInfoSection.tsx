@@ -1,16 +1,26 @@
 
 import React from 'react';
-import { ExtractedData } from "@/lib/types/proposals";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Briefcase, Phone, Mail } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Search, User, Building } from "lucide-react";
+import { CompanyData } from "@/lib/types/proposals";
+import CompanyDetailsPanel from "./CompanyDetailsPanel";
 
 interface ClientInfoSectionProps {
-  formData: Partial<ExtractedData>;
+  formData: {
+    cnpj?: string;
+    clientName?: string;
+    debtNumber?: string;
+    clientPhone?: string;
+    clientEmail?: string;
+    businessActivity?: string;
+  };
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isSearchingCnpj: boolean;
   handleSearchCnpj: () => void;
-  companyData: any | null;
+  companyData: CompanyData | null;
 }
 
 const ClientInfoSection = ({
@@ -21,128 +31,103 @@ const ClientInfoSection = ({
   companyData
 }: ClientInfoSectionProps) => {
   return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-medium text-slate-700 dark:text-slate-200">
-        Dados do Contribuinte
-      </h2>
+    <div className="space-y-6">
+      <h2 className="text-lg font-medium">Dados do Cliente</h2>
       
-      <div className="p-5 border rounded-lg bg-gray-50 dark:bg-gray-800/50 dark:border-gray-700">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* CNPJ */}
-          <div className="space-y-2">
-            <label htmlFor="cnpj" className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              CNPJ
-            </label>
-            <div className="flex gap-2">
-              <Input
-                id="cnpj"
-                name="cnpj"
-                type="text"
-                placeholder="00.000.000/0000-00"
-                value={formData.cnpj || ''}
-                onChange={onInputChange}
-                className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400"
-              />
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={handleSearchCnpj} 
-                disabled={isSearchingCnpj || !formData.cnpj}
-                className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-              >
-                <Search className="h-4 w-4 mr-1" />
-                Buscar
-              </Button>
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Os dados da empresa serão preenchidos automaticamente após consulta
-            </p>
-          </div>
-          
-          {/* Número do Débito */}
-          <div className="space-y-2">
-            <label htmlFor="debtNumber" className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              Número do Débito
-            </label>
+      <div className="space-y-4">
+        {/* CNPJ Search Section */}
+        <div>
+          <Label htmlFor="cnpj" className="flex items-center gap-2 mb-2">
+            CNPJ do Cliente
+          </Label>
+          <div className="flex gap-2">
             <Input
-              id="debtNumber"
-              name="debtNumber"
-              type="text"
-              placeholder="000000-00"
-              value={formData.debtNumber || ''}
+              id="cnpj"
+              name="cnpj"
+              value={formData.cnpj || ''}
               onChange={onInputChange}
-              className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400"
+              placeholder="00.000.000/0000-00"
+              className="flex-1"
+              maxLength={18}
             />
+            <Button
+              type="button"
+              variant="outline"
+              className="shrink-0 w-32"
+              onClick={handleSearchCnpj}
+              disabled={isSearchingCnpj || !formData.cnpj || formData.cnpj.length < 14}
+            >
+              {isSearchingCnpj ? 'Buscando...' : 'Buscar CNPJ'}
+            </Button>
           </div>
-          
-          {/* Nome/Razão Social */}
+        </div>
+        
+        {/* Display Company Data if Available */}
+        {companyData && (
+          <CompanyDetailsPanel companyData={companyData} />
+        )}
+        
+        {/* Client Information */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <label htmlFor="clientName" className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
-              <Briefcase className="h-4 w-4 text-af-blue-600 dark:text-af-blue-400" />
-              Nome/Razão Social
-            </label>
+            <Label htmlFor="clientName">Nome/Razão Social</Label>
             <Input
               id="clientName"
               name="clientName"
-              type="text"
-              placeholder="Razão Social"
               value={formData.clientName || ''}
               onChange={onInputChange}
-              className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400"
+              placeholder="Nome completo do cliente"
             />
           </div>
           
-          {/* Ramo de Atividade */}
           <div className="space-y-2">
-            <label htmlFor="businessActivity" className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              Ramo de Atividade
-            </label>
+            <Label htmlFor="debtNumber">Número do Débito</Label>
             <Input
-              id="businessActivity"
-              name="businessActivity"
-              type="text"
-              placeholder="Ramo de atividade principal"
-              value={formData.businessActivity || ''}
+              id="debtNumber"
+              name="debtNumber"
+              value={formData.debtNumber || ''}
               onChange={onInputChange}
-              className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400"
+              placeholder="Número do débito"
             />
           </div>
           
-          {/* Telefone */}
           <div className="space-y-2">
-            <label htmlFor="clientPhone" className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
-              <Phone className="h-4 w-4 text-af-blue-600 dark:text-af-blue-400" />
-              Telefone
-            </label>
+            <Label htmlFor="clientPhone">Telefone</Label>
             <Input
               id="clientPhone"
               name="clientPhone"
-              type="text"
-              placeholder="(00) 00000-0000"
               value={formData.clientPhone || ''}
               onChange={onInputChange}
-              className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400"
+              placeholder="(99) 99999-9999"
             />
           </div>
           
-          {/* Email */}
           <div className="space-y-2">
-            <label htmlFor="clientEmail" className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
-              <Mail className="h-4 w-4 text-af-blue-600 dark:text-af-blue-400" />
-              Email
-            </label>
+            <Label htmlFor="clientEmail">Email</Label>
             <Input
               id="clientEmail"
               name="clientEmail"
-              type="email"
-              placeholder="email@exemplo.com"
               value={formData.clientEmail || ''}
               onChange={onInputChange}
-              className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400"
+              placeholder="cliente@exemplo.com"
+              type="email"
+            />
+          </div>
+          
+          <div className="space-y-2 col-span-full">
+            <Label htmlFor="businessActivity">Atividade Principal</Label>
+            <Input
+              id="businessActivity"
+              name="businessActivity"
+              value={formData.businessActivity || ''}
+              onChange={onInputChange}
+              placeholder="Ramo de atividade da empresa"
             />
           </div>
         </div>
       </div>
+      
+      <Separator className="my-6" />
     </div>
   );
 };

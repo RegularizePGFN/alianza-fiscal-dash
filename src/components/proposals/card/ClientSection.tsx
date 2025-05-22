@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { BriefcaseIcon } from 'lucide-react';
 import { CompanyData } from "@/lib/types/proposals";
 import {
   CompanyDataDetails,
@@ -33,8 +32,7 @@ const ClientSection = ({
 }: ClientSectionProps) => {
   return (
     <div className="space-y-2">
-      <h3 className="font-semibold text-base border-b border-af-blue-200 pb-1 text-af-blue-800 flex items-center">
-        <BriefcaseIcon className="mr-2 h-4 w-4 flex-shrink-0 text-af-blue-600" />
+      <h3 className="font-semibold text-base border-b border-af-blue-200 pb-1 text-af-blue-800">
         Dados do Contribuinte
       </h3>
       

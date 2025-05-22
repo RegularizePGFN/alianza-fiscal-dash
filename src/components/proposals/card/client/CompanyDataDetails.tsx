@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { CompanyData } from "@/lib/types/proposals";
-import { CompanySideActivities } from './';
 
 interface CompanyDataDetailsProps {
   companyData: CompanyData;
@@ -80,7 +79,7 @@ const CompanyDataDetails = ({ companyData }: CompanyDataDetailsProps) => {
               <span className="text-gray-600">Telefones:</span>
               <p>
                 {companyData.phones.map((phone, index) => 
-                  `(${phone.area}) ${phone.number}`
+                  `${phone.area}${phone.number}`
                 ).join(', ')}
               </p>
             </div>
@@ -96,9 +95,9 @@ const CompanyDataDetails = ({ companyData }: CompanyDataDetailsProps) => {
         
         {companyData.mainActivity && (
           <div className="mt-2">
-            <span className="font-medium text-af-blue-700 text-xs">Atividade Principal:</span>
+            <span className="text-gray-600">Atividade Principal:</span>
             <p className="text-xs mt-0.5">
-              {companyData.mainActivity.id} | {companyData.mainActivity.text}
+              {companyData.mainActivity.text}
             </p>
           </div>
         )}
