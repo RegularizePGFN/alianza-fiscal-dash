@@ -74,6 +74,8 @@ export function DailyResultsContent({ todaySales, currentDate }: DailyResultsCon
           console.error("Error fetching proposals:", proposalsError);
         }
         
+        console.log("Today's proposals:", proposalsData);
+        
         // Initialize all salespeople with zero counts
         const allSalespeople = (profilesData || []).map(profile => ({
           id: profile.id,
@@ -104,11 +106,14 @@ export function DailyResultsContent({ todaySales, currentDate }: DailyResultsCon
         });
         
         // Update counts for salespeople who created proposals today
-        if (proposalsData) {
+        if (proposalsData && proposalsData.length > 0) {
+          console.log(`Found ${proposalsData.length} proposals for today`);
+          
           proposalsData.forEach(proposal => {
             const existingSalesperson = allSalespeople.find(sp => sp.id === proposal.user_id);
             if (existingSalesperson) {
               existingSalesperson.proposalsCount = (existingSalesperson.proposalsCount || 0) + 1;
+              console.log(`Updating proposal count for ${existingSalesperson.name} to ${existingSalesperson.proposalsCount}`);
               
               // Add fees if available
               if (proposal.fees_value) {
@@ -125,10 +130,50 @@ export function DailyResultsContent({ todaySales, currentDate }: DailyResultsCon
                 
                 if (!isNaN(feesValue)) {
                   existingSalesperson.feesAmount = (existingSalesperson.feesAmount || 0) + feesValue;
+                  console.log(`Updating fees for ${existingSalesperson.name} to ${existingSalesperson.feesAmount}`);
                 }
               }
+            } else if (proposal.user_id) {
+              // If we don't have this salesperson in our list yet, fetch their name
+              const fetchSalespersonName = async () => {
+                const { data } = await supabase
+                  .from("profiles")
+                  .select("name")
+                  .eq("id", proposal.user_id)
+                  .single();
+                
+                if (data) {
+                  // Add new salesperson to our list
+                  let feesValue = 0;
+                  
+                  if (proposal.fees_value) {
+                    if (typeof proposal.fees_value === 'string') {
+                      const cleanedValue = String(proposal.fees_value).replace(/[^0-9,.]/g, '').replace(',', '.');
+                      feesValue = parseFloat(cleanedValue);
+                    } else if (typeof proposal.fees_value === 'number') {
+                      feesValue = proposal.fees_value;
+                    }
+                  }
+                  
+                  allSalespeople.push({
+                    id: proposal.user_id,
+                    name: data.name || "Sem nome",
+                    salesCount: 0,
+                    salesAmount: 0,
+                    proposalsCount: 1,
+                    feesAmount: !isNaN(feesValue) ? feesValue : 0
+                  });
+                  
+                  // Update the state with the new data
+                  setSalespeople(sortData([...allSalespeople]));
+                }
+              };
+              
+              fetchSalespersonName();
             }
           });
+        } else {
+          console.log("No proposals found for today");
         }
 
         // Apply initial sort to the data
