@@ -2,7 +2,6 @@
 import React from 'react';
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Percent } from "lucide-react";
 import { formatBrazilianCurrency } from '@/lib/utils';
 
 interface HeaderSectionProps {
@@ -66,10 +65,7 @@ const HeaderSection = ({
             />
           )}
           <CardTitle className="text-2xl font-bold text-white">
-            <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Proposta de Parcelamento PGFN
-            </div>
+            Proposta de Parcelamento PGFN
           </CardTitle>
         </div>
         <Badge 
@@ -78,7 +74,6 @@ const HeaderSection = ({
             backgroundColor: colors.accent,
           }}
         >
-          <Percent className="mr-1 h-4 w-4" /> 
           Economia de R$ {calculateEconomyValue()}
         </Badge>
       </div>

@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 interface SectionContainerProps {
   children: ReactNode;
   title: string;
-  icon?: React.ReactNode;
+  icon?: React.ReactNode; // Keeping the prop for backward compatibility
   className?: string;
   color?: string;
   fullWidth?: boolean;
@@ -18,7 +18,7 @@ interface SectionContainerProps {
 const SectionContainer = ({ 
   children, 
   title, 
-  icon, 
+  icon, // We'll keep the prop but not use it
   className, 
   color = '#1E40AF',
   fullWidth = false,
@@ -30,7 +30,6 @@ const SectionContainer = ({
         className="text-base font-semibold pb-1.5 mb-2 border-b border-gray-200 flex items-center" 
         style={{ color }}
       >
-        {icon && <span className="mr-2">{icon}</span>}
         {title}
       </h3>
       {subtitle && (

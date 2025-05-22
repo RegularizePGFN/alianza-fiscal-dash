@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
-import { formatBrazilianCurrency } from '@/lib/utils';
 import { 
   MetadataSection,
   ClientSection,

@@ -1,80 +1,123 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { ExtractedData, CompanyData } from "@/lib/types/proposals";
-import { HeaderSection } from './sections';
-import ProposalContent from './ProposalContent';
-import { ActionButtonsSection } from './sections';
+import { Separator } from "@/components/ui/separator";
+import { ExtractedData } from "@/lib/types/proposals";
+import { generateProposalPdf, generateProposalPng } from "@/lib/pdfUtils";
+import { useToast } from "@/hooks/use-toast";
+
+// Import the new component sections
+import ProposalHeader from './card/sections/ProposalHeader';
+import ProposalDataSection from './card/sections/ProposalDataSection';
+import NegotiationDataSection from './card/sections/NegotiationDataSection';
+import FeesDisplaySection from './card/sections/FeesDisplaySection';
+import PaymentOptionsDisplay from './card/sections/PaymentOptionsDisplay';
+import ActionButtonsSection from './card/sections/ActionButtonsSection';
 
 interface ProposalCardProps {
   data: Partial<ExtractedData>;
   imageUrl?: string;
-  companyData?: CompanyData | null;
 }
 
-const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
-  // Get colors from template settings or use defaults
-  const colors = (() => {
-    try {
-      return {
-        primary: '#3B82F6',
-        secondary: '#1E40AF',
-        accent: '#10B981',
-        background: '#F8FAFC'
-      };
-    } catch (e) {
-      return {
-        primary: '#3B82F6',
-        secondary: '#1E40AF',
-        accent: '#10B981',
-        background: '#F8FAFC'
-      };
+const ProposalCard = ({ data }: ProposalCardProps) => {
+  const proposalRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+  
+  const generatePdf = async () => {
+    if (!proposalRef.current) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar o PDF. Tente novamente.",
+        variant: "destructive",
+      });
+      return;
     }
-  })();
-
-  // Default layout settings
-  const layout = {
-    sections: ['client', 'alert', 'debt', 'payment', 'fees', 'total'],
-    showHeader: true,
-    showLogo: true,
-    showWatermark: false
+    
+    toast({
+      title: "Processando",
+      description: "Gerando PDF, aguarde um momento...",
+    });
+    
+    try {
+      await generateProposalPdf(proposalRef.current, data);
+      
+      toast({
+        title: "Sucesso",
+        description: "PDF gerado com sucesso!",
+      });
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar o PDF. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const generatePng = async () => {
+    if (!proposalRef.current) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar a imagem PNG. Tente novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    toast({
+      title: "Processando",
+      description: "Gerando imagem PNG, aguarde um momento...",
+    });
+    
+    try {
+      await generateProposalPng(proposalRef.current, data);
+      
+      toast({
+        title: "Sucesso",
+        description: "Imagem PNG gerada com sucesso!",
+      });
+    } catch (error) {
+      console.error("Erro ao gerar PNG:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar a imagem PNG. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
-    <div className="flex flex-col items-center space-y-4">
-      {/* Action buttons - acima do card da proposta */}
-      <ActionButtonsSection 
-        data={data}
-        companyData={companyData}
+    <Card ref={proposalRef} className="border-border max-w-4xl mx-auto shadow-lg bg-gradient-to-br from-af-blue-50 to-white overflow-hidden">
+      {/* Header with Logo */}
+      <ProposalHeader
+        totalDebt={data.totalDebt}
+        discountedValue={data.discountedValue || '0,00'}
       />
 
-      {/* Main proposal card */}
-      <Card 
-        className="max-w-3xl mx-auto shadow border overflow-hidden font-['Roboto',sans-serif] w-full print:shadow-none print:border-0"
-        style={{ 
-          backgroundColor: colors.background,
-          margin: 0,
-          padding: 0
-        }}
-      >
-        {/* Header with Logo */}
-        <HeaderSection 
-          showHeader={layout.showHeader} 
-          showLogo={layout.showLogo}
-          discountedValue={data.discountedValue || '0,00'}
-          colors={colors}
-          totalDebt={data.totalDebt}
-        />
+      <CardContent className="pt-6 space-y-8 px-8 pb-8">
+        {/* Contribuinte Section */}
+        <ProposalDataSection data={data} />
 
-        <CardContent className="p-0">
-          {/* Use the shared ProposalContent component */}
-          <ProposalContent 
-            data={data}
-            companyData={companyData}
-          />
-        </CardContent>
-      </Card>
-    </div>
+        {/* Negociação Section */}
+        <NegotiationDataSection data={data} />
+
+        {/* Fees Section - Highlighted */}
+        <FeesDisplaySection data={data} />
+
+        {/* Payment Options */}
+        <PaymentOptionsDisplay data={data} />
+
+        <Separator className="my-6" />
+
+        {/* Action Buttons */}
+        <ActionButtonsSection 
+          onGeneratePdf={generatePdf}
+          onGeneratePng={generatePng}
+          data={data}
+        />
+      </CardContent>
+    </Card>
   );
 };
 
