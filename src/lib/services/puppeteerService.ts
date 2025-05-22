@@ -1,7 +1,7 @@
 
-import axios from 'axios';
 import { ExtractedData } from '@/lib/types/proposals';
 import { uploadFileToMinio, getProposalFilePath } from './minioService';
+import { renderAndUpload } from './renderApiService';
 
 // We'll use a remote Puppeteer service endpoint
 const PUPPETEER_SERVICE_URL = 'https://puppeteer-service.aliancafiscal.com.br/render';
@@ -39,7 +39,7 @@ const base64ToUint8Array = (base64: string): Uint8Array => {
   return bytes;
 };
 
-// Generate proposal files using Puppeteer service
+// Generate proposal files using the render API service
 export const generateProposalFiles = async (
   htmlContent: string,
   data: Partial<ExtractedData>
@@ -52,36 +52,39 @@ export const generateProposalFiles = async (
     const pdfPath = getProposalFilePath(identifier, 'pdf');
     const pngPath = getProposalFilePath(identifier, 'png');
     
-    // First, try using the actual Puppeteer service
     try {
-      // Send HTML to Puppeteer service for rendering
-      const response = await axios.post(PUPPETEER_SERVICE_URL, {
+      // Use our new render API service for PDF
+      const pdfResult = await renderAndUpload({
         html: htmlContent,
-        options: {
-          format: 'A4',
-          printBackground: true,
-          margin: { top: '1cm', right: '1cm', bottom: '1cm', left: '1cm' }
+        fileKey: pdfPath,
+        fileType: 'pdf',
+        metadata: {
+          cnpj: data.cnpj || '',
+          clientName: data.clientName || ''
         }
       });
       
-      const renderResult: RenderResponse = response.data;
+      // Use our new render API service for PNG
+      const pngResult = await renderAndUpload({
+        html: htmlContent,
+        fileKey: pngPath,
+        fileType: 'png',
+        metadata: {
+          cnpj: data.cnpj || '',
+          clientName: data.clientName || ''
+        }
+      });
       
-      // Convert base64 to Uint8Array
-      const pdfContent = base64ToUint8Array(renderResult.pdf);
-      const pngContent = base64ToUint8Array(renderResult.png);
-      
-      // Upload files to MinIO
-      const [pdfUrl, pngUrl] = await Promise.all([
-        uploadFileToMinio(pdfContent, pdfPath, 'application/pdf'),
-        uploadFileToMinio(pngContent, pngPath, 'image/png')
-      ]);
-      
-      return { pdfUrl, pngUrl, pdfPath, pngPath };
+      return {
+        pdfUrl: pdfResult.url,
+        pngUrl: pngResult.url,
+        pdfPath,
+        pngPath
+      };
       
     } catch (serviceError) {
-      console.warn('Puppeteer service unavailable, falling back to client-side rendering:', serviceError);
+      console.warn('Render API service unavailable, falling back to client-side rendering:', serviceError);
       // If remote service fails, fallback to existing PDF generation method
-      // This will be implemented in the fallback handler below
       throw serviceError;
     }
   } catch (error) {
