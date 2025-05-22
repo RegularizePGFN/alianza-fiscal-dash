@@ -3,6 +3,7 @@ import React from 'react';
 import { ExtractedData } from '@/lib/types/proposals';
 import SectionContainer from './SectionContainer';
 import DataField from './DataField';
+import { CreditCard } from 'lucide-react';
 
 interface FeesSectionProps {
   data: Partial<ExtractedData>;
@@ -23,25 +24,18 @@ const FeesSection = ({ data, colors }: FeesSectionProps) => {
     data.feesInstallments && 
     parseInt(data.feesInstallments) > 1;
 
-  // Se não houver valor de honorários, não mostramos a seção
-  if (!data.feesValue && !showInstallmentFees) {
-    return null;
-  }
-
   return (
     <SectionContainer 
       title="Honorários" 
-      icon={null}
+      icon={<CreditCard className="h-4 w-4" />}
       color={sectionColor}
     >
-      {data.feesValue && (
-        <DataField 
-          label="Honorários à Vista" 
-          value={`R$ ${data.feesValue || '0,00'}`}
-          highlight={true}
-          className="bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/20 dark:to-gray-800/50"
-        />
-      )}
+      <DataField 
+        label="Honorários à Vista" 
+        value={`R$ ${data.feesValue || '0,00'}`}
+        highlight={true}
+        className="bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/20 dark:to-gray-800/50"
+      />
       
       {showInstallmentFees && (
         <DataField 

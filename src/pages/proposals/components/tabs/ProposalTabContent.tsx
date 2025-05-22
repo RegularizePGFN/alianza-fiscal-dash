@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 import { ProposalCard } from "@/components/proposals/card";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ const ProposalTabContent = ({
   onReset,
   onInputChange
 }: ProposalTabContentProps) => {
-  const [isEditing, setIsEditing] = React.useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   return (
     <div className="space-y-6">

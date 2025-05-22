@@ -46,6 +46,48 @@ const FinancialInfoSection = ({
     
     onInputChange(syntheticEvent);
   };
+
+  // Calculate total entry value
+  const calculateTotalEntryValue = () => {
+    if (formData.entryValue && formData.entryInstallments) {
+      try {
+        const entryValue = parseFloat(formData.entryValue.replace(/\./g, '').replace(',', '.'));
+        const installments = parseInt(formData.entryInstallments);
+        
+        if (!isNaN(entryValue) && !isNaN(installments) && installments > 0) {
+          // For display purposes only - the entry value is now considered the total amount
+          return entryValue.toLocaleString('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          });
+        }
+      } catch (error) {
+        console.error("Erro ao calcular o valor total da entrada:", error);
+      }
+    }
+    return formData.entryValue || "0,00";
+  };
+  
+  // Calculate entry installment value
+  const calculateEntryInstallmentValue = () => {
+    if (formData.entryValue && formData.entryInstallments && parseInt(formData.entryInstallments) > 1) {
+      try {
+        const entryValue = parseFloat(formData.entryValue.replace(/\./g, '').replace(',', '.'));
+        const installments = parseInt(formData.entryInstallments);
+        
+        if (!isNaN(entryValue) && !isNaN(installments) && installments > 0) {
+          const installmentValue = entryValue / installments;
+          return installmentValue.toLocaleString('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          });
+        }
+      } catch (error) {
+        console.error("Erro ao calcular o valor da parcela de entrada:", error);
+      }
+    }
+    return formData.entryValue || "0,00";
+  };
   
   return (
     <div className="space-y-6">
@@ -118,7 +160,7 @@ const FinancialInfoSection = ({
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           <div>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Valor da Entrada (por parcela)
+              Valor da Entrada (total)
             </label>
             <Input
               name="entryValue"
@@ -128,7 +170,7 @@ const FinancialInfoSection = ({
               disabled={disabled}
               className="mt-1"
             />
-            <p className="text-xs text-gray-500 mt-1">Valor de cada parcela da entrada</p>
+            <p className="text-xs text-gray-500 mt-1">Valor total da entrada</p>
           </div>
           
           <div>
@@ -147,23 +189,14 @@ const FinancialInfoSection = ({
           
           <div className="col-span-1">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Total da Entrada
+              Valor por parcela da entrada
             </label>
             <Input
-              value={
-                formData.entryValue && formData.entryInstallments
-                  ? `R$ ${(
-                      parseFloat(formData.entryValue.replace(/\./g, '').replace(',', '.')) *
-                      parseInt(formData.entryInstallments)
-                    ).toLocaleString('pt-BR', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2
-                    })}`
-                  : "R$ 0,00"
-              }
+              value={`R$ ${calculateEntryInstallmentValue()}`}
               disabled={true}
               className="mt-1 bg-gray-50"
             />
+            <p className="text-xs text-gray-500 mt-1">Calculado automaticamente</p>
           </div>
           
           <div>

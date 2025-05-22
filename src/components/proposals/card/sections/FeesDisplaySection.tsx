@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { CreditCard, BriefcaseIcon, Info } from "lucide-react";
 import { ExtractedData } from "@/lib/types/proposals";
 
 interface FeesDisplaySectionProps {
@@ -10,21 +11,27 @@ const FeesDisplaySection = ({ data }: FeesDisplaySectionProps) => {
   if (!data.feesValue) return null;
   
   return (
-    <div className="mb-3">
-      <h2 className="text-xs font-semibold mb-2 text-gray-800 border-b pb-1">
-        Honorários
-      </h2>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
-        <div>
-          <p className="text-[10px] text-gray-600">Honorários à Vista:</p>
-          <p>R$ {data.feesValue}</p>
-        </div>
-        {data.feesInstallmentValue && (
+    <div className="space-y-4">
+      <h3 className="font-semibold text-lg border-b border-af-blue-200 pb-2 text-af-blue-800 flex items-center">
+        <CreditCard className="mr-2 h-5 w-5 text-af-blue-600" />
+        Custos e Honorários
+      </h3>
+      <div className="bg-gradient-to-r from-purple-100 to-blue-50 p-5 rounded-lg border border-purple-200 shadow-md">
+        <div className="flex justify-between items-center">
           <div>
-            <p className="text-[10px] text-gray-600">Honorários Parcelados:</p>
-            <p>{data.feesInstallments || '0'}x de R$ {data.feesInstallmentValue} no cartão</p>
+            <span className="font-semibold text-purple-800 flex items-center text-lg">
+              <BriefcaseIcon className="mr-2 h-5 w-5 text-purple-700" />
+              Honorários Aliança Fiscal:
+            </span>
+            <p className="text-sm text-purple-600 mt-1">
+              <Info className="inline-block mr-1 h-4 w-4" />
+              Pagamento imediato
+            </p>
           </div>
-        )}
+          <div className="text-right">
+            <p className="text-2xl font-bold text-purple-900">R$ {data.feesValue}</p>
+          </div>
+        </div>
       </div>
     </div>
   );

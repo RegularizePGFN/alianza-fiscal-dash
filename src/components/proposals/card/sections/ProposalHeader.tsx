@@ -1,5 +1,8 @@
 
 import React from 'react';
+import { CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { FileText, Percent } from "lucide-react";
 import { formatBrazilianCurrency } from '@/lib/utils';
 
 interface ProposalHeaderProps {
@@ -26,24 +29,30 @@ const ProposalHeader = ({ totalDebt, discountedValue }: ProposalHeaderProps) => 
     }
   };
   
+  const economyValue = calculateEconomyValue();
+
   return (
-    <div className="py-2 px-3 border-b border-gray-200">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-1.5">
+    <CardHeader className="bg-gradient-to-r from-af-blue-600 to-af-blue-800 text-white pb-8">
+      <div className="flex justify-between items-start">
+        <div className="flex items-center gap-4">
           <img 
             src="/lovable-uploads/d939ccfc-a061-45e8-97e0-1fa1b82d3df2.png" 
             alt="Logo" 
-            className="h-4 w-auto" 
+            className="h-14 w-auto"
           />
-          <h1 className="text-xs font-medium text-gray-700">
-            Proposta de Transação Tributária | PGFN
-          </h1>
+          <CardTitle className="text-2xl font-bold text-white">
+            <div className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Proposta de Parcelamento PGFN
+            </div>
+          </CardTitle>
         </div>
-        <div className="text-[10px] text-gray-600">
-          • Economia de R$ {calculateEconomyValue()}
-        </div>
+        <Badge className="bg-af-green-500 hover:bg-af-green-400 text-white text-sm py-1.5 px-3">
+          <Percent className="mr-1 h-4 w-4" /> 
+          Economia de R$ {economyValue}
+        </Badge>
       </div>
-    </div>
+    </CardHeader>
   );
 };
 

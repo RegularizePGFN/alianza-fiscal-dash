@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { BriefcaseIcon, CheckSquare, DollarSign, Percent, Calendar } from "lucide-react";
 import { ExtractedData } from "@/lib/types/proposals";
 
 interface ProposalDataSectionProps {
@@ -8,45 +9,25 @@ interface ProposalDataSectionProps {
 
 const ProposalDataSection = ({ data }: ProposalDataSectionProps) => {
   return (
-    <div className="mb-3">
-      <h2 className="text-xs font-semibold mb-2 text-gray-800 border-b pb-1">
-        Dados do Contribuinte
-      </h2>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
-        <div>
-          <p className="text-[10px] text-gray-600">CNPJ:</p>
-          <p>{data.cnpj || '-'}</p>
-        </div>
-        <div>
-          <p className="text-[10px] text-gray-600">Razão Social:</p>
-          <p>{data.clientName || '-'}</p>
-        </div>
-        <div>
-          <p className="text-[10px] text-gray-600">Situação:</p>
-          <p>{data.situation || '-'}</p>
-        </div>
-        <div>
-          <p className="text-[10px] text-gray-600">Data de Abertura:</p>
-          <p>{data.openingDate || '-'}</p>
-        </div>
-        <div className="col-span-2">
-          <p className="text-[10px] text-gray-600">Endereço:</p>
-          <p>{data.address || '-'}</p>
-        </div>
-        <div>
-          <p className="text-[10px] text-gray-600">Telefone:</p>
-          <p>{data.clientPhone || '-'}</p>
-        </div>
-        <div>
-          <p className="text-[10px] text-gray-600">Email:</p>
-          <p>{data.clientEmail || '-'}</p>
-        </div>
-        <div className="col-span-2">
-          <p className="text-[10px] text-gray-600">Atividade Principal:</p>
-          <p>{data.businessActivity || '-'}</p>
+    <>
+      {/* Contribuinte Section */}
+      <div className="space-y-4">
+        <h3 className="font-semibold text-lg border-b border-af-blue-200 pb-2 text-af-blue-800 flex items-center">
+          <BriefcaseIcon className="mr-2 h-5 w-5 text-af-blue-600" />
+          Dados do Contribuinte
+        </h3>
+        <div className="grid grid-cols-2 gap-6">
+          <div className="bg-white p-4 rounded-md shadow-sm border border-af-blue-100">
+            <span className="font-medium text-af-blue-700">CNPJ:</span>
+            <p className="text-lg">{data.cnpj || '-'}</p>
+          </div>
+          <div className="bg-white p-4 rounded-md shadow-sm border border-af-blue-100">
+            <span className="font-medium text-af-blue-700">Número do Débito:</span>
+            <p className="text-lg">{data.debtNumber || '-'}</p>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
