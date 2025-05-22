@@ -9,7 +9,6 @@ export { default as TotalValueSection } from './TotalValueSection';
 export { default as PaymentOptionsSection } from './PaymentOptionsSection';
 export { default as ActionButtons } from './ActionButtons';
 export { default as DebtConsequencesAlert } from './DebtConsequencesAlert';
-export { default as ProposalPages } from './ProposalPages';
 
 // Export sections
 export * from './sections';

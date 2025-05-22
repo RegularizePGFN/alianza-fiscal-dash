@@ -16,10 +16,10 @@ const ActionButtons = ({ onPrint, proposalData, proposalRef }: ActionButtonsProp
   const { toast } = useToast();
   
   const onGeneratePdf = async () => {
-    if (!proposalData) {
+    if (!proposalRef.current) {
       toast({
         title: "Erro",
-        description: "Não foi possível gerar o PDF. Dados da proposta não encontrados.",
+        description: "Não foi possível gerar o PDF. Tente novamente.",
         variant: "destructive",
       });
       return;
@@ -31,7 +31,7 @@ const ActionButtons = ({ onPrint, proposalData, proposalRef }: ActionButtonsProp
     });
     
     try {
-      const pdfUrl = await generateProposalPdf(proposalData);
+      await generateProposalPdf(proposalRef.current, proposalData);
       
       toast({
         title: "Sucesso",
