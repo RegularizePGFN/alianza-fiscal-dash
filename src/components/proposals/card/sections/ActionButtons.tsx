@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Printer, Download } from "lucide-react";
 import { ExtractedData } from "@/lib/types/proposals";
-import { generateProposalPdf } from "@/lib/pdfUtils";
+import { generateProposalPdf } from "@/lib/pdf-utils";
 import { useToast } from "@/hooks/use-toast";
 
 interface ActionButtonsProps {
