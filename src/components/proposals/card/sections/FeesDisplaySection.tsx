@@ -16,7 +16,7 @@ const FeesDisplaySection = ({
     data.showFeesInstallments === 'true' && 
     data.feesInstallmentValue && 
     data.feesInstallments && 
-    parseInt(data.feesInstallments) > 1;
+    parseInt(data.feesInstallments) > 0;
     
   // Payment method display name
   const paymentMethod = data.feesPaymentMethod === 'cartao' ? 'no cartão' : 'via boleto';

@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { CreditCard } from 'lucide-react';
+import { calculateEconomy } from "@/lib/pdf/utils";
 
 interface PaymentOptionsSectionProps {
   discountedValue: string;
@@ -40,26 +41,6 @@ const PaymentOptionsSection = ({
     return entryValue || "0,00";
   };
 
-  // Calculate the economy (savings)
-  const calculateSavings = () => {
-    if (!totalDebt || !discountedValue) return "0,00";
-    
-    try {
-      // Parse values, handling BR currency format
-      const totalValue = parseFloat(totalDebt.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.'));
-      const discountValue = parseFloat(discountedValue.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.'));
-      
-      if (isNaN(totalValue) || isNaN(discountValue)) return "0,00";
-      
-      const savings = totalValue - discountValue;
-      // Format back to BR currency
-      return savings.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    } catch (error) {
-      console.error("Error calculating savings:", error);
-      return "0,00";
-    }
-  };
-
   // Check if there's any discount
   const hasDiscount = () => {
     if (!totalDebt || !discountedValue) return false;
@@ -79,6 +60,8 @@ const PaymentOptionsSection = ({
     ? `${entryInstallments}x de R$ ${entryInstallmentValue()}`
     : `R$ ${entryValue || '0,00'}`;
 
+  const economyValue = calculateEconomy(totalDebt, discountedValue);
+
   return (
     <div className="bg-white p-1.5 rounded-lg border border-af-blue-200 shadow-sm">
       <div className="flex justify-between items-center">
@@ -88,8 +71,8 @@ const PaymentOptionsSection = ({
         </h3>
         
         {hasDiscount() && (
-          <div className="bg-af-green-600 px-1.5 py-0.5 rounded-sm text-[9px] font-medium text-white whitespace-nowrap">
-            Economia de R$ {calculateSavings()}
+          <div className="text-[9px] font-medium text-af-blue-600 whitespace-nowrap">
+            Economia de R$ {economyValue}
           </div>
         )}
       </div>

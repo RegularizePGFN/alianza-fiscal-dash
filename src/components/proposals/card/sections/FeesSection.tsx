@@ -22,7 +22,7 @@ const FeesSection = ({ data, colors }: FeesSectionProps) => {
     data.showFeesInstallments === 'true' && 
     data.feesInstallmentValue && 
     data.feesInstallments && 
-    parseInt(data.feesInstallments) > 1;
+    parseInt(data.feesInstallments) > 0;
 
   return (
     <SectionContainer 

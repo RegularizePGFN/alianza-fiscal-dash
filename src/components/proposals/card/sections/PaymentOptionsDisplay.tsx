@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { ExtractedData } from "@/lib/types/proposals";
+import { calculateEconomy } from "@/lib/pdf/utils";
 
 interface PaymentOptionsDisplayProps {
   data: Partial<ExtractedData>;
@@ -28,26 +29,6 @@ const PaymentOptionsDisplay = ({ data }: PaymentOptionsDisplayProps) => {
     return data.entryValue || "0,00";
   };
 
-  // Calculate the economy (savings)
-  const calculateSavings = () => {
-    if (!data.totalDebt || !data.discountedValue) return "0,00";
-    
-    try {
-      // Parse values, handling BR currency format
-      const totalValue = parseFloat(data.totalDebt.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.'));
-      const discountValue = parseFloat(data.discountedValue.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.'));
-      
-      if (isNaN(totalValue) || isNaN(discountValue)) return "0,00";
-      
-      const savings = totalValue - discountValue;
-      // Format back to BR currency
-      return savings.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    } catch (error) {
-      console.error("Error calculating savings:", error);
-      return "0,00";
-    }
-  };
-
   // Check if there's any discount (economy)
   const hasDiscount = () => {
     if (!data.totalDebt || !data.discountedValue) return false;
@@ -67,7 +48,7 @@ const PaymentOptionsDisplay = ({ data }: PaymentOptionsDisplayProps) => {
     ? `${data.entryInstallments}x de R$ ${entryInstallmentValue()}`
     : `R$ ${data.entryValue || '0,00'}`;
 
-  const savings = calculateSavings();
+  const economyValue = calculateEconomy(data.totalDebt, data.discountedValue);
 
   return (
     <div className="bg-white p-5 rounded-lg border border-af-blue-200 shadow-sm">
@@ -77,8 +58,8 @@ const PaymentOptionsDisplay = ({ data }: PaymentOptionsDisplayProps) => {
         </h3>
         
         {hasDiscount() && (
-          <div className="bg-af-green-600 px-4 py-1.5 rounded-sm text-sm font-medium text-white whitespace-nowrap flex items-center">
-            Economia de R$ {savings}
+          <div className="text-sm font-medium text-af-blue-600">
+            Economia de R$ {economyValue}
           </div>
         )}
       </div>

@@ -4,6 +4,7 @@ import { ExtractedData } from '@/lib/types/proposals';
 import SectionContainer from './SectionContainer';
 import DataField from './DataField';
 import { CreditCard } from 'lucide-react';
+import { calculateEconomy } from "@/lib/pdf/utils";
 
 interface PaymentSectionProps {
   data: Partial<ExtractedData>;
@@ -35,26 +36,6 @@ const PaymentSection = ({ data, colors }: PaymentSectionProps) => {
     return data.entryValue || "0,00";
   };
 
-  // Calculate the economy (savings)
-  const calculateSavings = () => {
-    if (!data.totalDebt || !data.discountedValue) return "0,00";
-    
-    try {
-      // Parse values, handling BR currency format
-      const totalValue = parseFloat(data.totalDebt.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.'));
-      const discountValue = parseFloat(data.discountedValue.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.'));
-      
-      if (isNaN(totalValue) || isNaN(discountValue)) return "0,00";
-      
-      const savings = totalValue - discountValue;
-      // Format back to BR currency
-      return savings.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    } catch (error) {
-      console.error("Error calculating savings:", error);
-      return "0,00";
-    }
-  };
-
   // Check if there's any discount
   const hasDiscount = () => {
     if (!data.totalDebt || !data.discountedValue) return false;
@@ -75,6 +56,8 @@ const PaymentSection = ({ data, colors }: PaymentSectionProps) => {
     ? `${data.entryInstallments}x de R$ ${entryInstallmentValue()}`
     : `R$ ${data.entryValue || '0,00'}`;
 
+  const economyValue = calculateEconomy(data.totalDebt, data.discountedValue);
+
   return (
     <SectionContainer 
       title="Opções de Pagamento" 
@@ -83,8 +66,8 @@ const PaymentSection = ({ data, colors }: PaymentSectionProps) => {
       className="print:break-inside-avoid"
       extraHeaderContent={
         hasDiscount() && (
-          <div className="bg-green-600 text-white text-xs py-1 px-3 rounded-sm whitespace-nowrap">
-            Economia de R$ {calculateSavings()}
+          <div className="text-xs text-af-blue-600 whitespace-nowrap">
+            Economia de R$ {economyValue}
           </div>
         )
       }

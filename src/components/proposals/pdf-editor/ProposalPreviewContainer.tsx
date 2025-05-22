@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { FileCheck, Download } from "lucide-react";
 import { PDFTemplatePreview } from "@/components/proposals/pdf-editor";
 import { ExtractedData, PDFTemplate, CompanyData } from "@/lib/types/proposals";
-import { generateSimplifiedProposalPng } from "@/lib/pdf";
+import { generateSimplifiedProposalPng, calculateEconomy } from "@/lib/pdf";
 
 interface ProposalPreviewContainerProps {
   formData: Partial<ExtractedData>;

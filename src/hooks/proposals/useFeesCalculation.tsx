@@ -22,7 +22,25 @@ export const useFeesCalculation = ({ formData, setFormData }: UseFeesCalculation
         formData.feesAdditionalPercentage) {
       calculateInstallmentFees();
     }
-  }, [formData.feesValue, formData.feesInstallments, formData.feesAdditionalPercentage, formData.showFeesInstallments]);
+  }, [formData.feesValue, formData.feesInstallments, formData.feesAdditionalPercentage]);
+
+  // Watch for changes in showFeesInstallments to set default values
+  useEffect(() => {
+    if (formData.showFeesInstallments === 'true') {
+      // Set default values if they're not already set
+      setFormData(prev => ({
+        ...prev,
+        feesAdditionalPercentage: prev.feesAdditionalPercentage || '20',
+        feesInstallments: prev.feesInstallments || '3',
+        feesPaymentMethod: prev.feesPaymentMethod || 'boleto'
+      }));
+      
+      // Calculate the installment fees with the new values
+      if (formData.feesValue) {
+        calculateInstallmentFees();
+      }
+    }
+  }, [formData.showFeesInstallments]);
 
   // Function to calculate upfront fees (20% of savings)
   const calculateFees = () => {
@@ -54,7 +72,7 @@ export const useFeesCalculation = ({ formData, setFormData }: UseFeesCalculation
       }));
       
       // Also calculate installment fees if needed
-      if (formData.feesInstallments && formData.feesAdditionalPercentage) {
+      if (formData.showFeesInstallments === 'true' && formData.feesInstallments && formData.feesAdditionalPercentage) {
         calculateInstallmentFees();
       }
       

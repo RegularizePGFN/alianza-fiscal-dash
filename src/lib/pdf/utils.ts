@@ -42,18 +42,18 @@ export const formatCurrency = (value?: string) => {
 
 // Calculate economy value between two currency strings
 export const calculateEconomy = (totalDebt?: string, discountedValue?: string) => {
-  if (!totalDebt || !discountedValue) return "R$ 0,00";
+  if (!totalDebt || !discountedValue) return "0,00";
   
   try {
     const totalDebtValue = parseFloat(totalDebt.replace(/\./g, '').replace(',', '.').replace(/[^\d.-]/g, ''));
     const discountedValue2 = parseFloat(discountedValue.replace(/\./g, '').replace(',', '.').replace(/[^\d.-]/g, ''));
     
-    if (isNaN(totalDebtValue) || isNaN(discountedValue2)) return "R$ 0,00";
+    if (isNaN(totalDebtValue) || isNaN(discountedValue2)) return "0,00";
     
     const economy = totalDebtValue - discountedValue2;
-    return `R$ ${economy.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return economy.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   } catch (e) {
     console.error('Error calculating economy value:', e);
-    return "R$ 0,00";
+    return "0,00";
   }
 };
