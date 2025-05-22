@@ -334,9 +334,9 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     // Apply PDF-specific styling to the clone
     const pdfStyle = document.createElement('style');
     pdfStyle.textContent = `
-      @page { margin: 5mm; }
-      body { font-family: 'Roboto', Arial, sans-serif; }
-      * { box-sizing: border-box; }
+      @page { margin: 0; padding: 0; }
+      body { font-family: 'Roboto', Arial, sans-serif; margin: 0; padding: 0; }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
       p { margin: 0; padding: 0; }
       button, [data-pdf-remove="true"] { display: none !important; }
       table { width: 100%; border-collapse: collapse; page-break-inside: avoid; }
@@ -345,8 +345,9 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       h3, h4 { margin-top: 6px; margin-bottom: 3px; }
       .section { page-break-inside: avoid; }
       
-      /* Simple styling for cleaner PDF output */
-      .card { border: 1px solid #e0e0e0; margin-bottom: 10px; }
+      /* Remove all rounded corners, borders and shadows */
+      .rounded, .rounded-lg, .rounded-md, .rounded-sm, .rounded-xl, .rounded-2xl { border-radius: 0 !important; }
+      .card { border: none; margin: 0; padding: 0; }
       .card-content { padding: 6px; }
       
       /* Override any complex gradients or shadows */
@@ -364,7 +365,7 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       }
     });
     
-    // Create PDF with A4 dimensions and reduced margins
+    // Create PDF with A4 dimensions and no margins
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -388,8 +389,8 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       // A4 dimensions in pixels (assuming 96 DPI)
       const a4Width = 210; // mm
       const a4Height = 297; // mm
-      const pdfWidth = a4Width - 10; // subtract margins
-      const pdfHeight = a4Height - 10; // subtract margins
+      const pdfWidth = a4Width; // use full width with no margins
+      const pdfHeight = a4Height; // use full height with no margins
       
       // Use html2canvas to render the clone element
       const canvas = await html2canvas(proposalClone, {
@@ -397,7 +398,9 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
         useCORS: true,
         logging: false,
         allowTaint: true,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        width: proposalClone.scrollWidth,
+        height: proposalClone.scrollHeight
       });
       
       // Calculate how many pages we need
@@ -406,18 +409,17 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       const pdfImgWidth = pdfWidth;
       const pdfImgHeight = (imgProps.height * pdfImgWidth) / imgProps.width;
       
-      // Add the image to the PDF with minimum margins
-      pdf.addImage(imgData, 'PNG', 5, 5, pdfImgWidth, pdfImgHeight, '', 'FAST');
+      // Add the image to the PDF with no margins
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfImgWidth, pdfImgHeight, '', 'FAST');
       
-      // We're removing page numbers, so this section is modified
       let heightLeft = pdfImgHeight;
       let position = 0;
       
-      // Add additional pages if needed, without page numbers
+      // Add additional pages if needed, without page numbers and without margins
       while (heightLeft > pdfHeight) {
         position += pdfHeight;
         pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 5, -(position - 5), pdfImgWidth, pdfImgHeight, '', 'FAST');
+        pdf.addImage(imgData, 'PNG', 0, -(position), pdfImgWidth, pdfImgHeight, '', 'FAST');
         heightLeft -= pdfHeight;
       }
       

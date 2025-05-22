@@ -62,7 +62,7 @@ const PDFTemplatePreview = ({
   return (
     <Card 
       ref={previewRef} 
-      className="border-0 p-0 overflow-hidden shadow-md preview-proposal font-['Roboto',sans-serif] transition-colors mx-auto"
+      className="border-0 p-0 overflow-visible shadow-none preview-proposal font-['Roboto',sans-serif] transition-colors mx-auto rounded-none"
       style={{ 
         backgroundColor: colors.background,
         width: `${a4Width}px`,
@@ -73,7 +73,7 @@ const PDFTemplatePreview = ({
       }}
     >
       {layout.showHeader && (
-        <div className="relative overflow-hidden rounded-t-none print:break-after-avoid">
+        <div className="relative overflow-hidden print:break-after-avoid rounded-none">
           <div className="absolute inset-0 opacity-10 bg-gradient-to-br from-slate-400 to-slate-100"></div>
           <div className="relative p-2 flex justify-between items-center">
             <div className="flex items-center gap-2">

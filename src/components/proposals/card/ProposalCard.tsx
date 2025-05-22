@@ -60,7 +60,10 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
 
   return (
     <div className="flex flex-col space-y-4">
-      <Card ref={proposalRef} className="border-0 max-w-4xl mx-auto shadow-lg bg-gradient-to-br from-af-blue-50 to-white overflow-hidden">
+      <Card 
+        ref={proposalRef} 
+        className="border-0 max-w-4xl mx-auto shadow-none bg-gradient-to-br from-af-blue-50 to-white rounded-none overflow-visible"
+      >
         {/* Header with Logo */}
         <ProposalHeader
           totalDebt={data.totalDebt}
