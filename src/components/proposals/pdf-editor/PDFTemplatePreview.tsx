@@ -55,7 +55,7 @@ const PDFTemplatePreview = ({
     };
   })();
 
-  // A4 dimensions with 0.65 scale (using 3.7795 pixels per mm)
+  // A4 dimensions with adjusted scale (using 3.7795 pixels per mm)
   const a4Width = 210 * 3.7795 * 0.65;
   const a4Height = 297 * 3.7795 * 0.65;
 
@@ -73,10 +73,10 @@ const PDFTemplatePreview = ({
       }}
     >
       {layout.showHeader && (
-        <div className="relative overflow-hidden rounded-t-lg print:break-after-avoid">
+        <div className="relative overflow-hidden rounded-t-none print:break-after-avoid">
           <div className="absolute inset-0 opacity-10 bg-gradient-to-br from-slate-400 to-slate-100"></div>
-          <div className="relative p-4 flex justify-between items-center">
-            <div className="flex items-center gap-3">
+          <div className="relative p-2 flex justify-between items-center">
+            <div className="flex items-center gap-2">
               {layout.showLogo && (
                 <img 
                   src="/lovable-uploads/d939ccfc-a061-45e8-97e0-1fa1b82d3df2.png" 

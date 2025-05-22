@@ -60,14 +60,14 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
 
   return (
     <div className="flex flex-col space-y-4">
-      <Card ref={proposalRef} className="border-border max-w-4xl mx-auto shadow-lg bg-gradient-to-br from-af-blue-50 to-white overflow-hidden">
+      <Card ref={proposalRef} className="border-0 max-w-4xl mx-auto shadow-lg bg-gradient-to-br from-af-blue-50 to-white overflow-hidden">
         {/* Header with Logo */}
         <ProposalHeader
           totalDebt={data.totalDebt}
           discountedValue={data.discountedValue || '0,00'}
         />
 
-        <CardContent className="pt-5 space-y-6 px-7 pb-7">
+        <CardContent className="pt-3 space-y-4 px-5 pb-5">
           {/* CNPJ and Company Data Section */}
           {companyData ? (
             <CompanyInfoSection 

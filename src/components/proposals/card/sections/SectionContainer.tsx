@@ -25,17 +25,17 @@ const SectionContainer = ({
   subtitle
 }: SectionContainerProps) => {
   return (
-    <div className={cn("mb-5 print:break-inside-avoid", className)}>
+    <div className={cn("mb-3 print:break-inside-avoid", className)}>
       <h3 
-        className="text-base font-semibold pb-1.5 mb-2 border-b border-gray-200 flex items-center" 
+        className="text-base font-semibold pb-1 mb-1.5 border-b border-gray-200 flex items-center" 
         style={{ color }}
       >
         {title}
       </h3>
       {subtitle && (
-        <p className="text-sm text-gray-600 mb-2.5 italic">{subtitle}</p>
+        <p className="text-xs text-gray-600 mb-1.5 italic">{subtitle}</p>
       )}
-      <div className={`grid grid-cols-1 ${fullWidth ? '' : 'md:grid-cols-2'} gap-3`}>
+      <div className={`grid grid-cols-1 ${fullWidth ? '' : 'md:grid-cols-2'} gap-2`}>
         {children}
       </div>
     </div>
