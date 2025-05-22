@@ -21,7 +21,7 @@ const PaymentSection = ({ data, colors }: PaymentSectionProps) => {
   return (
     <SectionContainer 
       title="Opções de Pagamento" 
-      icon={null} // Removed icon as requested
+      icon={null}
       color={sectionColor}
     >
       <DataField 

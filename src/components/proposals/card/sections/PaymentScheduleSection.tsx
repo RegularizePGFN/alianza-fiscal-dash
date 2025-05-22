@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ExtractedData } from '@/lib/types/proposals';
 import SectionContainer from './SectionContainer';
@@ -104,7 +105,7 @@ const PaymentScheduleSection = ({ data, colors, showHeader = true }: PaymentSche
   return (
     <SectionContainer 
       title="Cronograma de Pagamento" 
-      icon={null} // Removed icon as requested
+      icon={null}
       color={sectionColor}
       fullWidth
     >

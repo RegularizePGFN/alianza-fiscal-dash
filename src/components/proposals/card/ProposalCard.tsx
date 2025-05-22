@@ -2,12 +2,10 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
-import { HeaderSection } from './sections';
 import ProposalContent from './ProposalContent';
 import { useToast } from "@/hooks/use-toast";
 import { generateProposalPdf, generateProposalPng } from "@/lib/pdfUtils";
 import { Button } from "@/components/ui/button";
-import { Printer, Download, FileImage, ArrowLeft, ArrowRight } from "lucide-react";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink } from "@/components/ui/pagination";
 
 interface ProposalCardProps {
@@ -51,23 +49,12 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
   }, []);
   
   // Get colors from template settings or use defaults
-  const colors = (() => {
-    try {
-      return {
-        primary: '#3B82F6',
-        secondary: '#1E40AF',
-        accent: '#10B981',
-        background: '#F8FAFC'
-      };
-    } catch (e) {
-      return {
-        primary: '#3B82F6',
-        secondary: '#1E40AF',
-        accent: '#10B981',
-        background: '#F8FAFC'
-      };
-    }
-  })();
+  const colors = {
+    primary: '#3B82F6',
+    secondary: '#1E40AF',
+    accent: '#10B981',
+    background: '#F8FAFC'
+  };
 
   // Default layout settings
   const layout = {
@@ -129,7 +116,6 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
     });
     
     try {
-      // Use the updated function to capture exact screen appearance
       await generateProposalPng(proposalRef.current, data);
       
       toast({
@@ -154,15 +140,15 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
     setCurrentPage(prev => Math.max(prev - 1, 0));
   };
 
-  // Calculate A4 dimensions for the preview
-  // A4 is 210mm × 297mm - using a scaling factor to fit nicely on screen
-  const a4Width = 210 * 3.7795 * 0.5; // A4 width in pixels with 0.5 scale
-  const a4Height = 297 * 3.7795 * 0.5; // A4 height in pixels with 0.5 scale
+  // Calculate A4 dimensions for the preview (210mm × 297mm)
+  // Using a scaling factor to fit properly on screen
+  const a4Width = 210 * 3.7795 * 0.75; // A4 width in pixels with 0.75 scale (instead of 0.5)
+  const a4Height = 297 * 3.7795 * 0.75; // A4 height in pixels with 0.75 scale (instead of 0.5)
 
   return (
     <div className="flex flex-col items-center space-y-4">
       {/* Page navigation above the proposal */}
-      <div className="flex justify-between items-center w-full max-w-3xl px-4" data-pdf-remove="true">
+      <div className="flex justify-between items-center w-full max-w-full px-4" data-pdf-remove="true">
         <p className="text-sm text-gray-500">
           Página {currentPage + 1} de {totalPages}
         </p>
@@ -173,7 +159,6 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
                 onClick={prevPage} 
                 className={`cursor-pointer ${currentPage === 0 ? 'pointer-events-none opacity-50' : ''}`}
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
                 Anterior
               </PaginationLink>
             </PaginationItem>
@@ -194,21 +179,21 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
                 className={`cursor-pointer ${currentPage === totalPages - 1 ? 'pointer-events-none opacity-50' : ''}`}
               >
                 Próxima
-                <ArrowRight className="h-4 w-4 ml-2" />
               </PaginationLink>
             </PaginationItem>
           </PaginationContent>
         </Pagination>
       </div>
 
-      {/* Main proposal card - action buttons moved outside */}
+      {/* Main proposal card with larger scale */}
       <Card 
         ref={proposalRef} 
-        className="max-w-3xl mx-auto shadow border overflow-hidden font-['Roboto',sans-serif] w-full print:w-full print:max-w-none"
+        className="shadow border overflow-hidden font-['Roboto',sans-serif] w-full print:w-full print:max-w-none mx-auto"
         style={{ 
           backgroundColor: colors.background,
           width: `${a4Width}px`, 
           height: `${a4Height}px`,
+          maxWidth: '100%',
           maxHeight: '100%'
         }}
       >
@@ -224,18 +209,15 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
         </CardContent>
       </Card>
       
-      {/* Action buttons - now outside the proposal card, centered below */}
+      {/* Action buttons - now outside the proposal card */}
       <div className="flex justify-center gap-3 py-4 w-full" data-pdf-remove="true">
         <Button variant="outline" onClick={handlePrint} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
-          <Printer className="mr-2 h-4 w-4" />
           Imprimir
         </Button>
         <Button variant="outline" onClick={handleGeneratePng} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
-          <FileImage className="mr-2 h-4 w-4" />
           Baixar PNG
         </Button>
         <Button onClick={handleGeneratePdf} className="bg-af-blue-600 hover:bg-af-blue-700">
-          <Download className="mr-2 h-4 w-4" />
           Baixar PDF
         </Button>
       </div>

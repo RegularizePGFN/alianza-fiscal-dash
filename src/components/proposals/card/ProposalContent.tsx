@@ -63,6 +63,22 @@ const ProposalContent = ({
     showWatermark: layoutData?.showWatermark || false
   };
 
+  // Calculate the total number of pages
+  const totalPages = (() => {
+    let pages = 1;
+    try {
+      const entryDates = data.entryDates ? JSON.parse(data.entryDates) : [];
+      const installmentDates = data.installmentDates ? JSON.parse(data.installmentDates) : [];
+      
+      if (entryDates.length > 0 || installmentDates.length > 0) {
+        pages++;
+      }
+    } catch (error) {
+      console.error('Error parsing payment dates:', error);
+    }
+    return pages;
+  })();
+
   // Page 0 is the main content, page 1+ is the payment schedule
   if (currentPage === 0) {
     // We'll use a set to track which sections we've rendered to avoid duplicates
@@ -160,7 +176,7 @@ const ProposalContent = ({
         </div>
         
         <div className="absolute bottom-4 right-6 text-xs text-gray-500 print:block hidden">
-          Página 1 de {data.entryDates || data.installmentDates ? '2' : '1'}
+          Página 1 de {totalPages}
         </div>
       </div>
     );
@@ -185,7 +201,7 @@ const ProposalContent = ({
         </div>
         
         <div className="absolute bottom-4 right-6 text-xs text-gray-500 print:block hidden">
-          Página 2 de 2
+          Página 2 de {totalPages}
         </div>
       </div>
     );

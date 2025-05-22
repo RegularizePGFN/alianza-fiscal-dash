@@ -2,7 +2,6 @@
 import React from 'react';
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Percent } from "lucide-react";
 import { formatBrazilianCurrency } from '@/lib/utils';
 
 interface ProposalHeaderProps {
@@ -41,14 +40,10 @@ const ProposalHeader = ({ totalDebt, discountedValue }: ProposalHeaderProps) => 
             className="h-14 w-auto"
           />
           <CardTitle className="text-2xl font-bold text-white">
-            <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Proposta de Parcelamento PGFN
-            </div>
+            Proposta de Parcelamento PGFN
           </CardTitle>
         </div>
         <Badge className="bg-af-green-500 hover:bg-af-green-400 text-white text-sm py-1.5 px-3">
-          <Percent className="mr-1 h-4 w-4" /> 
           Economia de R$ {economyValue}
         </Badge>
       </div>

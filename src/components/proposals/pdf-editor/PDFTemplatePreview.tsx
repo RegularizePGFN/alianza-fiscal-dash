@@ -3,8 +3,6 @@ import React, { useRef, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { ExtractedData, PDFTemplate, CompanyData } from '@/lib/types/proposals';
 import ProposalContent from '../card/ProposalContent';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink } from '@/components/ui/pagination';
 
 interface PDFTemplatePreviewProps {
@@ -92,10 +90,9 @@ const PDFTemplatePreview = ({
     };
   })();
 
-  // Dimensões exatas de um A4 (210mm x 297mm) em pixels com uma escala de 0.5
-  // para se ajustar bem à tela (usando proporção aproximada de 3.7795 pixels por mm)
-  const a4Width = 210 * 3.7795 * 0.5;
-  const a4Height = 297 * 3.7795 * 0.5;
+  // A4 dimensions in pixels with a 0.75 scale factor (larger than before)
+  const a4Width = 210 * 3.7795 * 0.75;
+  const a4Height = 297 * 3.7795 * 0.75;
 
   return (
     <div className="flex flex-col items-center">
@@ -111,7 +108,6 @@ const PDFTemplatePreview = ({
                 onClick={prevPage} 
                 className={`cursor-pointer ${currentPage === 0 ? 'pointer-events-none opacity-50' : ''}`}
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
                 Anterior
               </PaginationLink>
             </PaginationItem>
@@ -132,7 +128,6 @@ const PDFTemplatePreview = ({
                 className={`cursor-pointer ${currentPage === totalPages - 1 ? 'pointer-events-none opacity-50' : ''}`}
               >
                 Próxima
-                <ArrowRight className="h-4 w-4 ml-2" />
               </PaginationLink>
             </PaginationItem>
           </PaginationContent>
@@ -146,6 +141,7 @@ const PDFTemplatePreview = ({
           backgroundColor: colors.background,
           width: `${a4Width}px`,
           height: `${a4Height}px`,
+          maxWidth: '100%',
           maxHeight: '100%',
           aspectRatio: '210/297', // Proporção A4
         }}

@@ -1,3 +1,4 @@
+
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { ExtractedData, CompanyData } from './types/proposals';
@@ -34,11 +35,8 @@ export async function generateProposalPng(proposalElement: HTMLElement, data: Pa
     const activePageElement = proposalElement.querySelector('.active-page');
     const currentPage = activePageElement ? parseInt(activePageElement.getAttribute('data-page') || '0') : 0;
     
-    // Need to generate multiple PNGs, one for each page
-    const pages = [];
-    let totalPages = 1; // Start with 1 page
-    
     // Determine total pages
+    let totalPages = 1; // Start with 1 page
     try {
       const entryDates = data.entryDates ? JSON.parse(data.entryDates) : [];
       const installmentDates = data.installmentDates ? JSON.parse(data.installmentDates) : [];
@@ -51,40 +49,51 @@ export async function generateProposalPng(proposalElement: HTMLElement, data: Pa
     }
 
     // Capture each page separately
+    const pages = [];
     for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
-      // Set the current page in the DOM
-      const contentContainer = proposalElement.querySelector('.overflow-auto');
-      if (contentContainer && contentContainer.parentElement) {
-        // Find or create the content element and set the page index
-        const contentElement = proposalElement.querySelector('[data-page]');
-        if (contentElement) {
-          contentElement.setAttribute('data-page', pageIndex.toString());
+      // Find page navigation elements
+      const pageNav = proposalElement.querySelector('.pagination-content');
+      if (pageNav) {
+        // Simulate clicking on the correct page button
+        const pageButtons = pageNav.querySelectorAll('[data-page]');
+        const targetButton = Array.from(pageButtons).find(btn => 
+          btn.getAttribute('data-page') === pageIndex.toString()
+        );
+        
+        if (targetButton instanceof HTMLElement) {
+          targetButton.click();
         }
-        
-        // Force a re-render
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Capture this page
-        const canvas = await html2canvas(proposalElement, {
-          scale: 2, // Better balance between quality and file size
-          useCORS: true,
-          logging: false,
-          allowTaint: true,
-          backgroundColor: '#ffffff',
-          imageTimeout: 0,
-          onclone: (documentClone) => {
-            // Find and hide action buttons in the clone
-            const actionButtons = documentClone.querySelectorAll('button, [data-pdf-remove="true"]');
-            actionButtons.forEach(button => {
-              if (button instanceof HTMLElement) {
-                button.style.display = 'none';
-              }
-            });
-          }
-        });
-        
-        pages.push(canvas);
+      } else {
+        // Set the current page in the DOM if no navigation buttons
+        const contentDiv = proposalElement.querySelector('[data-page]');
+        if (contentDiv) {
+          contentDiv.setAttribute('data-page', pageIndex.toString());
+        }
       }
+        
+      // Force a re-render
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Capture this page
+      const canvas = await html2canvas(proposalElement, {
+        scale: 2, // Better balance between quality and file size
+        useCORS: true,
+        logging: false,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        imageTimeout: 0,
+        onclone: (documentClone) => {
+          // Find and hide action buttons in the clone
+          const actionButtons = documentClone.querySelectorAll('[data-pdf-remove="true"]');
+          actionButtons.forEach(button => {
+            if (button instanceof HTMLElement) {
+              button.style.display = 'none';
+            }
+          });
+        }
+      });
+      
+      pages.push(canvas);
     }
     
     // Merge all canvases into a single image for download
@@ -126,12 +135,6 @@ export async function generateProposalPng(proposalElement: HTMLElement, data: Pa
         el.style.display = '';
       }
     });
-    
-    // Restore the original page if needed
-    const contentElement = proposalElement.querySelector('[data-page]');
-    if (contentElement) {
-      contentElement.setAttribute('data-page', currentPage.toString());
-    }
     
     return Promise.resolve();
   } catch (error) {
@@ -184,6 +187,14 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       console.error('Error parsing payment dates:', error);
     }
 
+    // Hide elements that shouldn't appear in the export
+    const elementsToHide = proposalElement.querySelectorAll('[data-pdf-remove="true"]');
+    elementsToHide.forEach(el => {
+      if (el instanceof HTMLElement) {
+        el.style.display = 'none';
+      }
+    });
+
     // Create a temporary clone of the proposal element for each page
     for (let pageIndex = 0; pageIndex < numberOfPages; pageIndex++) {
       // Clone the original element
@@ -200,8 +211,8 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       tempDiv.appendChild(cloneElement);
       
       // Hide navigation and buttons
-      const elementsToHide = cloneElement.querySelectorAll('[data-pdf-remove="true"]');
-      elementsToHide.forEach(el => {
+      const elementsToHideInClone = cloneElement.querySelectorAll('[data-pdf-remove="true"]');
+      elementsToHideInClone.forEach(el => {
         if (el instanceof HTMLElement) {
           el.style.display = 'none';
         }
@@ -213,13 +224,12 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
         // Replace the content with the appropriate page
         const contentContainer = cloneElement.querySelector('.p-0') || cloneElement;
         
-        // Create a new content element for this page
-        const pageContent = document.createElement('div');
-        pageContent.className = 'p-6 h-full';
-        
+        // Set the current page in the component
         if (pageIndex === 0) {
-          // First page: Title, client info, negotiation details, payment options
-          pageContent.innerHTML = `
+          // First page: Main content
+          const firstPageContent = document.createElement('div');
+          firstPageContent.className = 'p-6 h-full';
+          firstPageContent.innerHTML = `
           <!-- Header with logo -->
           <div class="bg-gradient-to-r from-af-blue-600 to-af-blue-800 text-white p-4 rounded-md mb-6">
             <div class="flex justify-between items-start">
@@ -337,20 +347,24 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
             Página 1 de ${numberOfPages}
           </div>
         `;
+          
+          contentContainer.innerHTML = '';
+          contentContainer.appendChild(firstPageContent);
         } else {
           // Payment schedule page
-          pageContent.innerHTML = await generatePaymentScheduleHtml(data);
+          const scheduleContent = document.createElement('div');
+          scheduleContent.className = 'p-6 h-full';
+          scheduleContent.innerHTML = await generatePaymentScheduleHtml(data);
           
           // Add page number
           const pageNumberDiv = document.createElement('div');
           pageNumberDiv.className = 'absolute bottom-4 right-6 text-xs text-gray-500';
           pageNumberDiv.textContent = `Página ${pageIndex + 1} de ${numberOfPages}`;
-          pageContent.appendChild(pageNumberDiv);
+          scheduleContent.appendChild(pageNumberDiv);
+          
+          contentContainer.innerHTML = '';
+          contentContainer.appendChild(scheduleContent);
         }
-        
-        // Replace content
-        contentContainer.innerHTML = '';
-        contentContainer.appendChild(pageContent);
       }
       
       // Capture the page with html2canvas
@@ -379,13 +393,12 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       document.body.removeChild(tempDiv);
     }
 
-    // Add page numbers
-    for (let i = 1; i <= numberOfPages; i++) {
-      pdf.setPage(i);
-      pdf.setFontSize(8);
-      pdf.setTextColor(100, 100, 100);
-      pdf.text(`Página ${i} de ${numberOfPages}`, 210 / 2, 297 - 10, { align: 'center' });
-    }
+    // Restore visibility of hidden elements
+    elementsToHide.forEach(el => {
+      if (el instanceof HTMLElement) {
+        el.style.display = '';
+      }
+    });
 
     // Save the PDF
     pdf.save(fileName);
