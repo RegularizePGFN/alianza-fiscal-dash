@@ -2,6 +2,10 @@
 import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 import { fetchCnpjData } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+import { generateProposalFiles, fallbackGenerateProposalFiles } from "@/lib/services/puppeteerService";
+import { getProposalHtml } from "@/lib/pdfUtils";
+import { useRef } from "react";
 
 interface UseProposalGenerationProps {
   formData: Partial<ExtractedData>;
@@ -30,10 +34,17 @@ export const useProposalGeneration = ({
   fetchProposals,
   user,
 }: UseProposalGenerationProps) => {
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
+  const proposalRef = useRef<HTMLDivElement | null>(null);
 
   const handleGenerateProposal = async (): Promise<void> => {
     setGeneratedProposal(true);
+
+    // Show loading toast
+    toast.loading("Gerando proposta...", {
+      id: "generate-proposal",
+      duration: 10000,
+    });
 
     // Ensure fees and other values have proper formatting
     const processedData = { ...formData };
@@ -64,10 +75,85 @@ export const useProposalGeneration = ({
       try {
         const proposal = await saveProposal(processedData as ExtractedData, imagePreview || undefined);
         if (proposal) {
+          try {
+            // Find the proposal preview element
+            const proposalElement = document.querySelector('.proposal-preview-container');
+            
+            if (proposalElement) {
+              // Get HTML content for Puppeteer
+              const htmlContent = getProposalHtml(proposalElement as HTMLElement);
+              
+              // Try to use the Puppeteer service
+              try {
+                const { pdfUrl, pngUrl } = await generateProposalFiles(htmlContent, processedData);
+                
+                // Update the proposal data to include the file URLs
+                const updatedProposal = {
+                  ...proposal,
+                  data: {
+                    ...proposal.data,
+                    pdfUrl,
+                    pngUrl,
+                  }
+                };
+                
+                // Update selected proposal with the file URLs
+                setSelectedProposal(updatedProposal);
+                
+                // Success toast
+                toast.success("Proposta gerada com sucesso!", {
+                  id: "generate-proposal",
+                  duration: 3000,
+                });
+              } catch (puppeteerError) {
+                console.error("Error using Puppeteer service:", puppeteerError);
+                
+                // Fallback to client-side rendering
+                if (proposalRef.current) {
+                  const { pdfUrl, pngUrl } = await fallbackGenerateProposalFiles(
+                    proposalRef.current,
+                    processedData
+                  );
+                  
+                  // Update the proposal data to include the file URLs
+                  const updatedProposal = {
+                    ...proposal,
+                    data: {
+                      ...proposal.data,
+                      pdfUrl,
+                      pngUrl,
+                    }
+                  };
+                  
+                  // Update selected proposal with the file URLs
+                  setSelectedProposal(updatedProposal);
+                  
+                  // Success toast with fallback notice
+                  toast.success("Proposta gerada (modo alternativo)!", {
+                    id: "generate-proposal",
+                    duration: 3000,
+                  });
+                } else {
+                  throw new Error("Proposal element not found for fallback rendering");
+                }
+              }
+            } else {
+              throw new Error("Proposal element not found");
+            }
+          } catch (renderError) {
+            console.error("Error rendering proposal:", renderError);
+            
+            // Error toast
+            toast.error("Erro ao renderizar a proposta", {
+              id: "generate-proposal",
+              duration: 3000,
+            });
+          }
+          
           // On success, update the proposals list and navigate to proposal tab
           await fetchProposals();
-          setSelectedProposal(proposal);
-          toast({
+          
+          uiToast({
             title: "Proposta gerada",
             description: "Sua proposta foi gerada e armazenada com sucesso!"
           });
@@ -77,7 +163,13 @@ export const useProposalGeneration = ({
         }
       } catch (error) {
         console.error("Error saving proposal:", error);
-        toast({
+        
+        toast.error("Erro ao gerar proposta", {
+          id: "generate-proposal",
+          duration: 3000,
+        });
+        
+        uiToast({
           title: "Erro ao gerar proposta",
           description: "Ocorreu um erro ao gerar a proposta. Por favor, tente novamente.",
           variant: "destructive"
@@ -121,6 +213,7 @@ export const useProposalGeneration = ({
   
   return {
     handleGenerateProposal,
-    handleViewProposal
+    handleViewProposal,
+    proposalRef
   };
 };
