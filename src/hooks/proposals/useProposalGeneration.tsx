@@ -83,7 +83,7 @@ export const useProposalGeneration = ({
               // Get HTML content for Puppeteer
               const htmlContent = getProposalHtml(proposalElement as HTMLElement);
               
-              // Try to use the Puppeteer service
+              // Try to use the browser-compatible service
               try {
                 const { pdfUrl, pngUrl } = await generateProposalFiles(htmlContent, processedData);
                 
@@ -105,34 +105,39 @@ export const useProposalGeneration = ({
                   id: "generate-proposal",
                   duration: 3000,
                 });
-              } catch (puppeteerError) {
-                console.error("Error using Puppeteer service:", puppeteerError);
+              } catch (serviceError) {
+                console.error("Error using generation service:", serviceError);
                 
                 // Fallback to client-side rendering
                 if (proposalRef.current) {
-                  const { pdfUrl, pngUrl } = await fallbackGenerateProposalFiles(
-                    proposalRef.current,
-                    processedData
-                  );
-                  
-                  // Update the proposal data to include the file URLs
-                  const updatedProposal = {
-                    ...proposal,
-                    data: {
-                      ...proposal.data,
-                      pdfUrl,
-                      pngUrl,
-                    }
-                  };
-                  
-                  // Update selected proposal with the file URLs
-                  setSelectedProposal(updatedProposal);
-                  
-                  // Success toast with fallback notice
-                  toast.success("Proposta gerada (modo alternativo)!", {
-                    id: "generate-proposal",
-                    duration: 3000,
-                  });
+                  try {
+                    const { pdfUrl, pngUrl } = await fallbackGenerateProposalFiles(
+                      proposalRef.current,
+                      processedData
+                    );
+                    
+                    // Update the proposal data to include the file URLs
+                    const updatedProposal = {
+                      ...proposal,
+                      data: {
+                        ...proposal.data,
+                        pdfUrl,
+                        pngUrl,
+                      }
+                    };
+                    
+                    // Update selected proposal with the file URLs
+                    setSelectedProposal(updatedProposal);
+                    
+                    // Success toast with fallback notice
+                    toast.success("Proposta gerada (modo alternativo)!", {
+                      id: "generate-proposal",
+                      duration: 3000,
+                    });
+                  } catch (fallbackError) {
+                    console.error("Error in fallback generation:", fallbackError);
+                    throw fallbackError;
+                  }
                 } else {
                   throw new Error("Proposal element not found for fallback rendering");
                 }

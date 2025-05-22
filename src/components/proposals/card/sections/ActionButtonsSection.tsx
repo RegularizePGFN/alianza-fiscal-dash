@@ -71,6 +71,7 @@ const ActionButtonsSection = ({
         
         // Fallback to client-side rendering
         if (previewRef.current) {
+          // Use local PDF generation as fallback
           await generateProposalPdf(previewRef.current, data);
           toast.success("PDF gerado localmente com sucesso!", { id: "generate-pdf" });
         } else {
@@ -129,6 +130,7 @@ const ActionButtonsSection = ({
         
         // Fallback to client-side rendering
         if (previewRef.current) {
+          // Use local PNG generation as fallback
           await generateProposalPng(previewRef.current, data);
           toast.success("Imagem PNG gerada localmente com sucesso!", { id: "generate-png" });
         } else {

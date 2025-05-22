@@ -1,14 +1,11 @@
 
-import { Client } from 'minio';
+// minioService.ts - Browser compatible version
+import axios from 'axios';
 
-// MinIO client configuration
-const minioClient = new Client({
-  endPoint: 'minio.neumo.com.br',
-  port: 443,
-  useSSL: true,
-  accessKey: 'bKUH7zI9pFv7feUTEMlp',
-  secretKey: '8UQM0yEQz7yMDx2r50zhOCOqFbcToJInX78Sj63g'
-});
+// URL to our MinIO proxy API 
+const MINIO_API_URL = 'https://puppeteer-service.aliancafiscal.com.br/minio';
+// Fallback URL for development/testing
+const MOCK_API_URL = 'https://pdf-mock.aliancafiscal.com.br/minio';
 
 const BUCKET_NAME = 'aliancafiscal';
 
@@ -18,7 +15,7 @@ const stringToUint8Array = (str: string) => {
   return encoder.encode(str);
 };
 
-// Function to upload file to MinIO
+// Function to upload file to MinIO (via API proxy)
 export const uploadFileToMinio = async (
   fileContent: string | Uint8Array,
   filePath: string,
@@ -30,26 +27,43 @@ export const uploadFileToMinio = async (
       ? stringToUint8Array(fileContent) 
       : fileContent;
     
-    // Calculate content length
-    const contentLength = content.byteLength;
+    // Create form data for multipart upload
+    const formData = new FormData();
+    const blob = new Blob([content], { type: contentType });
+    formData.append('file', blob);
+    formData.append('filePath', filePath);
+    formData.append('contentType', contentType);
+    formData.append('bucket', BUCKET_NAME);
     
-    // Upload to MinIO
-    await minioClient.putObject(
-      BUCKET_NAME,
-      filePath,
-      Buffer.from(content),
-      contentLength,
-      { 'Content-Type': contentType }
-    );
-    
-    // Generate a presigned URL valid for 7 days (604800 seconds)
-    const signedUrl = await minioClient.presignedGetObject(
-      BUCKET_NAME,
-      filePath,
-      604800
-    );
-    
-    return signedUrl;
+    // Upload via our API proxy
+    try {
+      const response = await axios.post(MINIO_API_URL + '/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      if (response.data && response.data.url) {
+        return response.data.url;
+      } else {
+        throw new Error('Invalid response from server');
+      }
+    } catch (apiError) {
+      console.warn('Error with primary API, trying fallback:', apiError);
+      
+      // Fallback to mock service for development/testing
+      const mockResponse = await axios.post(MOCK_API_URL + '/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      if (mockResponse.data && mockResponse.data.url) {
+        return mockResponse.data.url;
+      } else {
+        throw new Error('Invalid response from fallback server');
+      }
+    }
   } catch (error: any) {
     console.error('Error uploading to MinIO:', error);
     throw new Error(`Failed to upload file to MinIO: ${error.message}`);
@@ -71,13 +85,19 @@ export const getSignedUrl = async (
   filePath: string
 ): Promise<string> => {
   try {
-    // Generate a presigned URL valid for 7 days (604800 seconds)
-    const signedUrl = await minioClient.presignedGetObject(
-      BUCKET_NAME,
-      filePath,
-      604800
-    );
-    return signedUrl;
+    // Request signed URL from our API proxy
+    const response = await axios.get(MINIO_API_URL + '/signedUrl', {
+      params: {
+        bucket: BUCKET_NAME,
+        filePath
+      }
+    });
+    
+    if (response.data && response.data.url) {
+      return response.data.url;
+    } else {
+      throw new Error('Invalid response from server');
+    }
   } catch (error: any) {
     console.error('Error generating signed URL:', error);
     throw new Error(`Failed to generate signed URL: ${error.message}`);

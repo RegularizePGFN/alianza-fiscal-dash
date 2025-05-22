@@ -23,12 +23,17 @@ export interface ProposalFiles {
 
 // Convert base64 to Uint8Array
 const base64ToUint8Array = (base64: string): Uint8Array => {
-  const binary = atob(base64);
-  const len = binary.length;
+  // Remove data URL prefix if present
+  const base64String = base64.includes('base64,') 
+    ? base64.split('base64,')[1] 
+    : base64;
+    
+  const binaryString = atob(base64String);
+  const len = binaryString.length;
   const bytes = new Uint8Array(len);
   
   for (let i = 0; i < len; i++) {
-    bytes[i] = binary.charCodeAt(i);
+    bytes[i] = binaryString.charCodeAt(i);
   }
   
   return bytes;

@@ -16,9 +16,10 @@ import ActionButtonsSection from './card/sections/ActionButtonsSection';
 interface ProposalCardProps {
   data: Partial<ExtractedData>;
   imageUrl?: string;
+  companyData?: any;
 }
 
-const ProposalCard = ({ data }: ProposalCardProps) => {
+const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
   const proposalRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -48,6 +49,7 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
         {/* Action Buttons */}
         <ActionButtonsSection 
           data={data}
+          companyData={companyData}
         />
       </CardContent>
     </Card>
