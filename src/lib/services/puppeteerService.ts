@@ -39,12 +39,23 @@ const base64ToUint8Array = (base64: string): Uint8Array => {
   return bytes;
 };
 
+// Sanitize HTML to prevent XSS attacks
+const sanitizeHtml = (html: string): string => {
+  // Basic sanitization: strip script tags (a real implementation would use a library like DOMPurify)
+  return html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+             .replace(/on\w+="[^"]*"/gi, '') // Remove event handlers
+             .replace(/on\w+='[^']*'/gi, '');
+};
+
 // Generate proposal files using the render API service
 export const generateProposalFiles = async (
   htmlContent: string,
   data: Partial<ExtractedData>
 ): Promise<ProposalFiles> => {
   try {
+    // Sanitize HTML content to prevent security issues
+    const sanitizedHtml = sanitizeHtml(htmlContent);
+    
     // Make sure we have a CNPJ, fallback to a timestamp if not available
     const identifier = data.cnpj ? data.cnpj : `temp_${Date.now()}`;
     
@@ -53,25 +64,27 @@ export const generateProposalFiles = async (
     const pngPath = getProposalFilePath(identifier, 'png');
     
     try {
-      // Use our new render API service for PDF
+      // Use our render API service for PDF
       const pdfResult = await renderAndUpload({
-        html: htmlContent,
+        html: sanitizedHtml,
         fileKey: pdfPath,
         fileType: 'pdf',
         metadata: {
           cnpj: data.cnpj || '',
-          clientName: data.clientName || ''
+          clientName: data.clientName || '',
+          timestamp: new Date().toISOString()
         }
       });
       
-      // Use our new render API service for PNG
+      // Use our render API service for PNG
       const pngResult = await renderAndUpload({
-        html: htmlContent,
+        html: sanitizedHtml,
         fileKey: pngPath,
         fileType: 'png',
         metadata: {
           cnpj: data.cnpj || '',
-          clientName: data.clientName || ''
+          clientName: data.clientName || '',
+          timestamp: new Date().toISOString()
         }
       });
       

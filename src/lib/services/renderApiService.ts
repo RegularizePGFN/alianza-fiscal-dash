@@ -27,12 +27,23 @@ interface RenderResponse {
  */
 export const renderAndUpload = async (options: RenderOptions): Promise<RenderResponse> => {
   try {
+    // Basic input validation
+    if (!options.html || !options.fileKey || !options.fileType) {
+      throw new Error('Missing required parameters: html, fileKey or fileType');
+    }
+    
+    // Validate fileType
+    if (options.fileType !== 'pdf' && options.fileType !== 'png') {
+      throw new Error('fileType must be either "pdf" or "png"');
+    }
+    
     // Try the primary API endpoint
     try {
       const response = await axios.post(RENDER_API_URL, options, {
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        timeout: 45000 // 45 second timeout for rendering large documents
       });
       
       if (response.data && response.data.url) {
@@ -40,14 +51,15 @@ export const renderAndUpload = async (options: RenderOptions): Promise<RenderRes
       } else {
         throw new Error('Invalid response from rendering service');
       }
-    } catch (apiError) {
-      console.warn('Error with primary rendering API, trying fallback:', apiError);
+    } catch (apiError: any) {
+      console.warn('Error with primary rendering API, trying fallback:', apiError.message);
       
       // Fallback to mock service for development/testing
       const mockResponse = await axios.post(MOCK_API_URL, options, {
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        timeout: 30000 // 30 second timeout for mock service
       });
       
       if (mockResponse.data && mockResponse.data.url) {
