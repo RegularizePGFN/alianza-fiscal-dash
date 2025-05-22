@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
-import { HeaderSection } from './sections';
+import { HeaderSection, FooterSection } from './sections';
 import ProposalContent from './ProposalContent';
 
 interface ProposalPreviewProps {
@@ -32,7 +32,7 @@ const ProposalPreview = ({ data, companyData }: ProposalPreviewProps) => {
 
   return (
     <Card 
-      className="mx-auto shadow border overflow-hidden font-['Roboto',sans-serif] w-full print:shadow-none print:border-0"
+      className="mx-auto shadow border overflow-hidden font-['Roboto',sans-serif] w-full print:shadow-none print:border-0 flex flex-col min-h-[100vh]"
       style={{ 
         backgroundColor: colors.background,
         margin: 0,
@@ -48,13 +48,16 @@ const ProposalPreview = ({ data, companyData }: ProposalPreviewProps) => {
         totalDebt={data.totalDebt}
       />
 
-      <CardContent className="p-0">
+      <CardContent className="p-0 flex-grow">
         {/* Use the shared ProposalContent component */}
         <ProposalContent 
           data={data}
           companyData={companyData}
         />
       </CardContent>
+
+      {/* Footer */}
+      <FooterSection data={data} />
     </Card>
   );
 };

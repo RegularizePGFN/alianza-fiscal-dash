@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line } from 'recharts';
+import { PieChart, Pie, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
@@ -310,34 +310,6 @@ export function ProposalsDashboard() {
                   align="right"
                 />
               </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-      
-      <Card className="md:col-span-2">
-        <CardHeader>
-          <CardTitle className="text-lg">Desempenho por Vendedor</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={userProposalsData}
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                layout="vertical"
-              >
-                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                <XAxis type="number" tickFormatter={value => value} />
-                <YAxis dataKey="name" type="category" tick={{ fontSize: 12 }} width={100} />
-                <Tooltip formatter={(value, name) => [
-                  name === 'count' ? value : formatCurrency(value as number), 
-                  name === 'count' ? 'Propostas' : 'Honorários'
-                ]} />
-                <Legend />
-                <Bar dataKey="count" name="Propostas" fill="#8884d8" barSize={20} />
-                <Bar dataKey="fees" name="Honorários (R$)" fill="#82ca9d" barSize={20} />
-              </BarChart>
             </ResponsiveContainer>
           </div>
         </CardContent>

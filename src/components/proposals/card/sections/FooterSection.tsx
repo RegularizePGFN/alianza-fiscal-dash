@@ -7,8 +7,9 @@ interface FooterSectionProps {
 }
 
 const FooterSection = ({ data }: FooterSectionProps) => {
-  // Don't show footer at all since signature is always shown
-  return null;
+  return (
+    <div className="bg-af-blue-700 h-2 w-full mt-auto print:fixed print:bottom-0"></div>
+  );
 };
 
 export default FooterSection;

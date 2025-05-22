@@ -32,6 +32,9 @@ const ProposalsContainer = () => {
     user: proposalsState.user,
   });
   
+  // Mostrar dashboard apenas na aba "upload"
+  const shouldShowDashboard = isAdmin && proposalsState.activeTab === "upload";
+  
   return (
     <div className="container py-6">
       <div className="flex justify-between items-center mb-6">
@@ -79,8 +82,8 @@ const ProposalsContainer = () => {
         setProcessingStatus={proposalsState.setProcessingStatus}
       />
       
-      {/* Add the dashboard section for admins only */}
-      {isAdmin && <ProposalsDashboard />}
+      {/* Mostrar o dashboard apenas na aba "upload" */}
+      {shouldShowDashboard && <ProposalsDashboard />}
     </div>
   );
 };
