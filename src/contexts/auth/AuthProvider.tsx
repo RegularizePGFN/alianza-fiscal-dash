@@ -3,6 +3,18 @@ import React, { useState, useEffect } from 'react';
 import { AuthContext } from './AuthContext';
 import { AuthState } from './types';
 import { supabase } from '@/integrations/supabase/client';
+import { User as SupabaseUser } from '@supabase/supabase-js';
+import { User } from '@/lib/types';
+
+// Helper function to map Supabase user to our User type
+const mapSupabaseUserToUser = (supabaseUser: SupabaseUser | null): User | null => {
+  if (!supabaseUser) return null;
+  
+  return {
+    ...supabaseUser,
+    name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || 'User',
+  };
+};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [authState, setAuthState] = useState<AuthState>({
@@ -15,9 +27,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up the auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        const mappedUser = session ? mapSupabaseUserToUser(session.user) : null;
         setAuthState({
           isAuthenticated: session !== null,
-          user: session?.user || null,
+          user: mappedUser,
           isLoading: false,
         });
       }
@@ -29,9 +42,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) {
         console.error('Error getting session:', error);
       }
+      const mappedUser = data.session ? mapSupabaseUserToUser(data.session.user) : null;
       setAuthState({
         isAuthenticated: data.session !== null,
-        user: data.session?.user || null,
+        user: mappedUser,
         isLoading: false,
       });
     };
@@ -50,6 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       user: null,
       isLoading: false,
     });
+    return true;
   };
 
   // Added missing methods from AuthContextProps
@@ -62,10 +77,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) throw error;
       
-      return { success: true, data };
+      return true;
     } catch (error: any) {
       console.error('Login error:', error);
-      return { success: false, error: error.message };
+      return false;
     }
   };
 
@@ -73,16 +88,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { data } = await supabase.auth.getUser();
       if (data?.user) {
+        const mappedUser = mapSupabaseUserToUser(data.user);
         setAuthState(prev => ({
           ...prev,
-          user: data.user,
+          user: mappedUser,
         }));
-        return { success: true };
+        return true;
       }
-      return { success: false, error: "Could not refresh user" };
+      return false;
     } catch (error: any) {
       console.error('Refresh user error:', error);
-      return { success: false, error: error.message };
+      return false;
     }
   };
 
@@ -92,12 +108,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const impersonateUser = async (userId: string) => {
     // Implementation would depend on your backend
     setIsImpersonating(true);
-    return { success: true };
+    return true;
   };
   
   const stopImpersonating = async () => {
     setIsImpersonating(false);
-    return { success: true };
+    return true;
   };
 
   return (

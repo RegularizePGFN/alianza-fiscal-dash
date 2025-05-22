@@ -10,38 +10,36 @@ import NotFound from './pages/NotFound';
 import ProfilePage from './pages/ProfilePage';
 import ProposalsContainer from './pages/proposals/ProposalsContainer';
 import PrintProposalPage from './pages/proposals/PrintProposalPage';
-import { AuthProvider } from './contexts/auth';
 import { AppLayout } from './components/layout/AppLayout';
 import { Toaster } from './components/ui/toaster';
 import './App.css';
 import './styles/index.css';
+import { useAuth } from './contexts/auth';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          
-          {/* Public proposal print route */}
-          <Route path="/propostas/print/:id" element={<PrintProposalPage />} />
-          
-          <Route path="/" element={<AppLayout />}>
-            <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="dashboard" element={<DashboardPage />} />
-            <Route path="vendas" element={<SalesPage />} />
-            <Route path="relatorios" element={<ReportsPage />} />
-            <Route path="propostas" element={<ProposalsContainer />} />
-            <Route path="usuarios" element={<UsersPage />} />
-            <Route path="configuracoes" element={<SettingsPage />} />
-            <Route path="perfil" element={<ProfilePage />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
+    <Router>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        
+        {/* Public proposal print route */}
+        <Route path="/propostas/print/:id" element={<PrintProposalPage />} />
+        
+        <Route path="/" element={<AppLayout />}>
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="vendas" element={<SalesPage />} />
+          <Route path="relatorios" element={<ReportsPage />} />
+          <Route path="propostas" element={<ProposalsContainer />} />
+          <Route path="usuarios" element={<UsersPage />} />
+          <Route path="configuracoes" element={<SettingsPage />} />
+          <Route path="perfil" element={<ProfilePage />} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
 
-        <Toaster />
-      </Router>
-    </AuthProvider>
+      <Toaster />
+    </Router>
   );
 }
 
