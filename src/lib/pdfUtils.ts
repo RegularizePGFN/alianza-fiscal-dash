@@ -1,4 +1,3 @@
-
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { ExtractedData, CompanyData } from './types/proposals';
@@ -221,123 +220,123 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
         if (pageIndex === 0) {
           // First page: Title, client info, negotiation details, payment options
           pageContent.innerHTML = `
-            <!-- Header with logo -->
-            <div class="bg-gradient-to-r from-af-blue-600 to-af-blue-800 text-white p-4 rounded-md mb-6">
-              <div class="flex justify-between items-start">
-                <div class="flex items-center gap-4">
-                  <img src="/lovable-uploads/d939ccfc-a061-45e8-97e0-1fa1b82d3df2.png" alt="Logo" class="h-14 w-auto">
-                  <h1 class="text-2xl font-bold">Proposta de Parcelamento PGFN</h1>
-                </div>
-                <div class="bg-af-green-500 text-white text-sm py-1.5 px-3 rounded-md">
-                  Economia de R$ ${calculateEconomyValue(data.totalDebt, data.discountedValue)}
-                </div>
+          <!-- Header with logo -->
+          <div class="bg-gradient-to-r from-af-blue-600 to-af-blue-800 text-white p-4 rounded-md mb-6">
+            <div class="flex justify-between items-start">
+              <div class="flex items-center gap-4">
+                <img src="/lovable-uploads/d939ccfc-a061-45e8-97e0-1fa1b82d3df2.png" alt="Logo" class="h-14 w-auto">
+                <h1 class="text-2xl font-bold">Proposta de Parcelamento PGFN</h1>
+              </div>
+              <div class="bg-af-green-500 text-white text-sm py-1.5 px-3 rounded-md">
+                Economia de R$ ${calculateEconomyValue(data.totalDebt, data.discountedValue)}
               </div>
             </div>
-            
-            <!-- Client Info -->
-            <div class="mb-6">
-              <h2 class="text-lg font-semibold mb-2 text-af-blue-800 border-b pb-1">Dados do Contribuinte</h2>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p class="text-sm text-gray-500">CNPJ:</p>
-                  <p>${data.cnpj || ''}</p>
-                </div>
-                <div>
-                  <p class="text-sm text-gray-500">Razão Social:</p>
-                  <p>${data.clientName || ''}</p>
-                </div>
-                <div>
-                  <p class="text-sm text-gray-500">Situação:</p>
-                  <p>${data.situation || ''}</p>
-                </div>
-                <div>
-                  <p class="text-sm text-gray-500">Data de Abertura:</p>
-                  <p>${data.openingDate || ''}</p>
-                </div>
-                <div class="col-span-2">
-                  <p class="text-sm text-gray-500">Endereço:</p>
-                  <p>${data.address || ''}</p>
-                </div>
-                <div>
-                  <p class="text-sm text-gray-500">Telefone:</p>
-                  <p>${data.clientPhone || ''}</p>
-                </div>
-                <div>
-                  <p class="text-sm text-gray-500">Email:</p>
-                  <p>${data.clientEmail || ''}</p>
-                </div>
-                <div class="col-span-2">
-                  <p class="text-sm text-gray-500">Atividade Principal:</p>
-                  <p>${data.businessActivity || ''}</p>
-                </div>
+          </div>
+          
+          <!-- Client Info -->
+          <div class="mb-6">
+            <h2 class="text-lg font-semibold mb-2 text-af-blue-800 border-b pb-1">Dados do Contribuinte</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p class="text-sm text-gray-500">CNPJ:</p>
+                <p>${data.cnpj || ''}</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">Razão Social:</p>
+                <p>${data.clientName || ''}</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">Situação:</p>
+                <p>${data.situation || ''}</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">Data de Abertura:</p>
+                <p>${data.openingDate || ''}</p>
+              </div>
+              <div class="col-span-2">
+                <p class="text-sm text-gray-500">Endereço:</p>
+                <p>${data.address || ''}</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">Telefone:</p>
+                <p>${data.clientPhone || ''}</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">Email:</p>
+                <p>${data.clientEmail || ''}</p>
+              </div>
+              <div class="col-span-2">
+                <p class="text-sm text-gray-500">Atividade Principal:</p>
+                <p>${data.businessActivity || ''}</p>
               </div>
             </div>
-            
-            <!-- Negotiation Details -->
-            <div class="mb-6">
-              <h2 class="text-lg font-semibold mb-2 text-af-blue-800 border-b pb-1">Dados da Negociação</h2>
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <p class="text-sm text-gray-500">Valor Consolidado:</p>
-                  <p>R$ ${data.totalDebt || '0,00'}</p>
-                </div>
-                <div>
-                  <p class="text-sm text-gray-500">Valor com Reduções:</p>
-                  <p class="text-green-600">R$ ${data.discountedValue || '0,00'}</p>
-                </div>
-                <div class="col-span-2">
-                  <p class="text-sm text-gray-500">Percentual de Desconto:</p>
-                  <p class="text-green-600">${calculateDiscountPercentage(data.totalDebt, data.discountedValue)}%</p>
-                </div>
+          </div>
+          
+          <!-- Negotiation Details -->
+          <div class="mb-6">
+            <h2 class="text-lg font-semibold mb-2 text-af-blue-800 border-b pb-1">Dados da Negociação</h2>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <p class="text-sm text-gray-500">Valor Consolidado:</p>
+                <p>R$ ${data.totalDebt || '0,00'}</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">Valor com Reduções:</p>
+                <p class="text-green-600">R$ ${data.discountedValue || '0,00'}</p>
+              </div>
+              <div class="col-span-2">
+                <p class="text-sm text-gray-500">Percentual de Desconto:</p>
+                <p class="text-green-600">${calculateDiscountPercentage(data.totalDebt, data.discountedValue)}%</p>
               </div>
             </div>
-            
-            <!-- Payment Options -->
-            <div class="mb-6">
-              <h2 class="text-lg font-semibold mb-2 text-af-blue-800 border-b pb-1">Opções de Pagamento</h2>
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <p class="text-sm text-gray-500">À Vista:</p>
-                  <p>R$ ${data.discountedValue || '0,00'}</p>
-                </div>
-                <div>
-                  <p class="text-sm text-gray-500">Parcelado:</p>
-                  <p>${data.installments || '0'}x de R$ ${data.installmentValue || '0,00'}</p>
-                </div>
+          </div>
+          
+          <!-- Payment Options -->
+          <div class="mb-6">
+            <h2 class="text-lg font-semibold mb-2 text-af-blue-800 border-b pb-1">Opções de Pagamento</h2>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <p class="text-sm text-gray-500">À Vista:</p>
+                <p>R$ ${data.discountedValue || '0,00'}</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">Parcelado:</p>
+                <p>${data.installments || '0'}x de R$ ${data.installmentValue || '0,00'}</p>
               </div>
             </div>
-            
-            <!-- Fees -->
-            <div class="mb-6">
-              <h2 class="text-lg font-semibold mb-2 text-af-blue-800 border-b pb-1">Honorários</h2>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p class="text-sm text-gray-500">Honorários à Vista:</p>
-                  <p>R$ ${data.feesValue || '0,00'}</p>
-                </div>
-                <div>
-                  <p class="text-sm text-gray-500">Honorários Parcelados:</p>
-                  <p>${data.feesInstallments || '0'}x de R$ ${data.feesInstallmentValue || '0,00'} no cartão</p>
-                </div>
-                <div class="col-span-2">
-                  <p class="text-sm text-gray-500">Total:</p>
-                  <p>R$ ${calculateTotal(data.feesValue, data.feesInstallments, data.feesInstallmentValue)}</p>
-                </div>
+          </div>
+          
+          <!-- Fees -->
+          <div class="mb-6">
+            <h2 class="text-lg font-semibold mb-2 text-af-blue-800 border-b pb-1">Honorários</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p class="text-sm text-gray-500">Honorários à Vista:</p>
+                <p>R$ ${data.feesValue || '0,00'}</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">Honorários Parcelados:</p>
+                <p>${data.feesInstallments || '0'}x de R$ ${data.feesInstallmentValue || '0,00'} no cartão</p>
+              </div>
+              <div class="col-span-2">
+                <p class="text-sm text-gray-500">Total:</p>
+                <p>R$ ${calculateTotal(data.feesValue, data.feesInstallments, data.feesInstallmentValue)}</p>
               </div>
             </div>
-            
-            <!-- Signature -->
-            <div class="mt-12 border-t pt-6">
-              <p class="text-center">${data.sellerName || 'Especialista Tributário'}</p>
-              <p class="text-center text-gray-500">Especialista Tributário</p>
-              <p class="text-center text-gray-500 text-sm mt-1">${data.sellerEmail || ''}</p>
-            </div>
-            
-            <!-- Page number -->
-            <div class="absolute bottom-4 right-6 text-xs text-gray-500">
-              Página 1 de ${numberOfPages}
-            </div>
-          `;
+          </div>
+          
+          <!-- Signature -->
+          <div class="mt-12 border-t pt-6">
+            <p class="text-center">${data.sellerName || 'Especialista Tributário'}</p>
+            <p class="text-center text-gray-500">Especialista Tributário</p>
+            <p class="text-center text-gray-500 text-sm mt-1">${data.sellerEmail || ''}</p>
+          </div>
+          
+          <!-- Page number -->
+          <div class="absolute bottom-4 right-6 text-xs text-gray-500">
+            Página 1 de ${numberOfPages}
+          </div>
+        `;
         } else {
           // Payment schedule page
           pageContent.innerHTML = await generatePaymentScheduleHtml(data);
