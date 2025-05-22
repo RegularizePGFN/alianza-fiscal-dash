@@ -12,7 +12,7 @@ const ProposalHeader = ({
         <img src="/lovable-uploads/d939ccfc-a061-45e8-97e0-1fa1b82d3df2.png" alt="Aliança Fiscal" className="h-8 w-auto object-contain" />
         <div>
           <h2 className="font-semibold text-lg tracking-tight py-[5px] my-0">Proposta de Regularização • PGFN</h2>
-          <p className="text-xs text-af-blue-100 my-0 mx-0 py-[3px]">Aliança Fiscal</p>
+          <p className="text-af-blue-100 mx-0 py-0 my-[-8px] text-xs">Aliança Fiscal</p>
         </div>
       </div>
     </div>;
