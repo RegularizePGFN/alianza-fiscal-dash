@@ -1,8 +1,7 @@
 
 import React from 'react';
-import { CardHeader, CardTitle } from "@/components/ui/card";
+import { CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Percent } from "lucide-react";
 import { formatBrazilianCurrency } from '@/lib/utils';
 
 interface HeaderSectionProps {
@@ -50,37 +49,23 @@ const HeaderSection = ({
   if (!showHeader) return null;
   
   return (
-    <CardHeader 
-      className="bg-gradient-to-r from-af-blue-600 to-af-blue-800 text-white pb-8"
-      style={{
-        background: `linear-gradient(to right, ${colors.primary}, ${colors.secondary})`
-      }}
-    >
-      <div className="flex justify-between items-start">
+    <CardHeader className="py-4 border-b border-gray-200">
+      <div className="flex justify-between items-center">
         <div className="flex items-center gap-4">
           {showLogo && (
             <img 
               src="/lovable-uploads/d939ccfc-a061-45e8-97e0-1fa1b82d3df2.png" 
               alt="Logo" 
-              className="h-14 w-auto"
+              className="h-8 w-auto" 
             />
           )}
-          <CardTitle className="text-2xl font-bold text-white">
-            <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Proposta de Parcelamento PGFN
-            </div>
-          </CardTitle>
+          <h1 className="text-lg font-semibold text-gray-800">
+            Proposta de Transação Tributária | PGFN
+          </h1>
         </div>
-        <Badge 
-          className="text-white text-sm py-1.5 px-3"
-          style={{
-            backgroundColor: colors.accent,
-          }}
-        >
-          <Percent className="mr-1 h-4 w-4" /> 
-          Economia de R$ {calculateEconomyValue()}
-        </Badge>
+        <div className="text-sm text-gray-700">
+          • Economia de R$ {calculateEconomyValue()}
+        </div>
       </div>
     </CardHeader>
   );

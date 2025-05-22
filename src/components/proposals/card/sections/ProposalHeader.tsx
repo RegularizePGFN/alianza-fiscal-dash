@@ -1,7 +1,6 @@
 
 import React from 'react';
-import { CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { CardHeader } from "@/components/ui/card";
 import { formatBrazilianCurrency } from '@/lib/utils';
 
 interface ProposalHeaderProps {
@@ -31,21 +30,21 @@ const ProposalHeader = ({ totalDebt, discountedValue }: ProposalHeaderProps) => 
   const economyValue = calculateEconomyValue();
 
   return (
-    <CardHeader className="bg-gradient-to-r from-af-blue-600 to-af-blue-800 text-white pb-8">
-      <div className="flex justify-between items-start">
+    <CardHeader className="py-4 border-b border-gray-200">
+      <div className="flex justify-between items-center">
         <div className="flex items-center gap-4">
           <img 
             src="/lovable-uploads/d939ccfc-a061-45e8-97e0-1fa1b82d3df2.png" 
             alt="Logo" 
-            className="h-14 w-auto"
+            className="h-8 w-auto"
           />
-          <CardTitle className="text-2xl font-bold text-white">
-            Proposta de Parcelamento PGFN
-          </CardTitle>
+          <h1 className="text-lg font-semibold text-gray-800">
+            Proposta de Transação Tributária | PGFN
+          </h1>
         </div>
-        <Badge className="bg-af-green-500 hover:bg-af-green-400 text-white text-sm py-1.5 px-3">
-          Economia de R$ {economyValue}
-        </Badge>
+        <div className="text-sm text-gray-700">
+          • Economia de R$ {economyValue}
+        </div>
       </div>
     </CardHeader>
   );

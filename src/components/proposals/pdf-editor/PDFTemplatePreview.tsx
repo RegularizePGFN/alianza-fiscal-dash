@@ -90,7 +90,7 @@ const PDFTemplatePreview = ({
     };
   })();
 
-  // A4 dimensions in pixels with a 0.75 scale factor (larger than before)
+  // A4 dimensions in pixels with a 0.75 scale factor
   const a4Width = 210 * 3.7795 * 0.75;
   const a4Height = 297 * 3.7795 * 0.75;
 
@@ -136,9 +136,8 @@ const PDFTemplatePreview = ({
       
       <Card 
         ref={previewRef} 
-        className="border p-0 overflow-hidden shadow-md preview-proposal font-['Roboto',sans-serif] transition-colors mx-auto"
+        className="border p-0 overflow-hidden shadow-md preview-proposal font-['Roboto',sans-serif] transition-colors mx-auto bg-white"
         style={{ 
-          backgroundColor: colors.background,
           width: `${a4Width}px`,
           height: `${a4Height}px`,
           maxWidth: '100%',
@@ -147,7 +146,7 @@ const PDFTemplatePreview = ({
         }}
       >
         {/* Use the shared ProposalContent component for consistency, with current page */}
-        <div className="overflow-auto h-full">
+        <div className="h-full">
           <ProposalContent 
             data={formData}
             companyData={companyData}

@@ -58,7 +58,7 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
 
   // Default layout settings
   const layout = {
-    sections: ['client', 'alert', 'debt', 'payment', 'fees', 'total'],
+    sections: ['client', 'debt', 'payment', 'fees', 'total'],
     showHeader: true,
     showLogo: true,
     showWatermark: false
@@ -142,8 +142,8 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
 
   // Calculate A4 dimensions for the preview (210mm × 297mm)
   // Using a scaling factor to fit properly on screen
-  const a4Width = 210 * 3.7795 * 0.75; // A4 width in pixels with 0.75 scale (instead of 0.5)
-  const a4Height = 297 * 3.7795 * 0.75; // A4 height in pixels with 0.75 scale (instead of 0.5)
+  const a4Width = 210 * 3.7795 * 0.75; // A4 width in pixels with 0.75 scale
+  const a4Height = 297 * 3.7795 * 0.75; // A4 height in pixels with 0.75 scale
 
   return (
     <div className="flex flex-col items-center space-y-4">
@@ -188,9 +188,8 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
       {/* Main proposal card with larger scale */}
       <Card 
         ref={proposalRef} 
-        className="shadow border overflow-hidden font-['Roboto',sans-serif] w-full print:w-full print:max-w-none mx-auto"
+        className="shadow border overflow-hidden font-['Roboto',sans-serif] w-full mx-auto bg-white"
         style={{ 
-          backgroundColor: colors.background,
           width: `${a4Width}px`, 
           height: `${a4Height}px`,
           maxWidth: '100%',
@@ -198,26 +197,24 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
         }}
       >
         <CardContent className="p-0 h-full">
-          <div className="overflow-auto h-full">
-            {/* Use the shared ProposalContent component with page prop */}
-            <ProposalContent 
-              data={data}
-              companyData={companyData}
-              currentPage={currentPage}
-            />
-          </div>
+          {/* Use the shared ProposalContent component with page prop */}
+          <ProposalContent 
+            data={data}
+            companyData={companyData}
+            currentPage={currentPage}
+          />
         </CardContent>
       </Card>
       
       {/* Action buttons - now outside the proposal card */}
       <div className="flex justify-center gap-3 py-4 w-full" data-pdf-remove="true">
-        <Button variant="outline" onClick={handlePrint} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
+        <Button variant="outline" onClick={handlePrint} className="border-gray-300 text-gray-700 hover:bg-gray-50">
           Imprimir
         </Button>
-        <Button variant="outline" onClick={handleGeneratePng} className="border-af-blue-300 text-af-blue-700 hover:bg-af-blue-50">
+        <Button variant="outline" onClick={handleGeneratePng} className="border-gray-300 text-gray-700 hover:bg-gray-50">
           Baixar PNG
         </Button>
-        <Button onClick={handleGeneratePdf} className="bg-af-blue-600 hover:bg-af-blue-700">
+        <Button onClick={handleGeneratePdf} className="bg-gray-800 hover:bg-gray-900">
           Baixar PDF
         </Button>
       </div>
