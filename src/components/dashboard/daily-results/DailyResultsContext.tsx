@@ -1,27 +1,42 @@
 
-import React, { createContext, useContext, useState } from 'react';
-import { SortColumn, SortDirection } from './types';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { Sale } from '@/lib/types';
 
-interface DailyResultsContextType {
+export type SortDirection = 'asc' | 'desc';
+export type SortColumn = 'name' | 'proposals' | 'fees' | 'salesCount' | 'salesAmount';
+
+export interface DailyResultsContextValue {
+  dailySales: Sale[];
+  setDailySales: React.Dispatch<React.SetStateAction<Sale[]>>;
+  currentDate: string;
+  setCurrentDate: React.Dispatch<React.SetStateAction<string>>;
   sortColumn: SortColumn;
+  setSortColumn: React.Dispatch<React.SetStateAction<SortColumn>>;
   sortDirection: SortDirection;
-  setSortColumn: (column: SortColumn) => void;
-  setSortDirection: (direction: SortDirection) => void;
+  setSortDirection: React.Dispatch<React.SetStateAction<SortDirection>>;
 }
 
-const DailyResultsContext = createContext<DailyResultsContextType | undefined>(undefined);
+const DailyResultsContext = createContext<DailyResultsContextValue | undefined>(undefined);
 
-export const DailyResultsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const DailyResultsProvider = ({ children }: { children: ReactNode }) => {
+  const [dailySales, setDailySales] = useState<Sale[]>([]);
+  const [currentDate, setCurrentDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [sortColumn, setSortColumn] = useState<SortColumn>('salesAmount');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   return (
-    <DailyResultsContext.Provider value={{ 
-      sortColumn, 
-      sortDirection, 
-      setSortColumn, 
-      setSortDirection 
-    }}>
+    <DailyResultsContext.Provider
+      value={{
+        dailySales,
+        setDailySales,
+        currentDate,
+        setCurrentDate,
+        sortColumn,
+        setSortColumn,
+        sortDirection,
+        setSortDirection,
+      }}
+    >
       {children}
     </DailyResultsContext.Provider>
   );

@@ -36,11 +36,6 @@ export interface ExtractedData {
   installmentDates?: string; // JSON string representation of installment payment dates
   // Show installment fees option
   showFeesInstallments?: string; // Whether to show installment fees in the proposal ("true" or "false")
-  // New MinIO file URLs
-  pdfUrl?: string; // URL to the PDF file stored in MinIO
-  pngUrl?: string; // URL to the PNG file stored in MinIO
-  pdfPath?: string; // Path to the PDF file in MinIO
-  pngPath?: string; // Path to the PNG file in MinIO
 }
 
 export interface Proposal {

@@ -1,10 +1,9 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { FileCheck } from "lucide-react";
 import { PDFTemplatePreview } from "@/components/proposals/pdf-editor";
 import { ExtractedData, PDFTemplate, CompanyData } from "@/lib/types/proposals";
-import { ActionButtonsSection } from "@/components/proposals/card/sections";
 
 interface ProposalPreviewContainerProps {
   formData: Partial<ExtractedData>;
@@ -21,15 +20,11 @@ export const ProposalPreviewContainer = ({
   companyData,
   onGeneratePDF
 }: ProposalPreviewContainerProps) => {
+  const previewRef = useRef<HTMLDivElement | null>(null);
+
   return (
-    <div className="flex flex-col">
+    <div ref={previewRef} className="flex flex-col">
       <div className="sticky top-4 mb-4">
-        {/* Botões de visualização e exportação acima do preview */}
-        <ActionButtonsSection 
-          data={formData}
-          companyData={companyData}
-        />
-        
         <PDFTemplatePreview 
           formData={formData}
           template={selectedTemplate}

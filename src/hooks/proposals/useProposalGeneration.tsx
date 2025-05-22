@@ -2,10 +2,6 @@
 import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 import { fetchCnpjData } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import { toast } from "sonner";
-import { generateProposalFiles, generateProposalFilesRemote } from "@/lib/services/puppeteerService";
-import { getProposalHtml } from "@/lib/pdfUtils";
-import { useRef } from "react";
 
 interface UseProposalGenerationProps {
   formData: Partial<ExtractedData>;
@@ -34,17 +30,10 @@ export const useProposalGeneration = ({
   fetchProposals,
   user,
 }: UseProposalGenerationProps) => {
-  const { toast: uiToast } = useToast();
-  const proposalRef = useRef<HTMLDivElement | null>(null);
+  const { toast } = useToast();
 
   const handleGenerateProposal = async (): Promise<void> => {
     setGeneratedProposal(true);
-
-    // Show loading toast
-    toast.loading("Gerando proposta...", {
-      id: "generate-proposal",
-      duration: 10000,
-    });
 
     // Ensure fees and other values have proper formatting
     const processedData = { ...formData };
@@ -75,144 +64,20 @@ export const useProposalGeneration = ({
       try {
         const proposal = await saveProposal(processedData as ExtractedData, imagePreview || undefined);
         if (proposal) {
-          try {
-            if (proposalRef.current) {
-              try {
-                console.log("Gerando proposta com método local...");
-                
-                // Certifique-se de que todos os elementos estão visíveis e carregados
-                setTimeout(async () => {
-                  try {
-                    // Método principal: geração local
-                    const { pdfUrl, pngUrl, pdfPath, pngPath } = await generateProposalFiles(
-                      proposalRef.current!,
-                      processedData
-                    );
-                    
-                    // Update the proposal data to include the file URLs
-                    const updatedProposal = {
-                      ...proposal,
-                      data: {
-                        ...proposal.data,
-                        pdfUrl,
-                        pngUrl,
-                        pdfPath,
-                        pngPath
-                      }
-                    };
-                    
-                    // Update selected proposal with the file URLs
-                    setSelectedProposal(updatedProposal);
-                    
-                    // Success toast
-                    toast.success("Proposta gerada com sucesso!", {
-                      id: "generate-proposal",
-                      duration: 3000,
-                    });
-                    
-                    // On success, update the proposals list and navigate to proposal tab
-                    await fetchProposals();
-                    
-                    uiToast({
-                      title: "Proposta gerada",
-                      description: "Sua proposta foi gerada e armazenada com sucesso!"
-                    });
-                    
-                    // Navigate to the proposal tab to show the final result
-                    setActiveTab("proposal");
-                  } catch (localError) {
-                    console.warn("Client-side generation failed, trying remote service:", localError);
-                    
-                    // Fallback para método remoto
-                    try {
-                      // Get HTML content for remote service
-                      const htmlContent = getProposalHtml(proposalRef.current!);
-                      
-                      // Try to use the remote service as fallback
-                      const { pdfUrl, pngUrl, pdfPath, pngPath } = await generateProposalFilesRemote(
-                        htmlContent,
-                        processedData
-                      );
-                      
-                      // Update the proposal with remote-generated files
-                      const updatedProposal = {
-                        ...proposal,
-                        data: {
-                          ...proposal.data,
-                          pdfUrl,
-                          pngUrl,
-                          pdfPath,
-                          pngPath
-                        }
-                      };
-                      
-                      // Update selected proposal with the file URLs
-                      setSelectedProposal(updatedProposal);
-                      
-                      // Success toast with remote notice
-                      toast.success("Proposta gerada (via serviço remoto)!", {
-                        id: "generate-proposal",
-                        duration: 3000,
-                      });
-                      
-                      // On success, update the proposals list and navigate to proposal tab
-                      await fetchProposals();
-                      
-                      uiToast({
-                        title: "Proposta gerada",
-                        description: "Sua proposta foi gerada via serviço remoto e armazenada com sucesso!"
-                      });
-                      
-                      // Navigate to the proposal tab to show the final result
-                      setActiveTab("proposal");
-                    } catch (remoteError) {
-                      console.error("Both local and remote generation failed:", remoteError);
-                      throw new Error("Nenhum método de geração funcionou");
-                    }
-                  }
-                }, 500); // Pequeno atraso para garantir que o DOM esteja totalmente renderizado
-              } catch (renderError) {
-                console.error("Error rendering proposal:", renderError);
-                
-                // Error toast
-                toast.error("Erro ao renderizar a proposta", {
-                  id: "generate-proposal",
-                  duration: 3000,
-                });
-                
-                uiToast({
-                  title: "Erro ao renderizar",
-                  description: "Ocorreu um erro ao renderizar a proposta. Por favor, tente novamente.",
-                  variant: "destructive"
-                });
-              }
-            } else {
-              throw new Error("Elemento da proposta não encontrado");
-            }
-          } catch (error) {
-            console.error("Error saving proposal:", error);
-            
-            toast.error("Erro ao gerar proposta", {
-              id: "generate-proposal",
-              duration: 3000,
-            });
-            
-            uiToast({
-              title: "Erro ao gerar proposta",
-              description: "Ocorreu um erro ao gerar a proposta. Por favor, tente novamente.",
-              variant: "destructive"
-            });
-          }
+          // On success, update the proposals list and navigate to proposal tab
+          await fetchProposals();
+          setSelectedProposal(proposal);
+          toast({
+            title: "Proposta gerada",
+            description: "Sua proposta foi gerada e armazenada com sucesso!"
+          });
+          
+          // Important: Navigate to the proposal tab to show the final result
+          setActiveTab("proposal");
         }
       } catch (error) {
         console.error("Error saving proposal:", error);
-        
-        toast.error("Erro ao gerar proposta", {
-          id: "generate-proposal",
-          duration: 3000,
-        });
-        
-        uiToast({
+        toast({
           title: "Erro ao gerar proposta",
           description: "Ocorreu um erro ao gerar a proposta. Por favor, tente novamente.",
           variant: "destructive"
@@ -256,7 +121,6 @@ export const useProposalGeneration = ({
   
   return {
     handleGenerateProposal,
-    handleViewProposal,
-    proposalRef
+    handleViewProposal
   };
 };

@@ -17,31 +17,6 @@ const PaymentOptionsSection = ({
   entryValue,
   entryInstallments
 }: PaymentOptionsSectionProps) => {
-  // Calculate entry installment value if multiple installments
-  const entryInstallmentValue = () => {
-    if (entryValue && entryInstallments && parseInt(entryInstallments) > 1) {
-      try {
-        const entryValueNum = parseFloat(entryValue.replace(/\./g, '').replace(',', '.'));
-        const installmentsNum = parseInt(entryInstallments);
-        
-        if (!isNaN(entryValueNum) && !isNaN(installmentsNum) && installmentsNum > 0) {
-          const installmentVal = entryValueNum / installmentsNum;
-          return installmentVal.toLocaleString('pt-BR', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-          });
-        }
-      } catch (error) {
-        console.error("Error calculating entry installment value:", error);
-      }
-    }
-    return entryValue || "0,00";
-  };
-
-  const entryDisplayValue = parseInt(entryInstallments || '1') > 1 
-    ? `${entryInstallments}x de R$ ${entryInstallmentValue()}`
-    : `R$ ${entryValue || '0,00'}`;
-
   return (
     <div className="bg-white p-1.5 rounded-lg border border-af-blue-200 shadow-sm">
       <h3 className="text-[10px] font-semibold text-af-blue-800 mb-1 flex items-center">
@@ -56,16 +31,11 @@ const PaymentOptionsSection = ({
         <div className="border border-af-blue-100 rounded p-1 hover:bg-af-blue-50 transition-colors">
           <p className="font-medium text-af-blue-700 text-[10px]">Parcelado</p>
           <p className="text-[11px] font-bold">{installments || '0'}x de R$ {installmentValue || '0,00'}</p>
-          {parseInt(entryInstallments || '1') >= 1 && (
-            <div>
-              <p className="text-[9px] text-gray-500 leading-tight">
-                Entrada em {entryDisplayValue}
-                {parseInt(installments || '0') > 0 && (
-                  <><br />Mais → {installments || '0'}x de R$ {installmentValue || '0,00'}</>
-                )}
-              </p>
-            </div>
-          )}
+          <div>
+            <p className="text-[9px] text-gray-500 leading-tight">
+              <span>Entrada: {entryInstallments || '1'}x de R$ {entryValue || '0,00'}</span>
+            </p>
+          </div>
         </div>
       </div>
     </div>

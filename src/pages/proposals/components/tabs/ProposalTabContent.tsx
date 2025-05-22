@@ -1,15 +1,14 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 import { ProposalCard } from "@/components/proposals/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { RotateCcw, Edit2, User, Building, Phone, Mail, FileText, ExternalLink, FileImage } from "lucide-react";
+import { RotateCcw, Edit2, User, Building, Phone, Mail, FileText } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 
 interface ProposalTabContentProps {
   formData: Partial<ExtractedData>;
@@ -26,14 +25,7 @@ const ProposalTabContent = ({
   onReset,
   onInputChange
 }: ProposalTabContentProps) => {
-  const [isEditing, setIsEditing] = useState(false);
-
-  // Function to open a URL in a new tab
-  const openUrl = (url: string | undefined) => {
-    if (url) {
-      window.open(url, '_blank');
-    }
-  };
+  const [isEditing, setIsEditing] = React.useState(false);
 
   return (
     <div className="space-y-6">
@@ -52,45 +44,6 @@ const ProposalTabContent = ({
           Nova Proposta
         </Button>
       </div>
-      
-      {/* Display file links if available */}
-      {!isEditing && (formData.pdfUrl || formData.pngUrl) && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Arquivos Disponíveis</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-2">
-            {formData.pdfUrl && (
-              <Button 
-                variant="outline" 
-                onClick={() => openUrl(formData.pdfUrl)} 
-                className="justify-start"
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                <span className="mr-auto">PDF da Proposta</span>
-                <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
-              </Button>
-            )}
-            {formData.pngUrl && (
-              <Button 
-                variant="outline" 
-                onClick={() => openUrl(formData.pngUrl)} 
-                className="justify-start"
-              >
-                <FileImage className="h-4 w-4 mr-2" />
-                <span className="mr-auto">Imagem da Proposta</span>
-                <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
-              </Button>
-            )}
-          </CardContent>
-          <CardFooter>
-            <Badge variant="outline" className="gap-1">
-              <FileText className="h-3 w-3" />
-              Arquivos armazenados permanentemente
-            </Badge>
-          </CardFooter>
-        </Card>
-      )}
       
       {isEditing ? (
         <Card>

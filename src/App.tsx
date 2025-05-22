@@ -1,4 +1,7 @@
 
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { Routes, Route } from "react-router-dom";
 
 import Index from "./pages/Index";
@@ -14,7 +17,7 @@ import NotFound from "./pages/NotFound";
 import CalculatorPage from "./pages/CalculatorPage";
 
 const App = () => (
-  <>
+  <TooltipProvider>
     <Routes>
       <Route path="/" element={<Index />} />
       <Route path="/login" element={<LoginPage />} />
@@ -28,7 +31,9 @@ const App = () => (
       <Route path="/calculadora" element={<CalculatorPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
-  </>
+    <Toaster />
+    <Sonner />
+  </TooltipProvider>
 );
 
 export default App;

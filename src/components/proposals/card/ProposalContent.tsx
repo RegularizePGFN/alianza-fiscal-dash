@@ -51,7 +51,7 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
 
   // Parse layout settings or use defaults
   const layout = {
-    sections: layoutData?.sections || ['company', 'debt', 'payment', 'fees', 'paymentSchedule'],
+    sections: layoutData?.sections || ['company', 'debt', 'payment', 'fees'],
     showHeader: layoutData?.showHeader !== undefined ? layoutData.showHeader : true,
     showLogo: layoutData?.showLogo !== undefined ? layoutData.showLogo : true,
     showWatermark: layoutData?.showWatermark || false
@@ -90,17 +90,17 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
           <CompanyInfoSection companyData={companyData} colors={colors} />
         ) : null;
       case 'alert':
-        return null; // Removed alert section
+        return null; // Não renderizar a seção de alerta (removida)
       case 'debt':
         return <NegotiationSection data={data} colors={colors} />;
       case 'payment':
         return <PaymentSection data={data} colors={colors} />;
       case 'paymentSchedule':
-        return <PaymentScheduleSection data={data} colors={colors} />;
+        return <div data-section="payment-schedule"><PaymentScheduleSection data={data} colors={colors} /></div>;
       case 'fees':
         return <FeesSection data={data} colors={colors} />;
       case 'total':
-        return null; // Removed total section
+        return null; // Não renderizar a seção de total (removida)
       case 'comments':
         return <CommentsSection data={data} colors={colors} />;
       default:
@@ -123,42 +123,30 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
     }
   }
 
-  // Remove 'total' and 'alert' from the sections array
+  // Remover 'total' e 'alert' do array de seções
   const filteredSections = sectionOrder.filter(section => section !== 'total' && section !== 'alert');
   
-  // Make sure paymentSchedule is included in the sections if not already present
-  if (!filteredSections.includes('paymentSchedule')) {
-    // Add paymentSchedule after payment section
+  // Add paymentSchedule section once after payment if needed and not already present
+  if (!filteredSections.includes('paymentSchedule') && filteredSections.includes('payment')) {
     const paymentIndex = filteredSections.indexOf('payment');
     if (paymentIndex !== -1) {
       filteredSections.splice(paymentIndex + 1, 0, 'paymentSchedule');
-    } else {
-      // If payment section doesn't exist, add paymentSchedule at the end
-      filteredSections.push('paymentSchedule');
     }
   }
 
   return (
-    <div className={`p-4 space-y-6 font-['Roboto',sans-serif] ${className}`}>
-      {/* Main content sections */}
-      <div className="space-y-6">
-        {/* Render all sections except payment schedule */}
-        {filteredSections.filter(section => section !== 'paymentSchedule').map((section, index) => (
-          <React.Fragment key={index}>
-            {renderSection(section)}
-          </React.Fragment>
-        ))}
-        
-        {/* Always show comments here if they exist and aren't already in the sections */}
-        {data.additionalComments && !renderedSections.has('comments') && 
-          <CommentsSection data={data} colors={colors} />
-        }
-      </div>
+    <div className={`p-6 space-y-0 font-['Roboto',sans-serif] ${className}`}>
+      {/* Render sections based on the adjusted section order */}
+      {filteredSections.map((section, index) => (
+        <React.Fragment key={index}>
+          {renderSection(section)}
+        </React.Fragment>
+      ))}
       
-      {/* Payment Schedule section on its own page for PDF */}
-      <div className="page-break-before">
-        {renderSection('paymentSchedule')}
-      </div>
+      {/* Always show comments at the end if they exist and aren't already in the sections */}
+      {data.additionalComments && !renderedSections.has('comments') && 
+        <CommentsSection data={data} colors={colors} />
+      }
       
       {/* Signature is always shown */}
       <SignatureSection data={data} />

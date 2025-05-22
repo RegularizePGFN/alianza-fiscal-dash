@@ -1,58 +1,65 @@
 
 import { useDailyResults } from "./DailyResultsContext";
-import { SortColumn } from "./types";
 
 export function TableHeader() {
-  const { sortColumn, sortDirection, setSortColumn, setSortDirection } = useDailyResults();
-
-  const handleSort = (column: SortColumn) => {
+  const {
+    sortColumn,
+    sortDirection,
+    setSortColumn,
+    setSortDirection
+  } = useDailyResults();
+  
+  const handleSort = (column: 'name' | 'proposals' | 'fees' | 'salesCount' | 'salesAmount') => {
     if (sortColumn === column) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
       setSortColumn(column);
-      setSortDirection('desc');
+      setSortDirection('desc'); // Default to descending when changing columns
     }
   };
-
-  const getSortIndicator = (column: SortColumn) => {
-    if (sortColumn !== column) return null;
-    return sortDirection === 'asc' ? '↑' : '↓';
-  };
-
-  return (
-    <thead>
-      <tr className="bg-muted/50">
-        <th 
-          onClick={() => handleSort('name')} 
-          className="py-1.5 px-2 font-medium text-xs border-b border-r border-border/30 cursor-pointer"
-        >
-          Nome {getSortIndicator('name')}
+  
+  return <thead>
+      <tr className="border-b border-gray-200 dark:border-gray-700 text-xs">
+        <th className="text-center p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => handleSort('name')}>
+          <span className="flex items-center justify-center">
+            Nome
+            {sortColumn === 'name' && <span className="ml-1">
+                {sortDirection === 'asc' ? '▲' : '▼'}
+              </span>}
+          </span>
         </th>
-        <th 
-          onClick={() => handleSort('salesCount')} 
-          className="py-1.5 px-2 font-medium text-xs border-b border-r border-border/30 cursor-pointer text-center"
-        >
-          Vendas {getSortIndicator('salesCount')}
+        <th className="text-center p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => handleSort('proposals')}>
+          <span className="flex items-center justify-center">
+            Prop. Enviada
+            {sortColumn === 'proposals' && <span className="ml-1">
+                {sortDirection === 'asc' ? '▲' : '▼'}
+              </span>}
+          </span>
         </th>
-        <th 
-          onClick={() => handleSort('salesAmount')} 
-          className="py-1.5 px-2 font-medium text-xs border-b border-r border-border/30 cursor-pointer text-center"
-        >
-          Valor {getSortIndicator('salesAmount')}
+        <th className="text-center p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => handleSort('fees')}>
+          <span className="flex items-center justify-center">
+            Honorários
+            {sortColumn === 'fees' && <span className="ml-1">
+                {sortDirection === 'asc' ? '▲' : '▼'}
+              </span>}
+          </span>
         </th>
-        <th 
-          onClick={() => handleSort('proposals')} 
-          className="py-1.5 px-2 font-medium text-xs border-b border-r border-border/30 cursor-pointer text-center"
-        >
-          Propostas {getSortIndicator('proposals')}
+        <th className="text-center p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => handleSort('salesCount')}>
+          <span className="flex items-center justify-center">
+            Vendas
+            {sortColumn === 'salesCount' && <span className="ml-1">
+                {sortDirection === 'asc' ? '▲' : '▼'}
+              </span>}
+          </span>
         </th>
-        <th 
-          onClick={() => handleSort('fees')} 
-          className="py-1.5 px-2 font-medium text-xs border-b border-border/30 cursor-pointer text-center"
-        >
-          Honorários {getSortIndicator('fees')}
+        <th className="text-center p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => handleSort('salesAmount')}>
+          <span className="flex items-center justify-center">
+            Valor
+            {sortColumn === 'salesAmount' && <span className="ml-1">
+                {sortDirection === 'asc' ? '▲' : '▼'}
+              </span>}
+          </span>
         </th>
       </tr>
-    </thead>
-  );
+    </thead>;
 }
