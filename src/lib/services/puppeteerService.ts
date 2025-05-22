@@ -47,68 +47,8 @@ const sanitizeHtml = (html: string): string => {
              .replace(/on\w+='[^']*'/gi, '');
 };
 
-// Generate proposal files using the render API service
+// Generate proposal files using client-side rendering (formerly fallback)
 export const generateProposalFiles = async (
-  htmlContent: string,
-  data: Partial<ExtractedData>
-): Promise<ProposalFiles> => {
-  try {
-    // Sanitize HTML content to prevent security issues
-    const sanitizedHtml = sanitizeHtml(htmlContent);
-    
-    // Make sure we have a CNPJ, fallback to a timestamp if not available
-    const identifier = data.cnpj ? data.cnpj : `temp_${Date.now()}`;
-    
-    // Prepare file paths
-    const pdfPath = getProposalFilePath(identifier, 'pdf');
-    const pngPath = getProposalFilePath(identifier, 'png');
-    
-    try {
-      // Use our render API service for PDF
-      const pdfResult = await renderAndUpload({
-        html: sanitizedHtml,
-        fileKey: pdfPath,
-        fileType: 'pdf',
-        metadata: {
-          cnpj: data.cnpj || '',
-          clientName: data.clientName || '',
-          timestamp: new Date().toISOString()
-        }
-      });
-      
-      // Use our render API service for PNG
-      const pngResult = await renderAndUpload({
-        html: sanitizedHtml,
-        fileKey: pngPath,
-        fileType: 'png',
-        metadata: {
-          cnpj: data.cnpj || '',
-          clientName: data.clientName || '',
-          timestamp: new Date().toISOString()
-        }
-      });
-      
-      return {
-        pdfUrl: pdfResult.url,
-        pngUrl: pngResult.url,
-        pdfPath,
-        pngPath
-      };
-      
-    } catch (serviceError) {
-      console.warn('Render API service unavailable, falling back to client-side rendering:', serviceError);
-      // If remote service fails, fallback to existing PDF generation method
-      throw serviceError;
-    }
-  } catch (error) {
-    console.error('Error generating proposal files:', error);
-    throw new Error(`Failed to generate proposal files: ${error.message}`);
-  }
-};
-
-// Fallback function using existing PDF generation approach with html2canvas and jsPDF
-// This will be called if the Puppeteer service is unavailable
-export const fallbackGenerateProposalFiles = async (
   element: HTMLElement,
   data: Partial<ExtractedData>
 ): Promise<ProposalFiles> => {
@@ -137,7 +77,58 @@ export const fallbackGenerateProposalFiles = async (
     
     return { pdfUrl, pngUrl, pdfPath, pngPath };
   } catch (error) {
-    console.error('Error in fallback proposal generation:', error);
-    throw new Error(`Failed to generate proposal files with fallback method: ${error.message}`);
+    console.error('Error in client-side proposal generation:', error);
+    throw new Error(`Failed to generate proposal files: ${error.message}`);
+  }
+};
+
+// Alternative method using remote rendering service (formerly primary)
+export const generateProposalFilesRemote = async (
+  htmlContent: string,
+  data: Partial<ExtractedData>
+): Promise<ProposalFiles> => {
+  try {
+    // Sanitize HTML content to prevent security issues
+    const sanitizedHtml = sanitizeHtml(htmlContent);
+    
+    // Make sure we have a CNPJ, fallback to a timestamp if not available
+    const identifier = data.cnpj ? data.cnpj : `temp_${Date.now()}`;
+    
+    // Prepare file paths
+    const pdfPath = getProposalFilePath(identifier, 'pdf');
+    const pngPath = getProposalFilePath(identifier, 'png');
+    
+    // Use render API service for PDF and PNG
+    const pdfResult = await renderAndUpload({
+      html: sanitizedHtml,
+      fileKey: pdfPath,
+      fileType: 'pdf',
+      metadata: {
+        cnpj: data.cnpj || '',
+        clientName: data.clientName || '',
+        timestamp: new Date().toISOString()
+      }
+    });
+    
+    const pngResult = await renderAndUpload({
+      html: sanitizedHtml,
+      fileKey: pngPath,
+      fileType: 'png',
+      metadata: {
+        cnpj: data.cnpj || '',
+        clientName: data.clientName || '',
+        timestamp: new Date().toISOString()
+      }
+    });
+    
+    return {
+      pdfUrl: pdfResult.url,
+      pngUrl: pngResult.url,
+      pdfPath,
+      pngPath
+    };
+  } catch (error) {
+    console.error('Error in remote proposal generation:', error);
+    throw new Error(`Failed to generate proposal files with remote service: ${error.message}`);
   }
 };

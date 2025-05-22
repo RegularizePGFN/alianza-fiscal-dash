@@ -17,10 +17,12 @@ interface ProposalCardProps {
   data: Partial<ExtractedData>;
   imageUrl?: string;
   companyData?: any;
+  forwardedRef?: React.RefObject<HTMLDivElement>;
 }
 
-const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
-  const proposalRef = useRef<HTMLDivElement>(null);
+const ProposalCard = ({ data, companyData, forwardedRef }: ProposalCardProps) => {
+  const internalRef = useRef<HTMLDivElement>(null);
+  const proposalRef = forwardedRef || internalRef;
   const { toast } = useToast();
 
   return (

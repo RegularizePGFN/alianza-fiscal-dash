@@ -3,7 +3,7 @@ import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 import { fetchCnpjData } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
-import { generateProposalFiles, fallbackGenerateProposalFiles } from "@/lib/services/puppeteerService";
+import { generateProposalFiles, generateProposalFilesRemote } from "@/lib/services/puppeteerService";
 import { getProposalHtml } from "@/lib/pdfUtils";
 import { useRef } from "react";
 
@@ -79,13 +79,13 @@ export const useProposalGeneration = ({
             // Find the proposal preview element
             const proposalElement = document.querySelector('.proposal-preview-container');
             
-            if (proposalElement) {
-              // Get HTML content for Puppeteer
-              const htmlContent = getProposalHtml(proposalElement as HTMLElement);
-              
-              // Try to use the browser-compatible service
+            if (proposalElement && proposalRef.current) {
               try {
-                const { pdfUrl, pngUrl } = await generateProposalFiles(htmlContent, processedData);
+                // Método principal: geração local
+                const { pdfUrl, pngUrl, pdfPath, pngPath } = await generateProposalFiles(
+                  proposalRef.current,
+                  processedData
+                );
                 
                 // Update the proposal data to include the file URLs
                 const updatedProposal = {
@@ -94,6 +94,8 @@ export const useProposalGeneration = ({
                     ...proposal.data,
                     pdfUrl,
                     pngUrl,
+                    pdfPath,
+                    pngPath
                   }
                 };
                 
@@ -105,45 +107,47 @@ export const useProposalGeneration = ({
                   id: "generate-proposal",
                   duration: 3000,
                 });
-              } catch (serviceError) {
-                console.error("Error using generation service:", serviceError);
+              } catch (localError) {
+                console.warn("Client-side generation failed, trying remote service:", localError);
                 
-                // Fallback to client-side rendering
-                if (proposalRef.current) {
-                  try {
-                    const { pdfUrl, pngUrl } = await fallbackGenerateProposalFiles(
-                      proposalRef.current,
-                      processedData
-                    );
-                    
-                    // Update the proposal data to include the file URLs
-                    const updatedProposal = {
-                      ...proposal,
-                      data: {
-                        ...proposal.data,
-                        pdfUrl,
-                        pngUrl,
-                      }
-                    };
-                    
-                    // Update selected proposal with the file URLs
-                    setSelectedProposal(updatedProposal);
-                    
-                    // Success toast with fallback notice
-                    toast.success("Proposta gerada (modo alternativo)!", {
-                      id: "generate-proposal",
-                      duration: 3000,
-                    });
-                  } catch (fallbackError) {
-                    console.error("Error in fallback generation:", fallbackError);
-                    throw fallbackError;
-                  }
-                } else {
-                  throw new Error("Proposal element not found for fallback rendering");
+                // Fallback para método remoto
+                try {
+                  // Get HTML content for remote service
+                  const htmlContent = getProposalHtml(proposalElement as HTMLElement);
+                  
+                  // Try to use the remote service as fallback
+                  const { pdfUrl, pngUrl, pdfPath, pngPath } = await generateProposalFilesRemote(
+                    htmlContent,
+                    processedData
+                  );
+                  
+                  // Update the proposal with remote-generated files
+                  const updatedProposal = {
+                    ...proposal,
+                    data: {
+                      ...proposal.data,
+                      pdfUrl,
+                      pngUrl,
+                      pdfPath,
+                      pngPath
+                    }
+                  };
+                  
+                  // Update selected proposal with the file URLs
+                  setSelectedProposal(updatedProposal);
+                  
+                  // Success toast with remote notice
+                  toast.success("Proposta gerada (via serviço remoto)!", {
+                    id: "generate-proposal",
+                    duration: 3000,
+                  });
+                } catch (remoteError) {
+                  console.error("Both local and remote generation failed:", remoteError);
+                  throw new Error("Nenhum método de geração funcionou");
                 }
               }
             } else {
-              throw new Error("Proposal element not found");
+              throw new Error("Elemento da proposta não encontrado");
             }
           } catch (renderError) {
             console.error("Error rendering proposal:", renderError);
@@ -163,7 +167,7 @@ export const useProposalGeneration = ({
             description: "Sua proposta foi gerada e armazenada com sucesso!"
           });
           
-          // Important: Navigate to the proposal tab to show the final result
+          // Navigate to the proposal tab to show the final result
           setActiveTab("proposal");
         }
       } catch (error) {

@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/
 import ProposalPreview from "@/components/proposals/card/ProposalPreview";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
 import { generateProposalPdf, generateProposalPng, getProposalHtml } from "@/lib/pdfUtils";
-import { generateProposalFiles, fallbackGenerateProposalFiles } from "@/lib/services/puppeteerService";
+import { generateProposalFiles, generateProposalFilesRemote } from "@/lib/services/puppeteerService";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 
@@ -50,7 +50,7 @@ const ActionButtonsSection = ({
     toast.loading("Gerando PDF, aguarde um momento...", { id: "generate-pdf" });
     
     try {
-      // Use the new MinIO-based generation if there's already a URL
+      // Use the existing PDF if available
       if (data.pdfUrl) {
         // Just open the existing PDF
         openFileInNewTab(data.pdfUrl);
@@ -59,24 +59,28 @@ const ActionButtonsSection = ({
         return;
       }
 
-      // Try to use the Puppeteer service
-      const htmlContent = getProposalHtml(previewElement as HTMLElement);
-      
-      try {
-        const { pdfUrl } = await generateProposalFiles(htmlContent, data);
-        openFileInNewTab(pdfUrl);
-        toast.success("PDF gerado com sucesso!", { id: "generate-pdf" });
-      } catch (puppeteerError) {
-        console.error("Error using Puppeteer service:", puppeteerError);
-        
-        // Fallback to client-side rendering
-        if (previewRef.current) {
-          // Use local PDF generation as fallback
+      // Try to generate locally first
+      if (previewRef.current) {
+        try {
+          // Use local PDF generation as primary method
           await generateProposalPdf(previewRef.current, data);
-          toast.success("PDF gerado localmente com sucesso!", { id: "generate-pdf" });
-        } else {
-          throw new Error("Proposal element not found for fallback rendering");
+          toast.success("PDF gerado com sucesso!", { id: "generate-pdf" });
+        } catch (localError) {
+          console.warn("Local PDF generation failed:", localError);
+          
+          // Try remote service as fallback
+          try {
+            const htmlContent = getProposalHtml(previewElement as HTMLElement);
+            const { pdfUrl } = await generateProposalFilesRemote(htmlContent, data);
+            openFileInNewTab(pdfUrl);
+            toast.success("PDF gerado via serviço remoto!", { id: "generate-pdf" });
+          } catch (remoteError) {
+            console.error("Remote PDF generation also failed:", remoteError);
+            throw new Error("Falha ao gerar PDF por ambos os métodos");
+          }
         }
+      } else {
+        throw new Error("Elemento da proposta não encontrado");
       }
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
@@ -109,7 +113,7 @@ const ActionButtonsSection = ({
     toast.loading("Gerando imagem PNG, aguarde um momento...", { id: "generate-png" });
     
     try {
-      // Use the new MinIO-based generation if there's already a URL
+      // Use the existing PNG if available
       if (data.pngUrl) {
         // Just open the existing PNG
         openFileInNewTab(data.pngUrl);
@@ -118,24 +122,28 @@ const ActionButtonsSection = ({
         return;
       }
 
-      // Try to use the Puppeteer service
-      const htmlContent = getProposalHtml(previewElement as HTMLElement);
-      
-      try {
-        const { pngUrl } = await generateProposalFiles(htmlContent, data);
-        openFileInNewTab(pngUrl);
-        toast.success("Imagem PNG gerada com sucesso!", { id: "generate-png" });
-      } catch (puppeteerError) {
-        console.error("Error using Puppeteer service:", puppeteerError);
-        
-        // Fallback to client-side rendering
-        if (previewRef.current) {
-          // Use local PNG generation as fallback
+      // Try to generate locally first
+      if (previewRef.current) {
+        try {
+          // Use local PNG generation as primary method
           await generateProposalPng(previewRef.current, data);
-          toast.success("Imagem PNG gerada localmente com sucesso!", { id: "generate-png" });
-        } else {
-          throw new Error("Proposal element not found for fallback rendering");
+          toast.success("Imagem PNG gerada com sucesso!", { id: "generate-png" });
+        } catch (localError) {
+          console.warn("Local PNG generation failed:", localError);
+          
+          // Try remote service as fallback
+          try {
+            const htmlContent = getProposalHtml(previewElement as HTMLElement);
+            const { pngUrl } = await generateProposalFilesRemote(htmlContent, data);
+            openFileInNewTab(pngUrl);
+            toast.success("Imagem PNG gerada via serviço remoto!", { id: "generate-png" });
+          } catch (remoteError) {
+            console.error("Remote PNG generation also failed:", remoteError);
+            throw new Error("Falha ao gerar PNG por ambos os métodos");
+          }
         }
+      } else {
+        throw new Error("Elemento da proposta não encontrado");
       }
     } catch (error) {
       console.error("Erro ao gerar PNG:", error);
