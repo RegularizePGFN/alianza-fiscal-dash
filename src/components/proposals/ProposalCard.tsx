@@ -1,9 +1,7 @@
-
 import React, { useRef } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { ExtractedData } from "@/lib/types/proposals";
-import { generateProposalPdf, generateProposalPng } from "@/lib/pdfUtils";
+import { generateProposalPdf, generateProposalPng } from "@/lib/pdf";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";

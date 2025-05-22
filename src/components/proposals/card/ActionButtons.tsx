@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Printer, Download, FileImage } from "lucide-react";
 import { ExtractedData } from "@/lib/types/proposals";
-import { generateProposalPdf, generateProposalPng } from "@/lib/pdfUtils";
+import { generateProposalPdf, generateProposalPng } from "@/lib/pdf";
 import { useToast } from "@/hooks/use-toast";
 
 interface ActionButtonsProps {

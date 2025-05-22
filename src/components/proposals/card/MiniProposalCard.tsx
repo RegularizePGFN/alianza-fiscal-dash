@@ -1,10 +1,9 @@
-
 import React, { useRef } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, Printer, Eye, FileText, Briefcase, AlertTriangle, CheckSquare, DollarSign, Percent, CreditCard, Calendar, User, MessageSquare, CircleCheck } from "lucide-react";
 import { ExtractedData } from "@/lib/types/proposals";
-import { generateProposalPdf } from "@/lib/pdfUtils";
+import { generateProposalPdf } from "@/lib/pdf";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from 'react-router-dom';
 
