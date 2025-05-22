@@ -1,47 +1,66 @@
+
 import React from 'react';
-import { ExtractedData } from '@/lib/types/proposals';
-import SectionContainer from './SectionContainer';
+import { ExtractedData } from "@/lib/types/proposals";
 
 interface PaymentScheduleSectionProps {
   data: Partial<ExtractedData>;
-  colors?: any;
+  colors: {
+    primary: string;
+    secondary: string;
+    accent: string;
+  };
   showHeader?: boolean;
+  className?: string;
 }
 
-const PaymentScheduleSection = ({ data, colors, showHeader = true }: PaymentScheduleSectionProps) => {
-  // Default color if not provided
-  const sectionColor = colors?.secondary || '#1E40AF';
-  
-  // Parse payment dates from JSON strings
-  let entryDates = [];
-  let installmentDates = [];
-  
-  try {
-    if (data.entryDates) {
-      entryDates = JSON.parse(data.entryDates);
+const PaymentScheduleSection = ({ 
+  data, 
+  colors,
+  showHeader = true,
+  className = ""
+}: PaymentScheduleSectionProps) => {
+  // Parse entry dates and installment dates
+  const entryDates = React.useMemo(() => {
+    try {
+      return data.entryDates ? JSON.parse(data.entryDates) : [];
+    } catch (error) {
+      console.error('Error parsing entry dates:', error);
+      return [];
     }
-    if (data.installmentDates) {
-      installmentDates = JSON.parse(data.installmentDates);
-    }
-  } catch (error) {
-    console.error('Error parsing payment dates:', error);
-  }
+  }, [data.entryDates]);
   
+  const installmentDates = React.useMemo(() => {
+    try {
+      return data.installmentDates ? JSON.parse(data.installmentDates) : [];
+    } catch (error) {
+      console.error('Error parsing installment dates:', error);
+      return [];
+    }
+  }, [data.installmentDates]);
+  
+  // If there are no dates to display, don't render anything
   if (entryDates.length === 0 && installmentDates.length === 0) {
-    return null; // Don't render if no dates available
+    return null;
   }
-
-  const content = (
-    <div className="space-y-4">
-      {/* Entry payments */}
+  
+  return (
+    <div className={`space-y-2 ${className}`}>
+      {/* Optional header */}
+      {showHeader && (
+        <h3 className="text-xs font-semibold border-b pb-1 mb-2" style={{ color: colors.secondary }}>
+          Cronograma de Pagamento
+        </h3>
+      )}
+      
+      {/* Entry Payments */}
       {entryDates.length > 0 && (
-        <div className="border-l-2 border-gray-300 pl-3 py-2 mb-3">
-          <h4 className="text-sm font-medium text-gray-700 mb-2">
+        <div className="mb-2 border-l-2 pl-2 py-1" style={{ borderColor: colors.primary }}>
+          <h4 className="text-xs font-medium mb-1" style={{ color: colors.primary }}>
             Entrada:
           </h4>
-          <div className="bg-white p-3 rounded-md border border-gray-200 overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-xs text-gray-500">
+          <div className="bg-white p-2 rounded border border-gray-200 overflow-x-auto">
+            <table className="w-full text-[10px]">
+              <thead className="text-[10px] text-gray-500">
                 <tr>
                   <th className="text-left pr-4 py-1">Parcela</th>
                   <th className="text-left pr-4 py-1">Vencimento</th>
@@ -49,11 +68,11 @@ const PaymentScheduleSection = ({ data, colors, showHeader = true }: PaymentSche
                 </tr>
               </thead>
               <tbody>
-                {entryDates.map((item, index) => (
-                  <tr key={`entry-${index}`} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                    <td className="pr-4 py-1">{item.installment}ª</td>
-                    <td className="pr-4 py-1">{item.formattedDate}</td>
-                    <td className="text-right py-1">R$ {data.entryValue}</td>
+                {entryDates.map((item: any, index: number) => (
+                  <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                    <td className="pr-4 py-0.5">{item.installment}ª</td>
+                    <td className="pr-4 py-0.5">{item.formattedDate}</td>
+                    <td className="text-right py-0.5">R$ {data.entryValue}</td>
                   </tr>
                 ))}
               </tbody>
@@ -62,17 +81,17 @@ const PaymentScheduleSection = ({ data, colors, showHeader = true }: PaymentSche
         </div>
       )}
       
-      {/* Regular installments */}
+      {/* Regular Installments */}
       {installmentDates.length > 0 && (
-        <div className="border-l-2 border-gray-300 pl-3 py-2">
-          <h4 className="text-sm font-medium text-gray-700 mb-2">
+        <div className="border-l-2 pl-2 py-1" style={{ borderColor: colors.accent }}>
+          <h4 className="text-xs font-medium mb-1" style={{ color: colors.accent }}>
             {entryDates.length > 0 
-              ? "Após o pagamento da entrada você pagará o restante em " + installmentDates.length + " parcelas:"
+              ? `Após o pagamento da entrada você pagará o restante em ${installmentDates.length} parcelas:`
               : "Parcelas:"}
           </h4>
-          <div className="bg-white p-3 rounded-md border border-gray-200 overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-xs text-gray-500">
+          <div className="bg-white p-2 rounded border border-gray-200 overflow-x-auto">
+            <table className="w-full text-[10px]">
+              <thead className="text-[10px] text-gray-500">
                 <tr>
                   <th className="text-left pr-4 py-1">Parcela</th>
                   <th className="text-left pr-4 py-1">Vencimento</th>
@@ -80,11 +99,11 @@ const PaymentScheduleSection = ({ data, colors, showHeader = true }: PaymentSche
                 </tr>
               </thead>
               <tbody>
-                {installmentDates.map((item, index) => (
-                  <tr key={`installment-${index}`} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                    <td className="pr-4 py-1">{entryDates.length + item.installment}ª</td>
-                    <td className="pr-4 py-1">{item.formattedDate}</td>
-                    <td className="text-right py-1">R$ {data.installmentValue}</td>
+                {installmentDates.map((item: any, index: number) => (
+                  <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                    <td className="pr-4 py-0.5">{entryDates.length + item.installment}ª</td>
+                    <td className="pr-4 py-0.5">{item.formattedDate}</td>
+                    <td className="text-right py-0.5">R$ {data.installmentValue}</td>
                   </tr>
                 ))}
               </tbody>
@@ -93,23 +112,6 @@ const PaymentScheduleSection = ({ data, colors, showHeader = true }: PaymentSche
         </div>
       )}
     </div>
-  );
-
-  // If showHeader is false, just return the content without the SectionContainer
-  if (!showHeader) {
-    return content;
-  }
-
-  // Otherwise, wrap the content in a SectionContainer with header
-  return (
-    <SectionContainer 
-      title="Cronograma de Pagamento" 
-      icon={null}
-      color={sectionColor}
-      fullWidth
-    >
-      {content}
-    </SectionContainer>
   );
 };
 

@@ -49,25 +49,25 @@ const HeaderSection = ({
   if (!showHeader) return null;
   
   return (
-    <CardHeader className="py-4 border-b border-gray-200">
+    <div className="py-2 px-4 border-b border-gray-200">
       <div className="flex justify-between items-center">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           {showLogo && (
             <img 
               src="/lovable-uploads/d939ccfc-a061-45e8-97e0-1fa1b82d3df2.png" 
               alt="Logo" 
-              className="h-8 w-auto" 
+              className="h-5 w-auto" 
             />
           )}
-          <h1 className="text-lg font-semibold text-gray-800">
+          <h1 className="text-sm font-semibold text-gray-800">
             Proposta de Transação Tributária | PGFN
           </h1>
         </div>
-        <div className="text-sm text-gray-700">
+        <div className="text-xs text-gray-700">
           • Economia de R$ {calculateEconomyValue()}
         </div>
       </div>
-    </CardHeader>
+    </div>
   );
 };
 

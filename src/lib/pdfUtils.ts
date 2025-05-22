@@ -219,147 +219,30 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       });
       
       // Set the correct page in the content
-      const contentDiv = cloneElement.querySelector('.overflow-auto');
-      if (contentDiv) {
-        // Replace the content with the appropriate page
-        const contentContainer = cloneElement.querySelector('.p-0') || cloneElement;
-        
-        // Set the current page in the component
-        if (pageIndex === 0) {
-          // First page: Main content
-          const firstPageContent = document.createElement('div');
-          firstPageContent.className = 'p-6 h-full';
-          firstPageContent.innerHTML = `
-          <!-- Header with logo -->
-          <div class="py-3 border-b border-gray-200 mb-4">
-            <div class="flex justify-between items-center">
-              <div class="flex items-center gap-3">
-                <img src="/lovable-uploads/d939ccfc-a061-45e8-97e0-1fa1b82d3df2.png" alt="Logo" class="h-8 w-auto">
-                <h1 class="text-base font-semibold text-gray-800">Proposta de Transação Tributária | PGFN</h1>
-              </div>
-              <div class="text-sm text-gray-700">
-                • Economia de R$ ${calculateEconomyValue(data.totalDebt, data.discountedValue)}
-              </div>
-            </div>
-          </div>
-          
-          <!-- Client Info -->
-          <div class="mb-5">
-            <h2 class="text-sm font-semibold mb-2 text-gray-800 border-b pb-1">Dados do Contribuinte</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-              <div>
-                <p class="text-xs text-gray-500">CNPJ:</p>
-                <p>${data.cnpj || ''}</p>
-              </div>
-              <div>
-                <p class="text-xs text-gray-500">Razão Social:</p>
-                <p>${data.clientName || ''}</p>
-              </div>
-              <div>
-                <p class="text-xs text-gray-500">Situação:</p>
-                <p>${data.situation || ''}</p>
-              </div>
-              <div>
-                <p class="text-xs text-gray-500">Data de Abertura:</p>
-                <p>${data.openingDate || ''}</p>
-              </div>
-              <div class="col-span-2">
-                <p class="text-xs text-gray-500">Endereço:</p>
-                <p>${data.address || ''}</p>
-              </div>
-              <div>
-                <p class="text-xs text-gray-500">Telefone:</p>
-                <p>${data.clientPhone || ''}</p>
-              </div>
-              <div>
-                <p class="text-xs text-gray-500">Email:</p>
-                <p>${data.clientEmail || ''}</p>
-              </div>
-              <div class="col-span-2">
-                <p class="text-xs text-gray-500">Atividade Principal:</p>
-                <p>${data.businessActivity || ''}</p>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Negotiation Details -->
-          <div class="mb-5">
-            <h2 class="text-sm font-semibold mb-2 text-gray-800 border-b pb-1">Dados da Negociação</h2>
-            <div class="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <p class="text-xs text-gray-500">Valor Consolidado:</p>
-                <p>R$ ${data.totalDebt || '0,00'}</p>
-              </div>
-              <div>
-                <p class="text-xs text-gray-500">Valor com Reduções:</p>
-                <p class="text-green-600">R$ ${data.discountedValue || '0,00'}</p>
-              </div>
-              <div class="col-span-2">
-                <p class="text-xs text-gray-500">Percentual de Desconto:</p>
-                <p class="text-green-600">${calculateDiscountPercentage(data.totalDebt, data.discountedValue)}%</p>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Payment Options -->
-          <div class="mb-5">
-            <h2 class="text-sm font-semibold mb-2 text-gray-800 border-b pb-1">Opções de Pagamento</h2>
-            <div class="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <p class="text-xs text-gray-500">À Vista:</p>
-                <p>R$ ${data.discountedValue || '0,00'}</p>
-              </div>
-              <div>
-                <p class="text-xs text-gray-500">Parcelado:</p>
-                <p>${data.installments || '0'}x de R$ ${data.installmentValue || '0,00'}</p>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Fees -->
-          <div class="mb-5">
-            <h2 class="text-sm font-semibold mb-2 text-gray-800 border-b pb-1">Honorários</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-              <div>
-                <p class="text-xs text-gray-500">Honorários à Vista:</p>
-                <p>R$ ${data.feesValue || '0,00'}</p>
-              </div>
-              <div>
-                <p class="text-xs text-gray-500">Honorários Parcelados:</p>
-                <p>${data.feesInstallments || '0'}x de R$ ${data.feesInstallmentValue || '0,00'} no cartão</p>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Signature -->
-          <div class="mt-8 border-t pt-4">
-            <p class="text-center text-sm">${data.sellerName || 'Especialista Tributário'}</p>
-            <p class="text-center text-xs text-gray-500">Especialista Tributário</p>
-            <p class="text-center text-xs text-gray-500 mt-1">${data.sellerEmail || ''}</p>
-          </div>
-          
-          <!-- Page number -->
-          <div class="absolute bottom-4 right-6 text-xs text-gray-500">
-            Página 1 de ${numberOfPages}
-          </div>
-        `;
-          
-          contentContainer.innerHTML = '';
-          contentContainer.appendChild(firstPageContent);
+      const contentDiv = cloneElement.querySelector('.p-0') || cloneElement;
+      if (contentDiv instanceof HTMLElement) {
+        // Handle multi-page content
+        if (cloneElement.querySelector('[data-page]')) {
+          // Set the current page if we have pagination
+          const pageContentElements = cloneElement.querySelectorAll('[data-page]');
+          pageContentElements.forEach(el => {
+            if (el instanceof HTMLElement) {
+              if (el.getAttribute('data-page') === pageIndex.toString()) {
+                el.style.display = '';
+              } else {
+                el.style.display = 'none';
+              }
+            }
+          });
         } else {
-          // Payment schedule page
-          const scheduleContent = document.createElement('div');
-          scheduleContent.className = 'p-6 h-full';
-          scheduleContent.innerHTML = await generatePaymentScheduleHtml(data);
-          
-          // Add page number
-          const pageNumberDiv = document.createElement('div');
-          pageNumberDiv.className = 'absolute bottom-4 right-6 text-xs text-gray-500';
-          pageNumberDiv.textContent = `Página ${pageIndex + 1} de ${numberOfPages}`;
-          scheduleContent.appendChild(pageNumberDiv);
-          
-          contentContainer.innerHTML = '';
-          contentContainer.appendChild(scheduleContent);
+          // Set up correct content for this page directly
+          if (pageIndex === 0) {
+            // Main content
+            contentDiv.innerHTML = generateMainPageContent(data);
+          } else if (pageIndex === 1) {
+            // Payment schedule
+            contentDiv.innerHTML = generatePaymentSchedulePage(data, numberOfPages);
+          }
         }
       }
       
@@ -405,8 +288,149 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
   }
 }
 
+// Helper function to generate main page content
+function generateMainPageContent(data: Partial<ExtractedData>): string {
+  return `
+  <div class="p-3 space-y-2 h-full">
+    <!-- Header with logo -->
+    <div class="py-2 border-b border-gray-200 mb-2">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center gap-2">
+          <img src="/lovable-uploads/d939ccfc-a061-45e8-97e0-1fa1b82d3df2.png" alt="Logo" class="h-5 w-auto">
+          <h1 class="text-sm font-semibold text-gray-800">Proposta de Transação Tributária | PGFN</h1>
+        </div>
+        <div class="text-xs text-gray-700">
+          • Economia de R$ ${calculateEconomyValue(data.totalDebt, data.discountedValue)}
+        </div>
+      </div>
+    </div>
+    
+    <!-- Client Info -->
+    <div class="mb-3">
+      <h2 class="text-xs font-semibold mb-1.5 text-gray-800 border-b pb-0.5">Dados do Contribuinte</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-1.5 text-xs">
+        <div>
+          <p class="text-[10px] text-gray-500">CNPJ:</p>
+          <p>${data.cnpj || ''}</p>
+        </div>
+        <div>
+          <p class="text-[10px] text-gray-500">Razão Social:</p>
+          <p>${data.clientName || ''}</p>
+        </div>
+        <div>
+          <p class="text-[10px] text-gray-500">Situação:</p>
+          <p>${data.situation || ''}</p>
+        </div>
+        <div>
+          <p class="text-[10px] text-gray-500">Data de Abertura:</p>
+          <p>${data.openingDate || ''}</p>
+        </div>
+        <div class="col-span-2">
+          <p class="text-[10px] text-gray-500">Endereço:</p>
+          <p>${data.address || ''}</p>
+        </div>
+        <div>
+          <p class="text-[10px] text-gray-500">Telefone:</p>
+          <p>${data.clientPhone || ''}</p>
+        </div>
+        <div>
+          <p class="text-[10px] text-gray-500">Email:</p>
+          <p>${data.clientEmail || ''}</p>
+        </div>
+        <div class="col-span-2">
+          <p class="text-[10px] text-gray-500">Atividade Principal:</p>
+          <p>${data.businessActivity || ''}</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Negotiation Details -->
+    <div class="mb-3">
+      <h2 class="text-xs font-semibold mb-1.5 text-gray-800 border-b pb-0.5">Dados da Negociação</h2>
+      <div class="grid grid-cols-2 gap-1.5 text-xs">
+        <div>
+          <p class="text-[10px] text-gray-500">Valor Consolidado:</p>
+          <p>R$ ${data.totalDebt || '0,00'}</p>
+        </div>
+        <div>
+          <p class="text-[10px] text-gray-500">Valor com Reduções:</p>
+          <p class="text-green-600">R$ ${data.discountedValue || '0,00'}</p>
+        </div>
+        <div class="col-span-2">
+          <p class="text-[10px] text-gray-500">Percentual de Desconto:</p>
+          <p class="text-green-600">${calculateDiscountPercentage(data.totalDebt, data.discountedValue)}%</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Payment Options -->
+    <div class="mb-3">
+      <h2 class="text-xs font-semibold mb-1.5 text-gray-800 border-b pb-0.5">Opções de Pagamento</h2>
+      <div class="grid grid-cols-2 gap-1.5 text-xs">
+        <div>
+          <p class="text-[10px] text-gray-500">À Vista:</p>
+          <p>R$ ${data.discountedValue || '0,00'}</p>
+        </div>
+        <div>
+          <p class="text-[10px] text-gray-500">Parcelado:</p>
+          <p>${data.installments || '0'}x de R$ ${data.installmentValue || '0,00'}</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Fees -->
+    <div class="mb-3">
+      <h2 class="text-xs font-semibold mb-1.5 text-gray-800 border-b pb-0.5">Honorários</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-1.5 text-xs">
+        <div>
+          <p class="text-[10px] text-gray-500">Honorários à Vista:</p>
+          <p>R$ ${data.feesValue || '0,00'}</p>
+        </div>
+        <div>
+          <p class="text-[10px] text-gray-500">Honorários Parcelados:</p>
+          <p>${data.feesInstallments || '0'}x de R$ ${data.feesInstallmentValue || '0,00'} no cartão</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Additional Comments -->
+    ${data.additionalComments ? `
+    <div class="mb-3">
+      <h2 class="text-xs font-semibold mb-1.5 text-gray-800 border-b pb-0.5">Observações</h2>
+      <div class="text-xs">
+        <p>${data.additionalComments}</p>
+      </div>
+    </div>
+    ` : ''}
+    
+    <!-- Signature -->
+    <div class="mt-4 border-t pt-2">
+      <p class="text-center text-xs">${data.sellerName || 'Especialista Tributário'}</p>
+      <p class="text-center text-[10px] text-gray-500">Especialista Tributário</p>
+      <p class="text-center text-[10px] text-gray-500 mt-0.5">${data.sellerEmail || ''}</p>
+    </div>
+    
+    <!-- Page number -->
+    <div class="absolute bottom-2 right-4 text-[10px] text-gray-500">
+      Página 1 de ${hasDates(data) ? '2' : '1'}
+    </div>
+  </div>
+  `;
+}
+
+// Helper function to determine if we have payment dates
+function hasDates(data: Partial<ExtractedData>): boolean {
+  try {
+    const entryDates = data.entryDates ? JSON.parse(data.entryDates) : [];
+    const installmentDates = data.installmentDates ? JSON.parse(data.installmentDates) : [];
+    return entryDates.length > 0 || installmentDates.length > 0;
+  } catch (error) {
+    return false;
+  }
+}
+
 // Helper function to generate payment schedule HTML
-async function generatePaymentScheduleHtml(data: Partial<ExtractedData>): Promise<string> {
+function generatePaymentSchedulePage(data: Partial<ExtractedData>, totalPages: number): string {
   try {
     let entryDates = [];
     let installmentDates = [];
@@ -423,27 +447,28 @@ async function generatePaymentScheduleHtml(data: Partial<ExtractedData>): Promis
     }
     
     let html = `
-      <div class="border-b border-gray-200 pb-3 mb-4">
-        <h2 class="text-base font-semibold text-center text-gray-800">
-          Cronograma de Pagamento
-        </h2>
-      </div>
+      <div class="p-3 space-y-2 h-full">
+        <div class="border-b border-gray-200 pb-2 mb-2">
+          <h2 class="text-sm font-semibold text-center text-gray-800">
+            Cronograma de Pagamento
+          </h2>
+        </div>
     `;
     
     // Entry payments
     if (entryDates.length > 0) {
       html += `
-        <div class="border-l-2 border-gray-300 pl-3 py-2 mb-4">
-          <h4 class="text-xs font-medium text-gray-700 mb-2">
+        <div class="border-l-2 border-blue-300 pl-2 py-1 mb-2">
+          <h4 class="text-xs font-medium text-gray-700 mb-1">
             Entrada:
           </h4>
-          <div class="bg-white p-3 rounded-md border border-gray-200 overflow-x-auto">
-            <table class="w-full text-xs">
-              <thead class="text-xs text-gray-500">
+          <div class="bg-white p-2 rounded-md border border-gray-200 overflow-x-auto">
+            <table class="w-full text-[10px]">
+              <thead class="text-[10px] text-gray-500">
                 <tr>
-                  <th class="text-left pr-4 py-1">Parcela</th>
-                  <th class="text-left pr-4 py-1">Vencimento</th>
-                  <th class="text-right py-1">Valor</th>
+                  <th class="text-left pr-4 py-0.5">Parcela</th>
+                  <th class="text-left pr-4 py-0.5">Vencimento</th>
+                  <th class="text-right py-0.5">Valor</th>
                 </tr>
               </thead>
               <tbody>
@@ -452,9 +477,9 @@ async function generatePaymentScheduleHtml(data: Partial<ExtractedData>): Promis
       entryDates.forEach((item, index) => {
         html += `
           <tr class="${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}">
-            <td class="pr-4 py-1">${item.installment}ª</td>
-            <td class="pr-4 py-1">${item.formattedDate}</td>
-            <td class="text-right py-1">R$ ${data.entryValue}</td>
+            <td class="pr-4 py-0.5">${item.installment}ª</td>
+            <td class="pr-4 py-0.5">${item.formattedDate}</td>
+            <td class="text-right py-0.5">R$ ${data.entryValue}</td>
           </tr>
         `;
       });
@@ -470,19 +495,19 @@ async function generatePaymentScheduleHtml(data: Partial<ExtractedData>): Promis
     // Regular installments
     if (installmentDates.length > 0) {
       html += `
-        <div class="border-l-2 border-gray-300 pl-3 py-2">
-          <h4 class="text-xs font-medium text-gray-700 mb-2">
+        <div class="border-l-2 border-green-300 pl-2 py-1">
+          <h4 class="text-xs font-medium text-gray-700 mb-1">
             ${entryDates.length > 0 
               ? "Após o pagamento da entrada você pagará o restante em " + installmentDates.length + " parcelas:"
               : "Parcelas:"}
           </h4>
-          <div class="bg-white p-3 rounded-md border border-gray-200 overflow-x-auto">
-            <table class="w-full text-xs">
-              <thead class="text-xs text-gray-500">
+          <div class="bg-white p-2 rounded-md border border-gray-200 overflow-x-auto">
+            <table class="w-full text-[10px]">
+              <thead class="text-[10px] text-gray-500">
                 <tr>
-                  <th class="text-left pr-4 py-1">Parcela</th>
-                  <th class="text-left pr-4 py-1">Vencimento</th>
-                  <th class="text-right py-1">Valor</th>
+                  <th class="text-left pr-4 py-0.5">Parcela</th>
+                  <th class="text-left pr-4 py-0.5">Vencimento</th>
+                  <th class="text-right py-0.5">Valor</th>
                 </tr>
               </thead>
               <tbody>
@@ -491,9 +516,9 @@ async function generatePaymentScheduleHtml(data: Partial<ExtractedData>): Promis
       installmentDates.forEach((item, index) => {
         html += `
           <tr class="${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}">
-            <td class="pr-4 py-1">${entryDates.length + item.installment}ª</td>
-            <td class="pr-4 py-1">${item.formattedDate}</td>
-            <td class="text-right py-1">R$ ${data.installmentValue}</td>
+            <td class="pr-4 py-0.5">${entryDates.length + item.installment}ª</td>
+            <td class="pr-4 py-0.5">${item.formattedDate}</td>
+            <td class="text-right py-0.5">R$ ${data.installmentValue}</td>
           </tr>
         `;
       });
@@ -505,6 +530,14 @@ async function generatePaymentScheduleHtml(data: Partial<ExtractedData>): Promis
         </div>
       `;
     }
+    
+    html += `
+      <!-- Page number -->
+      <div class="absolute bottom-2 right-4 text-[10px] text-gray-500">
+        Página 2 de ${totalPages}
+      </div>
+    </div>
+    `;
     
     return html;
   } catch (error) {
@@ -544,34 +577,6 @@ function calculateDiscountPercentage(totalDebt?: string, discountedValue?: strin
     return percentage.toFixed(2).replace('.', ',');
   } catch (e) {
     console.error('Error calculating discount percentage:', e);
-    return '0,00';
-  }
-}
-
-function calculateTotal(feesValue?: string, feesInstallments?: string, feesInstallmentValue?: string): string {
-  try {
-    // Try to calculate from installments if available
-    if (feesInstallments && feesInstallmentValue) {
-      const installments = parseInt(feesInstallments);
-      const installmentValue = parseFloat(feesInstallmentValue.replace(/\./g, '').replace(',', '.'));
-      
-      if (!isNaN(installments) && !isNaN(installmentValue)) {
-        const total = installments * installmentValue;
-        return total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      }
-    }
-    
-    // Fallback to fees value if installments calculation failed
-    if (feesValue) {
-      const value = parseFloat(feesValue.replace(/\./g, '').replace(',', '.'));
-      if (!isNaN(value)) {
-        return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      }
-    }
-    
-    return '0,00';
-  } catch (e) {
-    console.error('Error calculating total:', e);
     return '0,00';
   }
 }

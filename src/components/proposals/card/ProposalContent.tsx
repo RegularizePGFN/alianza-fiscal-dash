@@ -145,7 +145,7 @@ const ProposalContent = ({
     const filteredSections = sectionOrder.filter(section => section !== 'alert');
 
     return (
-      <div className={`p-5 space-y-4 h-full font-['Roboto',sans-serif] ${className}`}>
+      <div className={`p-3 space-y-2 h-full font-['Roboto',sans-serif] ${className}`}>
         {/* Show header on first page */}
         {layout.showHeader && (
           <HeaderSection 
@@ -157,8 +157,8 @@ const ProposalContent = ({
           />
         )}
 
-        {/* Main content for page 1 */}
-        <div className="main-content space-y-3">
+        {/* Main content for page 1 - reduce vertical spacing */}
+        <div className="main-content space-y-2">
           {/* Render main sections based on the adjusted section order */}
           {filteredSections.map((section, index) => (
             <React.Fragment key={index}>
@@ -175,7 +175,7 @@ const ProposalContent = ({
           <SignatureSection data={data} />
         </div>
         
-        <div className="absolute bottom-4 right-6 text-xs text-gray-500 print:block hidden">
+        <div className="absolute bottom-2 right-4 text-[10px] text-gray-500 print:block hidden">
           Página 1 de {totalPages}
         </div>
       </div>
@@ -183,16 +183,16 @@ const ProposalContent = ({
   } else {
     // Payment schedule page (page 1+)
     return (
-      <div className={`p-5 space-y-4 h-full font-['Roboto',sans-serif] ${className}`}>
+      <div className={`p-3 space-y-2 h-full font-['Roboto',sans-serif] ${className}`}>
         {/* Simple header for payment schedule */}
-        <div className="border-b border-gray-200 pb-3 mb-4">
-          <h2 className="text-xl font-semibold text-center" style={{ color: colors.secondary }}>
+        <div className="border-b border-gray-200 pb-2 mb-2">
+          <h2 className="text-sm font-semibold text-center" style={{ color: colors.secondary }}>
             Cronograma de Pagamento
           </h2>
         </div>
         
         {/* Payment schedule content - make it scrollable if needed */}
-        <div className="overflow-auto pb-4 h-[calc(100%-80px)]">
+        <div className="pb-2 h-[calc(100%-60px)]">
           <PaymentScheduleSection 
             data={data} 
             colors={colors} 
@@ -200,7 +200,7 @@ const ProposalContent = ({
           />
         </div>
         
-        <div className="absolute bottom-4 right-6 text-xs text-gray-500 print:block hidden">
+        <div className="absolute bottom-2 right-4 text-[10px] text-gray-500 print:block hidden">
           Página 2 de {totalPages}
         </div>
       </div>
