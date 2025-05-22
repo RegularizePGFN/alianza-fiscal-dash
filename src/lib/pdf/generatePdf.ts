@@ -18,6 +18,7 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
     proposalClone.style.position = 'absolute';
     proposalClone.style.left = '-9999px';
     proposalClone.style.width = '210mm'; // A4 width
+    proposalClone.style.minHeight = '297mm'; // A4 height
     
     // Apply PDF-specific styling to the clone
     const pdfStyle = document.createElement('style');
@@ -41,6 +42,12 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       /* Override any complex gradients or shadows */
       .shadow, .shadow-sm, .shadow-md, .shadow-lg { box-shadow: none !important; }
       .bg-gradient-to-br { background: white !important; }
+      
+      /* Ensure footer appears at the bottom of each page */
+      .print\\:fixed { position: fixed !important; }
+      .print\\:bottom-0 { bottom: 0 !important; }
+      .print\\:left-0 { left: 0 !important; }
+      .print\\:right-0 { right: 0 !important; }
     `;
     
     proposalClone.appendChild(pdfStyle);

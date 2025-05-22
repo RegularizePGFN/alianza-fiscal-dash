@@ -8,8 +8,8 @@ interface FooterSectionProps {
 
 const FooterSection = ({ data }: FooterSectionProps) => {
   return (
-    <div className="rounded-b-none bg-af-blue-700 text-white h-2 mt-4">
-      {/* This is just a thin blue bar at the bottom of the proposal */}
+    <div className="w-full rounded-b-none bg-af-blue-700 text-white h-2 print:fixed print:bottom-0 print:left-0 print:right-0">
+      {/* Este é apenas uma barra azul fina no rodapé da proposta */}
     </div>
   );
 };

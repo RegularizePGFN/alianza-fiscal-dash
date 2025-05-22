@@ -63,7 +63,7 @@ const PDFTemplatePreview = ({
   return (
     <Card 
       ref={previewRef} 
-      className="border-0 p-0 overflow-visible shadow-none preview-proposal font-['Roboto',sans-serif] transition-colors mx-auto rounded-none"
+      className="border-0 p-0 overflow-visible shadow-none preview-proposal font-['Roboto',sans-serif] transition-colors mx-auto rounded-none relative"
       style={{ 
         backgroundColor: colors.background,
         width: `${a4Width}px`,
@@ -100,8 +100,10 @@ const PDFTemplatePreview = ({
         isPreview={true}
       />
       
-      {/* Add thin footer bar */}
-      <FooterSection data={formData} />
+      {/* Add thin footer bar - agora posicionado no final */}
+      <div className="absolute bottom-0 left-0 right-0">
+        <FooterSection data={formData} />
+      </div>
     </Card>
   );
 };

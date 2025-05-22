@@ -33,11 +33,12 @@ const ProposalPreview = ({ data, companyData }: ProposalPreviewProps) => {
 
   return (
     <Card 
-      className="mx-auto shadow border overflow-hidden font-['Roboto',sans-serif] w-full print:shadow-none print:border-0"
+      className="mx-auto shadow border overflow-hidden font-['Roboto',sans-serif] w-full print:shadow-none print:border-0 relative"
       style={{ 
         backgroundColor: colors.background,
         margin: 0,
-        padding: 0
+        padding: 0,
+        minHeight: '100vh'
       }}
     >
       {/* Header with Logo */}
@@ -49,7 +50,7 @@ const ProposalPreview = ({ data, companyData }: ProposalPreviewProps) => {
         totalDebt={data.totalDebt}
       />
 
-      <CardContent className="p-0">
+      <CardContent className="p-0 pb-8">
         {/* Use the shared ProposalContent component */}
         <ProposalContent 
           data={data}
@@ -57,7 +58,7 @@ const ProposalPreview = ({ data, companyData }: ProposalPreviewProps) => {
         />
       </CardContent>
       
-      {/* Footer bar */}
+      {/* Footer bar - posicionada no final da página */}
       <FooterSection data={data} />
     </Card>
   );

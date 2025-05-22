@@ -71,11 +71,13 @@ const ProposalTabContent = ({
           />
           
           {/* Preview of the proposal */}
-          <ProposalCard
-            data={formData}
-            imageUrl={imagePreview || undefined}
-            companyData={companyData}
-          />
+          <div className="relative min-h-[297mm]">
+            <ProposalCard
+              data={formData}
+              imageUrl={imagePreview || undefined}
+              companyData={companyData}
+            />
+          </div>
         </>
       )}
     </div>
