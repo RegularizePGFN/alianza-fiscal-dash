@@ -26,10 +26,10 @@ export const useProposalsState = () => {
   const [processing, setProcessing] = useState(false);
   const [progressPercent, setProgressPercent] = useState(0);
   const [formData, setFormData] = useState<Partial<ExtractedData>>({
-    // Default values for the new fields
+    // Default values for fee installments
     feesAdditionalPercentage: '20',
     feesInstallments: '3',
-    feesPaymentMethod: 'cartao',
+    feesPaymentMethod: 'boleto',
     entryInstallments: '1',
     showFeesInstallments: 'false'
   });
