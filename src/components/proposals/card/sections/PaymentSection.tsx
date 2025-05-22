@@ -35,6 +35,41 @@ const PaymentSection = ({ data, colors }: PaymentSectionProps) => {
     return data.entryValue || "0,00";
   };
 
+  // Calculate the economy (savings)
+  const calculateSavings = () => {
+    if (!data.totalDebt || !data.discountedValue) return "0,00";
+    
+    try {
+      // Parse values, handling BR currency format
+      const totalValue = parseFloat(data.totalDebt.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.'));
+      const discountValue = parseFloat(data.discountedValue.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.'));
+      
+      if (isNaN(totalValue) || isNaN(discountValue)) return "0,00";
+      
+      const savings = totalValue - discountValue;
+      // Format back to BR currency
+      return savings.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    } catch (error) {
+      console.error("Error calculating savings:", error);
+      return "0,00";
+    }
+  };
+
+  // Check if there's any discount
+  const hasDiscount = () => {
+    if (!data.totalDebt || !data.discountedValue) return false;
+    
+    try {
+      const totalDebt = parseFloat(data.totalDebt.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.'));
+      const discountedValue = parseFloat(data.discountedValue.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.'));
+      
+      return totalDebt > discountedValue;
+    } catch (error) {
+      console.error("Error checking if has discount:", error);
+      return false;
+    }
+  };
+
   // Format entry display
   const entryDisplay = parseInt(data.entryInstallments || '1') > 1 
     ? `${data.entryInstallments}x de R$ ${entryInstallmentValue()}`
@@ -46,6 +81,13 @@ const PaymentSection = ({ data, colors }: PaymentSectionProps) => {
       icon={<CreditCard className="h-4 w-4" />}
       color={sectionColor}
       className="print:break-inside-avoid"
+      extraHeaderContent={
+        hasDiscount() && (
+          <div className="bg-green-600 text-white text-xs py-0.5 px-2 rounded">
+            Economia de R$ {calculateSavings()}
+          </div>
+        )
+      }
     >
       <DataField 
         label="À Vista" 

@@ -1,41 +1,36 @@
 
 import React, { ReactNode } from 'react';
-import { cn } from '@/lib/utils';
 
 interface SectionContainerProps {
-  children: ReactNode;
   title: string;
-  icon?: React.ReactNode; // Keeping the prop for backward compatibility
-  className?: string;
+  children: ReactNode;
+  icon?: ReactNode;
   color?: string;
-  fullWidth?: boolean;
-  subtitle?: string;
+  className?: string;
+  extraHeaderContent?: ReactNode;
 }
 
-/**
- * A responsive container for proposal sections
- */
-const SectionContainer = ({ 
-  children, 
-  title, 
-  icon, // We'll keep the prop but not use it
-  className, 
+const SectionContainer = ({
+  title,
+  children,
+  icon,
   color = '#1E40AF',
-  fullWidth = false,
-  subtitle
+  className = '',
+  extraHeaderContent
 }: SectionContainerProps) => {
   return (
-    <div className={cn("mb-3 print:break-inside-avoid", className)}>
-      <h3 
-        className="text-base font-semibold pb-1 mb-1.5 border-b border-gray-200 flex items-center" 
-        style={{ color }}
-      >
-        {title}
-      </h3>
-      {subtitle && (
-        <p className="text-xs text-gray-600 mb-1.5 italic">{subtitle}</p>
-      )}
-      <div className={`grid grid-cols-1 ${fullWidth ? '' : 'md:grid-cols-2'} gap-2`}>
+    <div className={`mb-4 ${className}`}>
+      <div className="flex justify-between items-center border-b pb-1 mb-3" style={{ borderColor: `${color}30` }}>
+        <h3 
+          className="font-medium flex items-center gap-1.5" 
+          style={{ color }}
+        >
+          {icon}
+          {title}
+        </h3>
+        {extraHeaderContent}
+      </div>
+      <div className="space-y-2">
         {children}
       </div>
     </div>

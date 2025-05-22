@@ -7,26 +7,6 @@ interface ProposalHeaderProps {
 }
 
 const ProposalHeader = ({ totalDebt, discountedValue }: ProposalHeaderProps) => {
-  // Calculate the potential savings
-  const calculateSavings = () => {
-    if (!totalDebt || !discountedValue) return "0,00";
-    
-    try {
-      // Parse values, handling BR currency format
-      const totalValue = parseFloat(totalDebt.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.'));
-      const discountValue = parseFloat(discountedValue.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.'));
-      
-      if (isNaN(totalValue) || isNaN(discountValue)) return "0,00";
-      
-      const savings = totalValue - discountValue;
-      // Format back to BR currency
-      return savings.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    } catch (error) {
-      console.error("Error calculating savings:", error);
-      return "0,00";
-    }
-  };
-
   return (
     <div className="rounded-t-none bg-af-blue-700 text-white p-3 flex justify-between items-center shadow-sm">
       <div className="flex items-center gap-2">
@@ -40,12 +20,6 @@ const ProposalHeader = ({ totalDebt, discountedValue }: ProposalHeaderProps) => 
           <p className="text-xs text-af-blue-100">Aliança Fiscal</p>
         </div>
       </div>
-      
-      {totalDebt && discountedValue && (
-        <div className="bg-af-green-600 px-3 py-1 rounded text-sm font-medium">
-          Economia de R$ {calculateSavings()}
-        </div>
-      )}
     </div>
   );
 };

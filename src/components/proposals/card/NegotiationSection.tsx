@@ -17,6 +17,23 @@ const NegotiationSection = ({
   installments, 
   installmentValue 
 }: NegotiationSectionProps) => {
+  // Check if there's any discount
+  const hasDiscount = () => {
+    if (!totalDebt || !discountedValue) return false;
+    
+    try {
+      const totalDebtValue = parseFloat(totalDebt.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.'));
+      const discountVal = parseFloat(discountedValue.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.'));
+      
+      return totalDebtValue > discountVal && (discountPercentage !== '0' && discountPercentage !== '0,00');
+    } catch (error) {
+      console.error("Error checking if has discount:", error);
+      return false;
+    }
+  };
+
+  if (!hasDiscount()) return null;
+
   return (
     <div className="space-y-1">
       <h3 className="text-xs font-semibold text-af-blue-800 pb-1 flex items-center border-b border-af-blue-200">
