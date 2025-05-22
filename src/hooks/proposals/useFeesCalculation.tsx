@@ -22,7 +22,7 @@ export const useFeesCalculation = ({ formData, setFormData }: UseFeesCalculation
         formData.feesAdditionalPercentage) {
       calculateInstallmentFees();
     }
-  }, [formData.feesValue, formData.feesInstallments, formData.feesAdditionalPercentage]);
+  }, [formData.feesValue, formData.feesInstallments, formData.feesAdditionalPercentage, formData.showFeesInstallments]);
 
   // Function to calculate upfront fees (20% of savings)
   const calculateFees = () => {
@@ -52,6 +52,11 @@ export const useFeesCalculation = ({ formData, setFormData }: UseFeesCalculation
         ...prev,
         feesValue: formattedFees,
       }));
+      
+      // Also calculate installment fees if needed
+      if (formData.feesInstallments && formData.feesAdditionalPercentage) {
+        calculateInstallmentFees();
+      }
       
     } catch (error) {
       console.error('Error calculating fees:', error);

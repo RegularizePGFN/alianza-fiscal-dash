@@ -27,10 +27,11 @@ export const useProposalsState = () => {
   const [progressPercent, setProgressPercent] = useState(0);
   const [formData, setFormData] = useState<Partial<ExtractedData>>({
     // Default values for the new fields
-    feesAdditionalPercentage: '30',
-    feesInstallments: '6',
+    feesAdditionalPercentage: '20',
+    feesInstallments: '3',
     feesPaymentMethod: 'cartao',
-    entryInstallments: '1'
+    entryInstallments: '1',
+    showFeesInstallments: 'false'
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [generatedProposal, setGeneratedProposal] = useState<boolean>(false);

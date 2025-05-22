@@ -30,20 +30,29 @@ const FeesSection = ({ data, colors }: FeesSectionProps) => {
       icon={<CreditCard className="h-4 w-4" />}
       color={sectionColor}
     >
-      <DataField 
-        label="Honorários à Vista" 
-        value={`R$ ${data.feesValue || '0,00'}`}
-        highlight={true}
-        className="bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/20 dark:to-gray-800/50"
-      />
-      
-      {showInstallmentFees && (
+      {showInstallmentFees ? (
+        <div className="grid grid-cols-2 gap-3">
+          <DataField 
+            label="Honorários à Vista" 
+            value={`R$ ${data.feesValue || '0,00'}`}
+            highlight={true}
+            className="bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/20 dark:to-gray-800/50"
+          />
+          
+          <DataField 
+            label="Honorários Parcelados" 
+            value={`R$ ${data.feesTotalInstallmentValue || '0,00'}`}
+            highlight={true}
+            className="bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/20 dark:to-gray-800/50"
+            description={`${data.feesInstallments}x de R$ ${data.feesInstallmentValue} ${paymentMethod}`}
+          />
+        </div>
+      ) : (
         <DataField 
-          label={`Honorários Parcelados (${data.feesInstallments}x)`}
-          value={`${data.feesInstallments}x de R$ ${data.feesInstallmentValue} ${paymentMethod}`}
+          label="Honorários à Vista" 
+          value={`R$ ${data.feesValue || '0,00'}`}
           highlight={true}
           className="bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/20 dark:to-gray-800/50"
-          description={`Total: R$ ${data.feesTotalInstallmentValue || '0,00'}`}
         />
       )}
     </SectionContainer>

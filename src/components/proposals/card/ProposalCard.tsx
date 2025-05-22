@@ -26,6 +26,21 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
   const proposalRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
+  // Check if there's any discount
+  const hasDiscount = () => {
+    if (!data.totalDebt || !data.discountedValue) return false;
+    
+    try {
+      const totalDebt = parseFloat(data.totalDebt.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.'));
+      const discountedValue = parseFloat(data.discountedValue.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.'));
+      
+      return totalDebt > discountedValue;
+    } catch (error) {
+      console.error("Error checking if has discount:", error);
+      return false;
+    }
+  };
+  
   const generatePdf = async () => {
     if (!proposalRef.current) {
       toast({
@@ -81,8 +96,8 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
             <ProposalDataSection data={data} />
           )}
 
-          {/* Negociação Section */}
-          <NegotiationDataSection data={data} />
+          {/* Negociação Section - Only if there's a discount */}
+          {hasDiscount() && <NegotiationDataSection data={data} />}
 
           {/* Payment Options - Now before fees */}
           <PaymentOptionsDisplay data={data} />

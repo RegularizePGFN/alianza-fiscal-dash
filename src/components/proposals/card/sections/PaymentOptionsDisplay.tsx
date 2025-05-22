@@ -77,7 +77,7 @@ const PaymentOptionsDisplay = ({ data }: PaymentOptionsDisplayProps) => {
         </h3>
         
         {hasDiscount() && (
-          <div className="bg-af-green-600 px-4 py-1.5 rounded-sm text-sm font-medium text-white whitespace-nowrap">
+          <div className="bg-af-green-600 px-4 py-1.5 rounded-sm text-sm font-medium text-white whitespace-nowrap flex items-center">
             Economia de R$ {savings}
           </div>
         )}

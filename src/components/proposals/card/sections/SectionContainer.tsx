@@ -31,7 +31,7 @@ const SectionContainer = ({
           {title}
         </h3>
         {extraHeaderContent && (
-          <div className={`flex ${fullWidth ? 'flex-1 justify-end' : ''}`}>
+          <div className={`flex items-center ${fullWidth ? 'flex-1 justify-end' : ''}`}>
             {extraHeaderContent}
           </div>
         )}

@@ -28,6 +28,7 @@ const ProposalTabContent = ({
 }: ProposalTabContentProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [showObservations, setShowObservations] = useState(!!formData.additionalComments);
+  const [showFeesInstallments, setShowFeesInstallments] = useState(formData.showFeesInstallments === 'true');
 
   const handleObservationsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onInputChange('additionalComments', e.target.value);
@@ -38,6 +39,11 @@ const ProposalTabContent = ({
     if (!checked) {
       onInputChange('additionalComments', '');
     }
+  };
+  
+  const handleShowFeesInstallmentsChange = (checked: boolean) => {
+    setShowFeesInstallments(checked);
+    onInputChange('showFeesInstallments', checked ? 'true' : 'false');
   };
 
   return (
@@ -165,6 +171,51 @@ const ProposalTabContent = ({
             <Separator />
 
             <div className="space-y-4">
+              {/* Fees Installments Options */}
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="showFeesInstallments" 
+                    checked={showFeesInstallments} 
+                    onCheckedChange={handleShowFeesInstallmentsChange}
+                  />
+                  <Label htmlFor="showFeesInstallments">Mostrar honorários parcelados na proposta</Label>
+                </div>
+                
+                {showFeesInstallments && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pl-6 mt-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="feesInstallments">Número de Parcelas</Label>
+                      <Input 
+                        id="feesInstallments" 
+                        value={formData.feesInstallments || '3'} 
+                        onChange={(e) => onInputChange('feesInstallments', e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="feesAdditionalPercentage">Adicional para Parcelamento (%)</Label>
+                      <Input 
+                        id="feesAdditionalPercentage" 
+                        value={formData.feesAdditionalPercentage || '20'} 
+                        onChange={(e) => onInputChange('feesAdditionalPercentage', e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="feesPaymentMethod">Método de Pagamento</Label>
+                      <select 
+                        id="feesPaymentMethod" 
+                        className="w-full p-2 border rounded"
+                        value={formData.feesPaymentMethod || 'cartao'} 
+                        onChange={(e) => onInputChange('feesPaymentMethod', e.target.value)}
+                      >
+                        <option value="cartao">Cartão de Crédito</option>
+                        <option value="boleto">Boleto</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="flex items-center space-x-2">
                 <Checkbox 
                   id="showObservations" 
@@ -207,9 +258,18 @@ const ProposalTabContent = ({
         </Card>
       ) : (
         <>
-          {/* Observations field outside the card */}
-          <div className="mb-4">
-            <div className="flex items-center space-x-2 mb-2">
+          {/* Options panel outside the card */}
+          <div className="mb-4 space-y-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="showFeesInstallments" 
+                checked={showFeesInstallments} 
+                onCheckedChange={handleShowFeesInstallmentsChange}
+              />
+              <Label htmlFor="showFeesInstallments">Mostrar honorários parcelados na proposta</Label>
+            </div>
+            
+            <div className="flex items-center space-x-2">
               <Checkbox 
                 id="showObservations" 
                 checked={showObservations} 
