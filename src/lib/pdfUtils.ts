@@ -101,30 +101,157 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       creator: 'Sistema de Propostas'
     });
 
-    // Find the main content and payment schedule separately
-    const mainContent = proposalElement.querySelector('.main-content');
-    const paymentSchedule = proposalElement.querySelector('.page-break-before');
+    // Create a temporary clone of the proposal element
+    const tempDiv = document.createElement('div');
+    tempDiv.style.position = 'fixed';
+    tempDiv.style.top = '-9999px';
+    tempDiv.style.left = '-9999px';
+    document.body.appendChild(tempDiv);
 
-    if (!mainContent) {
-      return Promise.reject(new Error('Main content not found'));
-    }
-
-    // Function to add an element to PDF
-    const addElementToPDF = async (element: Element, isNewPage = false) => {
-      if (isNewPage) {
-        pdf.addPage();
+    // Function to render a specific page
+    const renderPage = async (pageIndex: number) => {
+      // Clone the original element
+      const cloneElement = proposalElement.cloneNode(true) as HTMLElement;
+      
+      // Clear any previous content from temp div
+      tempDiv.innerHTML = '';
+      tempDiv.appendChild(cloneElement);
+      
+      // Find original content component and get its content
+      const originalContent = proposalElement.querySelector('.p-6') as HTMLElement;
+      if (!originalContent) {
+        throw new Error('Cannot find proposal content');
       }
-
-      // Create a temporary clone for rendering
-      const tempDiv = document.createElement('div');
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.left = '-9999px';
-      tempDiv.style.backgroundColor = '#fff';
-      tempDiv.appendChild(element.cloneNode(true));
-      document.body.appendChild(tempDiv);
-
-      // Remove buttons and other non-printable elements
-      const toRemove = tempDiv.querySelectorAll('button, [data-pdf-remove="true"]');
+      
+      // Get the ProposalContent component inside the clone
+      const contentContainer = cloneElement.querySelector('.p-6') as HTMLElement;
+      if (!contentContainer) {
+        throw new Error('Cannot find content container in clone');
+      }
+      
+      // Create page content based on page index
+      if (pageIndex === 0) {
+        // For first page, create a content showing header, client info, negotiation, and payment options
+        const mainTemplate = document.createElement('div');
+        
+        // Header (always included on first page)
+        const header = proposalElement.querySelector('.bg-gradient-to-r');
+        if (header) {
+          mainTemplate.appendChild(header.cloneNode(true));
+        }
+        
+        // Main content (client info, negotiation, payment options)
+        const mainContent = proposalElement.querySelector('.main-content');
+        if (mainContent) {
+          mainTemplate.appendChild(mainContent.cloneNode(true));
+        }
+        
+        // Replace content in the clone with main page content
+        contentContainer.innerHTML = '';
+        contentContainer.appendChild(mainTemplate);
+        
+      } else {
+        // For subsequent pages, show payment schedule
+        // Create a simpler header for payment schedule pages
+        const scheduleHeader = document.createElement('div');
+        scheduleHeader.innerHTML = `
+          <div class="border-b border-gray-200 pb-4 mb-6">
+            <h2 class="text-xl font-semibold text-center" style="color: #1E40AF;">
+              Cronograma de Pagamento
+            </h2>
+          </div>
+        `;
+        
+        // Get payment schedule content from the original
+        const paymentSchedule = document.createElement('div');
+        
+        // Try to parse payment dates
+        let entryDates = [];
+        let installmentDates = [];
+        
+        try {
+          if (data.entryDates) {
+            entryDates = JSON.parse(data.entryDates);
+          }
+          if (data.installmentDates) {
+            installmentDates = JSON.parse(data.installmentDates);
+          }
+        } catch (error) {
+          console.error('Error parsing payment dates:', error);
+        }
+        
+        // Create entry dates table
+        if (entryDates.length > 0) {
+          const entryDiv = document.createElement('div');
+          entryDiv.className = 'border-l-4 border-blue-500 pl-4 py-2 mb-4';
+          entryDiv.innerHTML = `
+            <h4 class="text-sm font-medium text-blue-700 mb-2">Entrada:</h4>
+            <div class="bg-white p-3 rounded-md border border-blue-100 overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="text-xs text-gray-500">
+                  <tr>
+                    <th class="text-left pr-4 py-1">Parcela</th>
+                    <th class="text-left pr-4 py-1">Vencimento</th>
+                    <th class="text-right py-1">Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${entryDates.map((item, index) => `
+                    <tr class="${index % 2 === 0 ? 'bg-blue-50' : 'bg-white'}">
+                      <td class="pr-4 py-1">${item.installment}ª</td>
+                      <td class="pr-4 py-1">${item.formattedDate}</td>
+                      <td class="text-right py-1">R$ ${data.entryValue}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+          paymentSchedule.appendChild(entryDiv);
+        }
+        
+        // Create installment dates table
+        if (installmentDates.length > 0) {
+          const installmentDiv = document.createElement('div');
+          installmentDiv.className = 'border-l-4 border-green-500 pl-4 py-2';
+          installmentDiv.innerHTML = `
+            <h4 class="text-sm font-medium text-green-700 mb-2">
+              ${entryDates.length > 0 
+                ? `Após o pagamento da entrada você pagará o restante em ${installmentDates.length} parcelas:`
+                : 'Parcelas:'}
+            </h4>
+            <div class="bg-white p-3 rounded-md border border-green-100 overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="text-xs text-gray-500">
+                  <tr>
+                    <th class="text-left pr-4 py-1">Parcela</th>
+                    <th class="text-left pr-4 py-1">Vencimento</th>
+                    <th class="text-right py-1">Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${installmentDates.map((item, index) => `
+                    <tr class="${index % 2 === 0 ? 'bg-green-50' : 'bg-white'}">
+                      <td class="pr-4 py-1">${entryDates.length + item.installment}ª</td>
+                      <td class="pr-4 py-1">${item.formattedDate}</td>
+                      <td class="text-right py-1">R$ ${data.installmentValue}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+          paymentSchedule.appendChild(installmentDiv);
+        }
+        
+        // Replace content in the clone
+        contentContainer.innerHTML = '';
+        contentContainer.appendChild(scheduleHeader);
+        contentContainer.appendChild(paymentSchedule);
+      }
+      
+      // Remove buttons and navigation controls
+      const toRemove = cloneElement.querySelectorAll('[data-pdf-remove="true"]');
       toRemove.forEach(el => {
         if (el.parentNode) {
           el.parentNode.removeChild(el);
@@ -132,15 +259,12 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       });
 
       // Capture the element
-      const canvas = await html2canvas(tempDiv, {
+      const canvas = await html2canvas(cloneElement, {
         scale: 2,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
       });
-
-      // Clean up
-      document.body.removeChild(tempDiv);
 
       // Add to PDF
       const imgData = canvas.toDataURL('image/png');
@@ -148,26 +272,43 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
       const pdfWidth = 210 - 20; // A4 width minus margins
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-      pdf.addImage(imgData, 'PNG', 10, 10, pdfWidth, pdfHeight, '', 'FAST');
+      // Add a new page if not the first page
+      if (pageIndex > 0) {
+        pdf.addPage();
+      }
 
-      return pdfHeight;
+      pdf.addImage(imgData, 'PNG', 10, 10, pdfWidth, pdfHeight, '', 'FAST');
     };
 
-    // Add main content (first page)
-    await addElementToPDF(mainContent);
-
-    // Add payment schedule if it exists (on a new page)
-    if (paymentSchedule) {
-      await addElementToPDF(paymentSchedule, true);
+    // Determine number of pages
+    let numberOfPages = 1;
+    
+    // Add payment schedule page if we have dates
+    try {
+      const entryDates = data.entryDates ? JSON.parse(data.entryDates) : [];
+      const installmentDates = data.installmentDates ? JSON.parse(data.installmentDates) : [];
+      
+      if (entryDates.length > 0 || installmentDates.length > 0) {
+        numberOfPages++;
+      }
+    } catch (error) {
+      console.error('Error parsing payment dates:', error);
     }
 
+    // Generate each page
+    for (let i = 0; i < numberOfPages; i++) {
+      await renderPage(i);
+    }
+
+    // Clean up temporary element
+    document.body.removeChild(tempDiv);
+
     // Add page numbers
-    const totalPages = pdf.getNumberOfPages();
-    for (let i = 1; i <= totalPages; i++) {
+    for (let i = 1; i <= numberOfPages; i++) {
       pdf.setPage(i);
       pdf.setFontSize(8);
       pdf.setTextColor(100, 100, 100);
-      pdf.text(`Página ${i} de ${totalPages}`, 210 / 2, 297 - 10, { align: 'center' });
+      pdf.text(`Página ${i} de ${numberOfPages}`, 210 / 2, 297 - 10, { align: 'center' });
     }
 
     // Save the PDF

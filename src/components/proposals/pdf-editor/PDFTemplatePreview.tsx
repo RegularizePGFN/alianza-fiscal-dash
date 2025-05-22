@@ -1,8 +1,10 @@
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { ExtractedData, PDFTemplate, CompanyData } from '@/lib/types/proposals';
 import ProposalContent from '../card/ProposalContent';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 interface PDFTemplatePreviewProps {
   formData: Partial<ExtractedData>;
@@ -18,6 +20,40 @@ const PDFTemplatePreview = ({
   companyData 
 }: PDFTemplatePreviewProps) => {
   const previewRef = useRef<HTMLDivElement>(null);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  
+  // Calculate total pages based on data
+  React.useEffect(() => {
+    let pages = 1; // Start with one page (main content)
+    
+    // Check if we have payment schedule data
+    try {
+      const entryDates = formData.entryDates ? JSON.parse(formData.entryDates) : [];
+      const installmentDates = formData.installmentDates ? JSON.parse(formData.installmentDates) : [];
+      
+      if (entryDates.length > 0 || installmentDates.length > 0) {
+        pages++;
+      }
+    } catch (error) {
+      console.error('Error parsing payment dates:', error);
+    }
+    
+    setTotalPages(pages);
+  }, [formData]);
+  
+  // Navigation functions
+  const nextPage = () => {
+    if (currentPage < totalPages - 1) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+  
+  const prevPage = () => {
+    if (currentPage > 0) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
   
   // Parse template colors from formData or use defaults from selected template
   const colors = (() => {
@@ -55,51 +91,63 @@ const PDFTemplatePreview = ({
     };
   })();
 
-  // Dimensões exatas de um A4 (210mm x 297mm) em pixels com uma escala de 0.65
+  // Dimensões exatas de um A4 (210mm x 297mm) em pixels com uma escala de 0.5
   // para se ajustar bem à tela (usando proporção aproximada de 3.7795 pixels por mm)
-  const a4Width = 210 * 3.7795 * 0.65;
-  const a4Height = 297 * 3.7795 * 0.65;
+  const a4Width = 210 * 3.7795 * 0.5;
+  const a4Height = 297 * 3.7795 * 0.5;
 
   return (
-    <Card 
-      ref={previewRef} 
-      className="border p-0 overflow-hidden shadow-md preview-proposal font-['Roboto',sans-serif] transition-colors mx-auto"
-      style={{ 
-        backgroundColor: colors.background,
-        width: `${a4Width}px`,
-        height: `${a4Height}px`,
-        maxHeight: '100%',
-        aspectRatio: '210/297', // Proporção A4
-        overflow: 'auto'
-      }}
-    >
-      {layout.showHeader && (
-        <div className="relative overflow-hidden rounded-t-lg">
-          <div className="absolute inset-0 opacity-10 bg-gradient-to-br from-slate-400 to-slate-100"></div>
-          <div className="relative p-6 flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              {layout.showLogo && (
-                <img 
-                  src="/lovable-uploads/d939ccfc-a061-45e8-97e0-1fa1b82d3df2.png" 
-                  alt="Logo" 
-                  className="h-12 w-auto"
-                />
-              )}
-              <h2 className="text-xl font-medium" style={{ color: colors.secondary }}>
-                Proposta de Parcelamento PGFN
-              </h2>
-            </div>
-          </div>
+    <div className="flex flex-col items-center">
+      {/* Page navigation */}
+      <div className="flex justify-between w-full max-w-full mb-2">
+        <p className="text-sm text-gray-500">
+          Página {currentPage + 1} de {totalPages}
+        </p>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={prevPage} 
+            disabled={currentPage === 0}
+            className="px-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span className="sr-only">Página anterior</span>
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={nextPage} 
+            disabled={currentPage === totalPages - 1}
+            className="px-2"
+          >
+            <ArrowRight className="h-4 w-4" />
+            <span className="sr-only">Próxima página</span>
+          </Button>
         </div>
-      )}
+      </div>
       
-      {/* Use the shared ProposalContent component for consistency */}
-      <ProposalContent 
-        data={formData}
-        companyData={companyData}
-        isPreview={true}
-      />
-    </Card>
+      <Card 
+        ref={previewRef} 
+        className="border p-0 overflow-hidden shadow-md preview-proposal font-['Roboto',sans-serif] transition-colors mx-auto"
+        style={{ 
+          backgroundColor: colors.background,
+          width: `${a4Width}px`,
+          height: `${a4Height}px`,
+          maxHeight: '100%',
+          aspectRatio: '210/297', // Proporção A4
+          overflow: 'auto'
+        }}
+      >
+        {/* Use the shared ProposalContent component for consistency, with current page */}
+        <ProposalContent 
+          data={formData}
+          companyData={companyData}
+          isPreview={true}
+          currentPage={currentPage}
+        />
+      </Card>
+    </div>
   );
 };
 

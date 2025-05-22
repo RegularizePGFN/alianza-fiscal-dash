@@ -1,5 +1,5 @@
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
 import { HeaderSection } from './sections';
@@ -7,7 +7,7 @@ import ProposalContent from './ProposalContent';
 import { useToast } from "@/hooks/use-toast";
 import { generateProposalPdf, generateProposalPng } from "@/lib/pdfUtils";
 import { Button } from "@/components/ui/button";
-import { Printer, Download, FileImage } from "lucide-react";
+import { Printer, Download, FileImage, ArrowLeft, ArrowRight } from "lucide-react";
 
 interface ProposalCardProps {
   data: Partial<ExtractedData>;
@@ -18,6 +18,29 @@ interface ProposalCardProps {
 const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
   const proposalRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  
+  // Calculate how many pages we'll have based on data
+  useEffect(() => {
+    // Set default to 1 page (main content)
+    let pages = 1;
+    
+    // Add payment schedule page if we have dates
+    try {
+      const entryDates = data.entryDates ? JSON.parse(data.entryDates) : [];
+      const installmentDates = data.installmentDates ? JSON.parse(data.installmentDates) : [];
+      
+      if (entryDates.length > 0 || installmentDates.length > 0) {
+        // Add one page for payment schedule
+        pages++;
+      }
+    } catch (error) {
+      console.error('Error parsing payment dates:', error);
+    }
+    
+    setTotalPages(pages);
+  }, [data]);
   
   // Effect to verify when fonts are loaded
   useEffect(() => {
@@ -122,26 +145,57 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
     }
   };
 
+  const nextPage = () => {
+    setCurrentPage(prev => Math.min(prev + 1, totalPages - 1));
+  };
+
+  const prevPage = () => {
+    setCurrentPage(prev => Math.max(prev - 1, 0));
+  };
+
   return (
     <div className="flex flex-col items-center space-y-4">
-      {/* Main proposal card - action buttons moved outside */}
-      <Card ref={proposalRef} className="max-w-3xl mx-auto shadow border overflow-hidden font-['Roboto',sans-serif] w-full"
-            style={{ backgroundColor: colors.background }}>
-        
-        {/* Header with Logo */}
-        <HeaderSection 
-          showHeader={layout.showHeader} 
-          showLogo={layout.showLogo}
-          discountedValue={data.discountedValue || '0,00'}
-          colors={colors}
-          totalDebt={data.totalDebt}
-        />
+      {/* Page navigation above the proposal */}
+      <div className="flex justify-between w-full max-w-3xl px-4" data-pdf-remove="true">
+        <p className="text-sm text-gray-500">
+          Página {currentPage + 1} de {totalPages}
+        </p>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={prevPage} 
+            disabled={currentPage === 0}
+            className="px-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span className="sr-only">Página anterior</span>
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={nextPage} 
+            disabled={currentPage === totalPages - 1}
+            className="px-2"
+          >
+            <ArrowRight className="h-4 w-4" />
+            <span className="sr-only">Próxima página</span>
+          </Button>
+        </div>
+      </div>
 
+      {/* Main proposal card - action buttons moved outside */}
+      <Card 
+        ref={proposalRef} 
+        className="max-w-3xl mx-auto shadow border overflow-hidden font-['Roboto',sans-serif] w-full print:w-full print:max-w-none"
+        style={{ backgroundColor: colors.background, maxHeight: '842px', height: '100%' }}
+      >
         <CardContent className="p-0">
-          {/* Use the shared ProposalContent component */}
+          {/* Use the shared ProposalContent component with page prop */}
           <ProposalContent 
             data={data}
             companyData={companyData}
+            currentPage={currentPage}
           />
         </CardContent>
       </Card>
