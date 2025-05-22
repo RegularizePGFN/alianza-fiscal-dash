@@ -38,6 +38,7 @@ const PaymentScheduleSection = ({ data, colors }: PaymentScheduleSectionProps) =
       icon={<Calendar className="h-4 w-4" />}
       color={sectionColor}
       fullWidth
+      className="page-break-before"
     >
       <div className="col-span-2 space-y-4">
         {/* Entry payments */}
@@ -73,7 +74,9 @@ const PaymentScheduleSection = ({ data, colors }: PaymentScheduleSectionProps) =
         {installmentDates.length > 0 && (
           <div className="border-l-4 border-green-500 pl-4 py-2">
             <h4 className="text-sm font-medium text-green-700 mb-2">
-              Após o pagamento da entrada você pagará o restante em {installmentDates.length} parcelas:
+              {entryDates.length > 0 
+                ? "Após o pagamento da entrada você pagará o restante em " + installmentDates.length + " parcelas:"
+                : "Parcelas:"}
             </h4>
             <div className="bg-white p-3 rounded-md border border-green-100 overflow-x-auto">
               <table className="w-full text-sm">

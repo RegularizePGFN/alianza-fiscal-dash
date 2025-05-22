@@ -60,8 +60,8 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
   // We'll use a set to track which sections we've rendered to avoid duplicates
   const renderedSections = new Set();
 
-  // Map section IDs to their corresponding components
-  const renderSection = (sectionId: string) => {
+  // Map section IDs to their corresponding components for the first page
+  const renderMainSection = (sectionId: string) => {
     // If we've already rendered this section, don't render it again
     if (renderedSections.has(sectionId)) return null;
     
@@ -89,18 +89,12 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
         return companyData ? (
           <CompanyInfoSection companyData={companyData} colors={colors} />
         ) : null;
-      case 'alert':
-        return null; // Não renderizar a seção de alerta (removida)
       case 'debt':
         return <NegotiationSection data={data} colors={colors} />;
       case 'payment':
         return <PaymentSection data={data} colors={colors} />;
-      case 'paymentSchedule':
-        return <div data-section="payment-schedule"><PaymentScheduleSection data={data} colors={colors} /></div>;
       case 'fees':
         return <FeesSection data={data} colors={colors} />;
-      case 'total':
-        return null; // Não renderizar a seção de total (removida)
       case 'comments':
         return <CommentsSection data={data} colors={colors} />;
       default:
@@ -123,33 +117,31 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
     }
   }
 
-  // Remover 'total' e 'alert' do array de seções
-  const filteredSections = sectionOrder.filter(section => section !== 'total' && section !== 'alert');
-  
-  // Add paymentSchedule section once after payment if needed and not already present
-  if (!filteredSections.includes('paymentSchedule') && filteredSections.includes('payment')) {
-    const paymentIndex = filteredSections.indexOf('payment');
-    if (paymentIndex !== -1) {
-      filteredSections.splice(paymentIndex + 1, 0, 'paymentSchedule');
-    }
-  }
+  // Remove 'alert' section
+  const filteredSections = sectionOrder.filter(section => section !== 'alert');
 
   return (
     <div className={`p-6 space-y-0 font-['Roboto',sans-serif] ${className}`}>
-      {/* Render sections based on the adjusted section order */}
-      {filteredSections.map((section, index) => (
-        <React.Fragment key={index}>
-          {renderSection(section)}
-        </React.Fragment>
-      ))}
+      {/* Main content for page 1 */}
+      <div className="main-content">
+        {/* Render main sections based on the adjusted section order */}
+        {filteredSections.map((section, index) => (
+          <React.Fragment key={index}>
+            {renderMainSection(section)}
+          </React.Fragment>
+        ))}
+        
+        {/* Always show comments at the end of the main content if they exist */}
+        {data.additionalComments && !renderedSections.has('comments') && 
+          <CommentsSection data={data} colors={colors} />
+        }
+        
+        {/* Signature is always shown on the main page */}
+        <SignatureSection data={data} />
+      </div>
       
-      {/* Always show comments at the end if they exist and aren't already in the sections */}
-      {data.additionalComments && !renderedSections.has('comments') && 
-        <CommentsSection data={data} colors={colors} />
-      }
-      
-      {/* Signature is always shown */}
-      <SignatureSection data={data} />
+      {/* Payment schedule on a separate page */}
+      <PaymentScheduleSection data={data} colors={colors} />
     </div>
   );
 };
