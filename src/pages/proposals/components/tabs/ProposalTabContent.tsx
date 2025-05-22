@@ -206,11 +206,37 @@ const ProposalTabContent = ({
           </CardContent>
         </Card>
       ) : (
-        <ProposalCard
-          data={formData}
-          imageUrl={imagePreview || undefined}
-          companyData={companyData}
-        />
+        <>
+          {/* Observations field outside the card */}
+          <div className="mb-4">
+            <div className="flex items-center space-x-2 mb-2">
+              <Checkbox 
+                id="showObservations" 
+                checked={showObservations} 
+                onCheckedChange={handleShowObservationsChange}
+              />
+              <Label htmlFor="showObservations">Adicionar observações</Label>
+            </div>
+            
+            {showObservations && (
+              <div className="space-y-2">
+                <Textarea 
+                  id="additionalComments" 
+                  value={formData.additionalComments || ''} 
+                  onChange={handleObservationsChange}
+                  className="h-20"
+                  placeholder="Digite as observações que devem aparecer na proposta..."
+                />
+              </div>
+            )}
+          </div>
+          
+          <ProposalCard
+            data={formData}
+            imageUrl={imagePreview || undefined}
+            companyData={companyData}
+          />
+        </>
       )}
     </div>
   );

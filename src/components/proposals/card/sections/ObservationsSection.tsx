@@ -10,12 +10,12 @@ const ObservationsSection = ({ data }: ObservationsSectionProps) => {
   if (!data.additionalComments) return null;
   
   return (
-    <div className="space-y-1.5">
-      <h3 className="font-semibold text-lg border-b border-af-blue-200 pb-1 text-af-blue-800">
+    <div className="space-y-1">
+      <h3 className="font-semibold text-sm border-b border-af-blue-200 pb-0.5 text-af-blue-800">
         Observações
       </h3>
-      <div className="bg-gray-50 p-2 rounded-lg border border-gray-200">
-        <p className="text-gray-700 text-sm whitespace-pre-wrap">{data.additionalComments}</p>
+      <div className="rounded-lg">
+        <p className="text-xs text-gray-700 whitespace-pre-wrap">{data.additionalComments}</p>
       </div>
     </div>
   );

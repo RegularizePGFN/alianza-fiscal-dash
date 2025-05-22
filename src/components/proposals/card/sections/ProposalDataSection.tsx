@@ -10,18 +10,18 @@ const ProposalDataSection = ({ data }: ProposalDataSectionProps) => {
   return (
     <>
       {/* Contribuinte Section */}
-      <div className="space-y-2">
-        <h3 className="font-semibold text-lg border-b border-af-blue-200 pb-1 text-af-blue-800">
+      <div className="space-y-1.5">
+        <h3 className="font-semibold text-sm border-b border-af-blue-200 pb-0.5 text-af-blue-800">
           Dados do Contribuinte
         </h3>
         <div className="grid grid-cols-2 gap-2">
-          <div className="bg-white p-2 rounded-md shadow-sm border border-af-blue-100">
-            <span className="font-medium text-af-blue-700">CNPJ:</span>
-            <p className="text-lg">{data.cnpj || '-'}</p>
+          <div className="p-1.5 rounded-md">
+            <span className="font-medium text-xs text-af-blue-700">CNPJ:</span>
+            <p className="text-sm">{data.cnpj || '-'}</p>
           </div>
-          <div className="bg-white p-2 rounded-md shadow-sm border border-af-blue-100">
-            <span className="font-medium text-af-blue-700">Número do Débito:</span>
-            <p className="text-lg">{data.debtNumber || '-'}</p>
+          <div className="p-1.5 rounded-md">
+            <span className="font-medium text-xs text-af-blue-700">Número do Débito:</span>
+            <p className="text-sm">{data.debtNumber || '-'}</p>
           </div>
         </div>
       </div>
