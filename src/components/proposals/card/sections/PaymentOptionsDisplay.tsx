@@ -58,7 +58,7 @@ const PaymentOptionsDisplay = ({ data }: PaymentOptionsDisplayProps) => {
         </h3>
         
         {hasDiscount() && (
-          <div className="text-sm font-medium text-af-blue-600">
+          <div className="text-sm font-medium text-af-green-700">
             Economia de R$ {economyValue}
           </div>
         )}

@@ -71,7 +71,7 @@ const PaymentOptionsSection = ({
         </h3>
         
         {hasDiscount() && (
-          <div className="text-[9px] font-medium text-af-blue-600 whitespace-nowrap">
+          <div className="text-[9px] font-medium text-af-green-700 whitespace-nowrap">
             Economia de R$ {economyValue}
           </div>
         )}

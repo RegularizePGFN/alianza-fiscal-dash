@@ -37,14 +37,16 @@ const FeesSection = ({ data, colors }: FeesSectionProps) => {
             value={`R$ ${data.feesValue || '0,00'}`}
             highlight={true}
             className="bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/20 dark:to-gray-800/50"
+            description="Pagamento imediato"
           />
           
           <DataField 
             label="Honorários Parcelados" 
-            value={`R$ ${data.feesTotalInstallmentValue || '0,00'}`}
+            value={`${data.feesInstallments}x de R$ ${data.feesInstallmentValue}`}
             highlight={true}
             className="bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/20 dark:to-gray-800/50"
-            description={`${data.feesInstallments}x de R$ ${data.feesInstallmentValue} ${paymentMethod}`}
+            description="Pagamento imediato da parcela"
+            additionalText={`Total: R$ ${data.feesTotalInstallmentValue || '0,00'}`}
           />
         </div>
       ) : (
@@ -53,6 +55,7 @@ const FeesSection = ({ data, colors }: FeesSectionProps) => {
           value={`R$ ${data.feesValue || '0,00'}`}
           highlight={true}
           className="bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/20 dark:to-gray-800/50"
+          description="Pagamento imediato"
         />
       )}
     </SectionContainer>

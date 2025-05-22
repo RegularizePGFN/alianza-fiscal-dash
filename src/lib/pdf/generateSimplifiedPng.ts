@@ -25,8 +25,8 @@ export async function generateSimplifiedProposalPng(
           <img src="/lovable-uploads/d939ccfc-a061-45e8-97e0-1fa1b82d3df2.png" class="h-10 w-auto" alt="Logo" />
           <h2 class="text-xl font-bold">Proposta de Parcelamento PGFN</h2>
         </div>
-        <div class="bg-af-green-500 text-white px-3 py-1 rounded">
-          Economia de ${calculateEconomy(data.totalDebt, data.discountedValue)}
+        <div class="text-af-green-400">
+          Economia de R$ ${calculateEconomy(data.totalDebt, data.discountedValue)}
         </div>
       </div>
       
@@ -112,15 +112,41 @@ export async function generateSimplifiedProposalPng(
       
       <div class="mt-6">
         <h3 class="text-af-blue-800 font-medium border-b pb-2 mb-3">Custos e Honorários</h3>
-        <div class="bg-purple-50 p-4 rounded-md border border-purple-100 flex justify-between items-center">
-          <div>
-            <span class="font-medium text-purple-800">Honorários Aliança Fiscal:</span>
-            <p class="text-sm text-gray-600">Pagamento imediato</p>
+        ${data.showFeesInstallments === 'true' && data.feesInstallmentValue ? `
+          <div class="grid grid-cols-2 gap-4">
+            <div class="bg-purple-50 p-4 rounded-md border border-purple-100">
+              <div>
+                <span class="font-medium text-purple-800">Honorários à Vista:</span>
+                <p class="text-sm text-gray-600">Pagamento imediato</p>
+              </div>
+              <div class="text-xl font-bold text-purple-700 mt-1">
+                ${formatCurrency(data.feesValue)}
+              </div>
+            </div>
+            <div class="bg-purple-50 p-4 rounded-md border border-purple-100">
+              <div>
+                <span class="font-medium text-purple-800">Honorários Parcelados:</span>
+                <p class="text-sm text-gray-600">Pagamento imediato da parcela</p>
+              </div>
+              <div class="text-xl font-bold text-purple-700 mt-1">
+                ${data.feesInstallments}x de ${formatCurrency(data.feesInstallmentValue)}
+              </div>
+              <div class="text-xs text-purple-700">
+                Total: ${formatCurrency(data.feesTotalInstallmentValue)}
+              </div>
+            </div>
           </div>
-          <div class="text-xl font-bold text-purple-700">
-            ${formatCurrency(data.feesValue)}
+        ` : `
+          <div class="bg-purple-50 p-4 rounded-md border border-purple-100 flex justify-between items-center">
+            <div>
+              <span class="font-medium text-purple-800">Honorários à Vista:</span>
+              <p class="text-sm text-gray-600">Pagamento imediato</p>
+            </div>
+            <div class="text-xl font-bold text-purple-700">
+              ${formatCurrency(data.feesValue)}
+            </div>
           </div>
-        </div>
+        `}
       </div>
       
       <div class="mt-6">
@@ -149,8 +175,8 @@ export async function generateSimplifiedProposalPng(
       }
       .bg-af-blue-700 { background-color: #1e40af; }
       .bg-af-blue-800 { color: #1e3a8a; }
-      .bg-af-green-500 { background-color: #10b981; }
-      .bg-af-green-700 { color: #047857; }
+      .text-af-green-400 { color: #34d399; }
+      .text-af-green-700 { color: #047857; }
       .text-af-blue-700 { color: #1e40af; }
       .text-af-blue-800 { color: #1e3a8a; }
       .text-purple-700 { color: #7e22ce; }

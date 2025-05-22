@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ExtractedData } from '@/lib/types/proposals';
 import SectionContainer from './SectionContainer';
@@ -66,7 +65,7 @@ const PaymentSection = ({ data, colors }: PaymentSectionProps) => {
       className="print:break-inside-avoid"
       extraHeaderContent={
         hasDiscount() && (
-          <div className="text-xs text-af-blue-600 whitespace-nowrap">
+          <div className="text-xs text-af-green-700 whitespace-nowrap">
             Economia de R$ {economyValue}
           </div>
         )

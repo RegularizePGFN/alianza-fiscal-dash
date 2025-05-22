@@ -33,7 +33,7 @@ const FeesDisplaySection = ({
             <div className="flex justify-between items-center">
               <div>
                 <span className="font-semibold text-purple-800 text-lg">
-                  Honorários Aliança Fiscal:
+                  Honorários à Vista:
                 </span>
                 <p className="text-sm text-purple-600">
                   Pagamento imediato
@@ -49,16 +49,16 @@ const FeesDisplaySection = ({
             <div className="flex justify-between items-center">
               <div>
                 <span className="font-semibold text-purple-800 text-lg">
-                  Honorários Aliança Fiscal:
+                  Honorários Parcelados:
                 </span>
                 <p className="text-sm text-purple-600">
-                  Pagamento parcelado
+                  Pagamento imediato da parcela
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-2xl font-bold text-purple-900">R$ {data.feesTotalInstallmentValue}</p>
+                <p className="text-2xl font-bold text-purple-900">{data.feesInstallments}x de R$ {data.feesInstallmentValue}</p>
                 <p className="text-xs text-purple-700">
-                  {data.feesInstallments}x de R$ {data.feesInstallmentValue} {paymentMethod}
+                  Total: R$ {data.feesTotalInstallmentValue}
                 </p>
               </div>
             </div>
@@ -69,7 +69,7 @@ const FeesDisplaySection = ({
           <div className="flex justify-between items-center">
             <div>
               <span className="font-semibold text-purple-800 text-lg">
-                Honorários Aliança Fiscal:
+                Honorários à Vista:
               </span>
               <p className="text-sm text-purple-600">
                 Pagamento imediato
