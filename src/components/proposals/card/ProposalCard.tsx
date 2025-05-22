@@ -67,7 +67,7 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
           discountedValue={data.discountedValue || '0,00'}
         />
 
-        <CardContent className="pt-6 space-y-8 px-8 pb-8">
+        <CardContent className="pt-5 space-y-6 px-7 pb-7">
           {/* CNPJ and Company Data Section */}
           {companyData ? (
             <CompanyInfoSection 

@@ -27,24 +27,14 @@ const CompanyInfoSection = ({ companyData, colors }: CompanyInfoSectionProps) =>
     return parts.filter(part => part).join(", ");
   };
   
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "";
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('pt-BR');
-    } catch (e) {
-      return dateString;
-    }
-  };
-  
   return (
-    <div className="mb-6">
+    <div className="mb-4">
       <h3 className="text-base font-semibold pb-2 mb-3 border-b border-gray-200" 
           style={{ color: colors.secondary }}>
         Dados do Contribuinte
       </h3>
       <div className="grid grid-cols-1 gap-3 text-sm">
-        {/* CNPJ and Razão Social row */}
+        {/* CNPJ and Situação row */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-gray-50 p-2 rounded">
             <span className="text-sm font-medium text-gray-500">CNPJ:</span>
@@ -60,21 +50,6 @@ const CompanyInfoSection = ({ companyData, colors }: CompanyInfoSectionProps) =>
         <div className="bg-gray-50 p-2 rounded">
           <span className="text-sm font-medium text-gray-500">Razão Social:</span>
           <p className="text-sm mt-1">{companyData.company?.name || '-'}</p>
-        </div>
-        
-        {/* Data de Abertura and Capital Social */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-gray-50 p-2 rounded">
-            <span className="text-sm font-medium text-gray-500">Data de Abertura:</span>
-            <p className="text-sm mt-1">{formatDate(companyData.founded) || '-'}</p>
-          </div>
-          
-          {companyData.company?.equity !== undefined && (
-            <div className="bg-gray-50 p-2 rounded">
-              <span className="text-sm font-medium text-gray-500">Capital Social:</span>
-              <p className="text-sm mt-1">R$ {companyData.company.equity.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-            </div>
-          )}
         </div>
         
         {/* Endereço */}

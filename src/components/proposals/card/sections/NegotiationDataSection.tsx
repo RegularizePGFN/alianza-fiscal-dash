@@ -13,20 +13,20 @@ const NegotiationDataSection = ({ data }: NegotiationDataSectionProps) => {
         Dados da Negociação
       </h3>
       
-      <div className="grid grid-cols-2 gap-6">
-        <div className="bg-white p-4 rounded-md shadow-sm border border-af-blue-100">
+      <div className="grid grid-cols-3 gap-3">
+        <div className="bg-white p-3 rounded-md shadow-sm border border-af-blue-100">
           <span className="font-medium text-af-blue-700">
             Valor Consolidado:
           </span>
           <p className="text-lg">R$ {data.totalDebt || '-'}</p>
         </div>
-        <div className="bg-white p-4 rounded-md shadow-sm border border-af-blue-100 bg-gradient-to-br from-af-green-50 to-white">
+        <div className="bg-white p-3 rounded-md shadow-sm border border-af-blue-100 bg-gradient-to-br from-af-green-50 to-white">
           <span className="font-medium text-af-green-700">
             Valor com Reduções:
           </span>
           <p className="text-lg font-bold text-af-green-700">R$ {data.discountedValue || '-'}</p>
         </div>
-        <div className="bg-white p-4 rounded-md shadow-sm border border-af-blue-100">
+        <div className="bg-white p-3 rounded-md shadow-sm border border-af-blue-100">
           <span className="font-medium text-af-blue-700">
             Percentual de Desconto:
           </span>
