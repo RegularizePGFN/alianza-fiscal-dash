@@ -23,18 +23,25 @@ const FeesSection = ({ data, colors }: FeesSectionProps) => {
     data.feesInstallments && 
     parseInt(data.feesInstallments) > 1;
 
+  // Se não houver valor de honorários, não mostramos a seção
+  if (!data.feesValue && !showInstallmentFees) {
+    return null;
+  }
+
   return (
     <SectionContainer 
       title="Honorários" 
       icon={null}
       color={sectionColor}
     >
-      <DataField 
-        label="Honorários à Vista" 
-        value={`R$ ${data.feesValue || '0,00'}`}
-        highlight={true}
-        className="bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/20 dark:to-gray-800/50"
-      />
+      {data.feesValue && (
+        <DataField 
+          label="Honorários à Vista" 
+          value={`R$ ${data.feesValue || '0,00'}`}
+          highlight={true}
+          className="bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/20 dark:to-gray-800/50"
+        />
+      )}
       
       {showInstallmentFees && (
         <DataField 

@@ -98,6 +98,11 @@ const MainPageContent = ({
 
   // Remove 'alert' section
   const filteredSections = sectionOrder.filter(section => section !== 'alert');
+  
+  // Ensure 'fees' section is included if we have fees data
+  if (data.feesValue && !filteredSections.includes('fees')) {
+    filteredSections.push('fees');
+  }
 
   return (
     <>
@@ -113,7 +118,7 @@ const MainPageContent = ({
       )}
 
       {/* Main content for page 1 - reduced vertical spacing */}
-      <div className="main-content space-y-2">
+      <div className="main-content space-y-2 px-3 py-2">
         {/* Render main sections based on the adjusted section order */}
         {filteredSections.map((section, index) => (
           <React.Fragment key={index}>
@@ -126,11 +131,16 @@ const MainPageContent = ({
           <CommentsSection data={data} colors={colors} />
         }
         
+        {/* Always show fees section if it has data and wasn't already included */}
+        {data.feesValue && !renderedSections.has('fees') && 
+          <FeesSection data={data} colors={colors} />
+        }
+        
         {/* Signature is always shown on the main page */}
         <SignatureSection data={data} />
       </div>
       
-      <div className="absolute bottom-2 right-4 text-[10px] text-gray-500 print:block hidden">
+      <div className="text-right pr-4 pb-2 text-[10px] text-gray-500">
         Página 1 de {totalPages}
       </div>
     </>

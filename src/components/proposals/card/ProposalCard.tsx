@@ -5,7 +5,7 @@ import { ExtractedData, CompanyData } from "@/lib/types/proposals";
 import ProposalContent from './ProposalContent';
 import { useToast } from "@/hooks/use-toast";
 import { generateProposalPdf, generateProposalPng } from "@/lib/pdf-utils";
-import { Button } from "@/components/ui/button";
+import ActionButtons from "./ActionButtons";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink } from "@/components/ui/pagination";
 
 interface ProposalCardProps {
@@ -52,70 +52,6 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
     window.print();
   };
 
-  const handleGeneratePdf = async () => {
-    if (!proposalRef.current) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível gerar o PDF. Tente novamente.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    toast({
-      title: "Processando",
-      description: "Gerando PDF, aguarde um momento...",
-    });
-    
-    try {
-      await generateProposalPdf(proposalRef.current, data);
-      
-      toast({
-        title: "Sucesso",
-        description: "PDF gerado com sucesso!",
-      });
-    } catch (error) {
-      console.error("Erro ao gerar PDF:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível gerar o PDF. Tente novamente.",
-        variant: "destructive",
-      });
-    }
-  };
-  
-  const handleGeneratePng = async () => {
-    if (!proposalRef.current) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível gerar a imagem PNG. Tente novamente.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    toast({
-      title: "Processando",
-      description: "Gerando imagem PNG de alta qualidade, aguarde...",
-    });
-    
-    try {
-      await generateProposalPng(proposalRef.current, data);
-      
-      toast({
-        title: "Sucesso",
-        description: "Imagem PNG gerada com sucesso!",
-      });
-    } catch (error) {
-      console.error("Erro ao gerar PNG:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível gerar a imagem PNG. Tente novamente.",
-        variant: "destructive",
-      });
-    }
-  };
-
   const nextPage = () => {
     setCurrentPage(prev => Math.min(prev + 1, totalPages - 1));
   };
@@ -123,11 +59,6 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
   const prevPage = () => {
     setCurrentPage(prev => Math.max(prev - 1, 0));
   };
-
-  // Calculate A4 dimensions for the preview (210mm × 297mm)
-  // Using a scaling factor to fit properly on screen
-  const a4Width = 210 * 3.7795 * 0.8; // A4 width in pixels with 0.8 scale
-  const a4Height = 297 * 3.7795 * 0.8; // A4 height in pixels with 0.8 scale
 
   return (
     <div className="flex flex-col items-center space-y-4">
@@ -152,6 +83,7 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
                   onClick={() => setCurrentPage(i)} 
                   isActive={currentPage === i}
                   className="cursor-pointer"
+                  data-page={i}
                 >
                   {i + 1}
                 </PaginationLink>
@@ -169,18 +101,17 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
         </Pagination>
       </div>
 
-      {/* Main proposal card with optimal scale */}
+      {/* Main proposal card with better sizing to fit content */}
       <Card 
         ref={proposalRef} 
-        className="shadow border overflow-hidden font-['Roboto',sans-serif] w-full mx-auto bg-white"
+        className="shadow border overflow-y-auto font-['Roboto',sans-serif] w-full mx-auto bg-white"
         style={{ 
-          width: `${a4Width}px`, 
-          height: `${a4Height}px`,
           maxWidth: '100%',
-          maxHeight: '90vh'
+          height: 'auto',
+          minHeight: '600px'
         }}
       >
-        <CardContent className="p-0 h-full">
+        <CardContent className="p-0">
           {/* Use the shared ProposalContent component with page prop */}
           <ProposalContent 
             data={data}
@@ -190,18 +121,12 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
         </CardContent>
       </Card>
       
-      {/* Action buttons - now outside the proposal card */}
-      <div className="flex justify-center gap-3 py-4 w-full" data-pdf-remove="true">
-        <Button variant="outline" onClick={handlePrint} className="border-gray-300 text-gray-700 hover:bg-gray-50">
-          Imprimir
-        </Button>
-        <Button variant="outline" onClick={handleGeneratePng} className="border-gray-300 text-gray-700 hover:bg-gray-50">
-          Baixar PNG
-        </Button>
-        <Button onClick={handleGeneratePdf} className="bg-gray-800 hover:bg-gray-900">
-          Baixar PDF
-        </Button>
-      </div>
+      {/* Action buttons - outside the proposal card */}
+      <ActionButtons
+        onPrint={handlePrint}
+        proposalData={data}
+        proposalRef={proposalRef}
+      />
     </div>
   );
 };

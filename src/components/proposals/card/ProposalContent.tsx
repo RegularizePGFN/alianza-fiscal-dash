@@ -36,7 +36,7 @@ const ProposalContent = ({
   // Page 0 is the main content, page 1+ is the payment schedule
   if (currentPage === 0) {
     return (
-      <div className={`p-3 space-y-2 h-full font-['Roboto',sans-serif] ${className}`}>
+      <div className={`h-full font-['Roboto',sans-serif] ${className}`}>
         <MainPageContent 
           data={data}
           companyData={companyData}
@@ -49,7 +49,7 @@ const ProposalContent = ({
   } else {
     // Payment schedule page (page 1+)
     return (
-      <div className={`p-3 space-y-2 h-full font-['Roboto',sans-serif] ${className}`}>
+      <div className={`p-3 h-full font-['Roboto',sans-serif] ${className}`}>
         <SchedulePageContent 
           data={data}
           colors={colors}
