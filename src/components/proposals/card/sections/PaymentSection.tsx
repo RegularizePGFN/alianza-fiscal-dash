@@ -83,11 +83,12 @@ const PaymentSection = ({ data, colors }: PaymentSectionProps) => {
       className="print:break-inside-avoid"
       extraHeaderContent={
         hasDiscount() && (
-          <div className="bg-green-600 text-white text-xs py-0.5 px-2 rounded">
+          <div className="bg-green-600 text-white text-xs py-1 px-3 rounded-sm whitespace-nowrap">
             Economia de R$ {calculateSavings()}
           </div>
         )
       }
+      fullWidth={true}
     >
       <DataField 
         label="À Vista" 

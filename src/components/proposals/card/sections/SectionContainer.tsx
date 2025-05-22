@@ -8,6 +8,7 @@ interface SectionContainerProps {
   color?: string;
   className?: string;
   extraHeaderContent?: ReactNode;
+  fullWidth?: boolean;
 }
 
 const SectionContainer = ({
@@ -16,7 +17,8 @@ const SectionContainer = ({
   icon,
   color = '#1E40AF',
   className = '',
-  extraHeaderContent
+  extraHeaderContent,
+  fullWidth = false
 }: SectionContainerProps) => {
   return (
     <div className={`mb-4 ${className}`}>
@@ -28,7 +30,11 @@ const SectionContainer = ({
           {icon}
           {title}
         </h3>
-        {extraHeaderContent}
+        {extraHeaderContent && (
+          <div className={`flex ${fullWidth ? 'flex-1 justify-end' : ''}`}>
+            {extraHeaderContent}
+          </div>
+        )}
       </div>
       <div className="space-y-2">
         {children}
