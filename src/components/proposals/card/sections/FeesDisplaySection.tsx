@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ExtractedData } from "@/lib/types/proposals";
 interface FeesDisplaySectionProps {
@@ -7,11 +8,11 @@ const FeesDisplaySection = ({
   data
 }: FeesDisplaySectionProps) => {
   if (!data.feesValue) return null;
-  return <div className="space-y-1.5">
-      <h3 className="font-semibold text-lg border-b border-af-blue-200 pb-1 text-af-blue-800">
+  return <div className="space-y-2">
+      <h3 className="font-semibold text-lg border-b border-af-blue-200 pb-1 mb-3 text-af-blue-800">
         Custos e Honorários
       </h3>
-      <div className="bg-gradient-to-r from-purple-100 to-blue-50 p-3 rounded-lg border border-purple-200 shadow-sm my-[26px]">
+      <div className="bg-gradient-to-r from-purple-100 to-blue-50 p-3 rounded-lg border border-purple-200 shadow-sm">
         <div className="flex justify-between items-center">
           <div>
             <span className="font-semibold text-purple-800 text-lg">

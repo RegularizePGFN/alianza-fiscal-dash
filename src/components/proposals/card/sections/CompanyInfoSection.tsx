@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { CompanyData } from "@/lib/types/proposals";
 interface CompanyInfoSectionProps {
@@ -19,7 +20,7 @@ const CompanyInfoSection = ({
   return <div className="mb-2">
       <h3 style={{
       color: colors.secondary
-    }} className="text-sm font-semibold pb-1 mb-1 border-b border-gray-200 my-[10px]">
+    }} className="text-sm font-semibold pb-1 mb-3 border-b border-gray-200 my-[10px]">
         Dados do Contribuinte
       </h3>
       <div className="grid grid-cols-1 gap-1.5 text-xs">
