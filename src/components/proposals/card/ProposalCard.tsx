@@ -47,22 +47,6 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
       console.log('All fonts loaded for proposal rendering');
     });
   }, []);
-  
-  // Get colors from template settings or use defaults
-  const colors = {
-    primary: '#3B82F6',
-    secondary: '#1E40AF',
-    accent: '#10B981',
-    background: '#F8FAFC'
-  };
-
-  // Default layout settings
-  const layout = {
-    sections: ['client', 'debt', 'payment', 'fees', 'total'],
-    showHeader: true,
-    showLogo: true,
-    showWatermark: false
-  };
 
   const handlePrint = () => {
     window.print();
@@ -142,8 +126,8 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
 
   // Calculate A4 dimensions for the preview (210mm × 297mm)
   // Using a scaling factor to fit properly on screen
-  const a4Width = 210 * 3.7795 * 0.75; // A4 width in pixels with 0.75 scale
-  const a4Height = 297 * 3.7795 * 0.75; // A4 height in pixels with 0.75 scale
+  const a4Width = 210 * 3.7795 * 0.8; // A4 width in pixels with 0.8 scale
+  const a4Height = 297 * 3.7795 * 0.8; // A4 height in pixels with 0.8 scale
 
   return (
     <div className="flex flex-col items-center space-y-4">
@@ -162,7 +146,7 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
                 Anterior
               </PaginationLink>
             </PaginationItem>
-            {totalPages > 2 && Array.from({length: totalPages}).map((_, i) => (
+            {totalPages > 1 && Array.from({length: totalPages}).map((_, i) => (
               <PaginationItem key={i}>
                 <PaginationLink 
                   onClick={() => setCurrentPage(i)} 
@@ -185,7 +169,7 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
         </Pagination>
       </div>
 
-      {/* Main proposal card with larger scale */}
+      {/* Main proposal card with optimal scale */}
       <Card 
         ref={proposalRef} 
         className="shadow border overflow-hidden font-['Roboto',sans-serif] w-full mx-auto bg-white"
@@ -193,7 +177,7 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
           width: `${a4Width}px`, 
           height: `${a4Height}px`,
           maxWidth: '100%',
-          maxHeight: '100%'
+          maxHeight: '90vh'
         }}
       >
         <CardContent className="p-0 h-full">

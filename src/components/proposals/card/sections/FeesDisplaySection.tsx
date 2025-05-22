@@ -10,24 +10,21 @@ const FeesDisplaySection = ({ data }: FeesDisplaySectionProps) => {
   if (!data.feesValue) return null;
   
   return (
-    <div className="space-y-2">
-      <h3 className="font-semibold text-sm border-b border-gray-200 pb-1 text-gray-800">
-        Custos e Honorários
-      </h3>
-      <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-2 rounded-md border border-purple-100 shadow-sm">
-        <div className="flex justify-between items-center">
-          <div>
-            <span className="font-semibold text-purple-800 text-xs">
-              Honorários Aliança Fiscal:
-            </span>
-            <p className="text-xs text-purple-600 mt-0.5">
-              Pagamento imediato
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm font-bold text-purple-900">R$ {data.feesValue}</p>
-          </div>
+    <div className="mb-3">
+      <h2 className="text-xs font-semibold mb-2 text-gray-800 border-b pb-1">
+        Honorários
+      </h2>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+        <div>
+          <p className="text-[10px] text-gray-600">Honorários à Vista:</p>
+          <p>R$ {data.feesValue}</p>
         </div>
+        {data.feesInstallmentValue && (
+          <div>
+            <p className="text-[10px] text-gray-600">Honorários Parcelados:</p>
+            <p>{data.feesInstallments || '0'}x de R$ {data.feesInstallmentValue} no cartão</p>
+          </div>
+        )}
       </div>
     </div>
   );

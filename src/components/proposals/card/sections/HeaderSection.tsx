@@ -1,7 +1,5 @@
 
 import React from 'react';
-import { CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { formatBrazilianCurrency } from '@/lib/utils';
 
 interface HeaderSectionProps {
@@ -49,21 +47,21 @@ const HeaderSection = ({
   if (!showHeader) return null;
   
   return (
-    <div className="py-2 px-4 border-b border-gray-200">
+    <div className="py-2 px-3 border-b border-gray-200 mb-2">
       <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {showLogo && (
             <img 
               src="/lovable-uploads/d939ccfc-a061-45e8-97e0-1fa1b82d3df2.png" 
               alt="Logo" 
-              className="h-5 w-auto" 
+              className="h-4 w-auto" 
             />
           )}
-          <h1 className="text-sm font-semibold text-gray-800">
+          <h1 className="text-xs font-medium text-gray-700">
             Proposta de Transação Tributária | PGFN
           </h1>
         </div>
-        <div className="text-xs text-gray-700">
+        <div className="text-[10px] text-gray-600">
           • Economia de R$ {calculateEconomyValue()}
         </div>
       </div>

@@ -53,46 +53,10 @@ const PDFTemplatePreview = ({
       setCurrentPage(currentPage - 1);
     }
   };
-  
-  // Parse template colors from formData or use defaults from selected template
-  const colors = (() => {
-    if (formData.templateColors && typeof formData.templateColors === 'string') {
-      try {
-        return JSON.parse(formData.templateColors);
-      } catch (e) {
-        console.error('Failed to parse template colors', e);
-      }
-    }
-    
-    return {
-      primary: template.primaryColor,
-      secondary: template.secondaryColor,
-      accent: template.accentColor,
-      background: template.backgroundColor
-    };
-  })();
 
-  // Parse layout settings
-  const layout = (() => {
-    if (formData.templateLayout && typeof formData.templateLayout === 'string') {
-      try {
-        return JSON.parse(formData.templateLayout);
-      } catch (e) {
-        console.error('Failed to parse template layout', e);
-      }
-    }
-    
-    return {
-      sections: template.defaultLayout,
-      showHeader: true,
-      showLogo: true,
-      showWatermark: false
-    };
-  })();
-
-  // A4 dimensions in pixels with a 0.75 scale factor
-  const a4Width = 210 * 3.7795 * 0.75;
-  const a4Height = 297 * 3.7795 * 0.75;
+  // A4 dimensions in pixels with a 0.8 scale factor for better visibility
+  const a4Width = 210 * 3.7795 * 0.8;
+  const a4Height = 297 * 3.7795 * 0.8;
 
   return (
     <div className="flex flex-col items-center">
@@ -111,7 +75,7 @@ const PDFTemplatePreview = ({
                 Anterior
               </PaginationLink>
             </PaginationItem>
-            {totalPages > 2 && Array.from({length: totalPages}).map((_, i) => (
+            {totalPages > 1 && Array.from({length: totalPages}).map((_, i) => (
               <PaginationItem key={i}>
                 <PaginationLink 
                   onClick={() => setCurrentPage(i)} 
@@ -141,8 +105,7 @@ const PDFTemplatePreview = ({
           width: `${a4Width}px`,
           height: `${a4Height}px`,
           maxWidth: '100%',
-          maxHeight: '100%',
-          aspectRatio: '210/297', // Proporção A4
+          maxHeight: '90vh',
         }}
       >
         {/* Use the shared ProposalContent component for consistency, with current page */}
