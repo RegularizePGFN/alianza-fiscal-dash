@@ -4,15 +4,18 @@ import { AuthContext } from './AuthContext';
 import { AuthState } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { User as SupabaseUser } from '@supabase/supabase-js';
-import { User } from '@/lib/types';
+import { User, UserRole } from '@/lib/types';
+import { mapUserRole } from './utils';
 
 // Helper function to map Supabase user to our User type
 const mapSupabaseUserToUser = (supabaseUser: SupabaseUser | null): User | null => {
   if (!supabaseUser) return null;
   
   return {
-    ...supabaseUser,
+    id: supabaseUser.id,
     name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || 'User',
+    email: supabaseUser.email || '',  // Ensure email is always set, even if empty string
+    role: mapUserRole(supabaseUser.role, supabaseUser.email),
   };
 };
 
@@ -57,14 +60,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const logout = async () => {
+  // Modified to return void instead of boolean
+  const logout = async (): Promise<void> => {
     await supabase.auth.signOut();
     setAuthState({
       isAuthenticated: false,
       user: null,
       isLoading: false,
     });
-    return true;
   };
 
   // Added missing methods from AuthContextProps
