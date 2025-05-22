@@ -1,7 +1,6 @@
 import React from 'react';
 import { ExtractedData } from '@/lib/types/proposals';
 import SectionContainer from './SectionContainer';
-import { Calendar } from 'lucide-react';
 
 interface PaymentScheduleSectionProps {
   data: Partial<ExtractedData>;
@@ -33,10 +32,10 @@ const PaymentScheduleSection = ({ data, colors, showHeader = true }: PaymentSche
   }
 
   const content = (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Entry payments */}
       {entryDates.length > 0 && (
-        <div className="border-l-4 border-blue-500 pl-4 py-2">
+        <div className="border-l-4 border-blue-500 pl-4 py-2 mb-4">
           <h4 className="text-sm font-medium text-blue-700 mb-2">
             Entrada:
           </h4>
@@ -51,7 +50,7 @@ const PaymentScheduleSection = ({ data, colors, showHeader = true }: PaymentSche
               </thead>
               <tbody>
                 {entryDates.map((item, index) => (
-                  <tr key={`entry-${index}`} className="odd:bg-blue-50 even:bg-white">
+                  <tr key={`entry-${index}`} className={index % 2 === 0 ? 'bg-blue-50' : 'bg-white'}>
                     <td className="pr-4 py-1">{item.installment}ª</td>
                     <td className="pr-4 py-1">{item.formattedDate}</td>
                     <td className="text-right py-1">R$ {data.entryValue}</td>
@@ -82,7 +81,7 @@ const PaymentScheduleSection = ({ data, colors, showHeader = true }: PaymentSche
               </thead>
               <tbody>
                 {installmentDates.map((item, index) => (
-                  <tr key={`installment-${index}`} className="odd:bg-green-50 even:bg-white">
+                  <tr key={`installment-${index}`} className={index % 2 === 0 ? 'bg-green-50' : 'bg-white'}>
                     <td className="pr-4 py-1">{entryDates.length + item.installment}ª</td>
                     <td className="pr-4 py-1">{item.formattedDate}</td>
                     <td className="text-right py-1">R$ {data.installmentValue}</td>
@@ -105,7 +104,7 @@ const PaymentScheduleSection = ({ data, colors, showHeader = true }: PaymentSche
   return (
     <SectionContainer 
       title="Cronograma de Pagamento" 
-      icon={<Calendar className="h-4 w-4" />}
+      icon={null} // Removed icon as requested
       color={sectionColor}
       fullWidth
     >

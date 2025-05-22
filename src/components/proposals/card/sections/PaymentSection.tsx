@@ -3,7 +3,6 @@ import React from 'react';
 import { ExtractedData } from '@/lib/types/proposals';
 import SectionContainer from './SectionContainer';
 import DataField from './DataField';
-import { CreditCard } from 'lucide-react';
 
 interface PaymentSectionProps {
   data: Partial<ExtractedData>;
@@ -22,7 +21,7 @@ const PaymentSection = ({ data, colors }: PaymentSectionProps) => {
   return (
     <SectionContainer 
       title="Opções de Pagamento" 
-      icon={<CreditCard className="h-4 w-4" />}
+      icon={null} // Removed icon as requested
       color={sectionColor}
     >
       <DataField 

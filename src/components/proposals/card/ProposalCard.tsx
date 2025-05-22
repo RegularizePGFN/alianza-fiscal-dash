@@ -155,6 +155,7 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
   };
 
   // Calculate A4 dimensions for the preview
+  // A4 is 210mm × 297mm - using a scaling factor to fit nicely on screen
   const a4Width = 210 * 3.7795 * 0.5; // A4 width in pixels with 0.5 scale
   const a4Height = 297 * 3.7795 * 0.5; // A4 height in pixels with 0.5 scale
 
@@ -170,8 +171,7 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
             <PaginationItem>
               <PaginationLink 
                 onClick={prevPage} 
-                disabled={currentPage === 0}
-                className="cursor-pointer"
+                className={`cursor-pointer ${currentPage === 0 ? 'pointer-events-none opacity-50' : ''}`}
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Anterior
@@ -191,8 +191,7 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
             <PaginationItem>
               <PaginationLink 
                 onClick={nextPage} 
-                disabled={currentPage === totalPages - 1}
-                className="cursor-pointer"
+                className={`cursor-pointer ${currentPage === totalPages - 1 ? 'pointer-events-none opacity-50' : ''}`}
               >
                 Próxima
                 <ArrowRight className="h-4 w-4 ml-2" />

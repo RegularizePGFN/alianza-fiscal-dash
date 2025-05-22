@@ -109,8 +109,7 @@ const PDFTemplatePreview = ({
             <PaginationItem>
               <PaginationLink 
                 onClick={prevPage} 
-                disabled={currentPage === 0}
-                className="cursor-pointer"
+                className={`cursor-pointer ${currentPage === 0 ? 'pointer-events-none opacity-50' : ''}`}
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Anterior
@@ -130,8 +129,7 @@ const PDFTemplatePreview = ({
             <PaginationItem>
               <PaginationLink 
                 onClick={nextPage} 
-                disabled={currentPage === totalPages - 1}
-                className="cursor-pointer"
+                className={`cursor-pointer ${currentPage === totalPages - 1 ? 'pointer-events-none opacity-50' : ''}`}
               >
                 Próxima
                 <ArrowRight className="h-4 w-4 ml-2" />

@@ -1,12 +1,10 @@
 
 import React from 'react';
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
-import { formatBrazilianCurrency } from '@/lib/utils';
 import { 
   MetadataSection,
   ClientSection,
   CompanyInfoSection,
-  AlertSection, 
   NegotiationSection,
   PaymentSection,
   FeesSection,
@@ -131,7 +129,7 @@ const ProposalContent = ({
     const filteredSections = sectionOrder.filter(section => section !== 'alert');
 
     return (
-      <div className={`p-6 space-y-4 h-full font-['Roboto',sans-serif] ${className}`}>
+      <div className={`p-5 space-y-4 h-full font-['Roboto',sans-serif] ${className}`}>
         {/* Show header on first page */}
         {layout.showHeader && (
           <HeaderSection 
@@ -144,7 +142,7 @@ const ProposalContent = ({
         )}
 
         {/* Main content for page 1 */}
-        <div className="main-content space-y-4">
+        <div className="main-content space-y-3">
           {/* Render main sections based on the adjusted section order */}
           {filteredSections.map((section, index) => (
             <React.Fragment key={index}>
@@ -169,16 +167,16 @@ const ProposalContent = ({
   } else {
     // Payment schedule page (page 1+)
     return (
-      <div className={`p-6 space-y-4 h-full font-['Roboto',sans-serif] ${className}`}>
+      <div className={`p-5 space-y-4 h-full font-['Roboto',sans-serif] ${className}`}>
         {/* Simple header for payment schedule */}
-        <div className="border-b border-gray-200 pb-4 mb-6">
+        <div className="border-b border-gray-200 pb-3 mb-4">
           <h2 className="text-xl font-semibold text-center" style={{ color: colors.secondary }}>
             Cronograma de Pagamento
           </h2>
         </div>
         
         {/* Payment schedule content - make it scrollable if needed */}
-        <div className="overflow-auto pb-8">
+        <div className="overflow-auto pb-4 h-[calc(100%-80px)]">
           <PaymentScheduleSection 
             data={data} 
             colors={colors} 

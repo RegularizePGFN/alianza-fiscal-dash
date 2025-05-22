@@ -1,7 +1,7 @@
 
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { ExtractedData } from './types/proposals';
+import { ExtractedData, CompanyData } from './types/proposals';
 
 // Helper function to format dates as dd/mm/yyyy
 const formatDate = (date: Date): string => {
@@ -248,15 +248,15 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
                 </div>
                 <div>
                   <p class="text-sm text-gray-500">Situação:</p>
-                  <p>${companyData?.situation || ''}</p>
+                  <p>${data.situation || ''}</p>
                 </div>
                 <div>
                   <p class="text-sm text-gray-500">Data de Abertura:</p>
-                  <p>${companyData?.opening_date || ''}</p>
+                  <p>${data.openingDate || ''}</p>
                 </div>
                 <div class="col-span-2">
                   <p class="text-sm text-gray-500">Endereço:</p>
-                  <p>${companyData?.address || ''}</p>
+                  <p>${data.address || ''}</p>
                 </div>
                 <div>
                   <p class="text-sm text-gray-500">Telefone:</p>
@@ -268,7 +268,7 @@ export async function generateProposalPdf(proposalElement: HTMLElement, data: Pa
                 </div>
                 <div class="col-span-2">
                   <p class="text-sm text-gray-500">Atividade Principal:</p>
-                  <p>${companyData?.main_activity?.code ? `${companyData.main_activity.code} | ${companyData.main_activity.text}` : data.businessActivity || ''}</p>
+                  <p>${data.businessActivity || ''}</p>
                 </div>
               </div>
             </div>
