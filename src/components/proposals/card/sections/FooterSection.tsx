@@ -7,11 +7,8 @@ interface FooterSectionProps {
 }
 
 const FooterSection = ({ data }: FooterSectionProps) => {
-  return (
-    <div className="w-full rounded-b-none bg-af-blue-700 text-white h-2 print:fixed print:bottom-0 print:left-0 print:right-0">
-      {/* Este é apenas uma barra azul fina no rodapé da proposta */}
-    </div>
-  );
+  // Don't show footer at all since signature is always shown
+  return null;
 };
 
 export default FooterSection;

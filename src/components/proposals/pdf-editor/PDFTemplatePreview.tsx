@@ -3,7 +3,6 @@ import React, { useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { ExtractedData, PDFTemplate, CompanyData } from '@/lib/types/proposals';
 import ProposalContent from '../card/ProposalContent';
-import FooterSection from '../card/sections/FooterSection';
 
 interface PDFTemplatePreviewProps {
   formData: Partial<ExtractedData>;
@@ -63,7 +62,7 @@ const PDFTemplatePreview = ({
   return (
     <Card 
       ref={previewRef} 
-      className="border-0 p-0 overflow-visible shadow-none preview-proposal font-['Roboto',sans-serif] transition-colors mx-auto rounded-none relative"
+      className="border-0 p-0 overflow-visible shadow-none preview-proposal font-['Roboto',sans-serif] transition-colors mx-auto rounded-none"
       style={{ 
         backgroundColor: colors.background,
         width: `${a4Width}px`,
@@ -99,11 +98,6 @@ const PDFTemplatePreview = ({
         companyData={companyData}
         isPreview={true}
       />
-      
-      {/* Add thin footer bar - agora posicionado no final */}
-      <div className="absolute bottom-0 left-0 right-0">
-        <FooterSection data={formData} />
-      </div>
     </Card>
   );
 };

@@ -4,7 +4,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
 import { HeaderSection } from './sections';
 import ProposalContent from './ProposalContent';
-import FooterSection from './sections/FooterSection';
 
 interface ProposalPreviewProps {
   data: Partial<ExtractedData>;
@@ -33,12 +32,11 @@ const ProposalPreview = ({ data, companyData }: ProposalPreviewProps) => {
 
   return (
     <Card 
-      className="mx-auto shadow border overflow-hidden font-['Roboto',sans-serif] w-full print:shadow-none print:border-0 relative"
+      className="mx-auto shadow border overflow-hidden font-['Roboto',sans-serif] w-full print:shadow-none print:border-0"
       style={{ 
         backgroundColor: colors.background,
         margin: 0,
-        padding: 0,
-        minHeight: '100vh'
+        padding: 0
       }}
     >
       {/* Header with Logo */}
@@ -50,16 +48,13 @@ const ProposalPreview = ({ data, companyData }: ProposalPreviewProps) => {
         totalDebt={data.totalDebt}
       />
 
-      <CardContent className="p-0 pb-8">
+      <CardContent className="p-0">
         {/* Use the shared ProposalContent component */}
         <ProposalContent 
           data={data}
           companyData={companyData}
         />
       </CardContent>
-      
-      {/* Footer bar - posicionada no final da página */}
-      <FooterSection data={data} />
     </Card>
   );
 };

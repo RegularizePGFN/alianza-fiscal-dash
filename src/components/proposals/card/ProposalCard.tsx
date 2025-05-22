@@ -15,7 +15,6 @@ import ObservationsSection from '../card/sections/ObservationsSection';
 import PaymentOptionsDisplay from '../card/sections/PaymentOptionsDisplay';
 import FeesDisplaySection from '../card/sections/FeesDisplaySection';
 import CompanyInfoSection from '../card/sections/CompanyInfoSection';
-import FooterSection from '../card/sections/FooterSection';
 
 interface ProposalCardProps {
   data: Partial<ExtractedData>;
@@ -109,9 +108,6 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
           {/* Fees Section - Now last */}
           <FeesDisplaySection data={data} />
         </CardContent>
-        
-        {/* Add the thin footer bar */}
-        <FooterSection data={data} />
       </Card>
       
       {/* Action Button outside the card */}
