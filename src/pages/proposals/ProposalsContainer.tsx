@@ -77,10 +77,8 @@ const ProposalsContainer = () => {
         onProcessComplete={handlers.handleProcessComplete} 
         onReset={handlers.handleReset}
         setProcessingStatus={proposalsState.setProcessingStatus}
+        showDashboard={isAdmin && proposalsState.activeTab === "upload"}
       />
-      
-      {/* Add the dashboard section for admins only */}
-      {isAdmin && <ProposalsDashboard />}
     </div>
   );
 };

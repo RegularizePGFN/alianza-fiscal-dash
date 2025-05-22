@@ -3,6 +3,7 @@ import React, { useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { ExtractedData, PDFTemplate, CompanyData } from '@/lib/types/proposals';
 import ProposalContent from '../card/ProposalContent';
+import FooterSection from '../card/sections/FooterSection';
 
 interface PDFTemplatePreviewProps {
   formData: Partial<ExtractedData>;
@@ -98,6 +99,9 @@ const PDFTemplatePreview = ({
         companyData={companyData}
         isPreview={true}
       />
+      
+      {/* Add thin footer bar */}
+      <FooterSection data={formData} />
     </Card>
   );
 };

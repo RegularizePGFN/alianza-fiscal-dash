@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
 import { HeaderSection } from './sections';
 import ProposalContent from './ProposalContent';
+import FooterSection from './sections/FooterSection';
 
 interface ProposalPreviewProps {
   data: Partial<ExtractedData>;
@@ -55,6 +56,9 @@ const ProposalPreview = ({ data, companyData }: ProposalPreviewProps) => {
           companyData={companyData}
         />
       </CardContent>
+      
+      {/* Footer bar */}
+      <FooterSection data={data} />
     </Card>
   );
 };

@@ -6,6 +6,7 @@ import { ChangeEvent } from "react";
 import UploadTabContent from "./tabs/UploadTabContent";
 import DataTabContent from "./tabs/DataTabContent";
 import ProposalTabContent from "./tabs/ProposalTabContent";
+import { ProposalsDashboard } from "@/components/proposals/ProposalsDashboard";
 
 interface ProposalsTabsProps {
   activeTab: string;
@@ -28,6 +29,7 @@ interface ProposalsTabsProps {
   onProcessComplete: (data: Partial<ExtractedData>, preview: string) => void;
   onReset: () => void;
   setProcessingStatus: (status: string) => void;
+  showDashboard?: boolean;
 }
 
 const ProposalsTabs = ({
@@ -50,7 +52,8 @@ const ProposalsTabs = ({
   onDeleteProposal,
   onProcessComplete,
   onReset,
-  setProcessingStatus
+  setProcessingStatus,
+  showDashboard = false
 }: ProposalsTabsProps) => {
   // Create a function that adapts onInputChange to the format expected by DataTabContent
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -82,6 +85,9 @@ const ProposalsTabs = ({
           onProcessComplete={onProcessComplete}
           setProcessingStatus={setProcessingStatus}
         />
+        
+        {/* Conditionally render the dashboard */}
+        {showDashboard && <ProposalsDashboard />}
       </TabsContent>
       
       <TabsContent value="data" className="space-y-6">
