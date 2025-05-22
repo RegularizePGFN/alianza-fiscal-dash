@@ -1,20 +1,19 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Download, FileImage, FilePdf, Share2 } from "lucide-react";
+import { Download } from "lucide-react";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
 import { generateSimplifiedProposalPng } from "@/lib/pdfUtils";
 
 interface ActionButtonsSectionProps {
   onGeneratePdf: () => void;
-  onGeneratePng: () => void;
+  onGeneratePng?: () => void;
   data: Partial<ExtractedData>;
   companyData?: CompanyData | null;
 }
 
 const ActionButtonsSection = ({ 
   onGeneratePdf, 
-  onGeneratePng, 
   data,
   companyData
 }: ActionButtonsSectionProps) => {
@@ -32,13 +31,8 @@ const ActionButtonsSection = ({
       data-pdf-remove="true"
     >
       <Button onClick={onGeneratePdf} variant="outline" className="gap-2">
-        <FilePdf className="h-4 w-4" />
-        Gerar PDF
-      </Button>
-      
-      <Button onClick={onGeneratePng} variant="outline" className="gap-2">
-        <FileImage className="h-4 w-4" />
-        Exportar Imagem
+        <Download className="h-4 w-4" />
+        Baixar em PDF
       </Button>
       
       <Button onClick={handleGenerateSimplifiedImage} variant="secondary" className="gap-2">

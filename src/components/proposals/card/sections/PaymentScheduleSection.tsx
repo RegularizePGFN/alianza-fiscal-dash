@@ -15,20 +15,16 @@ const PaymentScheduleSection = ({ data, colors }: PaymentScheduleSectionProps) =
   
   // Parse payment dates from JSON strings
   let entryDates = [];
-  let installmentDates = [];
   
   try {
     if (data.entryDates) {
       entryDates = JSON.parse(data.entryDates);
     }
-    if (data.installmentDates) {
-      installmentDates = JSON.parse(data.installmentDates);
-    }
   } catch (error) {
     console.error('Error parsing payment dates:', error);
   }
   
-  if (entryDates.length === 0 && installmentDates.length === 0) {
+  if (entryDates.length === 0 && !data.installments) {
     return null; // Don't render if no dates available
   }
 
@@ -54,6 +50,7 @@ const PaymentScheduleSection = ({ data, colors }: PaymentScheduleSectionProps) =
   };
 
   const entryInstallmentValue = calculateEntryInstallmentValue();
+  const totalInstallments = parseInt(data.installments || '0');
 
   return (
     <SectionContainer 
@@ -93,32 +90,16 @@ const PaymentScheduleSection = ({ data, colors }: PaymentScheduleSectionProps) =
           </div>
         )}
         
-        {/* Regular installments */}
-        {installmentDates.length > 0 && (
+        {/* Regular installments summary */}
+        {totalInstallments > 0 && (
           <div className="border-l-4 border-green-500 pl-4 py-2 print:break-inside-avoid">
             <h4 className="text-sm font-medium text-green-700 mb-2">
-              Após o pagamento da entrada você pagará o restante em {installmentDates.length} parcelas:
+              Após o pagamento da entrada você pagará o restante em {totalInstallments} parcelas:
             </h4>
-            <div className="bg-white p-3 rounded-md border border-green-100 overflow-x-auto">
-              <table className="w-full text-sm print:break-inside-avoid">
-                <thead className="text-xs text-gray-500">
-                  <tr>
-                    <th className="text-left pr-4 py-1">Parcela</th>
-                    <th className="text-left pr-4 py-1">Vencimento</th>
-                    <th className="text-right py-1">Valor</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {installmentDates.map((item, index) => (
-                    <tr key={`installment-${index}`} className="odd:bg-green-50 even:bg-white">
-                      <td className="pr-4 py-1">{entryDates.length + item.installment}ª</td>
-                      <td className="pr-4 py-1">{item.formattedDate}</td>
-                      <td className="text-right py-1">R$ {data.installmentValue}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <p className="bg-white p-3 rounded-md border border-green-100 text-sm">
+              O vencimento segue até completar as {totalInstallments} parcelas, sendo que o vencimento 
+              será sempre no último dia útil de cada mês.
+            </p>
           </div>
         )}
       </div>
