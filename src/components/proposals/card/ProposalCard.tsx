@@ -7,12 +7,12 @@ import { generateProposalPdf, generateProposalPng } from "@/lib/pdfUtils";
 import { useToast } from "@/hooks/use-toast";
 
 // Import the new component sections
-import ProposalHeader from './card/sections/ProposalHeader';
-import ProposalDataSection from './card/sections/ProposalDataSection';
-import NegotiationDataSection from './card/sections/NegotiationDataSection';
-import FeesDisplaySection from './card/sections/FeesDisplaySection';
-import PaymentOptionsDisplay from './card/sections/PaymentOptionsDisplay';
-import ActionButtonsSection from './card/sections/ActionButtonsSection';
+import ProposalHeader from './sections/ProposalHeader';
+import ProposalDataSection from './sections/ProposalDataSection';
+import NegotiationDataSection from './sections/NegotiationDataSection';
+import FeesDisplaySection from './sections/FeesDisplaySection';
+import PaymentOptionsDisplay from './sections/PaymentOptionsDisplay';
+import ActionButtonsSection from './sections/ActionButtonsSection';
 
 interface ProposalCardProps {
   data: Partial<ExtractedData>;

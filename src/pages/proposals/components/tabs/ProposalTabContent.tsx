@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 import { ProposalCard } from "@/components/proposals/card";
@@ -187,7 +186,6 @@ const ProposalTabContent = ({
         <ProposalCard
           data={formData}
           imageUrl={imagePreview || undefined}
-          companyData={companyData}
         />
       )}
     </div>
