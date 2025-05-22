@@ -2,7 +2,7 @@
 import React, { useRef } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ExtractedData } from "@/lib/types/proposals";
+import { ExtractedData, CompanyData } from "@/lib/types/proposals";
 import { generateProposalPdf, generateProposalPng } from "@/lib/pdfUtils";
 import { useToast } from "@/hooks/use-toast";
 
@@ -17,9 +17,10 @@ import ActionButtonsSection from './sections/ActionButtonsSection';
 interface ProposalCardProps {
   data: Partial<ExtractedData>;
   imageUrl?: string;
+  companyData?: CompanyData | null;
 }
 
-const ProposalCard = ({ data }: ProposalCardProps) => {
+const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
   const proposalRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
@@ -115,6 +116,7 @@ const ProposalCard = ({ data }: ProposalCardProps) => {
           onGeneratePdf={generatePdf}
           onGeneratePng={generatePng}
           data={data}
+          companyData={companyData}
         />
       </CardContent>
     </Card>
