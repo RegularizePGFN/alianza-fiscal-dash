@@ -10,6 +10,7 @@ interface DataFieldProps {
   highlight?: boolean;
   className?: string;
   description?: string;
+  additionalText?: string;
 }
 
 /**
@@ -22,7 +23,8 @@ const DataField = ({
   fullWidth = false,
   highlight = false,
   className,
-  description
+  description,
+  additionalText
 }: DataFieldProps) => {
   return (
     <div 
@@ -42,6 +44,9 @@ const DataField = ({
       </div>
       {description && (
         <p className="text-xs text-gray-500 mt-1 italic">{description}</p>
+      )}
+      {additionalText && (
+        <p className="text-xs text-gray-600 mt-1 font-medium">{additionalText}</p>
       )}
     </div>
   );
