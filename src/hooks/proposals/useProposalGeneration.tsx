@@ -76,10 +76,7 @@ export const useProposalGeneration = ({
         const proposal = await saveProposal(processedData as ExtractedData, imagePreview || undefined);
         if (proposal) {
           try {
-            // Find the proposal preview element
-            const proposalElement = document.querySelector('.proposal-preview-container');
-            
-            if (proposalElement && proposalRef.current) {
+            if (proposalRef.current) {
               try {
                 // Método principal: geração local
                 const { pdfUrl, pngUrl, pdfPath, pngPath } = await generateProposalFiles(
@@ -113,7 +110,7 @@ export const useProposalGeneration = ({
                 // Fallback para método remoto
                 try {
                   // Get HTML content for remote service
-                  const htmlContent = getProposalHtml(proposalElement as HTMLElement);
+                  const htmlContent = getProposalHtml(proposalRef.current);
                   
                   // Try to use the remote service as fallback
                   const { pdfUrl, pngUrl, pdfPath, pngPath } = await generateProposalFilesRemote(

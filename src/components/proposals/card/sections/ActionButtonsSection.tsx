@@ -34,10 +34,7 @@ const ActionButtonsSection = ({
   };
   
   const handleGeneratePdf = async () => {
-    // Find the dialog content element with the proposal
-    const previewElement = document.querySelector('.proposal-preview-container');
-    
-    if (!previewElement) {
+    if (!previewRef.current) {
       uiToast({
         title: "Erro",
         description: "Não foi possível encontrar a proposta para exportar. Abra a visualização primeiro.",
@@ -59,28 +56,23 @@ const ActionButtonsSection = ({
         return;
       }
 
-      // Try to generate locally first
-      if (previewRef.current) {
+      try {
+        // Use local PDF generation as primary method
+        await generateProposalPdf(previewRef.current, data);
+        toast.success("PDF gerado com sucesso!", { id: "generate-pdf" });
+      } catch (localError) {
+        console.warn("Local PDF generation failed:", localError);
+        
+        // Try remote service as fallback
         try {
-          // Use local PDF generation as primary method
-          await generateProposalPdf(previewRef.current, data);
-          toast.success("PDF gerado com sucesso!", { id: "generate-pdf" });
-        } catch (localError) {
-          console.warn("Local PDF generation failed:", localError);
-          
-          // Try remote service as fallback
-          try {
-            const htmlContent = getProposalHtml(previewElement as HTMLElement);
-            const { pdfUrl } = await generateProposalFilesRemote(htmlContent, data);
-            openFileInNewTab(pdfUrl);
-            toast.success("PDF gerado via serviço remoto!", { id: "generate-pdf" });
-          } catch (remoteError) {
-            console.error("Remote PDF generation also failed:", remoteError);
-            throw new Error("Falha ao gerar PDF por ambos os métodos");
-          }
+          const htmlContent = getProposalHtml(previewRef.current);
+          const { pdfUrl } = await generateProposalFilesRemote(htmlContent, data);
+          openFileInNewTab(pdfUrl);
+          toast.success("PDF gerado via serviço remoto!", { id: "generate-pdf" });
+        } catch (remoteError) {
+          console.error("Remote PDF generation also failed:", remoteError);
+          throw new Error("Falha ao gerar PDF por ambos os métodos");
         }
-      } else {
-        throw new Error("Elemento da proposta não encontrado");
       }
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
@@ -97,10 +89,7 @@ const ActionButtonsSection = ({
   };
 
   const handleGeneratePng = async () => {
-    // Find the dialog content element with the proposal
-    const previewElement = document.querySelector('.proposal-preview-container');
-    
-    if (!previewElement) {
+    if (!previewRef.current) {
       uiToast({
         title: "Erro",
         description: "Não foi possível encontrar a proposta para exportar. Abra a visualização primeiro.",
@@ -122,28 +111,23 @@ const ActionButtonsSection = ({
         return;
       }
 
-      // Try to generate locally first
-      if (previewRef.current) {
+      try {
+        // Use local PNG generation as primary method
+        await generateProposalPng(previewRef.current, data);
+        toast.success("Imagem PNG gerada com sucesso!", { id: "generate-png" });
+      } catch (localError) {
+        console.warn("Local PNG generation failed:", localError);
+        
+        // Try remote service as fallback
         try {
-          // Use local PNG generation as primary method
-          await generateProposalPng(previewRef.current, data);
-          toast.success("Imagem PNG gerada com sucesso!", { id: "generate-png" });
-        } catch (localError) {
-          console.warn("Local PNG generation failed:", localError);
-          
-          // Try remote service as fallback
-          try {
-            const htmlContent = getProposalHtml(previewElement as HTMLElement);
-            const { pngUrl } = await generateProposalFilesRemote(htmlContent, data);
-            openFileInNewTab(pngUrl);
-            toast.success("Imagem PNG gerada via serviço remoto!", { id: "generate-png" });
-          } catch (remoteError) {
-            console.error("Remote PNG generation also failed:", remoteError);
-            throw new Error("Falha ao gerar PNG por ambos os métodos");
-          }
+          const htmlContent = getProposalHtml(previewRef.current);
+          const { pngUrl } = await generateProposalFilesRemote(htmlContent, data);
+          openFileInNewTab(pngUrl);
+          toast.success("Imagem PNG gerada via serviço remoto!", { id: "generate-png" });
+        } catch (remoteError) {
+          console.error("Remote PNG generation also failed:", remoteError);
+          throw new Error("Falha ao gerar PNG por ambos os métodos");
         }
-      } else {
-        throw new Error("Elemento da proposta não encontrado");
       }
     } catch (error) {
       console.error("Erro ao gerar PNG:", error);
