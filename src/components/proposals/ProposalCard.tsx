@@ -1,8 +1,9 @@
+
 import React, { useRef } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ExtractedData } from "@/lib/types/proposals";
-import { generateProposalPdf, generateProposalPng } from "@/lib/pdfUtils";
+import { generateProposalPdf, generateProposalPng } from "@/lib/pdf-utils";
 import { useToast } from "@/hooks/use-toast";
 
 // Import the new component sections

@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
 import ProposalContent from './ProposalContent';
 import { useToast } from "@/hooks/use-toast";
-import { generateProposalPdf, generateProposalPng } from "@/lib/pdfUtils";
+import { generateProposalPdf, generateProposalPng } from "@/lib/pdf-utils";
 import { Button } from "@/components/ui/button";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink } from "@/components/ui/pagination";
 
