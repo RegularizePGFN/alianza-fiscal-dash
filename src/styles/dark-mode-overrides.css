@@ -68,30 +68,6 @@
   .dark #history-card-header {
     @apply bg-gray-800 border-gray-700;
   }
-
-  /* Ensure payment cards have proper contrast in dark mode */
-  .dark .border-af-blue-100 {
-    @apply border-gray-700;
-  }
-  
-  .dark .text-af-blue-700,
-  .dark .text-af-blue-800 {
-    @apply text-af-blue-300;
-  }
-  
-  .dark .text-gray-700 {
-    @apply text-gray-300;
-  }
-  
-  /* Ensure hover state is visible in dark mode */
-  .dark .hover\:bg-af-blue-50:hover {
-    @apply bg-gray-700;
-  }
-
-  /* Improve visibility for payment option cards */
-  .dark [class*="PaymentOptions"] .border {
-    @apply border-gray-700;
-  }
 }
 
 /* Font family for PDF generation */

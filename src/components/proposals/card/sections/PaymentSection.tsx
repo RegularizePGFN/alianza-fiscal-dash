@@ -67,7 +67,7 @@ const PaymentSection = ({ data, colors }: PaymentSectionProps) => {
       className="print:break-inside-avoid"
       extraHeaderContent={
         hasDiscount() && (
-          <div className="text-xs text-af-green-700 dark:text-af-green-400 whitespace-nowrap">
+          <div className="text-xs text-af-green-700 whitespace-nowrap">
             Economia de R$ {economyValue}
           </div>
         )
@@ -75,31 +75,31 @@ const PaymentSection = ({ data, colors }: PaymentSectionProps) => {
       fullWidth={true}
     >
       <div className="grid grid-cols-5 gap-2">
-        {/* À Vista card - smaller */}
-        <div className="col-span-1 border border-gray-200 dark:border-gray-700 rounded-md p-2 bg-white dark:bg-gray-800">
-          <div className="font-medium text-sm dark:text-gray-200" style={{ color: sectionColor }}>À Vista</div>
-          <div className="font-bold text-base dark:text-white">R$ {data.discountedValue || '0,00'}</div>
+        {/* À Vista card - now smaller */}
+        <div className="col-span-1 border border-gray-200 rounded-md p-2 bg-white">
+          <div className="font-medium text-sm" style={{ color: sectionColor }}>À Vista</div>
+          <div className="font-bold text-base">R$ {data.discountedValue || '0,00'}</div>
         </div>
         
-        {/* Parcelado card - larger */}
-        <div className="col-span-4 border border-gray-200 dark:border-gray-700 rounded-md p-2 bg-white dark:bg-gray-800">
-          <div className="font-medium text-sm mb-1 dark:text-gray-200" style={{ color: sectionColor }}>Parcelado</div>
+        {/* Parcelado card - now larger */}
+        <div className="col-span-4 border border-gray-200 rounded-md p-2 bg-white">
+          <div className="font-medium text-sm mb-1" style={{ color: sectionColor }}>Parcelado</div>
           
           <div className="grid grid-cols-2 gap-2">
-            {/* Entry payment section - on the left */}
-            <div className="border-r border-gray-100 dark:border-gray-700 pr-2">
-              <div className="text-xs text-gray-600 dark:text-gray-300">
-                <span className="font-medium dark:text-gray-200">Entrada:</span> {parseInt(data.entryInstallments || '1') > 1 ? 
+            {/* Entry payment section - now on the left */}
+            <div className="border-r border-gray-100 pr-2">
+              <div className="text-xs text-gray-600">
+                <span className="font-medium">Entrada:</span> {parseInt(data.entryInstallments || '1') > 1 ? 
                   `${data.entryInstallments}x de R$ ${entryInstallmentValue()}` : 
                   `R$ ${data.entryValue || '0,00'}`}
               </div>
             </div>
 
-            {/* Remaining installments - on the right */}
+            {/* Remaining installments - now on the right */}
             {parseInt(data.installments || '0') > 0 && (
               <div className="pl-2">
-                <div className="text-xs text-gray-600 dark:text-gray-300">
-                  <span className="font-medium dark:text-gray-200">Parcelas Restantes:</span> {data.installments}x de R$ {data.installmentValue || '0,00'}
+                <div className="text-xs text-gray-600">
+                  <span className="font-medium">Parcelas Restantes:</span> {data.installments}x de R$ {data.installmentValue || '0,00'}
                 </div>
               </div>
             )}
@@ -108,8 +108,8 @@ const PaymentSection = ({ data, colors }: PaymentSectionProps) => {
       </div>
       
       {/* Payment deadline information */}
-      <div className="mt-3 pt-2 border-t border-af-blue-100 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400">
-        <p>O pagamento da 1ª parcela da ENTRADA é para o dia <strong className="dark:text-gray-200">{formattedLastBusinessDay}</strong> até as 20h.</p>
+      <div className="mt-3 pt-2 border-t border-af-blue-100 text-xs text-gray-600">
+        <p>O pagamento da 1ª parcela da ENTRADA é para o dia <strong>{formattedLastBusinessDay}</strong> até as 20h.</p>
         <p>Demais parcelas da negociação são para o último dia útil de cada mês.</p>
       </div>
     </SectionContainer>
