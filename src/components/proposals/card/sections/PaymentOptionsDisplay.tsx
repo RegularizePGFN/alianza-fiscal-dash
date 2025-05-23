@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ExtractedData } from "@/lib/types/proposals";
 import { calculateEconomy } from "@/lib/pdf/utils";
@@ -62,7 +61,7 @@ const PaymentOptionsDisplay = ({
         {/* À Vista card - now smaller (1/5 of the space) */}
         <div className="col-span-1 border border-af-blue-100 rounded p-3 hover:bg-af-blue-50 transition-colors shadow-sm">
           <p className="font-medium text-af-blue-700 text-sm">À Vista</p>
-          <p className="text-base font-bold">R$ {data.discountedValue || '0,00'}</p>
+          <p className="text-base font-bold text-left my-[18px]">R$ {data.discountedValue || '0,00'}</p>
         </div>
         
         {/* Parcelado card - now larger (4/5 of the space) */}
