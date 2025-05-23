@@ -4,7 +4,7 @@ import { TableRow, TableCell } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { formatCurrency } from "@/lib/utils";
 import { SalespersonData, WeeklyDataResult } from "./types";
-import { getColor, getGoalStatusColor } from "./utils";
+import { getColor, getGoalStatusColor, getGoalStatusTextColor } from "./utils";
 
 interface SalespersonRowProps {
   person: SalespersonData & { position: number };
@@ -38,16 +38,14 @@ export const SalespersonRow: React.FC<SalespersonRowProps> = ({
       
       {availableWeeks.map((week) => {
         const weekStats = person.weeklyStats[week] || { count: 0, amount: 0 };
+        const textColorClass = getGoalStatusTextColor(person.id, week, weekStats.amount, weeklyGoals);
+        
         return (
           <React.Fragment key={`${person.id}-week-${week}`}>
-            <TableCell 
-              className={`text-center border-l ${getGoalStatusColor(person.id, week, weekStats.amount, weeklyGoals)}`}
-            >
+            <TableCell className={`text-center border-l ${textColorClass}`}>
               {weekStats.count}
             </TableCell>
-            <TableCell 
-              className={`text-right ${getGoalStatusColor(person.id, week, weekStats.amount, weeklyGoals)}`}
-            >
+            <TableCell className={`text-right ${textColorClass}`}>
               {formatCurrency(weekStats.amount)}
             </TableCell>
           </React.Fragment>

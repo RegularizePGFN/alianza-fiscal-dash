@@ -32,6 +32,23 @@ export const getGoalStatusColor = (
   }
 };
 
+export const getGoalStatusTextColor = (
+  personId: string, 
+  week: number, 
+  amount: number, 
+  weeklyGoals: WeeklyDataResult["weeklyGoals"]
+) => {
+  if (!weeklyGoals[personId] || !weeklyGoals[personId][week]) return "";
+  
+  const goal = weeklyGoals[personId][week];
+  
+  if (amount >= goal) {
+    return "text-green-600 dark:text-green-500 font-medium"; // Green text for goal achieved
+  } else {
+    return "text-red-600 dark:text-red-500 font-medium"; // Red text for goal not achieved
+  }
+};
+
 export const processWeeklyData = (salesData: Sale[]): WeeklyDataResult => {
   if (!salesData.length) return { 
     weeklyData: [], 
