@@ -15,6 +15,7 @@ import ObservationsSection from '../card/sections/ObservationsSection';
 import PaymentOptionsDisplay from '../card/sections/PaymentOptionsDisplay';
 import FeesDisplaySection from '../card/sections/FeesDisplaySection';
 import CompanyInfoSection from '../card/sections/CompanyInfoSection';
+import ExecutiveDataSection from '../card/sections/ExecutiveDataSection';
 
 interface ProposalCardProps {
   data: Partial<ExtractedData>;
@@ -105,8 +106,11 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
           {/* Observations Section - Only if additionalComments exists */}
           <ObservationsSection data={data} />
           
-          {/* Fees Section - Now last */}
+          {/* Fees Section */}
           <FeesDisplaySection data={data} />
+
+          {/* Executive Data Section - New section for executive information */}
+          <ExecutiveDataSection data={data} />
         </CardContent>
       </Card>
       

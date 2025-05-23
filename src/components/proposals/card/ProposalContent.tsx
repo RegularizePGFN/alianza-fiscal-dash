@@ -14,6 +14,7 @@ import {
   FooterSection,
   PaymentScheduleSection
 } from './sections';
+import ExecutiveDataSection from './sections/ExecutiveDataSection';
 
 interface ProposalContentProps {
   data: Partial<ExtractedData>;
@@ -102,6 +103,8 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
         return null; // Removed total section
       case 'comments':
         return <CommentsSection data={data} colors={colors} />;
+      case 'executive':
+        return <ExecutiveDataSection data={data} />;
       default:
         return null;
     }
@@ -148,6 +151,14 @@ const ProposalContent = ({ data, companyData, className = "", isPreview = false 
         {data.additionalComments && !renderedSections.has('comments') && 
           <CommentsSection data={data} colors={colors} />
         }
+        
+        {/* Always show fees section if not already rendered */}
+        {!renderedSections.has('fees') && 
+          <FeesSection data={data} colors={colors} />
+        }
+        
+        {/* Always show executive data if enabled */}
+        <ExecutiveDataSection data={data} />
       </div>
       
       {/* Payment Schedule section on its own page */}

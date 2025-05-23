@@ -30,7 +30,12 @@ export const useProposalsState = () => {
     feesInstallments: '2',
     feesPaymentMethod: 'cartao',
     entryInstallments: '1',
-    showFeesInstallments: 'false'
+    showFeesInstallments: 'false',
+    // Default values for executive data
+    includeExecutiveData: 'true',
+    executiveName: user?.name || '',
+    executiveEmail: user?.email || '',
+    executivePhone: ''
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [generatedProposal, setGeneratedProposal] = useState<boolean>(false);
@@ -42,6 +47,17 @@ export const useProposalsState = () => {
   useEffect(() => {
     fetchProposals();
   }, []);
+  
+  // Update executive data when user changes
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        executiveName: user.name || '',
+        executiveEmail: user.email || ''
+      }));
+    }
+  }, [user]);
   
   // Use our custom hooks
   const { fetchCompanyDataByCnpj } = useFetchCompanyData({ 

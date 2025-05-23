@@ -68,6 +68,7 @@ const ProposalTabContent = ({
             showObservations={showObservations}
             setShowObservations={setShowObservations}
             onObservationsChange={handleObservationsChange}
+            onInputChange={onInputChange}
           />
           
           {/* Preview of the proposal */}
