@@ -85,8 +85,8 @@ const PaymentOptionsDisplay = ({
 
       {/* Payment deadline information */}
       <div className="mt-4 pt-3 border-t border-af-blue-100 text-sm text-af-blue-700">
-        <p>O pagamento da 1ª parcela da ENTRADA é para o dia <strong>{formattedLastBusinessDay}</strong> até as 20h.</p>
-        <p>Demais parcelas da negociação são para o último dia útil de cada mês.</p>
+        <p className="px-[20px]">O pagamento da 1ª parcela da ENTRADA é para o dia <strong>{formattedLastBusinessDay}</strong> até as 20h.</p>
+        <p className="px-[20px]">Demais parcelas da negociação são para o último dia útil de cada mês.</p>
       </div>
     </div>;
 };
