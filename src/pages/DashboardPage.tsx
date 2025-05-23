@@ -3,9 +3,9 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { GoalsCommissionsSection } from "@/components/dashboard/GoalsCommissionsSection";
-import { RecentSalesSection } from "@/components/dashboard/RecentSalesSection";
 import { SalespeopleCommissionsCard } from "@/components/dashboard/salespeople-commissions";
 import { DailyResultsCard } from "@/components/dashboard/daily-results";
+import { WeeklyReportSection } from "@/components/dashboard/WeeklyReportSection";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
@@ -32,7 +32,8 @@ export default function DashboardPage() {
             {/* Admin-only commission projections card */}
             {isAdmin && <SalespeopleCommissionsCard />}
             
-            <RecentSalesSection salesData={salesData} />
+            {/* Weekly Report replacing the RecentSalesSection */}
+            <WeeklyReportSection salesData={salesData} />
           </div>
         )}
       </div>
