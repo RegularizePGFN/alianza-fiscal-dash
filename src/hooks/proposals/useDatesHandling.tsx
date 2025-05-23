@@ -10,6 +10,24 @@ interface UseDatesHandlingProps {
   setFormData: (data: Partial<ExtractedData>) => void;
 }
 
+// Get the last business day of a month
+export const getLastBusinessDayOfMonth = (date: Date): Date => {
+  // Get last day of month
+  const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  
+  // If last day is weekend, find the previous business day
+  if (isWeekend(lastDay)) {
+    return subDays(lastDay, lastDay.getDay() === 0 ? 2 : 1); // Subtract 2 days for Sunday, 1 day for Saturday
+  }
+  
+  return lastDay;
+};
+
+// Format date for display
+export const formatDateBR = (date: Date): string => {
+  return format(date, 'dd/MM/yyyy', { locale: ptBR });
+};
+
 export const useDatesHandling = ({ activeTab, formData, setFormData }: UseDatesHandlingProps) => {
   // Generate payment dates when switching to proposal tab or when entry installments/total installments change
   useEffect(() => {
@@ -17,24 +35,6 @@ export const useDatesHandling = ({ activeTab, formData, setFormData }: UseDatesH
       generatePaymentDates();
     }
   }, [activeTab, formData.entryInstallments, formData.installments]);
-
-  // Get the last business day of a month
-  const getLastBusinessDayOfMonth = (date: Date): Date => {
-    // Get last day of month
-    const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-    
-    // If last day is weekend, find the previous business day
-    if (isWeekend(lastDay)) {
-      return subDays(lastDay, lastDay.getDay() === 0 ? 2 : 1); // Subtract 2 days for Sunday, 1 day for Saturday
-    }
-    
-    return lastDay;
-  };
-
-  // Format date for display
-  const formatDateBR = (date: Date): string => {
-    return format(date, 'dd/MM/yyyy', { locale: ptBR });
-  };
 
   // Generate payment schedule based on form data
   const generatePaymentDates = () => {

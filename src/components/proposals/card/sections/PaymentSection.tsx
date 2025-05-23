@@ -1,9 +1,11 @@
+
 import React from 'react';
 import { ExtractedData } from '@/lib/types/proposals';
 import SectionContainer from './SectionContainer';
 import DataField from './DataField';
 import { CreditCard } from 'lucide-react';
 import { calculateEconomy } from "@/lib/pdf/utils";
+import { getLastBusinessDayOfMonth, formatDateBR } from '@/hooks/proposals/useDatesHandling';
 
 interface PaymentSectionProps {
   data: Partial<ExtractedData>;
@@ -56,6 +58,11 @@ const PaymentSection = ({ data, colors }: PaymentSectionProps) => {
     : `R$ ${data.entryValue || '0,00'}`;
 
   const economyValue = calculateEconomy(data.totalDebt, data.discountedValue);
+  
+  // Get the last business day of current month for payment deadline
+  const currentDate = new Date();
+  const lastBusinessDay = getLastBusinessDayOfMonth(currentDate);
+  const formattedLastBusinessDay = formatDateBR(lastBusinessDay);
 
   return (
     <SectionContainer 
@@ -89,6 +96,12 @@ const PaymentSection = ({ data, colors }: PaymentSectionProps) => {
             )}
           </div>
         )}
+      </div>
+      
+      {/* Payment deadline information */}
+      <div className="mt-3 pt-2 border-t border-af-blue-100 text-xs text-gray-600">
+        <p>O pagamento da 1ª parcela da ENTRADA é para o dia <strong>{formattedLastBusinessDay}</strong> até as 20h.</p>
+        <p>Demais parcelas da negociação são para o último dia útil de cada mês.</p>
       </div>
     </SectionContainer>
   );

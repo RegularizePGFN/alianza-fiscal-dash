@@ -2,6 +2,7 @@
 import React from 'react';
 import { CreditCard } from 'lucide-react';
 import { calculateEconomy } from "@/lib/pdf/utils";
+import { getLastBusinessDayOfMonth, formatDateBR } from '@/hooks/proposals/useDatesHandling';
 
 interface PaymentOptionsSectionProps {
   discountedValue: string;
@@ -61,6 +62,11 @@ const PaymentOptionsSection = ({
     : `R$ ${entryValue || '0,00'}`;
 
   const economyValue = calculateEconomy(totalDebt, discountedValue);
+  
+  // Get the last business day of current month for payment deadline
+  const currentDate = new Date();
+  const lastBusinessDay = getLastBusinessDayOfMonth(currentDate);
+  const formattedLastBusinessDay = formatDateBR(lastBusinessDay);
 
   return (
     <div className="bg-white p-1.5 rounded-lg border border-af-blue-200 shadow-sm">
@@ -96,6 +102,12 @@ const PaymentOptionsSection = ({
             </div>
           )}
         </div>
+      </div>
+      
+      {/* Payment deadline information */}
+      <div className="mt-1 pt-1 border-t border-af-blue-100 text-[8px] text-af-blue-700">
+        <p>Pagamento da 1ª parcela: <strong>{formattedLastBusinessDay}</strong> até 20h.</p>
+        <p>Demais parcelas: último dia útil de cada mês.</p>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@
 import React from 'react';
 import { ExtractedData } from "@/lib/types/proposals";
 import { calculateEconomy } from "@/lib/pdf/utils";
+import { getLastBusinessDayOfMonth, formatDateBR } from '@/hooks/proposals/useDatesHandling';
 
 interface PaymentOptionsDisplayProps {
   data: Partial<ExtractedData>;
@@ -49,6 +50,11 @@ const PaymentOptionsDisplay = ({ data }: PaymentOptionsDisplayProps) => {
     : `R$ ${data.entryValue || '0,00'}`;
 
   const economyValue = calculateEconomy(data.totalDebt, data.discountedValue);
+  
+  // Get the last business day of current month for payment deadline
+  const currentDate = new Date();
+  const lastBusinessDay = getLastBusinessDayOfMonth(currentDate);
+  const formattedLastBusinessDay = formatDateBR(lastBusinessDay);
 
   return (
     <div className="bg-white p-5 rounded-lg border border-af-blue-200 shadow-sm">
@@ -83,6 +89,12 @@ const PaymentOptionsDisplay = ({ data }: PaymentOptionsDisplayProps) => {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Payment deadline information */}
+      <div className="mt-4 pt-3 border-t border-af-blue-100 text-sm text-af-blue-700">
+        <p>O pagamento da 1ª parcela da ENTRADA é para o dia <strong>{formattedLastBusinessDay}</strong> até as 20h.</p>
+        <p>Demais parcelas da negociação são para o último dia útil de cada mês.</p>
       </div>
     </div>
   );
