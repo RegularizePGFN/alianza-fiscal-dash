@@ -45,10 +45,6 @@ const PaymentOptionsDisplay = ({ data }: PaymentOptionsDisplayProps) => {
     }
   };
 
-  const entryDisplay = parseInt(data.entryInstallments || '1') > 1 
-    ? `${data.entryInstallments}x de R$ ${entryInstallmentValue()}`
-    : `R$ ${data.entryValue || '0,00'}`;
-
   const economyValue = calculateEconomy(data.totalDebt, data.discountedValue);
   
   // Get the last business day of current month for payment deadline
@@ -77,14 +73,17 @@ const PaymentOptionsDisplay = ({ data }: PaymentOptionsDisplayProps) => {
         </div>
         <div className="border border-af-blue-100 rounded p-4 hover:bg-af-blue-50 transition-colors">
           <p className="font-medium text-af-blue-700">Parcelado</p>
-          <p className="text-lg font-bold">{data.installments || '0'}x de R$ {data.installmentValue || '0,00'}</p>
+          <div className="mb-2">
+            <p className="text-lg font-bold">{data.installments || '0'}x de R$ {data.installmentValue || '0,00'}</p>
+          </div>
+          
           {parseInt(data.entryInstallments || '1') >= 1 && (
-            <div className="mt-1">
-              <p className="text-sm text-gray-500 leading-tight">
-                Entrada em {entryDisplay}
-                {parseInt(data.installments || '0') > 0 && (
-                  <><br />Mais → {data.installments || '0'}x de R$ {data.installmentValue || '0,00'}</>
-                )}
+            <div className="mt-2 border-t border-af-blue-100 pt-2">
+              <p className="font-medium text-af-blue-700 text-sm">Entrada:</p>
+              <p className="text-sm text-gray-700 font-semibold">
+                {parseInt(data.entryInstallments || '1') > 1 ? 
+                  `${data.entryInstallments}x de R$ ${entryInstallmentValue()}` : 
+                  `R$ ${data.entryValue || '0,00'}`}
               </p>
             </div>
           )}

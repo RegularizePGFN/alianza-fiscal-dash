@@ -57,10 +57,6 @@ const PaymentOptionsSection = ({
     }
   };
 
-  const entryDisplayValue = parseInt(entryInstallments || '1') > 1 
-    ? `${entryInstallments}x de R$ ${entryInstallmentValue()}`
-    : `R$ ${entryValue || '0,00'}`;
-
   const economyValue = calculateEconomy(totalDebt, discountedValue);
   
   // Get the last business day of current month for payment deadline
@@ -91,13 +87,13 @@ const PaymentOptionsSection = ({
         <div className="border border-af-blue-100 rounded p-1 hover:bg-af-blue-50 transition-colors">
           <p className="font-medium text-af-blue-700 text-[10px]">Parcelado</p>
           <p className="text-[11px] font-bold">{installments || '0'}x de R$ {installmentValue || '0,00'}</p>
+          
           {parseInt(entryInstallments || '1') >= 1 && (
-            <div>
-              <p className="text-[9px] text-gray-500 leading-tight">
-                Entrada em {entryDisplayValue}
-                {parseInt(installments || '0') > 0 && (
-                  <><br />Mais → {installments || '0'}x de R$ {installmentValue || '0,00'}</>
-                )}
+            <div className="mt-0.5 border-t border-af-blue-50 pt-0.5">
+              <p className="text-[9px] text-af-blue-700 font-medium">
+                Entrada: {parseInt(entryInstallments || '1') > 1 ? 
+                  `${entryInstallments}x de R$ ${entryInstallmentValue()}` : 
+                  `R$ ${entryValue || '0,00'}`}
               </p>
             </div>
           )}

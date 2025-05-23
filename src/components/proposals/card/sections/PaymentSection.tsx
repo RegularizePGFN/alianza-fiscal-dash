@@ -52,11 +52,6 @@ const PaymentSection = ({ data, colors }: PaymentSectionProps) => {
     }
   };
 
-  // Format entry display
-  const entryDisplay = parseInt(data.entryInstallments || '1') > 1 
-    ? `${data.entryInstallments}x de R$ ${entryInstallmentValue()}`
-    : `R$ ${data.entryValue || '0,00'}`;
-
   const economyValue = calculateEconomy(data.totalDebt, data.discountedValue);
   
   // Get the last business day of current month for payment deadline
@@ -89,10 +84,12 @@ const PaymentSection = ({ data, colors }: PaymentSectionProps) => {
           value={`${data.installments || '0'}x de R$ ${data.installmentValue || '0,00'}`}
         />
         {parseInt(data.entryInstallments || '1') >= 1 && (
-          <div className="text-xs text-gray-500 -mt-1 ml-4">
-            Entrada em {entryDisplay}
+          <div className="text-xs text-gray-600 ml-4 mt-1">
+            <span className="font-medium">Entrada:</span> {parseInt(data.entryInstallments || '1') > 1 ? 
+              `${data.entryInstallments}x de R$ ${entryInstallmentValue()}` : 
+              `R$ ${data.entryValue || '0,00'}`}
             {parseInt(data.installments || '0') > 0 && (
-              <><br />Mais → {data.installments || '0'}x de R$ {data.installmentValue || '0,00'}</>
+              <p className="mt-1"><span className="font-medium">Mais:</span> {data.installments}x de R$ {data.installmentValue || '0,00'}</p>
             )}
           </div>
         )}
