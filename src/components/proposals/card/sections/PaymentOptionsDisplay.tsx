@@ -68,7 +68,7 @@ const PaymentOptionsDisplay = ({
           {/* Entry payment section - now first */}
           {parseInt(data.entryInstallments || '1') >= 1 && <div className="mb-2">
               <p className="font-medium text-af-blue-700 text-sm">Entrada:</p>
-              <p className="text-sm text-gray-700 font-semibold">
+              <p className="text-sm text-gray-700 font-semibold py-[10px]">
                 {parseInt(data.entryInstallments || '1') > 1 ? `${data.entryInstallments}x de R$ ${entryInstallmentValue()}` : `R$ ${data.entryValue || '0,00'}`}
               </p>
             </div>}
@@ -76,7 +76,7 @@ const PaymentOptionsDisplay = ({
           {/* Remaining installments - now second */}
           {parseInt(data.installments || '0') > 0 && <div className="mt-1 border-t border-af-blue-100 pt-2">
               <p className="font-medium text-af-blue-700 text-sm">Parcelas Restantes:</p>
-              <p className="text-sm text-gray-700 font-semibold py-[20px]">
+              <p className="text-sm text-gray-700 font-semibold py-[10px]">
                 {data.installments}x de R$ {data.installmentValue || '0,00'}
               </p>
             </div>}
