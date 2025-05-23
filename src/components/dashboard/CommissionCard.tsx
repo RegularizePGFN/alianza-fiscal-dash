@@ -1,3 +1,4 @@
+
 import { formatCurrency, formatPercentage, parseISODateString } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/auth';
@@ -6,12 +7,14 @@ import { COMMISSION_GOAL_AMOUNT, COMMISSION_RATE_ABOVE_GOAL, COMMISSION_RATE_BEL
 import { useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
 import { ChartContainer } from "@/components/ui/chart";
-import { format } from 'date-fns';
+import { format, isWeekend, eachDayOfInterval, isSameMonth, startOfMonth, endOfMonth, isAfter } from 'date-fns';
+
 interface CommissionCardProps {
   totalSales: number;
   goalAmount: number;
   salesData: Sale[];
 }
+
 export function CommissionCard({
   totalSales,
   goalAmount,
@@ -51,63 +54,94 @@ export function CommissionCard({
     return salesData.filter(sale => sale.salesperson_id === user.id);
   }, [salesData, user]);
 
-  // Agrupar vendas por dia
+  // Gerar todos os dias úteis do mês atual até o dia de hoje
   const dailyData = useMemo(() => {
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
-
-    // Filtrar vendas do mês atual
-    const currentMonthSales = filteredSalesData.filter(sale => {
-      // Verifica se a sale_date está no formato YYYY-MM-DD e obtém o mês e ano
-      if (typeof sale.sale_date === 'string' && sale.sale_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        const [year, month] = sale.sale_date.split('-').map(Number);
-        return month - 1 === currentMonth && year === currentYear;
-      }
-      return false;
+    
+    // Gerar intervalo de dias do primeiro dia do mês até hoje
+    const monthStart = startOfMonth(now);
+    const monthEnd = endOfMonth(now);
+    const today = new Date();
+    
+    // Pegar todos os dias do mês até hoje (não incluir dias futuros)
+    const allDaysInterval = eachDayOfInterval({ 
+      start: monthStart, 
+      end: isAfter(today, monthEnd) ? monthEnd : today 
     });
-
-    // Agrupar por dia
-    const salesByDay: Record<string, {
+    
+    // Filtrar apenas dias úteis (excluir fins de semana)
+    const businessDays = allDaysInterval.filter(day => !isWeekend(day));
+    
+    // Criar objeto com dias úteis inicializados com valor zero
+    const businessDaysMap: Record<string, {
       day: string;
       value: number;
       count: number;
       date: string;
+      formattedDate: string; // Adicionando dia formatado para exibição
     }> = {};
+    
+    businessDays.forEach(day => {
+      const isoDate = format(day, 'yyyy-MM-dd');
+      const dayNumber = format(day, 'dd');
+      const formattedDate = format(day, 'dd/MM');
+      
+      businessDaysMap[isoDate] = {
+        day: dayNumber,
+        value: 0,
+        count: 0,
+        date: isoDate,
+        formattedDate: formattedDate
+      };
+    });
+    
+    // Filtrar vendas do mês atual
+    const currentMonthSales = filteredSalesData.filter(sale => {
+      if (typeof sale.sale_date === 'string' && sale.sale_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const saleDate = new Date(sale.sale_date);
+        return isSameMonth(saleDate, now) && saleDate.getFullYear() === currentYear;
+      }
+      return false;
+    });
+    
+    // Preencher os dias que têm vendas com os valores corretos
     currentMonthSales.forEach(sale => {
       if (typeof sale.sale_date === 'string' && sale.sale_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        const dayKey = sale.sale_date.split('-')[2]; // Extrai o dia da data ISO
-        const formattedDay = dayKey; // Já está no formato adequado (DD)
-
-        if (!salesByDay[dayKey]) {
-          salesByDay[dayKey] = {
-            day: formattedDay,
-            value: 0,
-            count: 0,
-            date: sale.sale_date
-          };
+        const saleDate = sale.sale_date;
+        
+        // Verificar se a data da venda está no mapa de dias úteis
+        if (businessDaysMap[saleDate]) {
+          businessDaysMap[saleDate].value += sale.gross_amount;
+          businessDaysMap[saleDate].count += 1;
         }
-        salesByDay[dayKey].value += sale.gross_amount;
-        salesByDay[dayKey].count += 1;
       }
     });
-
-    // Converter para array e ordenar por dia
-    return Object.values(salesByDay).sort((a, b) => parseInt(a.day) - parseInt(b.day));
+    
+    // Converter para array e ordenar por data
+    return Object.values(businessDaysMap).sort((a, b) => 
+      a.date.localeCompare(b.date)
+    );
   }, [filteredSalesData]);
 
   // Calcular o total de vendas e quantidade
   const totals = useMemo(() => {
     const totalDailySales = dailyData.reduce((sum, item) => sum + item.value, 0);
     const totalCount = dailyData.reduce((sum, item) => sum + item.count, 0);
+    const daysWithSales = dailyData.filter(day => day.count > 0).length;
+    const totalDays = dailyData.length;
+    
     const averageSalesAmount = totalCount > 0 ? totalDailySales / totalCount : 0;
-    const averageContractsPerDay = dailyData.length > 0 ? totalCount / dailyData.length : 0;
+    const averageContractsPerDay = daysWithSales > 0 ? totalCount / daysWithSales : 0;
+    
     return {
       totalDailySales,
       totalCount,
       averageSalesAmount,
       averageContractsPerDay,
-      daysWithSales: dailyData.length
+      daysWithSales,
+      totalBusinessDays: totalDays
     };
   }, [dailyData]);
 
@@ -118,6 +152,7 @@ export function CommissionCard({
     }
     return value;
   };
+  
   return <Card className="h-full">
       <CardHeader>
         <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -154,7 +189,7 @@ export function CommissionCard({
             </div>
             <div className="flex flex-col items-end">
               <span className="text-sm font-medium text-muted-foreground">
-                {totals.totalCount} contratos em {totals.daysWithSales} dias
+                {totals.totalCount} contratos em {totals.daysWithSales} de {totals.totalBusinessDays} dias úteis
               </span>
               <span className="text-xs text-muted-foreground">
                 Média: {totals.averageContractsPerDay.toFixed(1)} contratos/dia
@@ -164,55 +199,79 @@ export function CommissionCard({
           
           <div className="w-full h-32 overflow-hidden">
             <ChartContainer config={{
-            sales: {
-              color: '#8B5CF6' // Cor primária para vendas (valor)
-            },
-            count: {
-              color: '#2DD4BF' // Cor para quantidade de contratos
-            }
-          }} className="w-full h-full">
+              sales: {
+                color: '#8B5CF6' // Cor primária para vendas (valor)
+              },
+              count: {
+                color: '#2DD4BF' // Cor para quantidade de contratos
+              }
+            }} className="w-full h-full">
               <ResponsiveContainer width="99%" height="99%">
                 <LineChart data={dailyData} margin={{
-                top: 5,
-                right: 5,
-                left: 5,
-                bottom: 5
-              }}>
+                  top: 5,
+                  right: 5,
+                  left: 5,
+                  bottom: 5
+                }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                  <XAxis dataKey="day" tick={{
-                  fontSize: 10
-                }} tickMargin={5} />
+                  <XAxis dataKey="formattedDate" tick={{
+                    fontSize: 10
+                  }} tickMargin={5} />
                   <YAxis yAxisId="left" tickFormatter={value => `${value > 1000 ? `${(value / 1000).toFixed(0)}k` : value}`} tick={{
-                  fontSize: 10
-                }} width={30} />
+                    fontSize: 10
+                  }} width={30} />
                   <YAxis yAxisId="right" orientation="right" tick={{
-                  fontSize: 10
-                }} width={20} domain={[0, 'dataMax + 1']} />
-                  <Tooltip formatter={formatTooltip} labelFormatter={label => `Dia ${label}`} contentStyle={{
-                  backgroundColor: "white",
-                  border: "1px solid #e0e0e0",
-                  borderRadius: "4px",
-                  padding: "8px"
-                }} />
+                    fontSize: 10
+                  }} width={20} domain={[0, 'dataMax + 1']} />
+                  <Tooltip 
+                    formatter={formatTooltip} 
+                    labelFormatter={label => `Dia ${label}`} 
+                    contentStyle={{
+                      backgroundColor: "white",
+                      border: "1px solid #e0e0e0",
+                      borderRadius: "4px",
+                      padding: "8px"
+                    }} 
+                  />
                   <Legend />
-                  <Line type="monotone" dataKey="value" name="Vendas" yAxisId="left" stroke="#8B5CF6" strokeWidth={2} dot={{
-                  r: 2,
-                  fill: "#8B5CF6"
-                }} activeDot={{
-                  r: 4,
-                  stroke: "#8B5CF6",
-                  strokeWidth: 1,
-                  fill: "#8B5CF6"
-                }} isAnimationActive={false} />
-                  <Line type="monotone" dataKey="count" name="Contratos" yAxisId="right" stroke="#2DD4BF" strokeWidth={2} dot={{
-                  r: 2,
-                  fill: "#2DD4BF"
-                }} activeDot={{
-                  r: 4,
-                  stroke: "#2DD4BF",
-                  strokeWidth: 1,
-                  fill: "#2DD4BF"
-                }} isAnimationActive={false} />
+                  <Line 
+                    type="monotone" 
+                    dataKey="value" 
+                    name="Vendas" 
+                    yAxisId="left" 
+                    stroke="#8B5CF6" 
+                    strokeWidth={2} 
+                    dot={{
+                      r: 2,
+                      fill: "#8B5CF6"
+                    }} 
+                    activeDot={{
+                      r: 4,
+                      stroke: "#8B5CF6",
+                      strokeWidth: 1,
+                      fill: "#8B5CF6"
+                    }} 
+                    isAnimationActive={false} 
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="count" 
+                    name="Contratos" 
+                    yAxisId="right" 
+                    stroke="#2DD4BF" 
+                    strokeWidth={2} 
+                    dot={{
+                      r: 2,
+                      fill: "#2DD4BF"
+                    }} 
+                    activeDot={{
+                      r: 4,
+                      stroke: "#2DD4BF",
+                      strokeWidth: 1,
+                      fill: "#2DD4BF"
+                    }} 
+                    isAnimationActive={false} 
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </ChartContainer>
