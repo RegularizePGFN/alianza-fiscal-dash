@@ -1,21 +1,34 @@
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Sale } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 interface SalespersonWeeklyCardProps {
   salesData: Sale[];
   isLoading?: boolean;
 }
 
+interface SalespersonData {
+  id: string;
+  name: string;
+  initials: string;
+  weeklyStats: {
+    [week: number]: {
+      count: number;
+      amount: number;
+    };
+  };
+  totalCount: number;
+  totalAmount: number;
+}
+
 export function SalespersonWeeklyCard({ salesData, isLoading = false }: SalespersonWeeklyCardProps) {
   // Process weekly data
-  const weeksData = useMemo(() => {
-    if (!salesData.length) return {};
+  const { weeklyData, availableWeeks, currentWeek } = useMemo(() => {
+    if (!salesData.length) return { weeklyData: {}, availableWeeks: [], currentWeek: 1 };
     
     // Get current date info
     const now = new Date();
@@ -31,17 +44,8 @@ export function SalespersonWeeklyCard({ salesData, isLoading = false }: Salesper
     const dayOfMonth = now.getDate();
     const currentWeek = Math.ceil((dayOfMonth + adjustedDayOfWeekForFirst) / 7);
     
-    // Process sales data by week and salesperson
-    const weekData = {};
-    const maxWeeks = 6; // Support up to 6 weeks in a month
-    
-    // Initialize week data structure
-    for (let week = 1; week <= maxWeeks; week++) {
-      weekData[week] = {
-        hasData: false,
-        salespeople: {}
-      };
-    }
+    // Initialize salesperson data map
+    const salespeople: Record<string, SalespersonData> = {};
     
     // Process each sale into the weekly structure
     salesData.forEach(sale => {
@@ -55,52 +59,63 @@ export function SalespersonWeeklyCard({ salesData, isLoading = false }: Salesper
       const saleDayOfMonth = saleDate.getDate();
       const saleWeek = Math.ceil((saleDayOfMonth + adjustedDayOfWeekForFirst) / 7);
       
-      if (saleWeek > maxWeeks) return; // Skip if it's beyond our tracking
+      if (saleWeek > 6) return; // Skip if it's beyond our tracking
       
       const id = sale.salesperson_id;
       const name = sale.salesperson_name || "Desconhecido";
       
       // Initialize salesperson record if not exists
-      if (!weekData[saleWeek].salespeople[id]) {
-        weekData[saleWeek].salespeople[id] = {
+      if (!salespeople[id]) {
+        salespeople[id] = {
           id,
           name,
-          amount: 0,
-          count: 0,
           initials: name.split(' ')
             .map(n => n[0])
             .slice(0, 2)
             .join('')
-            .toUpperCase()
+            .toUpperCase(),
+          weeklyStats: {},
+          totalCount: 0,
+          totalAmount: 0
+        };
+      }
+      
+      // Initialize week stats if not exists
+      if (!salespeople[id].weeklyStats[saleWeek]) {
+        salespeople[id].weeklyStats[saleWeek] = {
+          count: 0,
+          amount: 0
         };
       }
       
       // Update sale data
-      weekData[saleWeek].salespeople[id].amount += sale.gross_amount;
-      weekData[saleWeek].salespeople[id].count += 1;
-      weekData[saleWeek].hasData = true;
+      salespeople[id].weeklyStats[saleWeek].count += 1;
+      salespeople[id].weeklyStats[saleWeek].amount += sale.gross_amount;
+      salespeople[id].totalCount += 1;
+      salespeople[id].totalAmount += sale.gross_amount;
     });
     
-    // Format the data for each week - sort by amount and add ranking
-    const formattedWeekData = {};
-    const availableWeeks = [];
+    // Find all weeks that have data
+    const weeksWithData = new Set<number>();
+    Object.values(salespeople).forEach(person => {
+      Object.keys(person.weeklyStats).forEach(week => {
+        weeksWithData.add(parseInt(week));
+      });
+    });
     
-    for (let week = 1; week <= maxWeeks; week++) {
-      if (weekData[week].hasData) {
-        availableWeeks.push(week);
-        
-        // Convert to array and sort by amount
-        formattedWeekData[week] = Object.values(weekData[week].salespeople)
-          .sort((a, b) => b.amount - a.amount)
-          .map((person, index) => ({
-            ...person,
-            position: index + 1
-          }));
-      }
-    }
+    // Sort by total amount and add ranking
+    const sortedSalespeople = Object.values(salespeople)
+      .sort((a, b) => b.totalAmount - a.totalAmount)
+      .map((person, index) => ({
+        ...person,
+        position: index + 1
+      }));
+    
+    // Convert to array and sort available weeks
+    const availableWeeks = Array.from(weeksWithData).sort((a, b) => a - b);
     
     return {
-      formattedWeekData,
+      weeklyData: sortedSalespeople,
       availableWeeks,
       currentWeek
     };
@@ -129,7 +144,7 @@ export function SalespersonWeeklyCard({ salesData, isLoading = false }: Salesper
   }
 
   // No data scenario
-  if (!weeksData.availableWeeks || weeksData.availableWeeks.length === 0) {
+  if (!availableWeeks || availableWeeks.length === 0) {
     return (
       <Card className="w-full">
         <CardHeader>
@@ -147,58 +162,86 @@ export function SalespersonWeeklyCard({ salesData, isLoading = false }: Salesper
       <CardHeader>
         <CardTitle>Desempenho Semanal</CardTitle>
       </CardHeader>
-      <CardContent>
-        <Tabs defaultValue={weeksData.currentWeek?.toString() || weeksData.availableWeeks[0].toString()}>
-          <TabsList className="w-full mb-4">
-            {weeksData.availableWeeks.map((week) => (
-              <TabsTrigger 
-                key={`week-${week}`} 
-                value={week.toString()} 
-                className="flex-1"
-              >
-                Semana {week}{week === weeksData.currentWeek ? ' (atual)' : ''}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+      <CardContent className="overflow-auto">
+        <Table className="w-full">
+          <TableHeader>
+            <TableRow>
+              <TableHead rowSpan={2} className="w-12 align-bottom">#</TableHead>
+              <TableHead rowSpan={2} className="align-bottom">Vendedor</TableHead>
+              
+              {availableWeeks.map((week) => (
+                <React.Fragment key={`week-${week}`}>
+                  <TableHead colSpan={2} className="text-center border-l">
+                    Semana {week} {week === currentWeek ? '(atual)' : ''}
+                  </TableHead>
+                </React.Fragment>
+              ))}
+              
+              <TableHead colSpan={2} className="text-center border-l bg-muted/30">
+                Total
+              </TableHead>
+            </TableRow>
+            
+            <TableRow>
+              {availableWeeks.map((week) => (
+                <React.Fragment key={`week-headers-${week}`}>
+                  <TableHead className="text-center border-l">Vendas</TableHead>
+                  <TableHead className="text-center">Valor</TableHead>
+                </React.Fragment>
+              ))}
+              <TableHead className="text-center border-l bg-muted/30">Vendas</TableHead>
+              <TableHead className="text-center bg-muted/30">Valor</TableHead>
+            </TableRow>
+          </TableHeader>
           
-          {weeksData.availableWeeks.map((week) => (
-            <TabsContent key={`week-content-${week}`} value={week.toString()}>
-              <Table className="w-full">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">#</TableHead>
-                    <TableHead>Vendedor</TableHead>
-                    <TableHead className="text-right">Vendas</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {weeksData.formattedWeekData[week].map((person) => (
-                    <TableRow key={person.id}>
-                      <TableCell className="font-medium">
-                        <span className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-xs text-white ${getColor(person.position)}`}>
-                          {person.position}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <Avatar className="h-7 w-7 mr-2">
-                            <AvatarFallback className="text-xs">
-                              {person.initials}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-sm font-medium">{person.name}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">{person.count}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(person.amount)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TabsContent>
-          ))}
-        </Tabs>
+          <TableBody>
+            {weeklyData.length > 0 && weeklyData.map((person: any) => (
+              <TableRow key={person.id}>
+                <TableCell className="font-medium">
+                  <span className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-xs text-white ${getColor(person.position)}`}>
+                    {person.position}
+                  </span>
+                </TableCell>
+                
+                <TableCell>
+                  <div className="flex items-center">
+                    <Avatar className="h-7 w-7 mr-2">
+                      <AvatarFallback className="text-xs">
+                        {person.initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-medium">{person.name}</span>
+                  </div>
+                </TableCell>
+                
+                {availableWeeks.map((week) => {
+                  const weekStats = person.weeklyStats[week] || { count: 0, amount: 0 };
+                  return (
+                    <React.Fragment key={`${person.id}-week-${week}`}>
+                      <TableCell className="text-center border-l">{weekStats.count}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(weekStats.amount)}</TableCell>
+                    </React.Fragment>
+                  );
+                })}
+                
+                <TableCell className="text-center border-l font-medium bg-muted/30">
+                  {person.totalCount}
+                </TableCell>
+                <TableCell className="text-right font-medium bg-muted/30">
+                  {formatCurrency(person.totalAmount)}
+                </TableCell>
+              </TableRow>
+            ))}
+            
+            {weeklyData.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={2 + (availableWeeks.length * 2) + 2} className="text-center py-6">
+                  Não há dados de vendas para exibir neste mês.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </CardContent>
     </Card>
   );
