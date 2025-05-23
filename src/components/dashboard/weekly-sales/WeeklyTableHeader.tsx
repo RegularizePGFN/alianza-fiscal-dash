@@ -1,13 +1,32 @@
 
 import React from "react";
 import { TableHeader, TableRow, TableHead } from "@/components/ui/table";
+import { ArrowDown, ArrowUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { SortState } from "./types";
 
 interface WeeklyTableHeaderProps {
   availableWeeks: number[];
   currentWeek: number;
+  sortState: SortState;
+  onSort: (week: number, field: "count" | "amount") => void;
 }
 
-export const WeeklyTableHeader: React.FC<WeeklyTableHeaderProps> = ({ availableWeeks, currentWeek }) => {
+export const WeeklyTableHeader: React.FC<WeeklyTableHeaderProps> = ({ 
+  availableWeeks, 
+  currentWeek,
+  sortState,
+  onSort
+}) => {
+  const renderSortIcon = (week: number, field: "count" | "amount") => {
+    if (sortState.week === week && sortState.field === field) {
+      return sortState.direction === "asc" ? 
+        <ArrowUp className="h-3 w-3" /> : 
+        <ArrowDown className="h-3 w-3" />;
+    }
+    return null;
+  };
+
   return (
     <TableHeader>
       <TableRow>
@@ -30,8 +49,26 @@ export const WeeklyTableHeader: React.FC<WeeklyTableHeaderProps> = ({ availableW
       <TableRow>
         {availableWeeks.map((week) => (
           <React.Fragment key={`week-headers-${week}`}>
-            <TableHead className="text-center border-l">Vendas</TableHead>
-            <TableHead className="text-center">Valor</TableHead>
+            <TableHead className="text-center border-l p-2">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className={`py-0 px-1 h-auto text-xs ${sortState.week === week && sortState.field === "count" ? "bg-muted" : ""}`}
+                onClick={() => onSort(week, "count")}
+              >
+                Vendas {renderSortIcon(week, "count")}
+              </Button>
+            </TableHead>
+            <TableHead className="text-center p-2">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className={`py-0 px-1 h-auto text-xs ${sortState.week === week && sortState.field === "amount" ? "bg-muted" : ""}`}
+                onClick={() => onSort(week, "amount")}
+              >
+                Valor {renderSortIcon(week, "amount")}
+              </Button>
+            </TableHead>
           </React.Fragment>
         ))}
         <TableHead className="text-center border-l bg-muted/30">Vendas</TableHead>

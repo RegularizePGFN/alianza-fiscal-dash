@@ -11,11 +11,18 @@ export const WeeklyTable: React.FC<WeeklyTableProps> = ({
   availableWeeks,
   currentWeek,
   weeklyTotals,
-  weeklyGoals
+  weeklyGoals,
+  sortState,
+  onSort
 }) => {
   return (
     <Table className="w-full">
-      <WeeklyTableHeader availableWeeks={availableWeeks} currentWeek={currentWeek} />
+      <WeeklyTableHeader 
+        availableWeeks={availableWeeks} 
+        currentWeek={currentWeek} 
+        sortState={sortState}
+        onSort={onSort}
+      />
       
       <TableBody>
         {weeklyData.length > 0 && weeklyData.map((person) => (

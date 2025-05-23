@@ -20,6 +20,14 @@ export interface SalespersonData {
   totalAmount: number;
 }
 
+export type SortDirection = "asc" | "desc" | null;
+
+export interface SortState {
+  week: number | null;
+  field: "count" | "amount" | null;
+  direction: SortDirection;
+}
+
 export interface WeeklyDataResult {
   weeklyData: Array<SalespersonData & { position: number }>;
   availableWeeks: number[];
@@ -52,4 +60,7 @@ export interface WeeklyTableProps {
       [week: number]: number;
     };
   };
+  sortState: SortState;
+  onSort: (week: number, field: "count" | "amount") => void;
 }
+
