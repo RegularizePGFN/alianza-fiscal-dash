@@ -11,10 +11,10 @@ interface AdditionalCommentsFieldProps {
 
 const AdditionalCommentsField = ({ value, onChange }: AdditionalCommentsFieldProps) => {
   return (
-    <Card className="mb-4">
-      <CardHeader className="pb-2">
+    <Card className="mb-4 border-2 border-blue-400 shadow-md">
+      <CardHeader className="pb-2 bg-blue-50">
         <CardTitle className="text-sm font-medium flex items-center">
-          <FileText className="h-4 w-4 mr-2 text-gray-500" />
+          <FileText className="h-5 w-5 mr-2 text-blue-500" />
           Adicionar Observações
         </CardTitle>
       </CardHeader>
