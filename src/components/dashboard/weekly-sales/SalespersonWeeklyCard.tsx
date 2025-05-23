@@ -25,10 +25,17 @@ interface SalespersonData {
   totalAmount: number;
 }
 
+// Define the return type for the useMemo function
+interface WeeklyDataResult {
+  weeklyData: Array<SalespersonData & { position: number }>;
+  availableWeeks: number[];
+  currentWeek: number;
+}
+
 export function SalespersonWeeklyCard({ salesData, isLoading = false }: SalespersonWeeklyCardProps) {
   // Process weekly data
-  const { weeklyData, availableWeeks, currentWeek } = useMemo(() => {
-    if (!salesData.length) return { weeklyData: {}, availableWeeks: [], currentWeek: 1 };
+  const { weeklyData, availableWeeks, currentWeek } = useMemo<WeeklyDataResult>(() => {
+    if (!salesData.length) return { weeklyData: [], availableWeeks: [], currentWeek: 1 };
     
     // Get current date info
     const now = new Date();
@@ -195,7 +202,7 @@ export function SalespersonWeeklyCard({ salesData, isLoading = false }: Salesper
           </TableHeader>
           
           <TableBody>
-            {weeklyData.length > 0 && weeklyData.map((person: any) => (
+            {weeklyData.length > 0 && weeklyData.map((person) => (
               <TableRow key={person.id}>
                 <TableCell className="font-medium">
                   <span className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-xs text-white ${getColor(person.position)}`}>
