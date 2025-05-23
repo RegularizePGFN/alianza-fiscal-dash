@@ -1,0 +1,2 @@
+
+export { ProposalsDashboard } from './ProposalsDashboard';

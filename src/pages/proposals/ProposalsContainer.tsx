@@ -5,7 +5,7 @@ import ProposalsHeader from "./components/ProposalsHeader";
 import ProposalsTabs from "./components/ProposalsTabs";
 import { useProposalsState } from "@/hooks/proposals";
 import { useProposalHandlers } from "@/hooks/proposals";
-import { ProposalsDashboard } from "@/components/proposals/ProposalsDashboard";
+import { ProposalsDashboard } from "@/components/proposals/dashboard";
 import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
 
