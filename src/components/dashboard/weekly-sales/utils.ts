@@ -60,57 +60,64 @@ export const calculateWeekDateRanges = (): WeekRange[] => {
   
   // Find first day of month
   const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
-  const dayOfWeekForFirst = firstDayOfMonth.getDay(); // 0 for Sunday
-  const adjustedDayOfWeekForFirst = dayOfWeekForFirst === 0 ? 6 : dayOfWeekForFirst - 1; // Convert to 0 = Monday, 6 = Sunday
   
-  // Calculate week ranges (considering only business days: Monday-Friday)
+  // Create an array to hold our week ranges
   const weekRanges: WeekRange[] = [];
-  let currentDate = new Date(firstDayOfMonth);
   
-  // If the first day is not Monday, adjust to the first Monday
-  if (adjustedDayOfWeekForFirst > 0) {
-    // Add the partial first week (from 1st of month to first Friday)
-    const endOfFirstWeek = new Date(firstDayOfMonth);
-    const daysToAdd = 5 - adjustedDayOfWeekForFirst; // Days until Friday
-    endOfFirstWeek.setDate(firstDayOfMonth.getDate() + daysToAdd);
+  // Set up the current date pointer
+  let currentDate = new Date(firstDayOfMonth);
+  let weekNumber = 1;
+  let startOfWeek = new Date(currentDate);
+  
+  // Iterate through all days of the month
+  while (currentDate.getMonth() === currentMonth) {
+    const dayOfWeek = currentDate.getDay(); // 0 is Sunday, 6 is Saturday
     
-    // Make sure we don't go into the next month
-    if (endOfFirstWeek.getMonth() === currentMonth) {
-      weekRanges.push({
-        weekNumber: 1,
-        startDate: new Date(firstDayOfMonth),
-        endDate: new Date(endOfFirstWeek)
-      });
+    // Check if it's a business day (Monday-Friday)
+    const isBusinessDay = dayOfWeek >= 1 && dayOfWeek <= 5;
+    
+    if (isBusinessDay) {
+      // If this is the first business day we're processing
+      if (!startOfWeek || startOfWeek.getMonth() !== currentMonth) {
+        startOfWeek = new Date(currentDate);
+      }
+      
+      // Check if it's the last business day of the week (Friday) or last day of month
+      const isLastDayOfWeek = dayOfWeek === 5;
+      const tomorrow = new Date(currentDate);
+      tomorrow.setDate(currentDate.getDate() + 1);
+      const isLastDayOfMonth = tomorrow.getMonth() !== currentMonth;
+      
+      // If it's Friday or the last day of month, end the week
+      if (isLastDayOfWeek || isLastDayOfMonth) {
+        // Add this week range
+        weekRanges.push({
+          weekNumber,
+          startDate: new Date(startOfWeek),
+          endDate: new Date(currentDate)
+        });
+        
+        // Reset start of week for next iteration and increment week number
+        startOfWeek = null as unknown as Date;
+        weekNumber++;
+      }
     }
     
-    // Move to next Monday
-    currentDate = new Date(firstDayOfMonth);
-    currentDate.setDate(firstDayOfMonth.getDate() + (8 - adjustedDayOfWeekForFirst));
+    // Move to the next day
+    currentDate.setDate(currentDate.getDate() + 1);
   }
   
-  // Process full weeks (Monday to Friday)
-  let weekNumber = weekRanges.length > 0 ? 2 : 1;
-  
-  while (currentDate.getMonth() === currentMonth) {
-    const weekStart = new Date(currentDate);
-    const weekEnd = new Date(currentDate);
-    weekEnd.setDate(currentDate.getDate() + 4); // Friday is 4 days after Monday
-    
-    // If the end of the week is in the next month, adjust it to the last day of the current month
-    if (weekEnd.getMonth() !== currentMonth) {
-      weekEnd.setMonth(currentMonth + 1);
-      weekEnd.setDate(0); // Last day of current month
-    }
+  // Handle case where the month ends in the middle of a week
+  // If we have a start of week but no end yet, add it with the last day of the month
+  if (startOfWeek && startOfWeek.getMonth() === currentMonth) {
+    // Calculate the last day of the month
+    const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
     
     weekRanges.push({
       weekNumber,
-      startDate: weekStart,
-      endDate: weekEnd
+      startDate: new Date(startOfWeek),
+      endDate: new Date(lastDayOfMonth)
     });
-    
-    // Move to next Monday
-    currentDate.setDate(currentDate.getDate() + 7);
-    weekNumber++;
   }
   
   return weekRanges;
