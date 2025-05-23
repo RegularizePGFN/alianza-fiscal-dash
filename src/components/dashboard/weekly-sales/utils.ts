@@ -1,6 +1,8 @@
 
 import { Sale } from "@/lib/types";
-import { SalespersonData, WeeklyDataResult } from "./types";
+import { SalespersonData, WeeklyDataResult, WeekRange } from "./types";
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 // Helper constants for goal calculations
 export const BUSINESS_DAYS_IN_MONTH = 22; // Average number of business days in a month
@@ -49,13 +51,88 @@ export const getGoalStatusTextColor = (
   }
 };
 
+// Calculate week date ranges for the current month
+export const calculateWeekDateRanges = (): WeekRange[] => {
+  // Get current date info
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+  
+  // Find first day of month
+  const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+  const dayOfWeekForFirst = firstDayOfMonth.getDay(); // 0 for Sunday
+  const adjustedDayOfWeekForFirst = dayOfWeekForFirst === 0 ? 6 : dayOfWeekForFirst - 1; // Convert to 0 = Monday, 6 = Sunday
+  
+  // Calculate week ranges (considering only business days: Monday-Friday)
+  const weekRanges: WeekRange[] = [];
+  let currentDate = new Date(firstDayOfMonth);
+  
+  // If the first day is not Monday, adjust to the first Monday
+  if (adjustedDayOfWeekForFirst > 0) {
+    // Add the partial first week (from 1st of month to first Friday)
+    const endOfFirstWeek = new Date(firstDayOfMonth);
+    const daysToAdd = 5 - adjustedDayOfWeekForFirst; // Days until Friday
+    endOfFirstWeek.setDate(firstDayOfMonth.getDate() + daysToAdd);
+    
+    // Make sure we don't go into the next month
+    if (endOfFirstWeek.getMonth() === currentMonth) {
+      weekRanges.push({
+        weekNumber: 1,
+        startDate: new Date(firstDayOfMonth),
+        endDate: new Date(endOfFirstWeek)
+      });
+    }
+    
+    // Move to next Monday
+    currentDate = new Date(firstDayOfMonth);
+    currentDate.setDate(firstDayOfMonth.getDate() + (8 - adjustedDayOfWeekForFirst));
+  }
+  
+  // Process full weeks (Monday to Friday)
+  let weekNumber = weekRanges.length > 0 ? 2 : 1;
+  
+  while (currentDate.getMonth() === currentMonth) {
+    const weekStart = new Date(currentDate);
+    const weekEnd = new Date(currentDate);
+    weekEnd.setDate(currentDate.getDate() + 4); // Friday is 4 days after Monday
+    
+    // If the end of the week is in the next month, adjust it to the last day of the current month
+    if (weekEnd.getMonth() !== currentMonth) {
+      weekEnd.setMonth(currentMonth + 1);
+      weekEnd.setDate(0); // Last day of current month
+    }
+    
+    weekRanges.push({
+      weekNumber,
+      startDate: weekStart,
+      endDate: weekEnd
+    });
+    
+    // Move to next Monday
+    currentDate.setDate(currentDate.getDate() + 7);
+    weekNumber++;
+  }
+  
+  return weekRanges;
+};
+
+// Format date range as "d-d MMM" (e.g., "1-5 mai")
+export const formatWeekRange = (range: WeekRange): string => {
+  const startDay = format(range.startDate, 'd', { locale: ptBR });
+  const endDay = format(range.endDate, 'd', { locale: ptBR });
+  const month = format(range.endDate, 'MMM', { locale: ptBR });
+  
+  return `${startDay}-${endDay} ${month}`;
+};
+
 export const processWeeklyData = (salesData: Sale[]): WeeklyDataResult => {
   if (!salesData.length) return { 
     weeklyData: [], 
     availableWeeks: [], 
     currentWeek: 1,
     weeklyTotals: {},
-    weeklyGoals: {}
+    weeklyGoals: {},
+    weekRanges: []
   };
   
   // Get current date info
@@ -71,6 +148,9 @@ export const processWeeklyData = (salesData: Sale[]): WeeklyDataResult => {
   // Calculate current week (1-indexed)
   const dayOfMonth = now.getDate();
   const currentWeek = Math.ceil((dayOfMonth + adjustedDayOfWeekForFirst) / 7);
+  
+  // Calculate week date ranges
+  const weekRanges = calculateWeekDateRanges();
   
   // Initialize salesperson data map
   const salespeople: Record<string, SalespersonData> = {};
@@ -185,6 +265,7 @@ export const processWeeklyData = (salesData: Sale[]): WeeklyDataResult => {
     availableWeeks,
     currentWeek,
     weeklyTotals,
-    weeklyGoals
+    weeklyGoals,
+    weekRanges
   };
 };

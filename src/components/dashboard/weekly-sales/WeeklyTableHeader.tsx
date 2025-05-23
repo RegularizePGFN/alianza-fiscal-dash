@@ -3,20 +3,23 @@ import React from "react";
 import { TableHeader, TableRow, TableHead } from "@/components/ui/table";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SortState } from "./types";
+import { SortState, WeekRange } from "./types";
+import { formatWeekRange } from "./utils";
 
 interface WeeklyTableHeaderProps {
   availableWeeks: number[];
   currentWeek: number;
   sortState: SortState;
   onSort: (week: number, field: "count" | "amount") => void;
+  weekRanges: WeekRange[];
 }
 
 export const WeeklyTableHeader: React.FC<WeeklyTableHeaderProps> = ({ 
   availableWeeks, 
   currentWeek,
   sortState,
-  onSort
+  onSort,
+  weekRanges
 }) => {
   const renderSortIcon = (week: number, field: "count" | "amount") => {
     if (sortState.week === week && sortState.field === field) {
@@ -25,6 +28,15 @@ export const WeeklyTableHeader: React.FC<WeeklyTableHeaderProps> = ({
         <ArrowDown className="h-3 w-3" />;
     }
     return null;
+  };
+
+  // Helper function to find date range for a specific week
+  const getWeekDateRange = (weekNumber: number): string => {
+    const weekRange = weekRanges.find(range => range.weekNumber === weekNumber);
+    if (weekRange) {
+      return formatWeekRange(weekRange);
+    }
+    return '';
   };
 
   return (
@@ -36,7 +48,10 @@ export const WeeklyTableHeader: React.FC<WeeklyTableHeaderProps> = ({
         {availableWeeks.map((week) => (
           <React.Fragment key={`week-${week}`}>
             <TableHead colSpan={2} className="text-center border-l">
-              Semana {week} {week === currentWeek ? '(atual)' : ''}
+              Semana {week} {week === currentWeek ? '(atual)' : ''} 
+              <span className="block text-xs text-muted-foreground">
+                {getWeekDateRange(week)}
+              </span>
             </TableHead>
           </React.Fragment>
         ))}

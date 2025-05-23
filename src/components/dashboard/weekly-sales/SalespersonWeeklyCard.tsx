@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sale } from "@/lib/types";
@@ -25,7 +26,8 @@ export function SalespersonWeeklyCard({
     availableWeeks,
     currentWeek,
     weeklyTotals,
-    weeklyGoals
+    weeklyGoals,
+    weekRanges
   } = useMemo(() => {
     const result = {
       ...baseData
@@ -99,7 +101,16 @@ export function SalespersonWeeklyCard({
         <CardTitle className="font-medium text-muted-foreground text-lg my-0 px-[20px]">Desempenho Semanal</CardTitle>
       </CardHeader>
       <CardContent className="overflow-auto">
-        <WeeklyTable weeklyData={weeklyData} availableWeeks={availableWeeks} currentWeek={currentWeek} weeklyTotals={weeklyTotals} weeklyGoals={weeklyGoals} sortState={sortState} onSort={handleSort} />
+        <WeeklyTable 
+          weeklyData={weeklyData} 
+          availableWeeks={availableWeeks} 
+          currentWeek={currentWeek} 
+          weeklyTotals={weeklyTotals} 
+          weeklyGoals={weeklyGoals} 
+          weekRanges={weekRanges} 
+          sortState={sortState} 
+          onSort={handleSort} 
+        />
       </CardContent>
     </Card>;
 }

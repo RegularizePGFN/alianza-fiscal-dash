@@ -12,6 +12,7 @@ export const WeeklyTable: React.FC<WeeklyTableProps> = ({
   currentWeek,
   weeklyTotals,
   weeklyGoals,
+  weekRanges,
   sortState,
   onSort
 }) => {
@@ -22,6 +23,7 @@ export const WeeklyTable: React.FC<WeeklyTableProps> = ({
         currentWeek={currentWeek} 
         sortState={sortState}
         onSort={onSort}
+        weekRanges={weekRanges}
       />
       
       <TableBody>
