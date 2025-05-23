@@ -88,6 +88,27 @@ const FinancialInfoSection = ({
     }
     return formData.entryValue || "0,00";
   };
+
+  // Calculate fees installment value automatically
+  const calculateFeesInstallmentValue = () => {
+    if (formData.feesTotalInstallmentValue && formData.feesInstallments) {
+      try {
+        const totalValue = parseFloat(formData.feesTotalInstallmentValue.replace(/\./g, '').replace(',', '.'));
+        const installments = parseInt(formData.feesInstallments);
+        
+        if (!isNaN(totalValue) && !isNaN(installments) && installments > 0) {
+          const installmentValue = totalValue / installments;
+          return installmentValue.toLocaleString('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          });
+        }
+      } catch (error) {
+        console.error("Erro ao calcular o valor da parcela dos honorários:", error);
+      }
+    }
+    return "0,00";
+  };
   
   return (
     <div className="space-y-6">
@@ -276,26 +297,13 @@ const FinancialInfoSection = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2 p-3 bg-gray-50 border rounded-md">
             <div>
               <label className="text-sm font-medium text-gray-700">
-                % adicional para parcelamento
-              </label>
-              <Input
-                name="feesAdditionalPercentage"
-                value={formData.feesAdditionalPercentage || "30"}
-                onChange={onInputChange}
-                placeholder="30"
-                className="mt-1"
-              />
-            </div>
-            
-            <div>
-              <label className="text-sm font-medium text-gray-700">
                 Parcelas
               </label>
               <Input
                 name="feesInstallments"
-                value={formData.feesInstallments || "6"}
+                value={formData.feesInstallments || "2"}
                 onChange={onInputChange}
-                placeholder="6"
+                placeholder="2"
                 className="mt-1"
               />
             </div>
@@ -320,19 +328,6 @@ const FinancialInfoSection = ({
             
             <div>
               <label className="text-sm font-medium text-gray-700">
-                Valor da parcela
-              </label>
-              <Input
-                name="feesInstallmentValue"
-                value={formData.feesInstallmentValue || ""}
-                onChange={onInputChange}
-                placeholder="0,00"
-                className="mt-1"
-              />
-            </div>
-            
-            <div>
-              <label className="text-sm font-medium text-gray-700">
                 Valor total parcelado
               </label>
               <Input
@@ -342,6 +337,18 @@ const FinancialInfoSection = ({
                 placeholder="0,00"
                 className="mt-1"
               />
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium text-gray-700">
+                Valor da parcela
+              </label>
+              <Input
+                value={`R$ ${calculateFeesInstallmentValue()}`}
+                disabled={true}
+                className="mt-1 bg-gray-50"
+              />
+              <p className="text-xs text-gray-500 mt-1">Calculado automaticamente</p>
             </div>
           </div>
         )}

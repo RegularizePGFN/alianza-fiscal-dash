@@ -15,32 +15,31 @@ export const useFeesCalculation = ({ formData, setFormData }: UseFeesCalculation
     }
   }, [formData.totalDebt, formData.discountedValue]);
   
-  // Calculate installment fees when feesValue or installment fees parameters change
-  useEffect(() => {
-    if (formData.feesValue && 
-        formData.feesInstallments && 
-        formData.feesAdditionalPercentage) {
-      calculateInstallmentFees();
-    }
-  }, [formData.feesValue, formData.feesInstallments, formData.feesAdditionalPercentage]);
-
-  // Watch for changes in showFeesInstallments to set default values
+  // Watch for changes in showFeesInstallments to set default values and calculate
   useEffect(() => {
     if (formData.showFeesInstallments === 'true') {
       // Set default values if they're not already set
       setFormData(prev => ({
         ...prev,
-        feesAdditionalPercentage: prev.feesAdditionalPercentage || '20',
-        feesInstallments: prev.feesInstallments || '3',
-        feesPaymentMethod: prev.feesPaymentMethod || 'boleto'
+        feesInstallments: prev.feesInstallments || '2',
+        feesPaymentMethod: prev.feesPaymentMethod || 'cartao'
       }));
       
-      // Calculate the installment fees with the new values
+      // Calculate the installment total value with 20% increase if we have a base fees value
       if (formData.feesValue) {
-        calculateInstallmentFees();
+        calculateInstallmentFeesTotal();
       }
     }
-  }, [formData.showFeesInstallments]);
+  }, [formData.showFeesInstallments, formData.feesValue]);
+
+  // Recalculate when total installment value or number of installments changes
+  useEffect(() => {
+    if (formData.showFeesInstallments === 'true' && 
+        formData.feesTotalInstallmentValue && 
+        formData.feesInstallments) {
+      calculateInstallmentValue();
+    }
+  }, [formData.feesTotalInstallmentValue, formData.feesInstallments]);
 
   // Function to calculate upfront fees (20% of savings)
   const calculateFees = () => {
@@ -71,9 +70,9 @@ export const useFeesCalculation = ({ formData, setFormData }: UseFeesCalculation
         feesValue: formattedFees,
       }));
       
-      // Also calculate installment fees if needed
-      if (formData.showFeesInstallments === 'true' && formData.feesInstallments && formData.feesAdditionalPercentage) {
-        calculateInstallmentFees();
+      // If installment fees are enabled, also calculate the installment total
+      if (formData.showFeesInstallments === 'true') {
+        calculateInstallmentFeesTotal();
       }
       
     } catch (error) {
@@ -81,33 +80,23 @@ export const useFeesCalculation = ({ formData, setFormData }: UseFeesCalculation
     }
   };
   
-  // Function to calculate installment fees
-  const calculateInstallmentFees = () => {
+  // Function to calculate total installment value (base fees + 20%)
+  const calculateInstallmentFeesTotal = () => {
     try {
-      if (!formData.feesValue || !formData.feesAdditionalPercentage || !formData.feesInstallments) return;
+      if (!formData.feesValue) return;
       
-      // Convert string values to numbers
+      // Convert string value to number
       const baseFeesValue = parseFloat(formData.feesValue.replace(/\./g, '').replace(',', '.'));
-      const additionalPercentage = parseFloat(formData.feesAdditionalPercentage) / 100;
-      const installments = parseInt(formData.feesInstallments);
       
-      if (isNaN(baseFeesValue) || isNaN(additionalPercentage) || isNaN(installments)) {
+      if (isNaN(baseFeesValue)) {
         return;
       }
       
-      // Apply additional percentage to base fees
-      const totalFeesValue = baseFeesValue * (1 + additionalPercentage);
+      // Add 20% to base fees
+      const totalFeesValue = baseFeesValue * 1.2;
       
-      // Calculate installment value
-      const installmentValue = totalFeesValue / installments;
-      
-      // Format the results with Brazilian currency format
+      // Format the result with Brazilian currency format
       const formattedTotalFees = totalFeesValue.toLocaleString('pt-BR', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
-      
-      const formattedInstallmentFees = installmentValue.toLocaleString('pt-BR', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       });
@@ -115,17 +104,50 @@ export const useFeesCalculation = ({ formData, setFormData }: UseFeesCalculation
       // Update formData
       setFormData(prev => ({
         ...prev,
-        feesInstallmentValue: formattedInstallmentFees,
         feesTotalInstallmentValue: formattedTotalFees
       }));
       
     } catch (error) {
-      console.error('Error calculating installment fees:', error);
+      console.error('Error calculating installment fees total:', error);
+    }
+  };
+
+  // Function to calculate individual installment value
+  const calculateInstallmentValue = () => {
+    try {
+      if (!formData.feesTotalInstallmentValue || !formData.feesInstallments) return;
+      
+      // Convert string values to numbers
+      const totalValue = parseFloat(formData.feesTotalInstallmentValue.replace(/\./g, '').replace(',', '.'));
+      const installments = parseInt(formData.feesInstallments);
+      
+      if (isNaN(totalValue) || isNaN(installments) || installments <= 0) {
+        return;
+      }
+      
+      // Calculate installment value
+      const installmentValue = totalValue / installments;
+      
+      // Format the result with Brazilian currency format
+      const formattedInstallmentValue = installmentValue.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+      
+      // Update formData with the calculated installment value
+      setFormData(prev => ({
+        ...prev,
+        feesInstallmentValue: formattedInstallmentValue
+      }));
+      
+    } catch (error) {
+      console.error('Error calculating installment value:', error);
     }
   };
 
   return {
     calculateFees,
-    calculateInstallmentFees
+    calculateInstallmentFeesTotal,
+    calculateInstallmentValue
   };
 };

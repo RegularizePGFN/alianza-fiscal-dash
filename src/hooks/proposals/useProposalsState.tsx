@@ -27,9 +27,8 @@ export const useProposalsState = () => {
   const [progressPercent, setProgressPercent] = useState(0);
   const [formData, setFormData] = useState<Partial<ExtractedData>>({
     // Default values for fee installments
-    feesAdditionalPercentage: '20',
-    feesInstallments: '3',
-    feesPaymentMethod: 'boleto',
+    feesInstallments: '2',
+    feesPaymentMethod: 'cartao',
     entryInstallments: '1',
     showFeesInstallments: 'false'
   });
@@ -52,7 +51,7 @@ export const useProposalsState = () => {
     setProcessingStatus 
   });
   
-  const { calculateFees, calculateInstallmentFees } = useFeesCalculation({ formData, setFormData });
+  const { calculateFees, calculateInstallmentFeesTotal, calculateInstallmentValue } = useFeesCalculation({ formData, setFormData });
   const { generatePaymentDates } = useDatesHandling({ activeTab, formData, setFormData });
   useTemplateDefaults({ setFormData });
   useUserData({ user, setFormData });
@@ -63,13 +62,6 @@ export const useProposalsState = () => {
       fetchCompanyDataByCnpj(formData.cnpj);
     }
   }, [formData.cnpj]);
-  
-  // Recalculate installment fees when needed
-  useEffect(() => {
-    if (formData.feesValue && formData.feesAdditionalPercentage && formData.feesInstallments) {
-      calculateInstallmentFees();
-    }
-  }, [formData.feesValue, formData.feesAdditionalPercentage, formData.feesInstallments]);
   
   // Generate payment dates when needed
   useEffect(() => {
