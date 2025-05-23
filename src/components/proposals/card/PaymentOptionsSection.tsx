@@ -86,14 +86,23 @@ const PaymentOptionsSection = ({
         </div>
         <div className="border border-af-blue-100 rounded p-1 hover:bg-af-blue-50 transition-colors">
           <p className="font-medium text-af-blue-700 text-[10px]">Parcelado</p>
-          <p className="text-[11px] font-bold">{installments || '0'}x de R$ {installmentValue || '0,00'}</p>
           
+          {/* Entry payment section - now first */}
           {parseInt(entryInstallments || '1') >= 1 && (
-            <div className="mt-0.5 border-t border-af-blue-50 pt-0.5">
+            <div className="mb-0.5">
               <p className="text-[9px] text-af-blue-700 font-medium">
                 Entrada: {parseInt(entryInstallments || '1') > 1 ? 
                   `${entryInstallments}x de R$ ${entryInstallmentValue()}` : 
                   `R$ ${entryValue || '0,00'}`}
+              </p>
+            </div>
+          )}
+          
+          {/* Remaining installments - now second */}
+          {parseInt(installments || '0') > 0 && (
+            <div className="mt-0.5 border-t border-af-blue-50 pt-0.5">
+              <p className="text-[9px] text-af-blue-700 font-medium">
+                Parcelas Restantes: {installments}x de R$ {installmentValue || '0,00'}
               </p>
             </div>
           )}

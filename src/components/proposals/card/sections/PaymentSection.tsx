@@ -81,16 +81,22 @@ const PaymentSection = ({ data, colors }: PaymentSectionProps) => {
       <div>
         <DataField 
           label="Parcelado" 
-          value={`${data.installments || '0'}x de R$ ${data.installmentValue || '0,00'}`}
+          value=""
         />
+        
+        {/* Entry payment section - now first */}
         {parseInt(data.entryInstallments || '1') >= 1 && (
-          <div className="text-xs text-gray-600 ml-4 mt-1">
+          <div className="text-xs text-gray-600 ml-4 mb-2">
             <span className="font-medium">Entrada:</span> {parseInt(data.entryInstallments || '1') > 1 ? 
               `${data.entryInstallments}x de R$ ${entryInstallmentValue()}` : 
               `R$ ${data.entryValue || '0,00'}`}
-            {parseInt(data.installments || '0') > 0 && (
-              <p className="mt-1"><span className="font-medium">Mais:</span> {data.installments}x de R$ {data.installmentValue || '0,00'}</p>
-            )}
+          </div>
+        )}
+
+        {/* Remaining installments - now second */}
+        {parseInt(data.installments || '0') > 0 && (
+          <div className="text-xs text-gray-600 ml-4">
+            <span className="font-medium">Parcelas Restantes:</span> {data.installments}x de R$ {data.installmentValue || '0,00'}
           </div>
         )}
       </div>
