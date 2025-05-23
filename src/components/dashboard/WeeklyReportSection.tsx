@@ -1,6 +1,7 @@
 
 import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChartContainer } from "@/components/ui/chart";
 import { Sale } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 import {
@@ -12,6 +13,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
+  Legend,
 } from "recharts";
 
 interface WeeklyReportSectionProps {
@@ -94,16 +96,13 @@ export function WeeklyReportSection({ salesData, isLoading = false }: WeeklyRepo
     return Math.ceil((dayOfMonth + adjustedDayOfWeekForFirst) / 7);
   }, []);
 
-  // Colors for the chart
-  const colors = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#af19ff'];
-
   if (isLoading) {
     return (
       <Card className="w-full">
         <CardHeader>
           <CardTitle>Consolidado por Semana</CardTitle>
         </CardHeader>
-        <CardContent className="h-80 flex items-center justify-center">
+        <CardContent className="h-60 flex items-center justify-center">
           <p>Carregando dados...</p>
         </CardContent>
       </Card>
@@ -112,79 +111,104 @@ export function WeeklyReportSection({ salesData, isLoading = false }: WeeklyRepo
 
   return (
     <Card className="w-full">
-      <CardHeader>
+      <CardHeader className="pb-2">
         <CardTitle>Consolidado por Semana</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-80">
+        <div className="h-60">
           {weeklyData.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={weeklyData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
-                <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
-                <Tooltip 
-                  formatter={(value: number, name: string) => {
-                    if (name === "Valor") {
-                      return [formatCurrency(value), "Valor Total"];
-                    }
-                    return [value, "Qtd. Vendas"];
-                  }}
-                />
-                <Bar 
-                  yAxisId="left" 
-                  dataKey="Vendas" 
-                  fill="#8884d8" 
-                  radius={[4, 4, 0, 0]}
+            <ChartContainer
+              config={{
+                Vendas: {
+                  label: "Qtd. Vendas",
+                  color: "#8884d8"
+                },
+                Valor: {
+                  label: "Valor Total",
+                  color: "#82ca9d"
+                }
+              }}
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={weeklyData}
+                  margin={{ top: 10, right: 5, left: 0, bottom: 20 }}
                 >
-                  {weeklyData.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={entry.week === currentWeek ? '#4c1d95' : '#8884d8'} 
-                      opacity={entry.week === currentWeek ? 1 : 0.7}
-                    />
-                  ))}
-                </Bar>
-                <Bar 
-                  yAxisId="right" 
-                  dataKey="Valor" 
-                  fill="#82ca9d" 
-                  radius={[4, 4, 0, 0]}
-                >
-                  {weeklyData.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={entry.week === currentWeek ? '#065f46' : '#82ca9d'} 
-                      opacity={entry.week === currentWeek ? 1 : 0.7}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false}
+                    tickLine={false}
+                    fontSize={12}
+                  />
+                  <YAxis 
+                    yAxisId="left"
+                    orientation="left" 
+                    stroke="#8884d8"
+                    axisLine={false}
+                    tickLine={false}
+                    width={30}
+                    fontSize={11}
+                  />
+                  <YAxis 
+                    yAxisId="right"
+                    orientation="right" 
+                    stroke="#82ca9d"
+                    tickFormatter={(value) => formatCurrency(value)}
+                    axisLine={false}
+                    tickLine={false}
+                    width={60}
+                    fontSize={11}
+                  />
+                  <Tooltip 
+                    formatter={(value: number, name: string) => {
+                      if (name === "Valor") {
+                        return [formatCurrency(value), "Valor Total"];
+                      }
+                      return [value, "Qtd. Vendas"];
+                    }}
+                  />
+                  <Legend />
+                  <Bar 
+                    yAxisId="left" 
+                    name="Vendas"
+                    dataKey="Vendas" 
+                    fill="#8884d8" 
+                    radius={[4, 4, 0, 0]}
+                    barSize={20}
+                  >
+                    {weeklyData.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={entry.week === currentWeek ? '#4c1d95' : '#8884d8'} 
+                        opacity={entry.week === currentWeek ? 1 : 0.7}
+                      />
+                    ))}
+                  </Bar>
+                  <Bar 
+                    yAxisId="right" 
+                    name="Valor"
+                    dataKey="Valor" 
+                    fill="#82ca9d" 
+                    radius={[4, 4, 0, 0]}
+                    barSize={20}
+                  >
+                    {weeklyData.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={entry.week === currentWeek ? '#065f46' : '#82ca9d'} 
+                        opacity={entry.week === currentWeek ? 1 : 0.7}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
           ) : (
             <div className="h-full flex items-center justify-center">
               <p className="text-muted-foreground">Não há dados para exibir neste período.</p>
             </div>
           )}
-        </div>
-        
-        <div className="mt-4 grid grid-cols-2 gap-4">
-          <div>
-            <h4 className="text-sm font-medium mb-1">Total de Vendas</h4>
-            <p className="text-2xl font-bold">
-              {weeklyData.reduce((sum, week) => sum + week.Vendas, 0)}
-            </p>
-          </div>
-          <div>
-            <h4 className="text-sm font-medium mb-1">Valor Total</h4>
-            <p className="text-2xl font-bold">
-              {formatCurrency(weeklyData.reduce((sum, week) => sum + week.Valor, 0))}
-            </p>
-          </div>
         </div>
       </CardContent>
     </Card>

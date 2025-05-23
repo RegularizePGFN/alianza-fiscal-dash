@@ -60,6 +60,11 @@
   .dark .recharts-text {
     @apply fill-gray-300;
   }
+
+  /* Weekly reports specific dark mode styles */
+  .dark .recharts-legend-item-text {
+    @apply fill-gray-200 text-gray-200;
+  }
   
   /* Card header gradient backgrounds in dark mode */
   .dark .bg-gradient-to-r.from-gray-50.to-white {

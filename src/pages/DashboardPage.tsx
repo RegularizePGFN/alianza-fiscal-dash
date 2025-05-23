@@ -6,6 +6,7 @@ import { GoalsCommissionsSection } from "@/components/dashboard/GoalsCommissions
 import { SalespeopleCommissionsCard } from "@/components/dashboard/salespeople-commissions";
 import { DailyResultsCard } from "@/components/dashboard/daily-results";
 import { WeeklyReportSection } from "@/components/dashboard/WeeklyReportSection";
+import { SalespersonWeeklyCard } from "@/components/dashboard/weekly-sales";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
@@ -32,8 +33,11 @@ export default function DashboardPage() {
             {/* Admin-only commission projections card */}
             {isAdmin && <SalespeopleCommissionsCard />}
             
-            {/* Weekly Report replacing the RecentSalesSection */}
-            <WeeklyReportSection salesData={salesData} />
+            {/* Weekly Reports Section - Split into two cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <WeeklyReportSection salesData={salesData} />
+              <SalespersonWeeklyCard salesData={salesData} />
+            </div>
           </div>
         )}
       </div>
