@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ExtractedData } from "@/lib/types/proposals";
 import { calculateEconomy } from "@/lib/pdf/utils";
@@ -46,7 +47,7 @@ const PaymentOptionsDisplay = ({
   const currentDate = new Date();
   const lastBusinessDay = getLastBusinessDayOfMonth(currentDate);
   const formattedLastBusinessDay = formatDateBR(lastBusinessDay);
-  return <div className="bg-white p-5 rounded-lg border border-af-blue-200 shadow-sm">
+  return <div className="bg-white p-0">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold text-af-blue-800">
           Opções de Pagamento
@@ -58,11 +59,11 @@ const PaymentOptionsDisplay = ({
       </div>
       
       <div className="grid grid-cols-2 gap-4">
-        <div className="border border-af-blue-100 rounded p-4 hover:bg-af-blue-50 transition-colors">
+        <div className="border border-af-blue-100 rounded p-4 hover:bg-af-blue-50 transition-colors shadow-sm">
           <p className="font-medium text-af-blue-700">À Vista</p>
           <p className="text-lg font-bold">R$ {data.discountedValue || '0,00'}</p>
         </div>
-        <div className="border border-af-blue-100 rounded p-4 hover:bg-af-blue-50 transition-colors">
+        <div className="border border-af-blue-100 rounded p-4 hover:bg-af-blue-50 transition-colors shadow-sm">
           <p className="font-medium text-af-blue-700">Parcelado</p>
           
           {/* Entry payment section - now first */}
@@ -85,8 +86,8 @@ const PaymentOptionsDisplay = ({
 
       {/* Payment deadline information */}
       <div className="mt-4 pt-3 border-t border-af-blue-100 text-sm text-af-blue-700">
-        <p className="px-[20px]">O pagamento da 1ª parcela da ENTRADA é para o dia <strong>{formattedLastBusinessDay}</strong> até as 20h.</p>
-        <p className="px-[20px]">Demais parcelas da negociação são para o último dia útil de cada mês.</p>
+        <p className="px-[5px]">O pagamento da 1ª parcela da ENTRADA é para o dia <strong>{formattedLastBusinessDay}</strong> até as 20h.</p>
+        <p className="px-[5px]">Demais parcelas da negociação são para o último dia útil de cada mês.</p>
       </div>
     </div>;
 };
