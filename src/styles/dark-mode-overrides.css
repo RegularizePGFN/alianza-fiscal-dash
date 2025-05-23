@@ -87,6 +87,24 @@
   .dark #history-card-header {
     @apply bg-gray-800 border-gray-700;
   }
+  
+  /* Weekly performance card styles */
+  .dark .recharts-bar-rectangle {
+    @apply stroke-gray-700;
+  }
+  
+  /* Select dropdown dark mode styling */
+  .dark [data-radix-select-content] {
+    @apply bg-gray-800 border-gray-700;
+  }
+  
+  .dark [data-radix-select-item] {
+    @apply text-gray-200 hover:bg-gray-700 hover:text-white;
+  }
+  
+  .dark [data-radix-select-item][data-state=checked] {
+    @apply bg-gray-700;
+  }
 }
 
 /* Font family for PDF generation */
