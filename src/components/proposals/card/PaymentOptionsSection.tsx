@@ -79,33 +79,36 @@ const PaymentOptionsSection = ({
         )}
       </div>
       
-      <div className="grid grid-cols-2 gap-1">
-        <div className="border border-af-blue-100 rounded p-1 hover:bg-af-blue-50 transition-colors shadow-sm">
+      <div className="grid grid-cols-5 gap-1">
+        {/* À Vista card - now smaller (1/5 of the grid) */}
+        <div className="col-span-1 border border-af-blue-100 rounded p-1 hover:bg-af-blue-50 transition-colors shadow-sm">
           <p className="font-medium text-af-blue-700 text-[10px]">À Vista</p>
           <p className="text-[11px] font-bold">R$ {discountedValue || '0,00'}</p>
         </div>
-        <div className="border border-af-blue-100 rounded p-1 hover:bg-af-blue-50 transition-colors shadow-sm">
-          <p className="font-medium text-af-blue-700 text-[10px]">Parcelado</p>
+        
+        {/* Parcelado card - now larger (4/5 of the grid) */}
+        <div className="col-span-4 border border-af-blue-100 rounded p-1 hover:bg-af-blue-50 transition-colors shadow-sm">
+          <p className="font-medium text-af-blue-700 text-[10px] mb-0.5">Parcelado</p>
           
-          {/* Entry payment section - now first */}
-          {parseInt(entryInstallments || '1') >= 1 && (
-            <div className="mb-0.5">
+          <div className="grid grid-cols-2 gap-1">
+            {/* Entry payment section - now on the left */}
+            <div className="border-r border-af-blue-50 pr-1">
               <p className="text-[9px] text-af-blue-700 font-medium">
                 Entrada: {parseInt(entryInstallments || '1') > 1 ? 
                   `${entryInstallments}x de R$ ${entryInstallmentValue()}` : 
                   `R$ ${entryValue || '0,00'}`}
               </p>
             </div>
-          )}
-          
-          {/* Remaining installments - now second */}
-          {parseInt(installments || '0') > 0 && (
-            <div className="mt-0.5 border-t border-af-blue-50 pt-0.5">
-              <p className="text-[9px] text-af-blue-700 font-medium">
-                Parcelas Restantes: {installments}x de R$ {installmentValue || '0,00'}
-              </p>
-            </div>
-          )}
+            
+            {/* Remaining installments - now on the right */}
+            {parseInt(installments || '0') > 0 && (
+              <div className="pl-1">
+                <p className="text-[9px] text-af-blue-700 font-medium">
+                  Parcelas Restantes: {installments}x de R$ {installmentValue || '0,00'}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
       

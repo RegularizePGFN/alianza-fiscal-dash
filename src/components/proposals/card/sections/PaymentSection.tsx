@@ -74,31 +74,37 @@ const PaymentSection = ({ data, colors }: PaymentSectionProps) => {
       }
       fullWidth={true}
     >
-      <DataField 
-        label="À Vista" 
-        value={`R$ ${data.discountedValue || '0,00'}`}
-      />
-      <div>
-        <DataField 
-          label="Parcelado" 
-          value=""
-        />
+      <div className="grid grid-cols-5 gap-2">
+        {/* À Vista card - now smaller */}
+        <div className="col-span-1 border border-gray-200 rounded-md p-2 bg-white">
+          <div className="font-medium text-sm" style={{ color: sectionColor }}>À Vista</div>
+          <div className="font-bold text-base">R$ {data.discountedValue || '0,00'}</div>
+        </div>
         
-        {/* Entry payment section - now first */}
-        {parseInt(data.entryInstallments || '1') >= 1 && (
-          <div className="text-xs text-gray-600 ml-4 mb-2">
-            <span className="font-medium">Entrada:</span> {parseInt(data.entryInstallments || '1') > 1 ? 
-              `${data.entryInstallments}x de R$ ${entryInstallmentValue()}` : 
-              `R$ ${data.entryValue || '0,00'}`}
-          </div>
-        )}
+        {/* Parcelado card - now larger */}
+        <div className="col-span-4 border border-gray-200 rounded-md p-2 bg-white">
+          <div className="font-medium text-sm mb-1" style={{ color: sectionColor }}>Parcelado</div>
+          
+          <div className="grid grid-cols-2 gap-2">
+            {/* Entry payment section - now on the left */}
+            <div className="border-r border-gray-100 pr-2">
+              <div className="text-xs text-gray-600">
+                <span className="font-medium">Entrada:</span> {parseInt(data.entryInstallments || '1') > 1 ? 
+                  `${data.entryInstallments}x de R$ ${entryInstallmentValue()}` : 
+                  `R$ ${data.entryValue || '0,00'}`}
+              </div>
+            </div>
 
-        {/* Remaining installments - now second */}
-        {parseInt(data.installments || '0') > 0 && (
-          <div className="text-xs text-gray-600 ml-4">
-            <span className="font-medium">Parcelas Restantes:</span> {data.installments}x de R$ {data.installmentValue || '0,00'}
+            {/* Remaining installments - now on the right */}
+            {parseInt(data.installments || '0') > 0 && (
+              <div className="pl-2">
+                <div className="text-xs text-gray-600">
+                  <span className="font-medium">Parcelas Restantes:</span> {data.installments}x de R$ {data.installmentValue || '0,00'}
+                </div>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
       
       {/* Payment deadline information */}

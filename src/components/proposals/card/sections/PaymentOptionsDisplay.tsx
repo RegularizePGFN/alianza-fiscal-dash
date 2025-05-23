@@ -58,29 +58,34 @@ const PaymentOptionsDisplay = ({
           </div>}
       </div>
       
-      <div className="grid grid-cols-2 gap-4">
-        <div className="border border-af-blue-100 rounded p-4 hover:bg-af-blue-50 transition-colors shadow-sm">
-          <p className="font-medium text-af-blue-700">À Vista</p>
-          <p className="text-lg font-bold">R$ {data.discountedValue || '0,00'}</p>
+      <div className="grid grid-cols-5 gap-3">
+        {/* À Vista card - now smaller (1/5 of the space) */}
+        <div className="col-span-1 border border-af-blue-100 rounded p-3 hover:bg-af-blue-50 transition-colors shadow-sm">
+          <p className="font-medium text-af-blue-700 text-sm">À Vista</p>
+          <p className="text-base font-bold">R$ {data.discountedValue || '0,00'}</p>
         </div>
-        <div className="border border-af-blue-100 rounded p-4 hover:bg-af-blue-50 transition-colors shadow-sm">
-          <p className="font-medium text-af-blue-700">Parcelado</p>
+        
+        {/* Parcelado card - now larger (4/5 of the space) */}
+        <div className="col-span-4 border border-af-blue-100 rounded p-3 hover:bg-af-blue-50 transition-colors shadow-sm">
+          <p className="font-medium text-af-blue-700 mb-2">Parcelado</p>
           
-          {/* Entry payment section - now first */}
-          {parseInt(data.entryInstallments || '1') >= 1 && <div className="mb-2">
+          <div className="grid grid-cols-2 gap-2">
+            {/* Entry payment section - now on the left */}
+            <div className="border-r border-af-blue-100 pr-2">
               <p className="font-medium text-af-blue-700 text-sm">Entrada:</p>
               <p className="text-sm text-gray-700 font-semibold py-[10px]">
                 {parseInt(data.entryInstallments || '1') > 1 ? `${data.entryInstallments}x de R$ ${entryInstallmentValue()}` : `R$ ${data.entryValue || '0,00'}`}
               </p>
-            </div>}
-          
-          {/* Remaining installments - now second */}
-          {parseInt(data.installments || '0') > 0 && <div className="mt-1 border-t border-af-blue-100 pt-2">
-              <p className="font-medium text-af-blue-700 text-sm">Parcelas Restantes:</p>
-              <p className="text-sm text-gray-700 font-semibold py-[10px]">
-                {data.installments}x de R$ {data.installmentValue || '0,00'}
-              </p>
-            </div>}
+            </div>
+            
+            {/* Remaining installments - now on the right */}
+            {parseInt(data.installments || '0') > 0 && <div className="pl-2">
+                <p className="font-medium text-af-blue-700 text-sm">Parcelas Restantes:</p>
+                <p className="text-sm text-gray-700 font-semibold py-[10px]">
+                  {data.installments}x de R$ {data.installmentValue || '0,00'}
+                </p>
+              </div>}
+          </div>
         </div>
       </div>
 
