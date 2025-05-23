@@ -28,7 +28,7 @@ export function SalespersonWeeklyCard({ salesData, isLoading = false }: Salesper
 
   // Process weekly data
   const weeksData = useMemo(() => {
-    if (!salesData.length) return { weeklyData: [], availableWeeks: [] };
+    if (!salesData.length) return { weeklyData: new Map<number, any[]>(), availableWeeks: [] };
     
     // Get current date info
     const now = new Date();
@@ -113,17 +113,20 @@ export function SalespersonWeeklyCard({ salesData, isLoading = false }: Salesper
       // Combine data from all weeks
       const allData = new Map<string, { name: string; amount: number; count: number }>();
       
-      weeksData.weeklyData.forEach((weekData, week) => {
-        weekData.forEach(person => {
-          const key = person.name;
-          if (!allData.has(key)) {
-            allData.set(key, { name: person.name, amount: 0, count: 0 });
-          }
-          const record = allData.get(key)!;
-          record.amount += person.amount;
-          record.count += person.count;
+      // Ensure weeklyData is treated as a Map
+      if (weeksData.weeklyData instanceof Map) {
+        weeksData.weeklyData.forEach((weekData, week) => {
+          weekData.forEach(person => {
+            const key = person.name;
+            if (!allData.has(key)) {
+              allData.set(key, { name: person.name, amount: 0, count: 0 });
+            }
+            const record = allData.get(key)!;
+            record.amount += person.amount;
+            record.count += person.count;
+          });
         });
-      });
+      }
       
       return Array.from(allData.values())
         .sort((a, b) => b.amount - a.amount)
@@ -138,7 +141,8 @@ export function SalespersonWeeklyCard({ salesData, isLoading = false }: Salesper
         }));
     }
     
-    return weeksData.weeklyData.get(selectedWeek as number) || [];
+    // Ensure weeklyData is treated as a Map and handle the case when it's not
+    return (weeksData.weeklyData instanceof Map && weeksData.weeklyData.get(selectedWeek as number)) || [];
   }, [weeksData, selectedWeek]);
   
   // Chart data
