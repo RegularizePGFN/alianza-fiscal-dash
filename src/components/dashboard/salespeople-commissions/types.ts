@@ -11,6 +11,7 @@ export type SalespersonCommission = {
   metaGap: number;
   expectedProgress: number;
   remainingDailyTarget: number;
+  zeroDaysCount: number; // New field for days with zero sales
 };
 
 export type SortColumn = 
@@ -20,7 +21,8 @@ export type SortColumn =
   | 'goalPercentage' 
   | 'metaGap'
   | 'remainingDailyTarget'
-  | 'projectedCommission';
+  | 'projectedCommission'
+  | 'zeroDaysCount'; // Add new sortable column
 
 export type SortDirection = 'asc' | 'desc';
 
@@ -33,4 +35,5 @@ export type SummaryTotals = {
   metaGap: number;
   remainingDailyTarget: number;
   projectedCommission: number;
+  zeroDaysCount: number; // New field for days with zero sales
 };

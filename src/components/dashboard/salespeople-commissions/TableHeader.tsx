@@ -35,6 +35,12 @@ export function TableHeader({ sortColumn, sortDirection, handleSort }: TableHead
         </th>
         <th 
           className="text-center py-2 font-medium cursor-pointer hover:bg-gray-50" 
+          onClick={() => handleSort('zeroDaysCount')}
+        >
+          Dias sem vendas {renderSortIndicator('zeroDaysCount')}
+        </th>
+        <th 
+          className="text-center py-2 font-medium cursor-pointer hover:bg-gray-50" 
           onClick={() => handleSort('totalSales')}
         >
           Total R$ {renderSortIndicator('totalSales')}

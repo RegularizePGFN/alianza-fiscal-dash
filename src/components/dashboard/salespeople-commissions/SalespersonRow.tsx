@@ -12,6 +12,11 @@ export function SalespersonRow({ person }: SalespersonRowProps) {
     <tr className="border-b border-gray-100">
       <td className="py-3 text-center">{person.name}</td>
       <td className="text-center py-3">{person.salesCount}</td>
+      <td className="text-center py-3 font-medium">
+        <span className={person.zeroDaysCount > 5 ? 'text-red-600' : 'text-gray-600'}>
+          {person.zeroDaysCount}
+        </span>
+      </td>
       <td className="text-center py-3">
         {person.totalSales.toLocaleString('pt-BR', {
           style: 'currency',

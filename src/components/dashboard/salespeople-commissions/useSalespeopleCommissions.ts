@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { SalespersonCommission, SortColumn, SortDirection, SummaryTotals } from "./types";
 import { getBusinessDaysInMonth, getBusinessDaysElapsedUntilToday } from "./utils";
 import { COMMISSION_GOAL_AMOUNT, COMMISSION_RATE_ABOVE_GOAL, COMMISSION_RATE_BELOW_GOAL } from "@/lib/constants";
+import { format, isWeekend } from "date-fns";
 
 export function useSalespeopleCommissions() {
   const [salespeople, setSalespeople] = useState<SalespersonCommission[]>([]);
@@ -73,6 +74,9 @@ export function useSalespeopleCommissions() {
           return;
         }
         
+        // Get all business days of the current month up to today
+        const allBusinessDays = getAllBusinessDaysUntilToday(currentMonth, currentYear);
+        
         const commissionData = await Promise.all(
           profilesData.map(async (profile) => {
             const startDate = `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`;
@@ -119,6 +123,14 @@ export function useSalespeopleCommissions() {
             const remainingAmount = goalAmount - totalSales;
             const remainingDailyTarget = businessDaysRemaining > 0 ? remainingAmount / businessDaysRemaining : 0;
             
+            // Calculate zero days count - days when the salesperson had no sales
+            const salesDates = new Set(
+              salesData?.map(sale => sale.sale_date) || []
+            );
+            
+            // Count business days with zero sales
+            const zeroDaysCount = allBusinessDays.filter(day => !salesDates.has(day)).length;
+            
             return {
               id: profile.id,
               name: profile.name || "Sem nome",
@@ -131,6 +143,7 @@ export function useSalespeopleCommissions() {
               metaGap,
               expectedProgress,
               remainingDailyTarget,
+              zeroDaysCount, // New field for days with zero sales
             };
           })
         );
@@ -154,6 +167,27 @@ export function useSalespeopleCommissions() {
     fetchSalespeopleCommissions();
   }, []);
   
+  // Get all business days of the current month until today
+  function getAllBusinessDaysUntilToday(month: number, year: number): string[] {
+    const result: string[] = [];
+    const today = new Date();
+    const lastDay = today.getDate();
+    
+    for (let day = 1; day <= lastDay; day++) {
+      const date = new Date(year, month - 1, day);
+      if (date > today) break; // Don't include future days
+      
+      // Skip weekends
+      if (!isWeekend(date)) {
+        // Format as YYYY-MM-DD to match database format
+        const formattedDate = format(date, 'yyyy-MM-dd');
+        result.push(formattedDate);
+      }
+    }
+    
+    return result;
+  }
+  
   // Calculate summary totals
   const summaryTotals: SummaryTotals = {
     salesCount: salespeople.reduce((sum, person) => sum + person.salesCount, 0),
@@ -166,6 +200,7 @@ export function useSalespeopleCommissions() {
     metaGap: salespeople.reduce((sum, person) => sum + person.metaGap, 0),
     remainingDailyTarget: salespeople.reduce((sum, person) => sum + person.remainingDailyTarget, 0),
     projectedCommission: salespeople.reduce((sum, person) => sum + person.projectedCommission, 0),
+    zeroDaysCount: 0, // Not applicable for summary row
   };
   
   return {
