@@ -30,12 +30,33 @@ interface WeeklyDataResult {
   weeklyData: Array<SalespersonData & { position: number }>;
   availableWeeks: number[];
   currentWeek: number;
+  weeklyTotals: {
+    [week: number]: {
+      count: number;
+      amount: number;
+    };
+  };
+  weeklyGoals: {
+    [id: string]: {
+      [week: number]: number;
+    };
+  };
 }
+
+// Helper constants for goal calculations
+const BUSINESS_DAYS_IN_MONTH = 22; // Average number of business days in a month
+const WEEKLY_GOAL_MULTIPLIER = 5; // Number of business days in a week
 
 export function SalespersonWeeklyCard({ salesData, isLoading = false }: SalespersonWeeklyCardProps) {
   // Process weekly data
-  const { weeklyData, availableWeeks, currentWeek } = useMemo<WeeklyDataResult>(() => {
-    if (!salesData.length) return { weeklyData: [], availableWeeks: [], currentWeek: 1 };
+  const { weeklyData, availableWeeks, currentWeek, weeklyTotals, weeklyGoals } = useMemo<WeeklyDataResult>(() => {
+    if (!salesData.length) return { 
+      weeklyData: [], 
+      availableWeeks: [], 
+      currentWeek: 1,
+      weeklyTotals: {},
+      weeklyGoals: {}
+    };
     
     // Get current date info
     const now = new Date();
@@ -53,6 +74,9 @@ export function SalespersonWeeklyCard({ salesData, isLoading = false }: Salesper
     
     // Initialize salesperson data map
     const salespeople: Record<string, SalespersonData> = {};
+    
+    // Initialize weekly totals
+    const weeklyTotals: { [week: number]: { count: number; amount: number } } = {};
     
     // Process each sale into the weekly structure
     salesData.forEach(sale => {
@@ -95,11 +119,23 @@ export function SalespersonWeeklyCard({ salesData, isLoading = false }: Salesper
         };
       }
       
+      // Initialize weekly totals if not exists
+      if (!weeklyTotals[saleWeek]) {
+        weeklyTotals[saleWeek] = {
+          count: 0,
+          amount: 0
+        };
+      }
+      
       // Update sale data
       salespeople[id].weeklyStats[saleWeek].count += 1;
       salespeople[id].weeklyStats[saleWeek].amount += sale.gross_amount;
       salespeople[id].totalCount += 1;
       salespeople[id].totalAmount += sale.gross_amount;
+      
+      // Update weekly totals
+      weeklyTotals[saleWeek].count += 1;
+      weeklyTotals[saleWeek].amount += sale.gross_amount;
     });
     
     // Find all weeks that have data
@@ -107,6 +143,29 @@ export function SalespersonWeeklyCard({ salesData, isLoading = false }: Salesper
     Object.values(salespeople).forEach(person => {
       Object.keys(person.weeklyStats).forEach(week => {
         weeksWithData.add(parseInt(week));
+      });
+    });
+    
+    // Calculate approximate monthly and weekly goals for each salesperson
+    const weeklyGoals: { [id: string]: { [week: number]: number } } = {};
+    
+    // Estimate goals based on average sales
+    const totalSales = Object.values(salespeople).reduce((sum, person) => sum + person.totalAmount, 0);
+    const avgSalesPerPerson = totalSales / (Object.keys(salespeople).length || 1);
+    
+    Object.values(salespeople).forEach(person => {
+      // Initialize goals for this salesperson
+      weeklyGoals[person.id] = {};
+      
+      // Calculate monthly goal (approximation)
+      const monthlyGoal = Math.max(avgSalesPerPerson * 1.1, person.totalAmount * 1.1); // 10% more than current total
+      
+      // Calculate daily goal
+      const dailyGoal = monthlyGoal / BUSINESS_DAYS_IN_MONTH;
+      
+      // Set weekly goal for each available week
+      Array.from(weeksWithData).forEach(week => {
+        weeklyGoals[person.id][week] = dailyGoal * WEEKLY_GOAL_MULTIPLIER;
       });
     });
     
@@ -124,7 +183,9 @@ export function SalespersonWeeklyCard({ salesData, isLoading = false }: Salesper
     return {
       weeklyData: sortedSalespeople,
       availableWeeks,
-      currentWeek
+      currentWeek,
+      weeklyTotals,
+      weeklyGoals
     };
   }, [salesData]);
 
@@ -134,6 +195,18 @@ export function SalespersonWeeklyCard({ salesData, isLoading = false }: Salesper
       case 2: return "bg-slate-400 dark:bg-slate-500";
       case 3: return "bg-amber-700 dark:bg-amber-800";
       default: return "bg-slate-200 dark:bg-slate-700";
+    }
+  };
+  
+  const getGoalStatusColor = (personId: string, week: number, amount: number) => {
+    if (!weeklyGoals[personId] || !weeklyGoals[personId][week]) return "";
+    
+    const goal = weeklyGoals[personId][week];
+    
+    if (amount >= goal) {
+      return "bg-green-100 dark:bg-green-900/20"; // Light green for goal achieved
+    } else {
+      return "bg-red-100 dark:bg-red-900/20"; // Light red for goal not achieved
     }
   };
 
@@ -225,8 +298,16 @@ export function SalespersonWeeklyCard({ salesData, isLoading = false }: Salesper
                   const weekStats = person.weeklyStats[week] || { count: 0, amount: 0 };
                   return (
                     <React.Fragment key={`${person.id}-week-${week}`}>
-                      <TableCell className="text-center border-l">{weekStats.count}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(weekStats.amount)}</TableCell>
+                      <TableCell 
+                        className={`text-center border-l ${getGoalStatusColor(person.id, week, weekStats.amount)}`}
+                      >
+                        {weekStats.count}
+                      </TableCell>
+                      <TableCell 
+                        className={`text-right ${getGoalStatusColor(person.id, week, weekStats.amount)}`}
+                      >
+                        {formatCurrency(weekStats.amount)}
+                      </TableCell>
                     </React.Fragment>
                   );
                 })}
@@ -239,6 +320,35 @@ export function SalespersonWeeklyCard({ salesData, isLoading = false }: Salesper
                 </TableCell>
               </TableRow>
             ))}
+            
+            {/* Weekly Totals Row */}
+            <TableRow className="border-t-2 border-t-gray-300 dark:border-t-gray-600">
+              <TableCell colSpan={2} className="font-bold">
+                Total por Semana
+              </TableCell>
+              
+              {availableWeeks.map((week) => {
+                const weekTotal = weeklyTotals[week] || { count: 0, amount: 0 };
+                return (
+                  <React.Fragment key={`total-week-${week}`}>
+                    <TableCell className="text-center border-l font-bold">
+                      {weekTotal.count}
+                    </TableCell>
+                    <TableCell className="text-right font-bold">
+                      {formatCurrency(weekTotal.amount)}
+                    </TableCell>
+                  </React.Fragment>
+                );
+              })}
+              
+              {/* Grand Totals */}
+              <TableCell className="text-center border-l font-bold bg-muted/30">
+                {Object.values(weeklyTotals).reduce((sum, week) => sum + week.count, 0)}
+              </TableCell>
+              <TableCell className="text-right font-bold bg-muted/30">
+                {formatCurrency(Object.values(weeklyTotals).reduce((sum, week) => sum + week.amount, 0))}
+              </TableCell>
+            </TableRow>
             
             {weeklyData.length === 0 && (
               <TableRow>
