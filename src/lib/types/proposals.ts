@@ -36,6 +36,11 @@ export interface ExtractedData {
   installmentDates?: string; // JSON string representation of installment payment dates
   // Show installment fees option
   showFeesInstallments?: string; // Whether to show installment fees in the proposal ("true" or "false")
+  // Executive data fields
+  includeExecutiveData?: string; // Whether to include executive data in the proposal ("true" or "false")
+  executiveName?: string; // Name of the executive
+  executiveEmail?: string; // Email of the executive
+  executivePhone?: string; // Phone of the executive (optional)
 }
 
 export interface Proposal {
