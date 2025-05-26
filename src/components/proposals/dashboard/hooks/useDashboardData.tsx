@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
+import { UserRole } from '@/lib/types';
 import { 
   ProposalData, 
   UserData, 
@@ -34,12 +35,22 @@ export function useDashboardData() {
         const startDate = monthStart.toISOString();
         const endDate = monthEnd.toISOString();
         
+        // Check if user is admin to fetch all proposals or just their own
+        const isAdmin = user.role === UserRole.ADMIN;
+        
         // Fetch proposals for the current month
-        const { data: proposals, error: proposalsError } = await supabase
+        let query = supabase
           .from('proposals')
           .select('id, user_id, created_at, total_debt, discounted_value, fees_value')
           .gte('created_at', startDate)
           .lte('created_at', endDate);
+        
+        // Only filter by user_id if not an admin
+        if (!isAdmin) {
+          query = query.eq('user_id', user.id);
+        }
+        
+        const { data: proposals, error: proposalsError } = await query;
         
         if (proposalsError) {
           console.error('Error fetching proposals:', proposalsError);
