@@ -56,10 +56,11 @@ export default function UsersPage() {
   }, [isProcessing]);
   
   const handleSuccess = useCallback(() => {
-    // Add delay to ensure database has time to update and force refresh
+    // Immediate data refresh without delays
     setIsProcessing(true);
-    setTimeout(() => {
-      fetchUsers();
+    
+    // Force refresh the users data
+    fetchUsers(true).then(() => {
       setIsProcessing(false);
       setIsFormOpen(false);
       setIsDeleteDialogOpen(false);
@@ -67,14 +68,18 @@ export default function UsersPage() {
       
       toast({
         title: "Sucesso",
-        description: "Operação realizada com sucesso. Recarregando dados...",
+        description: "Operação realizada com sucesso.",
       });
-
-      // Force a page refresh to ensure all components get the updated data
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-    }, 500);
+    }).catch((error) => {
+      console.error("Error refreshing users:", error);
+      setIsProcessing(false);
+      
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar os dados. Por favor, recarregue a página.",
+        variant: "destructive",
+      });
+    });
   }, [fetchUsers, toast]);
   
   // Check for user role - IMPORTANT: We're not using early return as it would break hooks

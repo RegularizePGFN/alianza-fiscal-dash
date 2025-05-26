@@ -173,8 +173,10 @@ export function UserFormModal({
         });
       }
 
-      // Call these functions only after successful operation
+      // Call success callback first to trigger data refresh
       onSuccess();
+      
+      // Close modal after successful operation
       onClose();
     } catch (error: any) {
       console.error("User operation error:", error);

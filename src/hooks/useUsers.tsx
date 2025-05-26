@@ -16,19 +16,25 @@ export function useUsers() {
   const isFetchingRef = useRef(false);
   
   // Fetch users from Supabase
-  const fetchUsers = async () => {
-    // Evitar chamadas duplicadas
-    if (isFetchingRef.current) return;
+  const fetchUsers = async (forceRefresh = false) => {
+    // Evitar chamadas duplicadas, mas permitir refresh forçado
+    if (isFetchingRef.current && !forceRefresh) return;
     
     isFetchingRef.current = true;
     setIsLoading(true);
     setError(null);
     
     try {
+      // Clear cache if forcing refresh
+      if (forceRefresh) {
+        console.log("Force refreshing users data...");
+      }
+      
       // Fetch profiles directly from the profiles table
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
-        .select("*");
+        .select("*")
+        .order('created_at', { ascending: false });
         
       if (profilesError) {
         console.error("Error fetching profiles:", profilesError);
@@ -40,7 +46,7 @@ export function useUsers() {
       if (!profilesData || profilesData.length === 0) {
         setUsers([]);
         setIsLoading(false);
-        isFetchingRef.current = false; // Important: reset the flag before returning
+        isFetchingRef.current = false;
         return;
       }
       
@@ -74,7 +80,6 @@ export function useUsers() {
       });
     } finally {
       setIsLoading(false);
-      // Importante: resetar a flag após a conclusão
       isFetchingRef.current = false;
     }
   };
