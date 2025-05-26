@@ -135,16 +135,17 @@ export const formatWeekRange = (range: WeekRange): string => {
   return `${startDay}-${endDay} ${month}`;
 };
 
-// Calculate which week a date belongs to based on actual week ranges
+// Calculate which week a date belongs to based on actual week ranges - UNIFIED LOGIC
 const calculateWeekNumber = (date: Date, weekRanges: WeekRange[]): number => {
+  // First try to find in the calculated week ranges
   for (const range of weekRanges) {
     if (date >= range.startDate && date <= range.endDate) {
-      console.log(`Date ${format(date, 'dd/MM/yyyy')} belongs to week ${range.weekNumber}`);
+      console.log(`Date ${format(date, 'dd/MM/yyyy')} belongs to week ${range.weekNumber} (range match)`);
       return range.weekNumber;
     }
   }
   
-  // If not found in any range, try to determine by position in month
+  // If not found in ranges, calculate based on business days from start of month
   const currentMonth = date.getMonth();
   const currentYear = date.getFullYear();
   
@@ -163,7 +164,7 @@ const calculateWeekNumber = (date: Date, weekRanges: WeekRange[]): number => {
   
   // Calculate week based on business days (5 business days per week)
   const weekNumber = Math.ceil(businessDaysCount / 5);
-  console.log(`Fallback: Date ${format(date, 'dd/MM/yyyy')} assigned to week ${weekNumber} (business day #${businessDaysCount})`);
+  console.log(`Date ${format(date, 'dd/MM/yyyy')} assigned to week ${weekNumber} via business day calculation (business day #${businessDaysCount})`);
   
   return weekNumber;
 };
@@ -186,7 +187,7 @@ export const processWeeklyData = (salesData: Sale[]): WeeklyDataResult => {
   // Calculate week date ranges first
   const weekRanges = calculateWeekDateRanges();
   
-  // Calculate current week using the week ranges
+  // Calculate current week using the SAME logic as sales
   const currentWeek = calculateWeekNumber(now, weekRanges);
   
   console.log(`Current date: ${format(now, 'dd/MM/yyyy')}, calculated as week ${currentWeek}`);
@@ -206,7 +207,7 @@ export const processWeeklyData = (salesData: Sale[]): WeeklyDataResult => {
       return;
     }
     
-    // Calculate week number for this sale using week ranges
+    // Calculate week number for this sale using the SAME unified logic
     const saleWeek = calculateWeekNumber(saleDate, weekRanges);
     
     // Allow up to week 8 if needed (some months might have more weeks)
@@ -257,7 +258,7 @@ export const processWeeklyData = (salesData: Sale[]): WeeklyDataResult => {
     weeklyTotals[saleWeek].count += 1;
     weeklyTotals[saleWeek].amount += sale.gross_amount;
     
-    console.log(`Sale on ${sale.sale_date} assigned to week ${saleWeek}`);
+    console.log(`Sale on ${sale.sale_date} assigned to week ${saleWeek} (${sale.salesperson_name})`);
   });
   
   // Find all weeks that have data
@@ -273,7 +274,10 @@ export const processWeeklyData = (salesData: Sale[]): WeeklyDataResult => {
     weeksWithData.add(parseInt(week));
   });
   
-  // Ensure we include all weeks up to current week even if no sales
+  // IMPORTANT: Always include current week even if no sales yet
+  weeksWithData.add(currentWeek);
+  
+  // Include all weeks up to current week
   for (let week = 1; week <= currentWeek; week++) {
     weeksWithData.add(week);
   }
@@ -316,6 +320,7 @@ export const processWeeklyData = (salesData: Sale[]): WeeklyDataResult => {
   const availableWeeks = Array.from(weeksWithData).sort((a, b) => a - b);
   
   console.log(`Final available weeks: ${availableWeeks.join(', ')}`);
+  console.log(`Weekly totals:`, weeklyTotals);
   
   return {
     weeklyData: sortedSalespeople,
