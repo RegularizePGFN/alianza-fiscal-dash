@@ -56,11 +56,13 @@ export default function UsersPage() {
   }, [isProcessing]);
   
   const handleSuccess = useCallback(() => {
-    // Immediate data refresh without delays
+    // Force immediate refresh without delay
     setIsProcessing(true);
+    console.log("Forcing immediate data refresh after user operation...");
     
-    // Force refresh the users data
+    // Force refresh the users data with fresh database query
     fetchUsers(true).then(() => {
+      console.log("Data refresh completed successfully");
       setIsProcessing(false);
       setIsFormOpen(false);
       setIsDeleteDialogOpen(false);
@@ -106,7 +108,7 @@ export default function UsersPage() {
               users={users}
               isLoading={isLoading}
               error={error}
-              onRetry={fetchUsers}
+              onRetry={() => fetchUsers(true)}
               onEditUser={handleEditUser}
               onDeleteUser={handleDeleteUser}
             />

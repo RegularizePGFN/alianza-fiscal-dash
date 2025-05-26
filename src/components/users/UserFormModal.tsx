@@ -96,13 +96,16 @@ export function UserFormModal({
         // Update existing user
         console.log("Updating user role to:", formData.role);
         
+        // Convert UserRole enum to string for database storage
+        const roleString = formData.role === UserRole.ADMIN ? 'admin' : 'vendedor';
+        
         // First update the profile directly in the profiles table
         const { error: profileUpdateError } = await supabase
           .from('profiles')
           .update({
             name: formData.name,
             email: formData.email,
-            role: formData.role
+            role: roleString
           })
           .eq('id', user.id);
         
@@ -111,6 +114,8 @@ export function UserFormModal({
           throw profileUpdateError;
         }
 
+        console.log("Profile updated successfully with role:", roleString);
+
         // Update user metadata (including role)
         const { error: authUpdateError } = await supabase.auth.admin.updateUserById(
           user.id,
@@ -118,7 +123,7 @@ export function UserFormModal({
             email: formData.email, 
             user_metadata: {
               name: formData.name,
-              role: formData.role
+              role: roleString
             }
           }
         );
@@ -153,13 +158,15 @@ export function UserFormModal({
         });
       } else {
         // Create new user
+        const roleString = formData.role === UserRole.ADMIN ? 'admin' : 'vendedor';
+        
         const { data: signUpData, error: signUpError } = await supabase.auth.admin.createUser({
           email: formData.email,
           password: formData.password,
           email_confirm: true,
           user_metadata: {
             name: formData.name,
-            role: formData.role
+            role: roleString
           },
         });
 
@@ -173,7 +180,7 @@ export function UserFormModal({
         });
       }
 
-      // Call success callback first to trigger data refresh
+      // Call success callback first to trigger immediate data refresh
       onSuccess();
       
       // Close modal after successful operation

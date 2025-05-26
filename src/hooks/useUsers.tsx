@@ -30,7 +30,7 @@ export function useUsers() {
         console.log("Force refreshing users data...");
       }
       
-      // Fetch profiles directly from the profiles table
+      // Fetch profiles directly from the profiles table with fresh data
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
         .select("*")
@@ -41,7 +41,7 @@ export function useUsers() {
         throw profilesError;
       }
       
-      console.log("Profiles data:", profilesData);
+      console.log("Fresh profiles data:", profilesData);
       
       if (!profilesData || profilesData.length === 0) {
         setUsers([]);
@@ -50,14 +50,14 @@ export function useUsers() {
         return;
       }
       
-      // Convert profiles to users
+      // Convert profiles to users with fresh role mapping
       const mappedUsers = profilesData.map(profile => {
         const email = profile.email || '';
         
         // Use the mapUserRole function to convert string role to UserRole enum
         const userRole = mapUserRole(profile.role, email);
         
-        console.log(`Mapping user ${profile.name} with role ${profile.role} to ${userRole}`);
+        console.log(`Mapping user ${profile.name} with role "${profile.role}" to ${userRole}`);
         
         return {
           id: profile.id,
@@ -68,7 +68,7 @@ export function useUsers() {
         };
       });
       
-      console.log("Final users list:", mappedUsers);
+      console.log("Final users list with updated roles:", mappedUsers);
       setUsers(mappedUsers);
     } catch (err: any) {
       console.error("Error fetching users:", err);
