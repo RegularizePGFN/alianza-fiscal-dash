@@ -56,7 +56,7 @@ export default function UsersPage() {
   }, [isProcessing]);
   
   const handleSuccess = useCallback(() => {
-    // Add delay to ensure database has time to update
+    // Add delay to ensure database has time to update and force refresh
     setIsProcessing(true);
     setTimeout(() => {
       fetchUsers();
@@ -67,8 +67,13 @@ export default function UsersPage() {
       
       toast({
         title: "Sucesso",
-        description: "Operação realizada com sucesso",
+        description: "Operação realizada com sucesso. Recarregando dados...",
       });
+
+      // Force a page refresh to ensure all components get the updated data
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     }, 500);
   }, [fetchUsers, toast]);
   

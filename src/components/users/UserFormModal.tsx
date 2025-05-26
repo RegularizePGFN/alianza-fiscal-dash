@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/contexts/auth";
 
 interface UserFormModalProps {
   isOpen: boolean;
@@ -24,6 +25,7 @@ export function UserFormModal({
   onSuccess,
 }: UserFormModalProps) {
   const { toast } = useToast();
+  const { refreshUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -94,6 +96,21 @@ export function UserFormModal({
         // Update existing user
         console.log("Updating user role to:", formData.role);
         
+        // First update the profile directly in the profiles table
+        const { error: profileUpdateError } = await supabase
+          .from('profiles')
+          .update({
+            name: formData.name,
+            email: formData.email,
+            role: formData.role
+          })
+          .eq('id', user.id);
+        
+        if (profileUpdateError) {
+          console.error("Error updating profile:", profileUpdateError);
+          throw profileUpdateError;
+        }
+
         // Update user metadata (including role)
         const { error: authUpdateError } = await supabase.auth.admin.updateUserById(
           user.id,
@@ -106,7 +123,10 @@ export function UserFormModal({
           }
         );
         
-        if (authUpdateError) throw authUpdateError;
+        if (authUpdateError) {
+          console.error("Error updating auth metadata:", authUpdateError);
+          // Don't throw here as the profile update was successful
+        }
 
         // Update password only if provided
         if (formData.password) {
@@ -115,7 +135,16 @@ export function UserFormModal({
             { password: formData.password }
           );
           
-          if (passwordError) throw passwordError;
+          if (passwordError) {
+            console.error("Error updating password:", passwordError);
+            throw passwordError;
+          }
+        }
+
+        // If we're updating the current user's own profile, refresh the auth context
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        if (currentUser && currentUser.id === user.id) {
+          await refreshUser();
         }
 
         toast({
