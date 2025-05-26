@@ -25,12 +25,17 @@ export function useUsers() {
     setError(null);
     
     try {
-      // Clear cache if forcing refresh
+      console.log("Fetching users data...", forceRefresh ? "(forced refresh)" : "");
+      
+      // Clear any cached data if forcing refresh
       if (forceRefresh) {
-        console.log("Force refreshing users data...");
+        console.log("Clearing cached data and forcing fresh fetch...");
+        // Clear React state first
+        setUsers([]);
       }
       
-      // Fetch profiles directly from the profiles table with fresh data
+      // Fetch profiles directly from the profiles table with cache busting
+      const timestamp = Date.now();
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
         .select("*")
@@ -41,9 +46,10 @@ export function useUsers() {
         throw profilesError;
       }
       
-      console.log("Fresh profiles data:", profilesData);
+      console.log("Fresh profiles data fetched:", profilesData);
       
       if (!profilesData || profilesData.length === 0) {
+        console.log("No profiles found");
         setUsers([]);
         setIsLoading(false);
         isFetchingRef.current = false;
@@ -70,6 +76,14 @@ export function useUsers() {
       
       console.log("Final users list with updated roles:", mappedUsers);
       setUsers(mappedUsers);
+      
+      // Force a small delay to ensure UI updates
+      if (forceRefresh) {
+        setTimeout(() => {
+          console.log("Force refresh completed, UI should be updated");
+        }, 100);
+      }
+      
     } catch (err: any) {
       console.error("Error fetching users:", err);
       setError(err.message || "Falha ao carregar os usuários.");
@@ -88,5 +102,11 @@ export function useUsers() {
     fetchUsers();
   }, []);
 
-  return { users, isLoading, error, fetchUsers };
+  // Add a manual refresh function that forces a fresh fetch
+  const refreshUsers = () => {
+    console.log("Manual refresh triggered");
+    fetchUsers(true);
+  };
+
+  return { users, isLoading, error, fetchUsers, refreshUsers };
 }

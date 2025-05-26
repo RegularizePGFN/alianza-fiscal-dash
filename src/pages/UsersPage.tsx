@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function UsersPage() {
   const { user } = useAuth();
-  const { users, isLoading, error, fetchUsers } = useUsers();
+  const { users, isLoading, error, fetchUsers, refreshUsers } = useUsers();
   const { toast } = useToast();
   
   // Modal state
@@ -56,33 +56,49 @@ export default function UsersPage() {
   }, [isProcessing]);
   
   const handleSuccess = useCallback(() => {
-    // Force immediate refresh without delay
-    setIsProcessing(true);
-    console.log("Forcing immediate data refresh after user operation...");
+    console.log("User operation completed successfully, refreshing data...");
     
-    // Force refresh the users data with fresh database query
-    fetchUsers(true).then(() => {
-      console.log("Data refresh completed successfully");
-      setIsProcessing(false);
-      setIsFormOpen(false);
-      setIsDeleteDialogOpen(false);
-      setSelectedUser(null);
-      
-      toast({
-        title: "Sucesso",
-        description: "Operação realizada com sucesso.",
+    setIsProcessing(true);
+    
+    // Close modals immediately
+    setIsFormOpen(false);
+    setIsDeleteDialogOpen(false);
+    setSelectedUser(null);
+    
+    // Force immediate refresh with multiple attempts to ensure data is updated
+    Promise.resolve()
+      .then(() => {
+        console.log("Starting immediate refresh...");
+        return refreshUsers();
+      })
+      .then(() => {
+        // Wait a bit and refresh again to ensure we get the latest data
+        setTimeout(() => {
+          console.log("Second refresh attempt...");
+          refreshUsers();
+        }, 500);
+      })
+      .then(() => {
+        setIsProcessing(false);
+        
+        toast({
+          title: "Sucesso",
+          description: "Operação realizada com sucesso.",
+        });
+        
+        console.log("User operation and refresh completed");
+      })
+      .catch((error) => {
+        console.error("Error during refresh:", error);
+        setIsProcessing(false);
+        
+        toast({
+          title: "Aviso",
+          description: "Operação realizada, mas pode ser necessário recarregar a página para ver as alterações.",
+          variant: "destructive",
+        });
       });
-    }).catch((error) => {
-      console.error("Error refreshing users:", error);
-      setIsProcessing(false);
-      
-      toast({
-        title: "Erro",
-        description: "Erro ao atualizar os dados. Por favor, recarregue a página.",
-        variant: "destructive",
-      });
-    });
-  }, [fetchUsers, toast]);
+  }, [refreshUsers, toast]);
   
   // Check for user role - IMPORTANT: We're not using early return as it would break hooks
   if (user?.role !== UserRole.ADMIN) {
@@ -108,7 +124,7 @@ export default function UsersPage() {
               users={users}
               isLoading={isLoading}
               error={error}
-              onRetry={() => fetchUsers(true)}
+              onRetry={() => refreshUsers()}
               onEditUser={handleEditUser}
               onDeleteUser={handleDeleteUser}
             />

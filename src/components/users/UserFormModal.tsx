@@ -99,13 +99,16 @@ export function UserFormModal({
         // Convert UserRole enum to string for database storage
         const roleString = formData.role === UserRole.ADMIN ? 'admin' : 'vendedor';
         
-        // First update the profile directly in the profiles table
+        console.log(`Updating user ${user.id} with role: ${roleString}`);
+        
+        // First update the profile directly in the profiles table with timestamp to force update
         const { error: profileUpdateError } = await supabase
           .from('profiles')
           .update({
             name: formData.name,
             email: formData.email,
-            role: roleString
+            role: roleString,
+            updated_at: new Date().toISOString() // Force timestamp update
           })
           .eq('id', user.id);
         
@@ -116,40 +119,65 @@ export function UserFormModal({
 
         console.log("Profile updated successfully with role:", roleString);
 
-        // Update user metadata (including role)
-        const { error: authUpdateError } = await supabase.auth.admin.updateUserById(
-          user.id,
-          { 
-            email: formData.email, 
-            user_metadata: {
-              name: formData.name,
-              role: roleString
+        // Also update auth metadata for consistency
+        try {
+          const { error: authUpdateError } = await supabase.auth.admin.updateUserById(
+            user.id,
+            { 
+              email: formData.email,
+              user_metadata: {
+                name: formData.name,
+                role: roleString
+              }
             }
+          );
+          
+          if (authUpdateError) {
+            console.warn("Auth metadata update warning (non-critical):", authUpdateError);
           }
-        );
-        
-        if (authUpdateError) {
-          console.error("Error updating auth metadata:", authUpdateError);
-          // Don't throw here as the profile update was successful
+        } catch (authError) {
+          console.warn("Auth update failed (non-critical):", authError);
         }
 
         // Update password only if provided
         if (formData.password) {
-          const { error: passwordError } = await supabase.auth.admin.updateUserById(
-            user.id,
-            { password: formData.password }
-          );
-          
-          if (passwordError) {
-            console.error("Error updating password:", passwordError);
-            throw passwordError;
+          try {
+            const { error: passwordError } = await supabase.auth.admin.updateUserById(
+              user.id,
+              { password: formData.password }
+            );
+            
+            if (passwordError) {
+              console.error("Error updating password:", passwordError);
+              throw passwordError;
+            }
+          } catch (pwdError) {
+            console.error("Password update failed:", pwdError);
+            throw pwdError;
           }
         }
 
         // If we're updating the current user's own profile, refresh the auth context
-        const { data: { user: currentUser } } = await supabase.auth.getUser();
-        if (currentUser && currentUser.id === user.id) {
-          await refreshUser();
+        try {
+          const { data: { user: currentUser } } = await supabase.auth.getUser();
+          if (currentUser && currentUser.id === user.id) {
+            await refreshUser();
+          }
+        } catch (authRefreshError) {
+          console.warn("Auth refresh failed (non-critical):", authRefreshError);
+        }
+
+        // Verify the update was successful by re-fetching the profile
+        const { data: verifyData, error: verifyError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+          
+        if (verifyError) {
+          console.warn("Verification fetch failed:", verifyError);
+        } else {
+          console.log("Verification: Profile role is now:", verifyData.role);
         }
 
         toast({
@@ -180,11 +208,12 @@ export function UserFormModal({
         });
       }
 
-      // Call success callback first to trigger immediate data refresh
+      // Wait a moment to ensure database consistency
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Call success callback to trigger data refresh
       onSuccess();
       
-      // Close modal after successful operation
-      onClose();
     } catch (error: any) {
       console.error("User operation error:", error);
       toast({
@@ -197,7 +226,6 @@ export function UserFormModal({
     }
   };
 
-  // Modificado para não fechar o dialog quando está carregando
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
       if (!open && !isLoading) {
