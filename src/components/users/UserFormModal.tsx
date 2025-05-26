@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { useAuth } from "@/contexts/auth";
 
 interface UserFormModalProps {
   isOpen: boolean;
@@ -25,7 +24,6 @@ export function UserFormModal({
   onSuccess,
 }: UserFormModalProps) {
   const { toast } = useToast();
-  const { refreshUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -96,88 +94,28 @@ export function UserFormModal({
         // Update existing user
         console.log("Updating user role to:", formData.role);
         
-        // Convert UserRole enum to string for database storage
-        const roleString = formData.role === UserRole.ADMIN ? 'admin' : 'vendedor';
-        
-        console.log(`Updating user ${user.id} with role: ${roleString}`);
-        
-        // First update the profile directly in the profiles table with timestamp to force update
-        const { error: profileUpdateError } = await supabase
-          .from('profiles')
-          .update({
-            name: formData.name,
-            email: formData.email,
-            role: roleString,
-            updated_at: new Date().toISOString() // Force timestamp update
-          })
-          .eq('id', user.id);
-        
-        if (profileUpdateError) {
-          console.error("Error updating profile:", profileUpdateError);
-          throw profileUpdateError;
-        }
-
-        console.log("Profile updated successfully with role:", roleString);
-
-        // Also update auth metadata for consistency
-        try {
-          const { error: authUpdateError } = await supabase.auth.admin.updateUserById(
-            user.id,
-            { 
-              email: formData.email,
-              user_metadata: {
-                name: formData.name,
-                role: roleString
-              }
+        // Update user metadata (including role)
+        const { error: authUpdateError } = await supabase.auth.admin.updateUserById(
+          user.id,
+          { 
+            email: formData.email, 
+            user_metadata: {
+              name: formData.name,
+              role: formData.role
             }
-          );
-          
-          if (authUpdateError) {
-            console.warn("Auth metadata update warning (non-critical):", authUpdateError);
           }
-        } catch (authError) {
-          console.warn("Auth update failed (non-critical):", authError);
-        }
+        );
+        
+        if (authUpdateError) throw authUpdateError;
 
         // Update password only if provided
         if (formData.password) {
-          try {
-            const { error: passwordError } = await supabase.auth.admin.updateUserById(
-              user.id,
-              { password: formData.password }
-            );
-            
-            if (passwordError) {
-              console.error("Error updating password:", passwordError);
-              throw passwordError;
-            }
-          } catch (pwdError) {
-            console.error("Password update failed:", pwdError);
-            throw pwdError;
-          }
-        }
-
-        // If we're updating the current user's own profile, refresh the auth context
-        try {
-          const { data: { user: currentUser } } = await supabase.auth.getUser();
-          if (currentUser && currentUser.id === user.id) {
-            await refreshUser();
-          }
-        } catch (authRefreshError) {
-          console.warn("Auth refresh failed (non-critical):", authRefreshError);
-        }
-
-        // Verify the update was successful by re-fetching the profile
-        const { data: verifyData, error: verifyError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
+          const { error: passwordError } = await supabase.auth.admin.updateUserById(
+            user.id,
+            { password: formData.password }
+          );
           
-        if (verifyError) {
-          console.warn("Verification fetch failed:", verifyError);
-        } else {
-          console.log("Verification: Profile role is now:", verifyData.role);
+          if (passwordError) throw passwordError;
         }
 
         toast({
@@ -186,15 +124,13 @@ export function UserFormModal({
         });
       } else {
         // Create new user
-        const roleString = formData.role === UserRole.ADMIN ? 'admin' : 'vendedor';
-        
         const { data: signUpData, error: signUpError } = await supabase.auth.admin.createUser({
           email: formData.email,
           password: formData.password,
           email_confirm: true,
           user_metadata: {
             name: formData.name,
-            role: roleString
+            role: formData.role
           },
         });
 
@@ -208,12 +144,9 @@ export function UserFormModal({
         });
       }
 
-      // Wait a moment to ensure database consistency
-      await new Promise(resolve => setTimeout(resolve, 200));
-      
-      // Call success callback to trigger data refresh
+      // Call these functions only after successful operation
       onSuccess();
-      
+      onClose();
     } catch (error: any) {
       console.error("User operation error:", error);
       toast({
@@ -226,6 +159,7 @@ export function UserFormModal({
     }
   };
 
+  // Modificado para não fechar o dialog quando está carregando
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
       if (!open && !isLoading) {

@@ -55,15 +55,8 @@ export function MonthlyGoalsSettings() {
         const email = profile.email?.toLowerCase() || '';
         const role = profile.role?.toLowerCase() || '';
         
-        console.log(`Checking user ${profile.name} with email ${email} and role ${role}`);
-        
-        // Check if user is salesperson based on role field OR not in admin emails
-        const isSalesperson = (role === 'vendedor' || role === 'salesperson') || 
-                             (!ADMIN_EMAILS.includes(email) && role !== 'admin');
-        
-        console.log(`User ${profile.name} is salesperson: ${isSalesperson}`);
-        
-        return isSalesperson;
+        // Not an admin if not in ADMIN_EMAILS and not explicitly 'admin' role
+        return !ADMIN_EMAILS.includes(email) && role !== 'admin';
       });
       
       console.log('Filtered salespeople:', salespeople);
@@ -157,7 +150,6 @@ export function MonthlyGoalsSettings() {
                       <div>
                         <div className="font-medium">{user.name}</div>
                         <div className="text-sm text-muted-foreground">{user.email}</div>
-                        <div className="text-xs text-gray-500">Função: {user.role}</div>
                       </div>
                       <Button size="sm" onClick={() => handleEditClick(user)}>
                         Editar

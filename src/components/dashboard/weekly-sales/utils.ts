@@ -51,8 +51,9 @@ export const getGoalStatusTextColor = (
   }
 };
 
-// Calculate week date ranges for the current month based on business days
+// Calculate week date ranges for the current month
 export const calculateWeekDateRanges = (): WeekRange[] => {
+  // Get current date info
   const now = new Date();
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
@@ -63,10 +64,10 @@ export const calculateWeekDateRanges = (): WeekRange[] => {
   // Create an array to hold our week ranges
   const weekRanges: WeekRange[] = [];
   
-  // Set up the current date pointer to first business day of month
+  // Set up the current date pointer
   let currentDate = new Date(firstDayOfMonth);
   let weekNumber = 1;
-  let startOfWeek: Date | null = null;
+  let startOfWeek = new Date(currentDate);
   
   // Iterate through all days of the month
   while (currentDate.getMonth() === currentMonth) {
@@ -76,41 +77,28 @@ export const calculateWeekDateRanges = (): WeekRange[] => {
     const isBusinessDay = dayOfWeek >= 1 && dayOfWeek <= 5;
     
     if (isBusinessDay) {
-      // If this is the first business day of a new week
-      if (!startOfWeek) {
+      // If this is the first business day we're processing
+      if (!startOfWeek || startOfWeek.getMonth() !== currentMonth) {
         startOfWeek = new Date(currentDate);
       }
       
-      // Check if it's the last business day of the week (Friday) or last business day of month
-      const isLastDayOfWeek = dayOfWeek === 5; // Friday
+      // Check if it's the last business day of the week (Friday) or last day of month
+      const isLastDayOfWeek = dayOfWeek === 5;
+      const tomorrow = new Date(currentDate);
+      tomorrow.setDate(currentDate.getDate() + 1);
+      const isLastDayOfMonth = tomorrow.getMonth() !== currentMonth;
       
-      // Check if this is the last business day of the month
-      let isLastBusinessDayOfMonth = false;
-      const tempDate = new Date(currentDate);
-      tempDate.setDate(tempDate.getDate() + 1);
-      
-      // Look ahead to see if there are more business days this month
-      while (tempDate.getMonth() === currentMonth) {
-        const tempDayOfWeek = tempDate.getDay();
-        if (tempDayOfWeek >= 1 && tempDayOfWeek <= 5) {
-          break; // Found another business day
-        }
-        tempDate.setDate(tempDate.getDate() + 1);
-      }
-      
-      if (tempDate.getMonth() !== currentMonth) {
-        isLastBusinessDayOfMonth = true;
-      }
-      
-      // If it's Friday or the last business day of month, end the week
-      if (isLastDayOfWeek || isLastBusinessDayOfMonth) {
+      // If it's Friday or the last day of month, end the week
+      if (isLastDayOfWeek || isLastDayOfMonth) {
+        // Add this week range
         weekRanges.push({
           weekNumber,
           startDate: new Date(startOfWeek),
           endDate: new Date(currentDate)
         });
         
-        startOfWeek = null;
+        // Reset start of week for next iteration and increment week number
+        startOfWeek = null as unknown as Date;
         weekNumber++;
       }
     }
@@ -119,9 +107,18 @@ export const calculateWeekDateRanges = (): WeekRange[] => {
     currentDate.setDate(currentDate.getDate() + 1);
   }
   
-  console.log(`Week ranges calculated:`, weekRanges.map(w => 
-    `Week ${w.weekNumber}: ${format(w.startDate, 'dd/MM')} - ${format(w.endDate, 'dd/MM')}`
-  ));
+  // Handle case where the month ends in the middle of a week
+  // If we have a start of week but no end yet, add it with the last day of the month
+  if (startOfWeek && startOfWeek.getMonth() === currentMonth) {
+    // Calculate the last day of the month
+    const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+    
+    weekRanges.push({
+      weekNumber,
+      startDate: new Date(startOfWeek),
+      endDate: new Date(lastDayOfMonth)
+    });
+  }
   
   return weekRanges;
 };
@@ -133,40 +130,6 @@ export const formatWeekRange = (range: WeekRange): string => {
   const month = format(range.endDate, 'MMM', { locale: ptBR });
   
   return `${startDay}-${endDay} ${month}`;
-};
-
-// Calculate which week a date belongs to based on actual week ranges - UNIFIED LOGIC
-const calculateWeekNumber = (date: Date, weekRanges: WeekRange[]): number => {
-  // First try to find in the calculated week ranges
-  for (const range of weekRanges) {
-    if (date >= range.startDate && date <= range.endDate) {
-      console.log(`Date ${format(date, 'dd/MM/yyyy')} belongs to week ${range.weekNumber} (range match)`);
-      return range.weekNumber;
-    }
-  }
-  
-  // If not found in ranges, calculate based on business days from start of month
-  const currentMonth = date.getMonth();
-  const currentYear = date.getFullYear();
-  
-  // Count business days from start of month to this date
-  const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
-  let businessDaysCount = 0;
-  let tempDate = new Date(firstDayOfMonth);
-  
-  while (tempDate <= date && tempDate.getMonth() === currentMonth) {
-    const dayOfWeek = tempDate.getDay();
-    if (dayOfWeek >= 1 && dayOfWeek <= 5) { // Monday to Friday
-      businessDaysCount++;
-    }
-    tempDate.setDate(tempDate.getDate() + 1);
-  }
-  
-  // Calculate week based on business days (5 business days per week)
-  const weekNumber = Math.ceil(businessDaysCount / 5);
-  console.log(`Date ${format(date, 'dd/MM/yyyy')} assigned to week ${weekNumber} via business day calculation (business day #${businessDaysCount})`);
-  
-  return weekNumber;
 };
 
 export const processWeeklyData = (salesData: Sale[]): WeeklyDataResult => {
@@ -184,13 +147,17 @@ export const processWeeklyData = (salesData: Sale[]): WeeklyDataResult => {
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
   
-  // Calculate week date ranges first
+  // Find first day of month and calculate first week start
+  const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+  const dayOfWeekForFirst = firstDayOfMonth.getDay(); // 0 for Sunday
+  const adjustedDayOfWeekForFirst = dayOfWeekForFirst === 0 ? 6 : dayOfWeekForFirst - 1;
+  
+  // Calculate current week (1-indexed)
+  const dayOfMonth = now.getDate();
+  const currentWeek = Math.ceil((dayOfMonth + adjustedDayOfWeekForFirst) / 7);
+  
+  // Calculate week date ranges
   const weekRanges = calculateWeekDateRanges();
-  
-  // Calculate current week using the SAME logic as sales
-  const currentWeek = calculateWeekNumber(now, weekRanges);
-  
-  console.log(`Current date: ${format(now, 'dd/MM/yyyy')}, calculated as week ${currentWeek}`);
   
   // Initialize salesperson data map
   const salespeople: Record<string, SalespersonData> = {};
@@ -207,11 +174,10 @@ export const processWeeklyData = (salesData: Sale[]): WeeklyDataResult => {
       return;
     }
     
-    // Calculate week number for this sale using the SAME unified logic
-    const saleWeek = calculateWeekNumber(saleDate, weekRanges);
+    const saleDayOfMonth = saleDate.getDate();
+    const saleWeek = Math.ceil((saleDayOfMonth + adjustedDayOfWeekForFirst) / 7);
     
-    // Allow up to week 8 if needed (some months might have more weeks)
-    if (saleWeek > 8) return;
+    if (saleWeek > 6) return; // Skip if it's beyond our tracking
     
     const id = sale.salesperson_id;
     const name = sale.salesperson_name || "Desconhecido";
@@ -257,8 +223,6 @@ export const processWeeklyData = (salesData: Sale[]): WeeklyDataResult => {
     // Update weekly totals
     weeklyTotals[saleWeek].count += 1;
     weeklyTotals[saleWeek].amount += sale.gross_amount;
-    
-    console.log(`Sale on ${sale.sale_date} assigned to week ${saleWeek} (${sale.salesperson_name})`);
   });
   
   // Find all weeks that have data
@@ -268,22 +232,6 @@ export const processWeeklyData = (salesData: Sale[]): WeeklyDataResult => {
       weeksWithData.add(parseInt(week));
     });
   });
-  
-  // Also include weeks from weeklyTotals to ensure we don't miss any
-  Object.keys(weeklyTotals).forEach(week => {
-    weeksWithData.add(parseInt(week));
-  });
-  
-  // IMPORTANT: Always include current week even if no sales yet
-  weeksWithData.add(currentWeek);
-  
-  // Include all weeks up to current week
-  for (let week = 1; week <= currentWeek; week++) {
-    weeksWithData.add(week);
-  }
-  
-  console.log(`Weeks with data found: ${Array.from(weeksWithData).sort((a, b) => a - b).join(', ')}`);
-  console.log(`Current week calculated as: ${currentWeek}`);
   
   // Calculate approximate monthly and weekly goals for each salesperson
   const weeklyGoals: { [id: string]: { [week: number]: number } } = {};
@@ -318,9 +266,6 @@ export const processWeeklyData = (salesData: Sale[]): WeeklyDataResult => {
   
   // Convert to array and sort available weeks
   const availableWeeks = Array.from(weeksWithData).sort((a, b) => a - b);
-  
-  console.log(`Final available weeks: ${availableWeeks.join(', ')}`);
-  console.log(`Weekly totals:`, weeklyTotals);
   
   return {
     weeklyData: sortedSalespeople,
