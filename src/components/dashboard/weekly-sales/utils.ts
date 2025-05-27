@@ -1,7 +1,7 @@
 
 import { Sale } from "@/lib/types";
 import { SalespersonData, WeeklyDataResult, WeekRange } from "./types";
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 // Helper constants for goal calculations
@@ -96,18 +96,35 @@ export const calculateBusinessDayWeeks = (year: number, month: number): WeekRang
 };
 
 // Calculate which week a given date belongs to
-export const getWeekNumberForDate = (date: Date, weekRanges: WeekRange[]): number | null => {
-  const dateTime = date.getTime();
+export const getWeekNumberForDate = (date: Date | string, weekRanges: WeekRange[]): number | null => {
+  // Handle both Date objects and date strings
+  let dateToCheck: Date;
+  if (typeof date === 'string') {
+    // Parse the date string (format: YYYY-MM-DD)
+    dateToCheck = parseISO(date);
+  } else {
+    dateToCheck = date;
+  }
+  
+  console.log(`Checking date ${format(dateToCheck, 'dd/MM/yyyy')} against week ranges`);
   
   for (const range of weekRanges) {
-    const startTime = range.startDate.getTime();
-    const endTime = range.endDate.getTime() + (24 * 60 * 60 * 1000 - 1); // End of day
+    const startDate = new Date(range.startDate);
+    const endDate = new Date(range.endDate);
     
-    if (dateTime >= startTime && dateTime <= endTime) {
+    // Set time to beginning of start date and end of end date for accurate comparison
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
+    
+    console.log(`  Week ${range.weekNumber}: ${format(startDate, 'dd/MM/yyyy')} to ${format(endDate, 'dd/MM/yyyy')}`);
+    
+    if (dateToCheck >= startDate && dateToCheck <= endDate) {
+      console.log(`  -> Date belongs to week ${range.weekNumber}`);
       return range.weekNumber;
     }
   }
   
+  console.log(`  -> Date does not belong to any week`);
   return null;
 };
 
@@ -146,7 +163,7 @@ export const processWeeklyData = (salesData: Sale[]): WeeklyDataResult => {
   // Calculate week ranges based on business days
   const weekRanges = calculateBusinessDayWeeks(currentYear, currentMonth);
   
-  // Find current week
+  // Find current week using current date
   const currentWeek = getWeekNumberForDate(now, weekRanges) || 1;
   console.log(`Current week: ${currentWeek}`);
   
@@ -158,8 +175,10 @@ export const processWeeklyData = (salesData: Sale[]): WeeklyDataResult => {
   
   // Process each sale into the weekly structure
   salesData.forEach(sale => {
-    const saleDate = new Date(sale.sale_date);
-    console.log(`Processing sale from ${sale.sale_date} (${format(saleDate, 'dd/MM/yyyy')})`);
+    console.log(`Processing sale from ${sale.sale_date}`);
+    
+    // Parse sale date - it comes as a string in format YYYY-MM-DD
+    const saleDate = parseISO(sale.sale_date);
     
     // Skip if not in the current month/year
     if (saleDate.getMonth() !== currentMonth - 1 || saleDate.getFullYear() !== currentYear) {
@@ -167,8 +186,8 @@ export const processWeeklyData = (salesData: Sale[]): WeeklyDataResult => {
       return;
     }
     
-    // Find which week this sale belongs to
-    const saleWeek = getWeekNumberForDate(saleDate, weekRanges);
+    // Find which week this sale belongs to using the sale_date string directly
+    const saleWeek = getWeekNumberForDate(sale.sale_date, weekRanges);
     
     if (!saleWeek) {
       console.log(`Could not determine week for sale date ${sale.sale_date}`);
