@@ -1,9 +1,9 @@
-
 import { parseISO } from 'date-fns';
 import { Sale } from "@/lib/types";
 import { SalespersonData, WeeklyDataResult } from "./types";
 import { BUSINESS_DAYS_IN_MONTH, WEEKLY_GOAL_MULTIPLIER } from "./constants";
-import { calculateBusinessDayWeeks, getWeekNumberForDate } from "./weekCalculations";
+import { calculateBusinessDayWeeks } from "./weekCalculations";
+import { getWeekNumberForDate } from "./dateUtils";
 
 export const processWeeklyData = (salesData: Sale[]): WeeklyDataResult => {
   if (!salesData.length) return { 
