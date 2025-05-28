@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { Sale } from "@/lib/types";
 import { PaginatedSalesTable } from "./PaginatedSalesTable";
 import { SalesFilter } from "./SalesFilter";
@@ -44,15 +45,32 @@ export function SalesContent({
   };
   
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {!loading && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 transition-colors">
-          <div className="flex flex-col space-y-4">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <h2 className="text-xl font-bold">Vendas</h2>
-            </div>
+        <motion.div 
+          className="bg-gradient-to-br from-background to-background/50 backdrop-blur-sm rounded-xl shadow-sm border border-border/40 p-6 transition-colors"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="flex flex-col space-y-6">
+            <motion.div 
+              className="flex flex-col md:flex-row md:items-center justify-between gap-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
+              <h2 className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+                Vendas
+              </h2>
+            </motion.div>
             
-            <div className="flex flex-col md:flex-row justify-between gap-4">
+            <motion.div 
+              className="flex flex-col md:flex-row justify-between gap-4"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
               <div className="flex-1">
                 <SalesFilter 
                   sales={sales} 
@@ -68,18 +86,32 @@ export function SalesContent({
                   onExport={handleExport}
                 />
               </div>
-            </div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       )}
       
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden transition-colors">
+      <motion.div 
+        className="bg-gradient-to-br from-background to-background/50 backdrop-blur-sm rounded-xl shadow-sm border border-border/40 overflow-hidden transition-colors"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+      >
         {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="flex flex-col items-center gap-4">
-              <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <div className="flex justify-center py-16">
+            <motion.div 
+              className="flex flex-col items-center gap-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              <motion.div 
+                className="h-10 w-10 rounded-full border-4 border-primary border-t-transparent"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              />
               <p className="text-sm text-muted-foreground">Carregando dados...</p>
-            </div>
+            </motion.div>
           </div>
         ) : (
           <PaginatedSalesTable
@@ -89,7 +121,7 @@ export function SalesContent({
             onDelete={onDelete}
           />
         )}
-      </div>
+      </motion.div>
     </div>
   );
 }

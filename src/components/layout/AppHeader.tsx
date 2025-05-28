@@ -1,6 +1,7 @@
 
-import { User, ArrowLeft } from "lucide-react";
+import { User, ArrowLeft, Bell } from "lucide-react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { NotificationsPopover } from "@/components/notifications/NotificationsPopover";
 import { useAuth } from "@/contexts/auth";
@@ -41,38 +42,77 @@ export function AppHeader() {
   };
   
   return (
-    <header className="sticky top-0 z-50 h-14 flex items-center gap-4 border-b bg-header px-4 md:px-6 dark:border-gray-800 dark:bg-gray-900/80 dark:backdrop-blur-sm app-header">
+    <motion.header 
+      className="sticky top-0 z-50 h-16 flex items-center gap-4 border-b bg-gradient-to-r from-header to-header/95 backdrop-blur-sm px-4 md:px-6 dark:border-gray-800 dark:from-gray-900/90 dark:to-gray-900/80 app-header shadow-sm"
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       {/* User greeting aligned to the left */}
-      <div className="flex-1">
+      <motion.div 
+        className="flex-1"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+      >
         {user && (
-          <span className="font-medium">
+          <span className="font-medium text-foreground">
             Olá {user.name || user.email?.split('@')[0] || ''}
           </span>
         )}
-      </div>
+      </motion.div>
       
-      <div className="flex items-center gap-2">
+      <motion.div 
+        className="flex items-center gap-3"
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
         {isImpersonating && (
-          <Button 
-            variant="outline" 
-            onClick={handleReturnToOriginalUser}
-            disabled={isReturningToOriginal}
-            size="sm"
-            className="text-xs"
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
-            <ArrowLeft className="h-3.5 w-3.5 mr-1" />
-            Voltar à sua conta
-          </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleReturnToOriginalUser}
+              disabled={isReturningToOriginal}
+              size="sm"
+              className="text-xs border-border/40 hover:border-border bg-background/50 backdrop-blur-sm"
+            >
+              <ArrowLeft className="h-3.5 w-3.5 mr-1" />
+              Voltar à sua conta
+            </Button>
+          </motion.div>
         )}
         
-        <ThemeToggle />
-        <NotificationsPopover />
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <ThemeToggle />
+        </motion.div>
         
-        <Link to="/perfil" className="flex h-8 w-8 items-center justify-center rounded-full bg-muted/50 hover:bg-muted">
-          <span className="sr-only">Perfil</span>
-          <User className="h-4 w-4" />
-        </Link>
-      </div>
-    </header>
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <NotificationsPopover />
+        </motion.div>
+        
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <Link 
+            to="/perfil" 
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 hover:from-muted hover:to-muted/70 border border-border/40 transition-all duration-200 shadow-sm hover:shadow-md"
+          >
+            <span className="sr-only">Perfil</span>
+            <User className="h-4 w-4" />
+          </Link>
+        </motion.div>
+      </motion.div>
+    </motion.header>
   );
 }

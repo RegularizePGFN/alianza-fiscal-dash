@@ -1,8 +1,8 @@
 
-import { PlusCircle, FileUp, FileDown } from "lucide-react";
+import { Plus, Upload, Download } from "lucide-react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ImportButton } from "./filters/ImportButton";
-import { ExportButton } from "./filters/ExportButton";
 
 interface SalesActionsProps {
   isAdmin: boolean;
@@ -18,27 +18,52 @@ export function SalesActions({
   onExport
 }: SalesActionsProps) {
   return (
-    <div className="flex space-x-2">
-      <Button variant="outline" size="sm" onClick={onAddSale}>
-        <PlusCircle className="mr-2 h-4 w-4" />
-        Nova Venda
-      </Button>
+    <motion.div 
+      className="flex gap-3"
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.3, delay: 0.2 }}
+    >
+      <motion.div
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+      >
+        <Button 
+          variant="default" 
+          size="sm" 
+          onClick={onAddSale}
+          className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all duration-200"
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Nova Venda
+        </Button>
+      </motion.div>
       
       {isAdmin && onImport && (
-        <ImportButton onImport={onImport} />
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <ImportButton onImport={onImport} />
+        </motion.div>
       )}
       
       {onExport && (
-        <Button
-          onClick={onExport}
-          variant="outline"
-          size="sm"
-          className="hidden md:flex"
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
         >
-          <FileDown className="mr-2 h-4 w-4" />
-          Exportar
-        </Button>
+          <Button
+            onClick={onExport}
+            variant="outline"
+            size="sm"
+            className="hidden md:flex border-border/40 hover:border-border bg-background/50 backdrop-blur-sm hover:bg-background"
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Exportar
+          </Button>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }
