@@ -7,7 +7,7 @@ import { TableHeader } from "./TableHeader";
 import { SalespersonRow } from "./SalespersonRow";
 import { SummaryRow } from "./SummaryRow";
 import { useSalespeopleCommissions } from "./useSalespeopleCommissions";
-import { Users, TrendingUp } from "lucide-react";
+import { Users, TrendingUp, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 export function SalespeopleCommissionsCard() {
@@ -42,7 +42,10 @@ export function SalespeopleCommissionsCard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="flex justify-center py-8">
-            <LoadingSpinner />
+            <div className="flex flex-col items-center gap-3">
+              <LoadingSpinner />
+              <p className="text-sm text-muted-foreground">Carregando dados dos vendedores...</p>
+            </div>
           </CardContent>
         </Card>
       </motion.div>
@@ -66,6 +69,11 @@ export function SalespeopleCommissionsCard() {
               <TrendingUp className="h-4 w-4" />
             </motion.div>
             <span className="text-gray-900 dark:text-white">Consolidado Vendedores</span>
+            {salespeople.length > 0 && (
+              <span className="ml-auto text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full">
+                {salespeople.length} vendedores
+              </span>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -79,43 +87,60 @@ export function SalespeopleCommissionsCard() {
               <tbody>
                 {salespeople.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="py-8 text-center text-gray-500">
+                    <td colSpan={9} className="py-12 text-center">
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="flex flex-col items-center gap-2"
+                        className="flex flex-col items-center gap-3"
                       >
-                        <Users className="h-8 w-8 text-gray-300" />
-                        <span>Nenhum vendedor encontrado</span>
+                        <div className="p-3 rounded-full bg-gray-100 dark:bg-gray-700">
+                          <Users className="h-8 w-8 text-gray-400" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="font-medium text-gray-900 dark:text-white">Nenhum vendedor encontrado</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            Verifique se existem vendedores cadastrados no sistema
+                          </p>
+                        </div>
                       </motion.div>
                     </td>
                   </tr>
                 ) : (
-                  salespeople.map((person, index) => (
+                  <>
+                    {salespeople.map((person, index) => (
+                      <motion.tr
+                        key={person.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                      >
+                        <SalespersonRow person={person} />
+                      </motion.tr>
+                    ))}
+                    
+                    {/* Summary row */}
                     <motion.tr
-                      key={person.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.3 }}
                     >
-                      <SalespersonRow person={person} />
+                      <SummaryRow summaryTotals={summaryTotals} />
                     </motion.tr>
-                  ))
-                )}
-                
-                {/* Summary row */}
-                {salespeople.length > 0 && (
-                  <motion.tr
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                  >
-                    <SummaryRow summaryTotals={summaryTotals} />
-                  </motion.tr>
+                  </>
                 )}
               </tbody>
             </table>
           </div>
+          
+          {salespeople.length > 0 && (
+            <div className="mt-4 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+              <div className="flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" />
+                <span>Dados atualizados em tempo real</span>
+              </div>
+              <span>Total: {salespeople.length} vendedores</span>
+            </div>
+          )}
         </CardContent>
       </Card>
     </motion.div>

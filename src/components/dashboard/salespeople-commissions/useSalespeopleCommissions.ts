@@ -59,6 +59,9 @@ export function useSalespeopleCommissions() {
         const businessDaysElapsed = getBusinessDaysElapsedUntilToday();
         const businessDaysRemaining = totalBusinessDays - businessDaysElapsed;
         
+        console.log("Fetching salespeople profiles...");
+        
+        // Fetch all profiles with role 'vendedor'
         const { data: profilesData, error: profilesError } = await supabase
           .from("profiles")
           .select("*")
@@ -71,84 +74,113 @@ export function useSalespeopleCommissions() {
             description: "Não foi possível carregar os dados dos vendedores.",
             variant: "destructive",
           });
+          setLoading(false);
+          return;
+        }
+        
+        console.log("Found profiles:", profilesData?.length || 0);
+        
+        if (!profilesData || profilesData.length === 0) {
+          console.log("No salespeople found");
+          setSalespeople([]);
+          setLoading(false);
           return;
         }
         
         // Get all business days of the current month up to today
         const allBusinessDays = getAllBusinessDaysUntilToday(currentMonth, currentYear);
+        console.log("Business days until today:", allBusinessDays.length);
         
         const commissionData = await Promise.all(
           profilesData.map(async (profile) => {
-            const startDate = `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`;
-            const endDate = new Date(currentYear, currentMonth, 0).toISOString().split('T')[0];
-            
-            const { data: salesData, error: salesError } = await supabase
-              .from("sales")
-              .select("*")
-              .eq("salesperson_id", profile.id)
-              .gte("sale_date", startDate)
-              .lte("sale_date", endDate);
+            try {
+              const startDate = `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`;
+              const endDate = new Date(currentYear, currentMonth, 0).toISOString().split('T')[0];
               
-            if (salesError) {
-              console.error(`Error fetching sales for ${profile.name}:`, salesError);
+              console.log(`Fetching sales for ${profile.name} from ${startDate} to ${endDate}`);
+              
+              // Fetch sales data for this salesperson
+              const { data: salesData, error: salesError } = await supabase
+                .from("sales")
+                .select("*")
+                .eq("salesperson_id", profile.id)
+                .gte("sale_date", startDate)
+                .lte("sale_date", endDate);
+                
+              if (salesError) {
+                console.error(`Error fetching sales for ${profile.name}:`, salesError);
+                return null;
+              }
+              
+              console.log(`Found ${salesData?.length || 0} sales for ${profile.name}`);
+              
+              // Fetch monthly goal
+              const { data: goalData, error: goalError } = await supabase
+                .from("monthly_goals")
+                .select("goal_amount")
+                .eq("user_id", profile.id)
+                .eq("month", currentMonth)
+                .eq("year", currentYear)
+                .maybeSingle();
+                
+              if (goalError) {
+                console.error(`Error fetching goal for ${profile.name}:`, goalError);
+              }
+              
+              const totalSales = salesData?.reduce((sum, sale) => sum + Number(sale.gross_amount || 0), 0) || 0;
+              const salesCount = salesData?.length || 0;
+              const goalAmount = goalData?.goal_amount ? Number(goalData.goal_amount) : 0;
+              
+              console.log(`${profile.name}: ${salesCount} sales, R$ ${totalSales}, goal R$ ${goalAmount}`);
+              
+              // For commission calculation, we use the FIXED COMMISSION GOAL AMOUNT
+              const commissionRate = totalSales >= COMMISSION_GOAL_AMOUNT 
+                ? COMMISSION_RATE_ABOVE_GOAL 
+                : COMMISSION_RATE_BELOW_GOAL;
+                
+              const projectedCommission = totalSales * commissionRate;
+              
+              const dailyTarget = goalAmount / totalBusinessDays;
+              const expectedProgress = dailyTarget * businessDaysElapsed;
+              const metaGap = totalSales - expectedProgress;
+              
+              // Goal percentage is calculated based on the personal goal, not commission goal
+              const goalPercentage = expectedProgress > 0 ? (totalSales / expectedProgress) * 100 : 0;
+              
+              const remainingAmount = goalAmount - totalSales;
+              const remainingDailyTarget = businessDaysRemaining > 0 ? remainingAmount / businessDaysRemaining : 0;
+              
+              // Calculate zero days count - days when the salesperson had no sales
+              const salesDates = new Set(
+                salesData?.map(sale => sale.sale_date) || []
+              );
+              
+              // Count business days with zero sales
+              const zeroDaysCount = allBusinessDays.filter(day => !salesDates.has(day)).length;
+              
+              return {
+                id: profile.id,
+                name: profile.name || "Sem nome",
+                totalSales,
+                goalAmount,
+                commissionGoalAmount: COMMISSION_GOAL_AMOUNT, // Fixed commission goal
+                projectedCommission,
+                goalPercentage,
+                salesCount,
+                metaGap,
+                expectedProgress,
+                remainingDailyTarget: Math.max(0, remainingDailyTarget),
+                zeroDaysCount, // New field for days with zero sales
+              };
+            } catch (error) {
+              console.error(`Error processing data for ${profile.name}:`, error);
               return null;
             }
-            
-            const { data: goalData } = await supabase
-              .from("monthly_goals")
-              .select("goal_amount")
-              .eq("user_id", profile.id)
-              .eq("month", currentMonth)
-              .eq("year", currentYear)
-              .maybeSingle();
-              
-            const totalSales = salesData?.reduce((sum, sale) => sum + Number(sale.gross_amount), 0) || 0;
-            const salesCount = salesData?.length || 0;
-            const goalAmount = goalData?.goal_amount ? Number(goalData.goal_amount) : 0;
-            
-            // For commission calculation, we use the FIXED COMMISSION GOAL AMOUNT
-            const commissionRate = totalSales >= COMMISSION_GOAL_AMOUNT 
-              ? COMMISSION_RATE_ABOVE_GOAL 
-              : COMMISSION_RATE_BELOW_GOAL;
-              
-            const projectedCommission = totalSales * commissionRate;
-            
-            const dailyTarget = goalAmount / totalBusinessDays;
-            const expectedProgress = dailyTarget * businessDaysElapsed;
-            const metaGap = totalSales - expectedProgress;
-            
-            // Goal percentage is calculated based on the personal goal, not commission goal
-            const goalPercentage = expectedProgress > 0 ? (totalSales / expectedProgress) * 100 : 0;
-            
-            const remainingAmount = goalAmount - totalSales;
-            const remainingDailyTarget = businessDaysRemaining > 0 ? remainingAmount / businessDaysRemaining : 0;
-            
-            // Calculate zero days count - days when the salesperson had no sales
-            const salesDates = new Set(
-              salesData?.map(sale => sale.sale_date) || []
-            );
-            
-            // Count business days with zero sales
-            const zeroDaysCount = allBusinessDays.filter(day => !salesDates.has(day)).length;
-            
-            return {
-              id: profile.id,
-              name: profile.name || "Sem nome",
-              totalSales,
-              goalAmount,
-              commissionGoalAmount: COMMISSION_GOAL_AMOUNT, // Fixed commission goal
-              projectedCommission,
-              goalPercentage,
-              salesCount,
-              metaGap,
-              expectedProgress,
-              remainingDailyTarget,
-              zeroDaysCount, // New field for days with zero sales
-            };
           })
         );
         
         const validCommissions = commissionData.filter(Boolean) as SalespersonCommission[];
+        console.log("Valid commissions:", validCommissions.length);
         
         // Apply initial sort
         sortSalespeople(validCommissions, sortColumn, sortDirection);
