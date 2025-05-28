@@ -8,7 +8,7 @@ import { Toaster } from '@/components/ui/toaster'
 import { Toaster as SonnerToaster } from '@/components/ui/sonner'
 import { AuthProvider } from '@/contexts/auth'
 
-// Import the new CSS file path
+// Import the CSS file path
 import './styles/index.css'
 
 const queryClient = new QueryClient({

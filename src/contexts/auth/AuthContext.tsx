@@ -1,5 +1,5 @@
 
-import { createContext, useContext } from 'react';
+import React, { createContext, useContext } from 'react';
 import { AuthContextProps, AuthState } from './types';
 
 // Initial auth state
