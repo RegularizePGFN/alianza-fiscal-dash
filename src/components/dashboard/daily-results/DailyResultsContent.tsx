@@ -52,14 +52,13 @@ export function DailyResultsContent({ todaySales, currentDate }: DailyResultsCon
         // Get today's date in ISO format
         const today = getTodayISO();
         
-        // 1. Fetch all salespeople profiles
+        // 1. Fetch all user profiles (remove role filter to include admins)
         const { data: profilesData, error: profilesError } = await supabase
           .from("profiles")
-          .select("id, name, role")
-          .eq("role", "vendedor");
+          .select("id, name, role");
           
         if (profilesError) {
-          console.error("Error fetching salespeople:", profilesError);
+          console.error("Error fetching profiles:", profilesError);
           return;
         }
         
@@ -74,8 +73,8 @@ export function DailyResultsContent({ todaySales, currentDate }: DailyResultsCon
           console.error("Error fetching proposals:", proposalsError);
         }
         
-        // Initialize all salespeople with zero counts
-        const allSalespeople = (profilesData || []).map(profile => ({
+        // Initialize all users with zero counts
+        const allUsers = (profilesData || []).map(profile => ({
           id: profile.id,
           name: profile.name || "Sem nome",
           salesCount: 0,
@@ -84,15 +83,15 @@ export function DailyResultsContent({ todaySales, currentDate }: DailyResultsCon
           feesAmount: 0
         }));
 
-        // Update counts for salespeople who made sales today
+        // Update counts for users who made sales today
         todaySales.forEach(sale => {
-          const existingSalesperson = allSalespeople.find(sp => sp.id === sale.salesperson_id);
-          if (existingSalesperson) {
-            existingSalesperson.salesCount += 1;
-            existingSalesperson.salesAmount += sale.gross_amount;
+          const existingUser = allUsers.find(user => user.id === sale.salesperson_id);
+          if (existingUser) {
+            existingUser.salesCount += 1;
+            existingUser.salesAmount += sale.gross_amount;
           } else if (sale.salesperson_id) {
             // In case there's a salesperson in the sales data but not in profiles
-            allSalespeople.push({
+            allUsers.push({
               id: sale.salesperson_id,
               name: sale.salesperson_name || "Sem nome",
               salesCount: 1,
@@ -103,12 +102,12 @@ export function DailyResultsContent({ todaySales, currentDate }: DailyResultsCon
           }
         });
         
-        // Update counts for salespeople who created proposals today
+        // Update counts for users who created proposals today
         if (proposalsData) {
           proposalsData.forEach(proposal => {
-            const existingSalesperson = allSalespeople.find(sp => sp.id === proposal.user_id);
-            if (existingSalesperson) {
-              existingSalesperson.proposalsCount = (existingSalesperson.proposalsCount || 0) + 1;
+            const existingUser = allUsers.find(user => user.id === proposal.user_id);
+            if (existingUser) {
+              existingUser.proposalsCount = (existingUser.proposalsCount || 0) + 1;
               
               // Add fees if available
               if (proposal.fees_value) {
@@ -124,15 +123,23 @@ export function DailyResultsContent({ todaySales, currentDate }: DailyResultsCon
                 }
                 
                 if (!isNaN(feesValue)) {
-                  existingSalesperson.feesAmount = (existingSalesperson.feesAmount || 0) + feesValue;
+                  existingUser.feesAmount = (existingUser.feesAmount || 0) + feesValue;
                 }
               }
+            } else {
+              // In case there's a user in proposals but not in profiles
+              console.warn(`User ${proposal.user_id} from proposal not found in profiles`);
             }
           });
         }
 
+        // Filter to show only users who have activity (sales or proposals)
+        const activeUsers = allUsers.filter(user => 
+          user.salesCount > 0 || user.proposalsCount > 0
+        );
+
         // Apply initial sort to the data
-        setSalespeople(sortData(allSalespeople));
+        setSalespeople(sortData(activeUsers));
       } catch (error) {
         console.error("Error processing data:", error);
       } finally {
@@ -150,7 +157,7 @@ export function DailyResultsContent({ todaySales, currentDate }: DailyResultsCon
   
   return (
     <div className="bg-white rounded-md p-2">
-      <h3 className="text-xs font-medium text-muted-foreground mb-1">Vendedores Hoje:</h3>
+      <h3 className="text-xs font-medium text-muted-foreground mb-1">Usuários Ativos Hoje:</h3>
       {loading ? (
         <div className="flex h-[150px] items-center justify-center">
           <p className="text-xs text-muted-foreground">Carregando dados...</p>
@@ -159,7 +166,7 @@ export function DailyResultsContent({ todaySales, currentDate }: DailyResultsCon
         <SalespeopleTable salespeople={salespeople} />
       ) : (
         <div className="flex h-[150px] items-center justify-center text-xs text-muted-foreground">
-          Sem vendedores cadastrados
+          Nenhuma atividade registrada hoje
         </div>
       )}
     </div>

@@ -34,7 +34,9 @@ export function useDashboardData() {
         const startDate = monthStart.toISOString();
         const endDate = monthEnd.toISOString();
         
-        // Fetch proposals for the current month
+        console.log("Fetching proposals for date range:", startDate, "to", endDate);
+        
+        // Fetch ALL proposals for the current month (no user filtering for dashboard)
         const { data: proposals, error: proposalsError } = await supabase
           .from('proposals')
           .select('id, user_id, created_at, total_debt, discounted_value, fees_value')
@@ -46,7 +48,9 @@ export function useDashboardData() {
           return;
         }
         
-        // Fetch users data for mapping
+        console.log("Fetched proposals:", proposals?.length || 0);
+        
+        // Fetch ALL users data for mapping (not just vendors)
         const { data: users, error: usersError } = await supabase
           .from('profiles')
           .select('id, name');
@@ -55,6 +59,8 @@ export function useDashboardData() {
           console.error('Error fetching users:', usersError);
           return;
         }
+        
+        console.log("Fetched users:", users?.length || 0);
         
         // Create a mapping of user IDs to names
         const userMap = (users || []).reduce((acc, user) => {
@@ -77,6 +83,8 @@ export function useDashboardData() {
   // Daily proposals count for the current month
   const dailyProposalsData = useMemo(() => {
     if (!proposalsData.length) return [];
+    
+    console.log("Processing daily proposals data for", proposalsData.length, "proposals");
     
     const now = new Date();
     const monthStart = startOfMonth(now);
@@ -113,14 +121,19 @@ export function useDashboardData() {
     });
     
     // Convert to array and sort by date
-    return Object.values(dailyCounts).sort((a, b) => 
+    const result = Object.values(dailyCounts).sort((a, b) => 
       a.date.localeCompare(b.date)
     );
+    
+    console.log("Daily proposals data:", result);
+    return result;
   }, [proposalsData]);
   
   // User proposals statistics
   const userProposalsData = useMemo(() => {
     if (!proposalsData.length || !Object.keys(usersData).length) return [];
+    
+    console.log("Processing user proposals data");
     
     // Count proposals per user
     const userCounts: Record<string, { count: number, fees: number }> = {};
@@ -134,12 +147,15 @@ export function useDashboardData() {
     });
     
     // Convert to array with user names
-    return Object.entries(userCounts).map(([userId, stats], index) => ({
-      name: usersData[userId] || 'Unknown',
+    const result = Object.entries(userCounts).map(([userId, stats], index) => ({
+      name: usersData[userId] || 'Usuário Desconhecido',
       count: stats.count,
       fees: stats.fees,
       color: COLORS[index % COLORS.length]
     })).sort((a, b) => b.count - a.count);
+    
+    console.log("User proposals data:", result);
+    return result;
   }, [proposalsData, usersData]);
   
   // Summary statistics
@@ -150,7 +166,9 @@ export function useDashboardData() {
     const totalFees = proposalsData.reduce((sum, proposal) => sum + (proposal.fees_value || 0), 0);
     const averageFees = totalFees / total;
     
-    return { total, totalFees, averageFees };
+    const result = { total, totalFees, averageFees };
+    console.log("Summary stats:", result);
+    return result;
   }, [proposalsData]);
   
   return { 
