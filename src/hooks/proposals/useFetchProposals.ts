@@ -31,8 +31,6 @@ export const useFetchProposals = () => {
       // Check if user is admin to fetch all proposals or just their own
       const isAdmin = user.role === UserRole.ADMIN;
       
-      console.log("Fetching proposals for user:", user.name, "isAdmin:", isAdmin);
-      
       // Query based on user role
       let query = supabase.from('proposals').select('*');
       
@@ -50,8 +48,6 @@ export const useFetchProposals = () => {
         throw new Error(error.message);
       }
       
-      console.log("Fetched proposals:", data?.length || 0);
-      
       // Fetch all users for mapping names to proposals (especially for admins)
       const { data: usersData, error: usersError } = await supabase
         .from('profiles')
@@ -67,8 +63,6 @@ export const useFetchProposals = () => {
         return acc;
       }, {} as Record<string, string>);
       
-      console.log("User map for proposals:", Object.keys(userMap).length, "users");
-      
       const formattedProposals = data.map((item: any): Proposal => {
         // Calculate fees if not present but we have the necessary values
         let feesValue = item.fees_value;
@@ -80,7 +74,7 @@ export const useFetchProposals = () => {
         }
         
         // Get user name from the map or fallback to user's own name
-        const userName = userMap[item.user_id] || user.name || 'Usuário Desconhecido';
+        const userName = userMap[item.user_id] || user.name || 'Unknown User';
         
         return {
           id: item.id,
@@ -111,7 +105,6 @@ export const useFetchProposals = () => {
         };
       });
       
-      console.log("Formatted proposals:", formattedProposals.length);
       setProposals(formattedProposals);
     } catch (error: any) {
       console.error('Error fetching proposals:', error);
