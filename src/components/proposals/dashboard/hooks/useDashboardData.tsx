@@ -26,6 +26,9 @@ export function useDashboardData() {
       
       setIsLoading(true);
       try {
+        console.log("=== DASHBOARD DATA DEBUG ===");
+        console.log("Dashboard - Current user:", user.name, "Role:", user.role);
+        
         // Get current month date range
         const now = new Date();
         const monthStart = startOfMonth(now);
@@ -35,8 +38,11 @@ export function useDashboardData() {
         const startDate = monthStart.toISOString();
         const endDate = monthEnd.toISOString();
         
+        console.log("Dashboard - Date range:", startDate, "to", endDate);
+        
         // Check if current user is admin
         const isAdmin = user.role === UserRole.ADMIN;
+        console.log("Dashboard - Is admin:", isAdmin);
         
         // Query proposals with date filter
         let query = supabase
@@ -46,29 +52,48 @@ export function useDashboardData() {
           .lte('created_at', endDate);
         
         if (isAdmin) {
-          // For admins, exclude proposals from admin users to show only vendor data
-          const { data: adminUsers, error: adminUsersError } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('role', UserRole.ADMIN);
+          console.log("Dashboard - Admin detected, filtering for vendor proposals only");
           
-          if (!adminUsersError && adminUsers?.length > 0) {
-            const adminUserIds = adminUsers.map(admin => admin.id);
-            query = query.not('user_id', 'in', `(${adminUserIds.join(',')})`);
+          // For admins, get all non-admin users first
+          const { data: vendorUsers, error: vendorUsersError } = await supabase
+            .from('profiles')
+            .select('id, name, role')
+            .neq('role', UserRole.ADMIN);
+          
+          if (vendorUsersError) {
+            console.error('Dashboard - Error fetching vendor users:', vendorUsersError);
+            return;
+          }
+          
+          console.log("Dashboard - Found vendor users:", vendorUsers?.length || 0);
+          
+          if (vendorUsers && vendorUsers.length > 0) {
+            const vendorUserIds = vendorUsers.map(vendor => vendor.id);
+            console.log("Dashboard - Vendor user IDs:", vendorUserIds);
+            
+            // Filter to show only proposals from vendor users
+            query = query.in('user_id', vendorUserIds);
+          } else {
+            console.log("Dashboard - No vendor users found");
+            setProposalsData([]);
+            setUsersData({});
+            setIsLoading(false);
+            return;
           }
         } else {
+          console.log("Dashboard - Regular user, showing own proposals only");
           // For non-admins, only their own proposals
           query = query.eq('user_id', user.id);
         }
         
         const { data: proposals, error: proposalsError } = await query;
         
+        console.log("Dashboard - Proposals query result:", { count: proposals?.length || 0, error: proposalsError });
+        
         if (proposalsError) {
-          console.error('Error fetching proposals:', proposalsError);
+          console.error('Dashboard - Error fetching proposals:', proposalsError);
           return;
         }
-        
-        console.log('Dashboard proposals fetched:', proposals?.length || 0);
         
         // Fetch users data for mapping (only non-admin users for admins)
         let usersQuery = supabase
@@ -76,16 +101,18 @@ export function useDashboardData() {
           .select('id, name, role');
         
         if (isAdmin) {
-          // Only include non-admin users in the mapping
+          // Only include non-admin users in the mapping for admins
           usersQuery = usersQuery.neq('role', UserRole.ADMIN);
         }
         
         const { data: users, error: usersError } = await usersQuery;
         
         if (usersError) {
-          console.error('Error fetching users:', usersError);
+          console.error('Dashboard - Error fetching users:', usersError);
           return;
         }
+        
+        console.log("Dashboard - Users data fetched:", users?.length || 0);
         
         // Create a mapping of user IDs to names
         const userMap = (users || []).reduce((acc, user) => {
@@ -93,12 +120,18 @@ export function useDashboardData() {
           return acc;
         }, {} as Record<string, string>);
         
-        console.log('Dashboard user mapping:', userMap);
+        console.log('Dashboard - User mapping created:', Object.keys(userMap).length, 'users');
+        console.log('Dashboard - Sample user mapping:', Object.entries(userMap).slice(0, 3));
         
         setProposalsData(proposals || []);
         setUsersData(userMap);
+        
+        console.log("Dashboard - Final data set:", {
+          proposalsCount: proposals?.length || 0,
+          usersCount: Object.keys(userMap).length
+        });
       } catch (error) {
-        console.error('Error processing dashboard data:', error);
+        console.error('Dashboard - Error processing data:', error);
       } finally {
         setIsLoading(false);
       }
@@ -109,6 +142,9 @@ export function useDashboardData() {
   
   // Daily proposals count for the current month
   const dailyProposalsData = useMemo(() => {
+    console.log("=== DAILY PROPOSALS CALCULATION ===");
+    console.log("Proposals data for daily calc:", proposalsData.length);
+    
     if (!proposalsData.length) return [];
     
     const now = new Date();
@@ -120,6 +156,8 @@ export function useDashboardData() {
       start: monthStart,
       end: now // Only count up to today
     });
+    
+    console.log("Days in month to calculate:", daysInMonth.length);
     
     // Initialize counts for each day
     const dailyCounts: Record<string, DailyProposalCount> = {};
@@ -145,14 +183,20 @@ export function useDashboardData() {
       }
     });
     
-    // Convert to array and sort by date
-    return Object.values(dailyCounts).sort((a, b) => 
+    const result = Object.values(dailyCounts).sort((a, b) => 
       a.date.localeCompare(b.date)
     );
+    
+    console.log("Daily proposals result:", result.slice(0, 5));
+    return result;
   }, [proposalsData]);
   
   // User proposals statistics
   const userProposalsData = useMemo(() => {
+    console.log("=== USER PROPOSALS CALCULATION ===");
+    console.log("Proposals data for user calc:", proposalsData.length);
+    console.log("Users data keys:", Object.keys(usersData).length);
+    
     if (!proposalsData.length || !Object.keys(usersData).length) return [];
     
     // Count proposals per user
@@ -166,26 +210,35 @@ export function useDashboardData() {
       userCounts[proposal.user_id].fees += proposal.fees_value || 0;
     });
     
+    console.log("User counts calculated:", userCounts);
+    
     // Convert to array with user names
-    return Object.entries(userCounts).map(([userId, stats], index) => ({
+    const result = Object.entries(userCounts).map(([userId, stats], index) => ({
       name: usersData[userId] || 'Unknown',
       count: stats.count,
       fees: stats.fees,
       color: COLORS[index % COLORS.length]
     })).sort((a, b) => b.count - a.count);
+    
+    console.log("User proposals result:", result);
+    return result;
   }, [proposalsData, usersData]);
   
   // Summary statistics
   const summaryStats = useMemo(() => {
+    console.log("=== SUMMARY STATS CALCULATION ===");
+    console.log("Proposals data for summary:", proposalsData.length);
+    
     if (!proposalsData.length) return { total: 0, totalFees: 0, averageFees: 0 };
     
     const total = proposalsData.length;
     const totalFees = proposalsData.reduce((sum, proposal) => sum + (proposal.fees_value || 0), 0);
     const averageFees = totalFees / total;
     
-    console.log('Dashboard summary stats:', { total, totalFees, averageFees });
+    const result = { total, totalFees, averageFees };
+    console.log('Dashboard summary stats calculated:', result);
     
-    return { total, totalFees, averageFees };
+    return result;
   }, [proposalsData]);
   
   return { 

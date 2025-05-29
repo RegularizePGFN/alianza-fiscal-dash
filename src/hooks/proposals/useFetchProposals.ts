@@ -28,30 +28,48 @@ export const useFetchProposals = () => {
     setIsLoading(true);
     
     try {
+      console.log("=== FETCH PROPOSALS DEBUG ===");
+      console.log("Current user:", user.name, "Role:", user.role);
+      
       // Check if current user is admin
       const isAdmin = user.role === UserRole.ADMIN;
+      console.log("Is admin:", isAdmin);
       
       // Base query for proposals
       let proposalsQuery = supabase.from('proposals').select('*');
       
       if (isAdmin) {
-        // For admins, exclude proposals made by other admins but include non-admin proposals
-        const { data: adminUsers, error: adminUsersError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('role', UserRole.ADMIN);
+        console.log("Admin detected - fetching vendor proposals only");
         
-        if (adminUsersError) {
-          console.error('Error fetching admin users:', adminUsersError);
+        // For admins, get all non-admin users first
+        const { data: vendorUsers, error: vendorUsersError } = await supabase
+          .from('profiles')
+          .select('id, name, role')
+          .neq('role', UserRole.ADMIN);
+        
+        if (vendorUsersError) {
+          console.error('Error fetching vendor users:', vendorUsersError);
+          throw new Error(vendorUsersError.message);
         }
         
-        const adminUserIds = adminUsers?.map(admin => admin.id) || [];
+        console.log("Found vendor users:", vendorUsers?.length || 0);
+        console.log("Vendor users:", vendorUsers?.map(u => ({ name: u.name, role: u.role })));
         
-        // Filter out proposals from admin users to show only vendor proposals
-        if (adminUserIds.length > 0) {
-          proposalsQuery = proposalsQuery.not('user_id', 'in', `(${adminUserIds.join(',')})`);
+        if (vendorUsers && vendorUsers.length > 0) {
+          const vendorUserIds = vendorUsers.map(vendor => vendor.id);
+          console.log("Vendor user IDs:", vendorUserIds);
+          
+          // Filter to show only proposals from vendor users
+          proposalsQuery = proposalsQuery.in('user_id', vendorUserIds);
+        } else {
+          console.log("No vendor users found - will return empty result");
+          // No vendors found, return empty
+          setProposals([]);
+          setIsLoading(false);
+          return;
         }
       } else {
+        console.log("Regular user - fetching own proposals only");
         // For non-admins, only show their own proposals
         proposalsQuery = proposalsQuery.eq('user_id', user.id);
       }
@@ -61,7 +79,10 @@ export const useFetchProposals = () => {
       
       const { data, error } = await proposalsQuery;
       
+      console.log("Proposals query result:", { data: data?.length || 0, error });
+      
       if (error) {
+        console.error("Query error:", error);
         throw new Error(error.message);
       }
       
@@ -73,6 +94,8 @@ export const useFetchProposals = () => {
       if (usersError) {
         console.error('Error fetching users:', usersError);
       }
+      
+      console.log("Users data fetched:", usersData?.length || 0);
       
       // Create a map of user IDs to names for quick lookup
       const userMap = (usersData || []).reduce((acc, user) => {
@@ -122,7 +145,14 @@ export const useFetchProposals = () => {
         };
       });
       
-      console.log('Fetched proposals:', formattedProposals.length);
+      console.log('Final formatted proposals:', formattedProposals.length);
+      console.log('Sample proposals:', formattedProposals.slice(0, 3).map(p => ({
+        id: p.id,
+        userName: p.userName,
+        clientName: p.data.clientName,
+        createdAt: p.createdAt
+      })));
+      
       setProposals(formattedProposals);
     } catch (error: any) {
       console.error('Error fetching proposals:', error);
