@@ -4,7 +4,7 @@ import AIImageProcessor from "@/components/proposals/AIImageProcessor";
 import ProposalHistory from "@/components/proposals/ProposalHistory";
 import { Proposal } from "@/lib/types/proposals";
 import { motion } from "framer-motion";
-import { Upload, BarChart3, TrendingUp, Users } from "lucide-react";
+import { BarChart3, TrendingUp, Users } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
@@ -45,6 +45,8 @@ const UploadTabContent = ({
       proposal.createdAt?.split('T')[0] === today
     );
 
+    console.log('Today proposals:', todayProposals.length);
+
     // Group by user
     const userStats: Record<string, { count: number; totalFees: number; userName: string }> = {};
     
@@ -63,11 +65,16 @@ const UploadTabContent = ({
       userStats[userId].totalFees += feesValue;
     });
 
-    return Object.values(userStats).sort((a, b) => b.count - a.count);
+    const statsArray = Object.values(userStats).sort((a, b) => b.count - a.count);
+    console.log('Today stats by user:', statsArray);
+    
+    return statsArray;
   }, [proposals]);
 
   const totalTodayProposals = todayStats.reduce((sum, stat) => sum + stat.count, 0);
   const totalTodayFees = todayStats.reduce((sum, stat) => sum + stat.totalFees, 0);
+
+  console.log('Today totals:', { totalTodayProposals, totalTodayFees, activeVendors: todayStats.length });
 
   return (
     <motion.div
@@ -76,30 +83,20 @@ const UploadTabContent = ({
       transition={{ duration: 0.5 }}
       className="space-y-6"
     >
-      {/* Upload Section */}
+      {/* Upload Section - Removendo o card externo conforme solicitado */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3, delay: 0.1 }}
       >
-        <Card className="shadow-lg border-0 bg-gradient-to-br from-purple-500 to-blue-600 text-white">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-xl font-bold flex items-center gap-2">
-              <Upload className="h-6 w-6" />
-              Análise de Imagem com Inteligência Artificial
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <AIImageProcessor
-              imagePreview={imagePreview}
-              processing={processing}
-              progressPercent={progressPercent}
-              companyData={companyData}
-              onProcessComplete={onProcessComplete}
-              setProcessingStatus={setProcessingStatus}
-            />
-          </CardContent>
-        </Card>
+        <AIImageProcessor
+          onProcessComplete={onProcessComplete}
+          processing={processing}
+          setProcessing={() => {}}
+          progressPercent={progressPercent}
+          setProgressPercent={() => {}}
+          updateStatus={setProcessingStatus}
+        />
       </motion.div>
 
       {/* Today's Statistics - Only show for admins */}

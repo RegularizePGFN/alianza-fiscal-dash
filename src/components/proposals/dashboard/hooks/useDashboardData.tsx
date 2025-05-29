@@ -46,7 +46,7 @@ export function useDashboardData() {
           .lte('created_at', endDate);
         
         if (isAdmin) {
-          // For admins, exclude proposals from admin users
+          // For admins, exclude proposals from admin users to show only vendor data
           const { data: adminUsers, error: adminUsersError } = await supabase
             .from('profiles')
             .select('id')
@@ -68,7 +68,9 @@ export function useDashboardData() {
           return;
         }
         
-        // Fetch users data for mapping (exclude admin users from results)
+        console.log('Dashboard proposals fetched:', proposals?.length || 0);
+        
+        // Fetch users data for mapping (only non-admin users for admins)
         let usersQuery = supabase
           .from('profiles')
           .select('id, name, role');
@@ -90,6 +92,8 @@ export function useDashboardData() {
           acc[user.id] = user.name;
           return acc;
         }, {} as Record<string, string>);
+        
+        console.log('Dashboard user mapping:', userMap);
         
         setProposalsData(proposals || []);
         setUsersData(userMap);
@@ -178,6 +182,8 @@ export function useDashboardData() {
     const total = proposalsData.length;
     const totalFees = proposalsData.reduce((sum, proposal) => sum + (proposal.fees_value || 0), 0);
     const averageFees = totalFees / total;
+    
+    console.log('Dashboard summary stats:', { total, totalFees, averageFees });
     
     return { total, totalFees, averageFees };
   }, [proposalsData]);

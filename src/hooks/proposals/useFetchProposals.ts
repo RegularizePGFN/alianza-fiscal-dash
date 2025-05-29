@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Proposal } from '@/lib/types/proposals';
@@ -34,8 +35,7 @@ export const useFetchProposals = () => {
       let proposalsQuery = supabase.from('proposals').select('*');
       
       if (isAdmin) {
-        // For admins, we need to exclude proposals made by other admins
-        // First, get all admin user IDs
+        // For admins, exclude proposals made by other admins but include non-admin proposals
         const { data: adminUsers, error: adminUsersError } = await supabase
           .from('profiles')
           .select('id')
@@ -47,9 +47,9 @@ export const useFetchProposals = () => {
         
         const adminUserIds = adminUsers?.map(admin => admin.id) || [];
         
-        // Filter out proposals from admin users (but keep current admin's proposals if any)
+        // Filter out proposals from admin users to show only vendor proposals
         if (adminUserIds.length > 0) {
-          proposalsQuery = proposalsQuery.not('user_id', 'in', `(${adminUserIds.filter(id => id !== user.id).join(',')})`);
+          proposalsQuery = proposalsQuery.not('user_id', 'in', `(${adminUserIds.join(',')})`);
         }
       } else {
         // For non-admins, only show their own proposals
@@ -97,7 +97,6 @@ export const useFetchProposals = () => {
           id: item.id,
           userId: item.user_id,
           userName: userInfo.name,
-          userRole: userInfo.role,
           createdAt: item.created_at,
           creationDate: item.creation_date,
           validityDate: item.validity_date,
@@ -123,6 +122,7 @@ export const useFetchProposals = () => {
         };
       });
       
+      console.log('Fetched proposals:', formattedProposals.length);
       setProposals(formattedProposals);
     } catch (error: any) {
       console.error('Error fetching proposals:', error);
