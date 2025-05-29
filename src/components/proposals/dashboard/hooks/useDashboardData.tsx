@@ -38,15 +38,26 @@ export function useDashboardData() {
         // Check if current user is admin
         const isAdmin = user.role === UserRole.ADMIN;
         
-        // Query based on user role - admins see all proposals
+        // Query proposals with date filter
         let query = supabase
           .from('proposals')
           .select('id, user_id, created_at, total_debt, discounted_value, fees_value')
           .gte('created_at', startDate)
           .lte('created_at', endDate);
         
-        // Only filter by user_id if not an admin
-        if (!isAdmin) {
+        if (isAdmin) {
+          // For admins, exclude proposals from admin users
+          const { data: adminUsers, error: adminUsersError } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('role', UserRole.ADMIN);
+          
+          if (!adminUsersError && adminUsers?.length > 0) {
+            const adminUserIds = adminUsers.map(admin => admin.id);
+            query = query.not('user_id', 'in', `(${adminUserIds.join(',')})`);
+          }
+        } else {
+          // For non-admins, only their own proposals
           query = query.eq('user_id', user.id);
         }
         
@@ -57,10 +68,17 @@ export function useDashboardData() {
           return;
         }
         
-        // Fetch users data for mapping
-        const { data: users, error: usersError } = await supabase
+        // Fetch users data for mapping (exclude admin users from results)
+        let usersQuery = supabase
           .from('profiles')
-          .select('id, name');
+          .select('id, name, role');
+        
+        if (isAdmin) {
+          // Only include non-admin users in the mapping
+          usersQuery = usersQuery.neq('role', UserRole.ADMIN);
+        }
+        
+        const { data: users, error: usersError } = await usersQuery;
         
         if (usersError) {
           console.error('Error fetching users:', usersError);

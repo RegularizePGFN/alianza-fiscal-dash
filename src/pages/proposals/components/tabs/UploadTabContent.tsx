@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AIImageProcessor } from "@/components/proposals/AIImageProcessor";
+import AIImageProcessor from "@/components/proposals/AIImageProcessor";
 import ProposalHistory from "@/components/proposals/ProposalHistory";
 import { Proposal } from "@/lib/types/proposals";
 import { motion } from "framer-motion";
@@ -17,7 +17,7 @@ interface UploadTabContentProps {
   companyData: any;
   proposals: Proposal[];
   loadingProposals: boolean;
-  onProcessComplete: (data: any) => void;
+  onProcessComplete: (data: any, preview: string) => void;
   onViewProposal: (proposal: Proposal) => void;
   onDeleteProposal: (id: string) => Promise<boolean>;
   setProcessingStatus: (status: string) => void;
@@ -173,7 +173,7 @@ const UploadTabContent = ({
         </motion.div>
       )}
 
-      {/* Proposal History - Remove the external card wrapper */}
+      {/* Proposal History */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

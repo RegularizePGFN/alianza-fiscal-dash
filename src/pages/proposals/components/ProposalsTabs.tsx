@@ -71,15 +71,15 @@ const ProposalsTabs = ({
       
       <TabsContent value="upload" className="space-y-6">
         <UploadTabContent
+          imagePreview={imagePreview}
           processing={processing}
-          setProcessing={setProcessing}
           progressPercent={progressPercent}
-          setProgressPercent={setProgressPercent}
+          companyData={companyData}
           proposals={proposals}
           loadingProposals={loadingProposals}
+          onProcessComplete={onProcessComplete}
           onViewProposal={onViewProposal}
           onDeleteProposal={onDeleteProposal}
-          onProcessComplete={onProcessComplete}
           setProcessingStatus={setProcessingStatus}
         />
       </TabsContent>

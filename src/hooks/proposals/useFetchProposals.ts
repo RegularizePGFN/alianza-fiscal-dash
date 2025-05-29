@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Proposal } from '@/lib/types/proposals';
@@ -31,27 +30,45 @@ export const useFetchProposals = () => {
       // Check if current user is admin
       const isAdmin = user.role === UserRole.ADMIN;
       
-      // Query based on user role - admins see all proposals
-      let query = supabase.from('proposals').select('*');
+      // Base query for proposals
+      let proposalsQuery = supabase.from('proposals').select('*');
       
-      // Only filter by user_id if not an admin
-      if (!isAdmin) {
-        query = query.eq('user_id', user.id);
+      if (isAdmin) {
+        // For admins, we need to exclude proposals made by other admins
+        // First, get all admin user IDs
+        const { data: adminUsers, error: adminUsersError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('role', UserRole.ADMIN);
+        
+        if (adminUsersError) {
+          console.error('Error fetching admin users:', adminUsersError);
+        }
+        
+        const adminUserIds = adminUsers?.map(admin => admin.id) || [];
+        
+        // Filter out proposals from admin users (but keep current admin's proposals if any)
+        if (adminUserIds.length > 0) {
+          proposalsQuery = proposalsQuery.not('user_id', 'in', `(${adminUserIds.filter(id => id !== user.id).join(',')})`);
+        }
+      } else {
+        // For non-admins, only show their own proposals
+        proposalsQuery = proposalsQuery.eq('user_id', user.id);
       }
       
       // Order by created_at desc
-      query = query.order('created_at', { ascending: false });
+      proposalsQuery = proposalsQuery.order('created_at', { ascending: false });
       
-      const { data, error } = await query;
+      const { data, error } = await proposalsQuery;
       
       if (error) {
         throw new Error(error.message);
       }
       
-      // Fetch all users for mapping names to proposals (especially for admins)
+      // Fetch all users for mapping names to proposals
       const { data: usersData, error: usersError } = await supabase
         .from('profiles')
-        .select('id, name');
+        .select('id, name, role');
       
       if (usersError) {
         console.error('Error fetching users:', usersError);
@@ -59,9 +76,9 @@ export const useFetchProposals = () => {
       
       // Create a map of user IDs to names for quick lookup
       const userMap = (usersData || []).reduce((acc, user) => {
-        acc[user.id] = user.name;
+        acc[user.id] = { name: user.name, role: user.role };
         return acc;
-      }, {} as Record<string, string>);
+      }, {} as Record<string, { name: string; role: string }>);
       
       const formattedProposals = data.map((item: any): Proposal => {
         // Calculate fees if not present but we have the necessary values
@@ -73,13 +90,14 @@ export const useFetchProposals = () => {
           feesValue = economyValue * 0.2; // 20% of the savings
         }
         
-        // Get user name from the map
-        const userName = userMap[item.user_id] || 'Usuário desconhecido';
+        // Get user info from the map
+        const userInfo = userMap[item.user_id] || { name: 'Usuário desconhecido', role: 'USER' };
         
         return {
           id: item.id,
           userId: item.user_id,
-          userName: userName,
+          userName: userInfo.name,
+          userRole: userInfo.role,
           createdAt: item.created_at,
           creationDate: item.creation_date,
           validityDate: item.validity_date,
