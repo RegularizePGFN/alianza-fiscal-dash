@@ -2,9 +2,11 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Eye, Trash2 } from 'lucide-react';
+import { Eye, Trash2, User } from 'lucide-react';
 import { Proposal } from '@/lib/types/proposals';
 import { formatBrazilianCurrency } from '@/lib/utils';
+import { useAuth } from '@/contexts/auth';
+import { UserRole } from '@/lib/types';
 
 interface ProposalHistoryProps {
   proposals: Proposal[];
@@ -16,6 +18,10 @@ interface ProposalHistoryProps {
 const ProposalHistory = ({ proposals, loading, onViewProposal, onDeleteProposal }: ProposalHistoryProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { user, originalUser } = useAuth();
+
+  // Check if current user is admin or if original user is admin (for impersonation)
+  const isAdmin = user?.role === UserRole.ADMIN || originalUser?.role === UserRole.ADMIN;
 
   // Filter proposals based on search term
   const filteredProposals = proposals.filter(proposal => {
@@ -46,7 +52,15 @@ const ProposalHistory = ({ proposals, loading, onViewProposal, onDeleteProposal 
   return (
     <Card className="shadow-md rounded-xl">
       <CardHeader id="history-card-header" className="bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 border-b dark:border-gray-700">
-        <CardTitle className="text-lg font-medium">Histórico de Propostas</CardTitle>
+        <CardTitle className="text-lg font-medium flex items-center gap-2">
+          <User className="h-5 w-5" />
+          Histórico de Propostas
+          {isAdmin && (
+            <span className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 px-2 py-1 rounded-full">
+              Todas as propostas
+            </span>
+          )}
+        </CardTitle>
       </CardHeader>
       <CardContent className="p-4 space-y-4">
         {/* Search bar */}
@@ -71,7 +85,9 @@ const ProposalHistory = ({ proposals, loading, onViewProposal, onDeleteProposal 
                 <tr>
                   <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">CNPJ ↕</th>
                   <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nome / Razão Social ↕</th>
-                  <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Usuário ↕</th>
+                  {isAdmin && (
+                    <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Vendedor ↕</th>
+                  )}
                   <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Valor Consolidado ↕</th>
                   <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Valor com Reduções ↕</th>
                   <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Desconto ↕</th>
@@ -84,7 +100,9 @@ const ProposalHistory = ({ proposals, loading, onViewProposal, onDeleteProposal 
                   <tr key={proposal.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                     <td className="px-2 py-2 whitespace-nowrap text-xs text-gray-900 dark:text-gray-200">{proposal.data.cnpj}</td>
                     <td className="px-2 py-2 whitespace-nowrap text-xs text-gray-900 dark:text-gray-200">{proposal.data.clientName}</td>
-                    <td className="px-2 py-2 whitespace-nowrap text-xs text-gray-900 dark:text-gray-200">{proposal.userName}</td>
+                    {isAdmin && (
+                      <td className="px-2 py-2 whitespace-nowrap text-xs text-purple-600 dark:text-purple-400 font-medium">{proposal.userName}</td>
+                    )}
                     <td className="px-2 py-2 whitespace-nowrap text-xs text-right text-gray-900 dark:text-gray-200">
                       R$ {formatBrazilianCurrency(proposal.data.totalDebt)}
                     </td>

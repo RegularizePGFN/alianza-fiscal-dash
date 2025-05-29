@@ -11,7 +11,7 @@ import { UserRole } from '@/lib/types';
 export const useFetchProposals = () => {
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { user } = useAuth();
+  const { user, originalUser } = useAuth();
   const { toast } = useToast();
   
   const formatDateBR = (date: string) => {
@@ -28,10 +28,10 @@ export const useFetchProposals = () => {
     setIsLoading(true);
     
     try {
-      // Check if user is admin to fetch all proposals or just their own
-      const isAdmin = user.role === UserRole.ADMIN;
+      // Check if current user is admin or if original user is admin (for impersonation)
+      const isAdmin = user.role === UserRole.ADMIN || originalUser?.role === UserRole.ADMIN;
       
-      // Query based on user role
+      // Query based on user role - admins see all proposals
       let query = supabase.from('proposals').select('*');
       
       // Only filter by user_id if not an admin
@@ -73,8 +73,8 @@ export const useFetchProposals = () => {
           feesValue = economyValue * 0.2; // 20% of the savings
         }
         
-        // Get user name from the map or fallback to user's own name
-        const userName = userMap[item.user_id] || user.name || 'Unknown User';
+        // Get user name from the map
+        const userName = userMap[item.user_id] || 'Usuário desconhecido';
         
         return {
           id: item.id,

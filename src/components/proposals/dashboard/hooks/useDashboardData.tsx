@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
+import { UserRole } from '@/lib/types';
 import { 
   ProposalData, 
   UserData, 
@@ -17,7 +18,7 @@ export function useDashboardData() {
   const [proposalsData, setProposalsData] = useState<ProposalData[]>([]);
   const [usersData, setUsersData] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
-  const { user } = useAuth();
+  const { user, originalUser } = useAuth();
   
   useEffect(() => {
     const fetchData = async () => {
@@ -34,12 +35,22 @@ export function useDashboardData() {
         const startDate = monthStart.toISOString();
         const endDate = monthEnd.toISOString();
         
-        // Fetch proposals for the current month
-        const { data: proposals, error: proposalsError } = await supabase
+        // Check if current user is admin or if original user is admin (for impersonation)
+        const isAdmin = user.role === UserRole.ADMIN || originalUser?.role === UserRole.ADMIN;
+        
+        // Query based on user role - admins see all proposals
+        let query = supabase
           .from('proposals')
           .select('id, user_id, created_at, total_debt, discounted_value, fees_value')
           .gte('created_at', startDate)
           .lte('created_at', endDate);
+        
+        // Only filter by user_id if not an admin
+        if (!isAdmin) {
+          query = query.eq('user_id', user.id);
+        }
+        
+        const { data: proposals, error: proposalsError } = await query;
         
         if (proposalsError) {
           console.error('Error fetching proposals:', proposalsError);
@@ -72,7 +83,7 @@ export function useDashboardData() {
     };
     
     fetchData();
-  }, [user]);
+  }, [user, originalUser]);
   
   // Daily proposals count for the current month
   const dailyProposalsData = useMemo(() => {
