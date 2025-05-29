@@ -11,7 +11,7 @@ import { UserRole } from '@/lib/types';
 export const useFetchProposals = () => {
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { user, originalUser } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   
   const formatDateBR = (date: string) => {
@@ -28,8 +28,8 @@ export const useFetchProposals = () => {
     setIsLoading(true);
     
     try {
-      // Check if current user is admin or if original user is admin (for impersonation)
-      const isAdmin = user.role === UserRole.ADMIN || originalUser?.role === UserRole.ADMIN;
+      // Check if current user is admin
+      const isAdmin = user.role === UserRole.ADMIN;
       
       // Query based on user role - admins see all proposals
       let query = supabase.from('proposals').select('*');

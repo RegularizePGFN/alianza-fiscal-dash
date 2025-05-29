@@ -12,10 +12,10 @@ import { UserRole } from "@/lib/types";
 const ProposalsContainer = () => {
   // Get state from our custom hook
   const proposalsState = useProposalsState();
-  const { user, originalUser } = useAuth();
+  const { user } = useAuth();
   
-  // Check if current user is admin or if original user is admin (for impersonation)
-  const isAdmin = user?.role === UserRole.ADMIN || originalUser?.role === UserRole.ADMIN;
+  // Check if current user is admin
+  const isAdmin = user?.role === UserRole.ADMIN;
   
   // Get handlers from our custom hook
   const handlers = useProposalHandlers({

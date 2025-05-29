@@ -18,7 +18,7 @@ export function useDashboardData() {
   const [proposalsData, setProposalsData] = useState<ProposalData[]>([]);
   const [usersData, setUsersData] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
-  const { user, originalUser } = useAuth();
+  const { user } = useAuth();
   
   useEffect(() => {
     const fetchData = async () => {
@@ -35,8 +35,8 @@ export function useDashboardData() {
         const startDate = monthStart.toISOString();
         const endDate = monthEnd.toISOString();
         
-        // Check if current user is admin or if original user is admin (for impersonation)
-        const isAdmin = user.role === UserRole.ADMIN || originalUser?.role === UserRole.ADMIN;
+        // Check if current user is admin
+        const isAdmin = user.role === UserRole.ADMIN;
         
         // Query based on user role - admins see all proposals
         let query = supabase
@@ -83,7 +83,7 @@ export function useDashboardData() {
     };
     
     fetchData();
-  }, [user, originalUser]);
+  }, [user]);
   
   // Daily proposals count for the current month
   const dailyProposalsData = useMemo(() => {

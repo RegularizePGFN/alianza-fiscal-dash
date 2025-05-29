@@ -18,10 +18,10 @@ interface ProposalHistoryProps {
 const ProposalHistory = ({ proposals, loading, onViewProposal, onDeleteProposal }: ProposalHistoryProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const { user, originalUser } = useAuth();
+  const { user } = useAuth();
 
-  // Check if current user is admin or if original user is admin (for impersonation)
-  const isAdmin = user?.role === UserRole.ADMIN || originalUser?.role === UserRole.ADMIN;
+  // Check if current user is admin
+  const isAdmin = user?.role === UserRole.ADMIN;
 
   // Filter proposals based on search term
   const filteredProposals = proposals.filter(proposal => {

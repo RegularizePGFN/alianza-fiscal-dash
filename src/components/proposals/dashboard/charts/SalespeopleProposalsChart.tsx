@@ -13,10 +13,10 @@ interface SalespeopleProposalsChartProps {
 }
 
 export function SalespeopleProposalsChart({ userProposalsData }: SalespeopleProposalsChartProps) {
-  const { user, originalUser } = useAuth();
+  const { user } = useAuth();
   
-  // Check if current user is admin or if original user is admin (for impersonation)
-  const isAdmin = user?.role === UserRole.ADMIN || originalUser?.role === UserRole.ADMIN;
+  // Check if current user is admin
+  const isAdmin = user?.role === UserRole.ADMIN;
 
   const PieCustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
