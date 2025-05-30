@@ -34,43 +34,15 @@ export const useFetchProposals = () => {
       const isAdmin = user.role === UserRole.ADMIN;
       console.log("Is admin:", isAdmin);
       
-      // Base query for proposals - REMOVING DATE FILTER FOR TESTING
+      // Base query for proposals - WITHOUT DATE FILTER FOR TESTING
       let proposalsQuery = supabase.from('proposals').select('*');
       
-      if (isAdmin) {
-        console.log("Admin detected - fetching vendor proposals only");
-        
-        // For admins, get all users with role 'vendedor' (from database)
-        const { data: vendorUsers, error: vendorUsersError } = await supabase
-          .from('profiles')
-          .select('id, name, role')
-          .eq('role', 'vendedor'); // Use exact database value
-        
-        if (vendorUsersError) {
-          console.error('Error fetching vendor users:', vendorUsersError);
-          throw new Error(vendorUsersError.message);
-        }
-        
-        console.log("Found vendor users:", vendorUsers?.length || 0);
-        console.log("Vendor users:", vendorUsers?.map(u => ({ name: u.name, role: u.role })));
-        
-        if (vendorUsers && vendorUsers.length > 0) {
-          const vendorUserIds = vendorUsers.map(vendor => vendor.id);
-          console.log("Vendor user IDs:", vendorUserIds);
-          
-          // Filter to show only proposals from vendor users
-          proposalsQuery = proposalsQuery.in('user_id', vendorUserIds);
-        } else {
-          console.log("No vendor users found - will return empty result");
-          // No vendors found, return empty
-          setProposals([]);
-          setIsLoading(false);
-          return;
-        }
-      } else {
+      if (!isAdmin) {
         console.log("Regular user - fetching own proposals only");
         // For non-admins, only show their own proposals
         proposalsQuery = proposalsQuery.eq('user_id', user.id);
+      } else {
+        console.log("Admin detected - will filter for vendor proposals after loading users");
       }
       
       // Order by created_at desc
@@ -86,24 +58,59 @@ export const useFetchProposals = () => {
         throw new Error(error.message);
       }
       
-      // Fetch all users for mapping names to proposals
+      // Get unique user IDs from proposals
+      const uniqueUserIds = [...new Set((data || []).map(p => p.user_id))];
+      console.log("Unique user IDs from proposals:", uniqueUserIds);
+      
+      if (uniqueUserIds.length === 0) {
+        console.log("No user IDs found in proposals");
+        setProposals([]);
+        setIsLoading(false);
+        return;
+      }
+      
+      // Fetch users based on the user_ids from proposals
       const { data: usersData, error: usersError } = await supabase
         .from('profiles')
-        .select('id, name, role');
+        .select('id, name, role')
+        .in('id', uniqueUserIds);
       
       if (usersError) {
         console.error('Error fetching users:', usersError);
       }
       
       console.log("Users data fetched:", usersData?.length || 0);
+      console.log("Users details:", usersData?.map(u => ({ id: u.id, name: u.name, role: u.role })));
       
-      // Create a map of user IDs to names for quick lookup
+      // For admins, filter proposals to show only from vendedor users
+      let finalProposals = data || [];
+      if (isAdmin && usersData) {
+        const vendorUserIds = usersData
+          .filter(user => user.role === 'vendedor')
+          .map(user => user.id);
+        
+        console.log("Vendor user IDs:", vendorUserIds);
+        
+        if (vendorUserIds.length > 0) {
+          finalProposals = data?.filter(proposal => 
+            vendorUserIds.includes(proposal.user_id)
+          ) || [];
+          console.log("Filtered proposals for vendors:", finalProposals.length);
+        } else {
+          console.log("No vendor users found, showing empty result");
+          finalProposals = [];
+        }
+      }
+      
+      // Create a map of user IDs to user info for quick lookup
       const userMap = (usersData || []).reduce((acc, user) => {
         acc[user.id] = { name: user.name, role: user.role };
         return acc;
       }, {} as Record<string, { name: string; role: string }>);
       
-      const formattedProposals = data.map((item: any): Proposal => {
+      console.log("User map created:", Object.keys(userMap).length, "users");
+      
+      const formattedProposals = finalProposals.map((item: any): Proposal => {
         // Calculate fees if not present but we have the necessary values
         let feesValue = item.fees_value;
         if (item.total_debt && item.discounted_value && !feesValue) {

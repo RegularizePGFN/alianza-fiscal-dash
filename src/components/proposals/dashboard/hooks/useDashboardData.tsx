@@ -38,38 +38,11 @@ export function useDashboardData() {
           .from('proposals')
           .select('id, user_id, created_at, total_debt, discounted_value, fees_value');
         
-        console.log("Dashboard - Fetching ALL proposals (no date filter for testing)");
+        console.log("Dashboard - Fetching proposals without date filter");
         
         if (isAdmin) {
-          console.log("Dashboard - Admin detected, filtering for vendor proposals only");
-          
-          // For admins, get all users with role 'vendedor' (from database)
-          const { data: vendorUsers, error: vendorUsersError } = await supabase
-            .from('profiles')
-            .select('id, name, role')
-            .eq('role', 'vendedor'); // Use exact database value
-          
-          if (vendorUsersError) {
-            console.error('Dashboard - Error fetching vendor users:', vendorUsersError);
-            return;
-          }
-          
-          console.log("Dashboard - Found vendor users:", vendorUsers?.length || 0);
-          console.log("Dashboard - Vendor users details:", vendorUsers?.map(u => ({ id: u.id, name: u.name, role: u.role })));
-          
-          if (vendorUsers && vendorUsers.length > 0) {
-            const vendorUserIds = vendorUsers.map(vendor => vendor.id);
-            console.log("Dashboard - Vendor user IDs:", vendorUserIds);
-            
-            // Filter to show only proposals from vendor users
-            query = query.in('user_id', vendorUserIds);
-          } else {
-            console.log("Dashboard - No vendor users found");
-            setProposalsData([]);
-            setUsersData({});
-            setIsLoading(false);
-            return;
-          }
+          console.log("Dashboard - Admin detected, will filter for vendor proposals after loading users");
+          // For admins, we'll filter after getting the proposals based on actual user_ids
         } else {
           console.log("Dashboard - Regular user, showing own proposals only");
           // For non-admins, only their own proposals
@@ -86,17 +59,23 @@ export function useDashboardData() {
           return;
         }
         
-        // Fetch users data for mapping (only vendedor users for admins)
-        let usersQuery = supabase
-          .from('profiles')
-          .select('id, name, role');
+        // Get unique user IDs from proposals
+        const uniqueUserIds = [...new Set((proposals || []).map(p => p.user_id))];
+        console.log("Dashboard - Unique user IDs from proposals:", uniqueUserIds);
         
-        if (isAdmin) {
-          // Only include vendedor users in the mapping for admins
-          usersQuery = usersQuery.eq('role', 'vendedor');
+        if (uniqueUserIds.length === 0) {
+          console.log("Dashboard - No user IDs found in proposals");
+          setProposalsData([]);
+          setUsersData({});
+          setIsLoading(false);
+          return;
         }
         
-        const { data: users, error: usersError } = await usersQuery;
+        // Fetch users based on the user_ids from proposals
+        const { data: users, error: usersError } = await supabase
+          .from('profiles')
+          .select('id, name, role')
+          .in('id', uniqueUserIds);
         
         if (usersError) {
           console.error('Dashboard - Error fetching users:', usersError);
@@ -105,6 +84,26 @@ export function useDashboardData() {
         
         console.log("Dashboard - Users data fetched:", users?.length || 0);
         console.log("Dashboard - Users details:", users?.map(u => ({ id: u.id, name: u.name, role: u.role })));
+        
+        // For admins, filter proposals to show only from vendedor users
+        let finalProposals = proposals || [];
+        if (isAdmin && users) {
+          const vendorUserIds = users
+            .filter(user => user.role === 'vendedor')
+            .map(user => user.id);
+          
+          console.log("Dashboard - Vendor user IDs:", vendorUserIds);
+          
+          if (vendorUserIds.length > 0) {
+            finalProposals = proposals?.filter(proposal => 
+              vendorUserIds.includes(proposal.user_id)
+            ) || [];
+            console.log("Dashboard - Filtered proposals for vendors:", finalProposals.length);
+          } else {
+            console.log("Dashboard - No vendor users found, showing empty result");
+            finalProposals = [];
+          }
+        }
         
         // Create a mapping of user IDs to names
         const userMap = (users || []).reduce((acc, user) => {
@@ -115,17 +114,17 @@ export function useDashboardData() {
         console.log('Dashboard - User mapping created:', Object.keys(userMap).length, 'users');
         console.log('Dashboard - User mapping sample:', Object.entries(userMap).slice(0, 3));
         
-        setProposalsData(proposals || []);
+        setProposalsData(finalProposals);
         setUsersData(userMap);
         
         console.log("Dashboard - Final data set:", {
-          proposalsCount: proposals?.length || 0,
+          proposalsCount: finalProposals.length,
           usersCount: Object.keys(userMap).length,
-          sampleProposal: proposals?.[0] ? {
-            id: proposals[0].id,
-            user_id: proposals[0].user_id,
-            fees_value: proposals[0].fees_value,
-            created_at: proposals[0].created_at
+          sampleProposal: finalProposals[0] ? {
+            id: finalProposals[0].id,
+            user_id: finalProposals[0].user_id,
+            fees_value: finalProposals[0].fees_value,
+            created_at: finalProposals[0].created_at
           } : null
         });
       } catch (error) {
