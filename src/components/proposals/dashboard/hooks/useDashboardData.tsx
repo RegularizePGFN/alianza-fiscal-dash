@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,7 +26,7 @@ export function useDashboardData() {
       setIsLoading(true);
       try {
         console.log("=== DASHBOARD DATA DEBUG ===");
-        console.log("Dashboard - Current user:", user.name, "Role:", user.role);
+        console.log("Dashboard - Current user:", user.name, "Role:", user.role, "Email:", user.email);
         
         // Get current month date range
         const now = new Date();
@@ -54,11 +53,11 @@ export function useDashboardData() {
         if (isAdmin) {
           console.log("Dashboard - Admin detected, filtering for vendor proposals only");
           
-          // For admins, get all non-admin users first
+          // For admins, get all users with role 'vendedor' (from database)
           const { data: vendorUsers, error: vendorUsersError } = await supabase
             .from('profiles')
             .select('id, name, role')
-            .neq('role', UserRole.ADMIN);
+            .eq('role', 'vendedor'); // Use exact database value
           
           if (vendorUsersError) {
             console.error('Dashboard - Error fetching vendor users:', vendorUsersError);
@@ -95,14 +94,14 @@ export function useDashboardData() {
           return;
         }
         
-        // Fetch users data for mapping (only non-admin users for admins)
+        // Fetch users data for mapping (only vendedor users for admins)
         let usersQuery = supabase
           .from('profiles')
           .select('id, name, role');
         
         if (isAdmin) {
-          // Only include non-admin users in the mapping for admins
-          usersQuery = usersQuery.neq('role', UserRole.ADMIN);
+          // Only include vendedor users in the mapping for admins
+          usersQuery = usersQuery.eq('role', 'vendedor');
         }
         
         const { data: users, error: usersError } = await usersQuery;

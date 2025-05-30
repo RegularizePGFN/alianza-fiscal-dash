@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Proposal } from '@/lib/types/proposals';
@@ -29,7 +28,7 @@ export const useFetchProposals = () => {
     
     try {
       console.log("=== FETCH PROPOSALS DEBUG ===");
-      console.log("Current user:", user.name, "Role:", user.role);
+      console.log("Current user:", user.name, "Role:", user.role, "Email:", user.email);
       
       // Check if current user is admin
       const isAdmin = user.role === UserRole.ADMIN;
@@ -41,11 +40,11 @@ export const useFetchProposals = () => {
       if (isAdmin) {
         console.log("Admin detected - fetching vendor proposals only");
         
-        // For admins, get all non-admin users first
+        // For admins, get all users with role 'vendedor' (from database)
         const { data: vendorUsers, error: vendorUsersError } = await supabase
           .from('profiles')
           .select('id, name, role')
-          .neq('role', UserRole.ADMIN);
+          .eq('role', 'vendedor'); // Use exact database value
         
         if (vendorUsersError) {
           console.error('Error fetching vendor users:', vendorUsersError);
