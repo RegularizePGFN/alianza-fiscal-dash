@@ -34,7 +34,7 @@ export const useFetchProposals = () => {
       const isAdmin = user.role === UserRole.ADMIN;
       console.log("Is admin:", isAdmin);
       
-      // Base query for proposals
+      // Base query for proposals - REMOVING DATE FILTER FOR TESTING
       let proposalsQuery = supabase.from('proposals').select('*');
       
       if (isAdmin) {
@@ -79,6 +79,7 @@ export const useFetchProposals = () => {
       const { data, error } = await proposalsQuery;
       
       console.log("Proposals query result:", { data: data?.length || 0, error });
+      console.log("Raw proposals data:", data?.slice(0, 3)); // Show first 3 proposals
       
       if (error) {
         console.error("Query error:", error);
@@ -149,7 +150,8 @@ export const useFetchProposals = () => {
         id: p.id,
         userName: p.userName,
         clientName: p.data.clientName,
-        createdAt: p.createdAt
+        createdAt: p.createdAt,
+        feesValue: p.data.feesValue
       })));
       
       setProposals(formattedProposals);
