@@ -1,4 +1,4 @@
-
+import { useEffect } from "react";
 import { RefreshCcw, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProposalsHeader from "./components/ProposalsHeader";
@@ -10,14 +10,11 @@ import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
 
 const ProposalsContainer = () => {
-  // Get state from our custom hook
   const proposalsState = useProposalsState();
   const { user } = useAuth();
-  
-  // Check if current user is admin
+
   const isAdmin = user?.role === UserRole.ADMIN;
-  
-  // Get handlers from our custom hook
+
   const handlers = useProposalHandlers({
     formData: proposalsState.formData,
     setFormData: proposalsState.setFormData,
@@ -33,10 +30,16 @@ const ProposalsContainer = () => {
     deleteProposal: proposalsState.deleteProposal,
     user: proposalsState.user,
   });
-  
-  // Mostrar dashboard apenas na aba "upload"
+
+  // ⚠️ Adicionamos esta parte para carregar automaticamente as propostas
+  useEffect(() => {
+    if (!proposalsState.loadingProposals) {
+      proposalsState.fetchProposals();
+    }
+  }, []);
+
   const shouldShowDashboard = isAdmin && proposalsState.activeTab === "upload";
-  
+
   return (
     <div className="container py-6">
       <div className="flex justify-between items-center mb-6">
@@ -60,7 +63,7 @@ const ProposalsContainer = () => {
           </Button>
         </div>
       </div>
-      
+
       <ProposalsTabs 
         activeTab={proposalsState.activeTab} 
         setActiveTab={proposalsState.setActiveTab} 
@@ -83,8 +86,7 @@ const ProposalsContainer = () => {
         onReset={handlers.handleReset}
         setProcessingStatus={proposalsState.setProcessingStatus}
       />
-      
-      {/* Mostrar o dashboard apenas na aba "upload" */}
+
       {shouldShowDashboard && <ProposalsDashboard />}
     </div>
   );
