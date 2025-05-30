@@ -12,7 +12,7 @@ export const useFetchProposals = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
-  
+
   const formatDateBR = (date: string) => {
     try {
       return format(new Date(date), 'dd/MM/yyyy HH:mm', { locale: ptBR });
@@ -20,109 +20,91 @@ export const useFetchProposals = () => {
       return date;
     }
   };
-  
+
   const fetchProposals = async () => {
     if (!user) return;
-    
+
     setIsLoading(true);
-    
+
     try {
       console.log("=== FETCH PROPOSALS DEBUG ===");
       console.log("Current user:", user.name, "Role:", user.role, "Email:", user.email);
-      
-      // Check if current user is admin
+
       const isAdmin = user.role === UserRole.ADMIN;
-      console.log("Is admin:", isAdmin);
-      
-      // Base query for proposals - WITHOUT DATE FILTER FOR TESTING
+
       let proposalsQuery = supabase.from('proposals').select('*');
-      
+
       if (!isAdmin) {
-        console.log("Regular user - fetching own proposals only");
-        // For non-admins, only show their own proposals
         proposalsQuery = proposalsQuery.eq('user_id', user.id);
-      } else {
-        console.log("Admin detected - will filter for vendor proposals after loading users");
       }
-      
-      // Order by created_at desc
+
       proposalsQuery = proposalsQuery.order('created_at', { ascending: false });
-      
+
       const { data, error } = await proposalsQuery;
-      
+
       console.log("Proposals query result:", { data: data?.length || 0, error });
-      console.log("Raw proposals data:", data?.slice(0, 3)); // Show first 3 proposals
-      
+      console.log("Raw proposals data:", data?.slice(0, 3));
+
       if (error) {
-        console.error("Query error:", error);
         throw new Error(error.message);
       }
-      
-      // Get unique user IDs from proposals
+
       const uniqueUserIds = [...new Set((data || []).map(p => p.user_id))];
-      console.log("Unique user IDs from proposals:", uniqueUserIds);
-      
+
       if (uniqueUserIds.length === 0) {
         console.log("No user IDs found in proposals");
         setProposals([]);
         setIsLoading(false);
         return;
       }
-      
-      // Fetch users based on the user_ids from proposals
+
       const { data: usersData, error: usersError } = await supabase
         .from('profiles')
         .select('id, name, role')
         .in('id', uniqueUserIds);
-      
+
       if (usersError) {
         console.error('Error fetching users:', usersError);
       }
-      
+
       console.log("Users data fetched:", usersData?.length || 0);
-      console.log("Users details:", usersData?.map(u => ({ id: u.id, name: u.name, role: u.role })));
-      
-      // For admins, filter proposals to show only from vendedor users
+
       let finalProposals = data || [];
+
       if (isAdmin && usersData) {
         const vendorUserIds = usersData
           .filter(user => user.role === 'vendedor')
           .map(user => user.id);
-        
+
         console.log("Vendor user IDs:", vendorUserIds);
-        
+
         if (vendorUserIds.length > 0) {
-          finalProposals = data?.filter(proposal => 
+          finalProposals = finalProposals.filter(proposal =>
             vendorUserIds.includes(proposal.user_id)
-          ) || [];
-          console.log("Filtered proposals for vendors:", finalProposals.length);
+          );
         } else {
-          console.log("No vendor users found, showing empty result");
+          console.log("No vendor users found, returning empty");
           finalProposals = [];
         }
       }
-      
-      // Create a map of user IDs to user info for quick lookup
+
       const userMap = (usersData || []).reduce((acc, user) => {
         acc[user.id] = { name: user.name, role: user.role };
         return acc;
       }, {} as Record<string, { name: string; role: string }>);
-      
-      console.log("User map created:", Object.keys(userMap).length, "users");
-      
+
       const formattedProposals = finalProposals.map((item: any): Proposal => {
-        // Calculate fees if not present but we have the necessary values
-        let feesValue = item.fees_value;
-        if (item.total_debt && item.discounted_value && !feesValue) {
-          const totalDebt = parseFloat(String(item.total_debt));
-          const discountedValue = parseFloat(String(item.discounted_value));
-          const economyValue = totalDebt - discountedValue;
-          feesValue = economyValue * 0.2; // 20% of the savings
+        const totalDebt = parseFloat(item.total_debt || '0');
+        const discountedValue = parseFloat(item.discounted_value || '0');
+        const economyValue = totalDebt - discountedValue;
+
+        let feesValue = parseFloat(item.fees_value || '');
+        if (!Number.isFinite(feesValue) || feesValue === 0) {
+          feesValue = Number.isFinite(economyValue) ? economyValue * 0.2 : 0;
         }
-        
-        // Get user info from the map
+
         const userInfo = userMap[item.user_id] || { name: 'Usuário desconhecido', role: 'USER' };
-        
+
         return {
           id: item.id,
           userId: item.user_id,
@@ -132,15 +114,15 @@ export const useFetchProposals = () => {
           validityDate: item.validity_date,
           data: {
             cnpj: item.cnpj,
-            totalDebt: item.total_debt?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00',
-            discountedValue: item.discounted_value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00',
-            discountPercentage: item.discount_percentage?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00',
-            entryValue: item.entry_value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00',
+            totalDebt: totalDebt,
+            discountedValue: discountedValue,
+            discountPercentage: parseFloat(item.discount_percentage || '0'),
+            entryValue: parseFloat(item.entry_value || '0'),
             entryInstallments: item.entry_installments?.toString() || '1',
             installments: item.installments?.toString() || '0',
-            installmentValue: item.installment_value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00',
+            installmentValue: parseFloat(item.installment_value || '0'),
             debtNumber: item.debt_number || '',
-            feesValue: feesValue?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00',
+            feesValue: feesValue,
             clientName: item.client_name,
             clientEmail: item.client_email,
             clientPhone: item.client_phone,
@@ -151,16 +133,10 @@ export const useFetchProposals = () => {
           imageUrl: item.image_url || '',
         };
       });
-      
-      console.log('Final formatted proposals:', formattedProposals.length);
-      console.log('Sample proposals:', formattedProposals.slice(0, 3).map(p => ({
-        id: p.id,
-        userName: p.userName,
-        clientName: p.data.clientName,
-        createdAt: p.createdAt,
-        feesValue: p.data.feesValue
-      })));
-      
+
+      console.log("Formatted proposals:", formattedProposals.length);
+      console.log("Sample proposal preview:", formattedProposals.slice(0, 3));
+
       setProposals(formattedProposals);
     } catch (error: any) {
       console.error('Error fetching proposals:', error);
@@ -173,26 +149,23 @@ export const useFetchProposals = () => {
       setIsLoading(false);
     }
   };
-  
+
   const deleteProposal = async (id: string) => {
     try {
       const { error } = await supabase
         .from('proposals')
         .delete()
         .eq('id', id);
-      
-      if (error) {
-        throw new Error(error.message);
-      }
-      
-      // Update local state by removing the deleted proposal
-      setProposals(prevProposals => prevProposals.filter(proposal => proposal.id !== id));
-      
+
+      if (error) throw new Error(error.message);
+
+      setProposals(prevProposals => prevProposals.filter(p => p.id !== id));
+
       toast({
         title: "Proposta excluída",
         description: "A proposta foi excluída com sucesso."
       });
-      
+
       return true;
     } catch (error: any) {
       console.error('Error deleting proposal:', error);
@@ -204,6 +177,6 @@ export const useFetchProposals = () => {
       return false;
     }
   };
-  
+
   return { proposals, isLoading, fetchProposals, deleteProposal };
 };
