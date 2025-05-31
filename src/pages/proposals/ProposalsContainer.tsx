@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { RefreshCcw, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import ProposalsHeader from "./components/ProposalsHeader";
 import ProposalsTabs from "./components/ProposalsTabs";
 import { useProposalsState } from "@/hooks/proposals";
@@ -13,6 +14,7 @@ import { UserRole } from "@/lib/types";
 const ProposalsContainer = () => {
   const proposalsState = useProposalsState();
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const isAdmin = user?.role === UserRole.ADMIN;
 

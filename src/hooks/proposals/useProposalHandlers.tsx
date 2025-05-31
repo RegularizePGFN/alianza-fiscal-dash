@@ -24,11 +24,11 @@ export const useProposalHandlers = (params: UseProposalHandlersParams) => {
   const { toast } = useToast();
 
   const handleInputChange = useCallback((field: string, value: string) => {
-    params.setFormData(prev => ({
-      ...prev,
+    params.setFormData({
+      ...params.formData,
       [field]: value
-    }));
-  }, [params.setFormData]);
+    });
+  }, [params.setFormData, params.formData]);
 
   const handleGenerateProposal = useCallback(async () => {
     console.log("=== GENERATE PROPOSAL DEBUG ===");
@@ -82,7 +82,7 @@ export const useProposalHandlers = (params: UseProposalHandlersParams) => {
     params.setGeneratedProposal(true);
   }, [params.setSelectedProposal, params.setActiveTab, params.setFormData, params.setGeneratedProposal]);
 
-  const handleDeleteProposal = useCallback(async (id: string) => {
+  const handleDeleteProposal = useCallback(async (id: string): Promise<boolean> => {
     console.log("Deleting proposal:", id);
     const success = await params.deleteProposal(id);
     
@@ -97,6 +97,8 @@ export const useProposalHandlers = (params: UseProposalHandlersParams) => {
         params.setActiveTab("upload");
       }
     }
+    
+    return success;
   }, [params.deleteProposal, params.fetchProposals, params.selectedProposal, params.setSelectedProposal, params.setActiveTab]);
 
   const handleProcessComplete = useCallback(() => {
