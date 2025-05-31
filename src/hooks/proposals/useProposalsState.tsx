@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth";
 import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
@@ -17,9 +17,15 @@ export const useProposalsState = () => {
   const {
     proposals,
     isLoading: loadingProposals,
-    fetchProposals,
+    fetchProposals: fetchProposalsOriginal,
     deleteProposal
   } = useFetchProposals();
+  
+  // ✅ Wrap fetchProposals with useCallback to ensure stable reference
+  const fetchProposals = useCallback(async () => {
+    console.log("fetchProposals called from useProposalsState");
+    await fetchProposalsOriginal();
+  }, [fetchProposalsOriginal]);
   
   // State management
   const [activeTab, setActiveTab] = useState("upload");
@@ -42,11 +48,6 @@ export const useProposalsState = () => {
   const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
   const [companyData, setCompanyData] = useState<CompanyData | null>(null);
   const [processingStatus, setProcessingStatus] = useState<string>("");
-  
-  // Fetch proposals when component mounts
-  useEffect(() => {
-    fetchProposals();
-  }, []);
   
   // Update executive data when user changes
   useEffect(() => {
@@ -77,14 +78,14 @@ export const useProposalsState = () => {
     if (formData.cnpj && formData.cnpj.length >= 14) {
       fetchCompanyDataByCnpj(formData.cnpj);
     }
-  }, [formData.cnpj]);
+  }, [formData.cnpj, fetchCompanyDataByCnpj]);
   
   // Generate payment dates when needed
   useEffect(() => {
     if (activeTab === 'proposal' && formData.entryValue && formData.installmentValue && formData.installments) {
       generatePaymentDates();
     }
-  }, [activeTab, formData.entryValue, formData.entryInstallments, formData.installmentValue, formData.installments]);
+  }, [activeTab, formData.entryValue, formData.entryInstallments, formData.installmentValue, formData.installments, generatePaymentDates]);
 
   return {
     // State

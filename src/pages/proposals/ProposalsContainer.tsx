@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { RefreshCcw, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,14 +32,30 @@ const ProposalsContainer = () => {
     user: proposalsState.user,
   });
 
-  // ⚠️ Adicionamos esta parte para carregar automaticamente as propostas
+  // ✅ Load proposals automatically when component mounts
   useEffect(() => {
-    if (!proposalsState.loadingProposals) {
+    console.log("ProposalsContainer mounted, loading proposals...");
+    proposalsState.fetchProposals();
+  }, [proposalsState.fetchProposals]);
+
+  // ✅ Refresh proposals when user changes (important for role-based filtering)
+  useEffect(() => {
+    if (user) {
+      console.log("User changed, refreshing proposals for:", user.name, user.role);
       proposalsState.fetchProposals();
     }
-  }, []);
+  }, [user?.id, user?.role, proposalsState.fetchProposals]);
 
   const shouldShowDashboard = isAdmin && proposalsState.activeTab === "upload";
+
+  const handleRefreshClick = async () => {
+    console.log("Manual refresh triggered");
+    await proposalsState.fetchProposals();
+    toast({
+      title: "Dados atualizados",
+      description: "As propostas foram recarregadas com sucesso.",
+    });
+  };
 
   return (
     <div className="container py-6">
@@ -47,7 +64,7 @@ const ProposalsContainer = () => {
         <div className="flex gap-2">
           <Button 
             variant="outline" 
-            onClick={() => proposalsState.fetchProposals()}
+            onClick={handleRefreshClick}
             disabled={proposalsState.loadingProposals}
             className="flex items-center gap-2"
           >
