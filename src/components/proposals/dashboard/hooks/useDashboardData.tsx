@@ -29,45 +29,46 @@ export function useDashboardData() {
         console.log("=== DASHBOARD DATA DEBUG ===");
         console.log("Dashboard - Current user:", user.name, "Role:", user.role, "Email:", user.email);
         
-        // Check if current user is admin
         const isAdmin = user.role === UserRole.ADMIN;
         console.log("Dashboard - Is admin:", isAdmin);
         
-        // Query proposals WITHOUT date filter for testing
+        // Simplified query focusing only on essential fields
         let query = supabase
           .from('proposals')
-          .select('id, user_id, created_at, total_debt, discounted_value, fees_value');
+          .select('id, user_id, created_at, fees_value')
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(500); // Reasonable limit for performance
         
-        console.log("Dashboard - Fetching proposals without date filter");
-        
-        if (isAdmin) {
-          console.log("Dashboard - Admin detected, will filter for vendor proposals after loading users");
-          // For admins, we'll filter after getting the proposals based on actual user_ids
-        } else {
+        if (!isAdmin) {
           console.log("Dashboard - Regular user, showing own proposals only");
-          // For non-admins, only their own proposals
           query = query.eq('user_id', user.id);
         }
         
         const { data: proposals, error: proposalsError } = await query;
         
         console.log("Dashboard - Proposals query result:", { count: proposals?.length || 0, error: proposalsError });
-        console.log("Dashboard - Raw proposals data (first 3):", proposals?.slice(0, 3));
         
         if (proposalsError) {
           console.error('Dashboard - Error fetching proposals:', proposalsError);
           return;
         }
         
+        if (!proposals || proposals.length === 0) {
+          console.log("Dashboard - No proposals found");
+          setProposalsData([]);
+          setUsersData({});
+          return;
+        }
+        
         // Get unique user IDs from proposals
-        const uniqueUserIds = [...new Set((proposals || []).map(p => p.user_id))];
-        console.log("Dashboard - Unique user IDs from proposals:", uniqueUserIds);
+        const uniqueUserIds = [...new Set(proposals.map(p => p.user_id))];
+        console.log("Dashboard - Unique user IDs from proposals:", uniqueUserIds.length);
         
         if (uniqueUserIds.length === 0) {
           console.log("Dashboard - No user IDs found in proposals");
           setProposalsData([]);
           setUsersData({});
-          setIsLoading(false);
           return;
         }
         
@@ -79,25 +80,24 @@ export function useDashboardData() {
         
         if (usersError) {
           console.error('Dashboard - Error fetching users:', usersError);
-          return;
+          // Continue without user names rather than failing completely
         }
         
         console.log("Dashboard - Users data fetched:", users?.length || 0);
-        console.log("Dashboard - Users details:", users?.map(u => ({ id: u.id, name: u.name, role: u.role })));
         
         // For admins, filter proposals to show only from vendedor users
-        let finalProposals = proposals || [];
+        let finalProposals = proposals;
         if (isAdmin && users) {
           const vendorUserIds = users
             .filter(user => user.role === 'vendedor')
             .map(user => user.id);
           
-          console.log("Dashboard - Vendor user IDs:", vendorUserIds);
+          console.log("Dashboard - Vendor user IDs:", vendorUserIds.length);
           
           if (vendorUserIds.length > 0) {
-            finalProposals = proposals?.filter(proposal => 
+            finalProposals = proposals.filter(proposal => 
               vendorUserIds.includes(proposal.user_id)
-            ) || [];
+            );
             console.log("Dashboard - Filtered proposals for vendors:", finalProposals.length);
           } else {
             console.log("Dashboard - No vendor users found, showing empty result");
@@ -112,20 +112,21 @@ export function useDashboardData() {
         }, {} as Record<string, string>);
         
         console.log('Dashboard - User mapping created:', Object.keys(userMap).length, 'users');
-        console.log('Dashboard - User mapping sample:', Object.entries(userMap).slice(0, 3));
         
-        setProposalsData(finalProposals);
+        // Convert to ProposalData format
+        const formattedProposals = finalProposals.map(proposal => ({
+          id: proposal.id,
+          user_id: proposal.user_id,
+          created_at: proposal.created_at,
+          fees_value: parseFloat(proposal.fees_value?.toString() || '0')
+        }));
+        
+        setProposalsData(formattedProposals);
         setUsersData(userMap);
         
         console.log("Dashboard - Final data set:", {
-          proposalsCount: finalProposals.length,
+          proposalsCount: formattedProposals.length,
           usersCount: Object.keys(userMap).length,
-          sampleProposal: finalProposals[0] ? {
-            id: finalProposals[0].id,
-            user_id: finalProposals[0].user_id,
-            fees_value: finalProposals[0].fees_value,
-            created_at: finalProposals[0].created_at
-          } : null
         });
       } catch (error) {
         console.error('Dashboard - Error processing data:', error);
@@ -135,18 +136,12 @@ export function useDashboardData() {
     };
     
     fetchData();
-  }, [user]);
+  }, [user?.id, user?.role]); // Only depend on essential user properties
   
   // Daily proposals count for the current month
   const dailyProposalsData = useMemo(() => {
     console.log("=== DAILY PROPOSALS CALCULATION ===");
     console.log("Proposals data for daily calc:", proposalsData.length);
-    console.log("Sample proposals data:", proposalsData.slice(0, 2).map(p => ({
-      id: p.id,
-      user_id: p.user_id,
-      created_at: p.created_at,
-      fees_value: p.fees_value
-    })));
     
     if (!proposalsData.length) return [];
     
@@ -180,13 +175,9 @@ export function useDashboardData() {
     // Count proposals for each day
     proposalsData.forEach(proposal => {
       const dateStr = proposal.created_at.split('T')[0];
-      console.log("Processing proposal date:", dateStr, "Proposal ID:", proposal.id);
       if (dailyCounts[dateStr]) {
         dailyCounts[dateStr].count += 1;
         dailyCounts[dateStr].fees += proposal.fees_value || 0;
-        console.log("Added to day", dateStr, "- count:", dailyCounts[dateStr].count, "fees:", dailyCounts[dateStr].fees);
-      } else {
-        console.log("Date", dateStr, "not in current month range");
       }
     });
     
@@ -194,7 +185,7 @@ export function useDashboardData() {
       a.date.localeCompare(b.date)
     );
     
-    console.log("Daily proposals result:", result.slice(0, 5));
+    console.log("Daily proposals result sample:", result.slice(0, 3));
     console.log("Total daily proposals:", result.reduce((sum, day) => sum + day.count, 0));
     return result;
   }, [proposalsData]);
@@ -218,7 +209,7 @@ export function useDashboardData() {
       userCounts[proposal.user_id].fees += proposal.fees_value || 0;
     });
     
-    console.log("User counts calculated:", userCounts);
+    console.log("User counts calculated:", Object.keys(userCounts).length, "users");
     
     // Convert to array with user names
     const result = Object.entries(userCounts).map(([userId, stats], index) => ({
@@ -228,7 +219,7 @@ export function useDashboardData() {
       color: COLORS[index % COLORS.length]
     })).sort((a, b) => b.count - a.count);
     
-    console.log("User proposals result:", result);
+    console.log("User proposals result:", result.length, "users");
     return result;
   }, [proposalsData, usersData]);
   

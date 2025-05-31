@@ -21,12 +21,6 @@ export const useProposalsState = () => {
     deleteProposal
   } = useFetchProposals();
   
-  // ✅ Wrap fetchProposals with useCallback to ensure stable reference
-  const fetchProposals = useCallback(async () => {
-    console.log("fetchProposals called from useProposalsState");
-    await fetchProposalsOriginal();
-  }, [fetchProposalsOriginal]);
-  
   // State management
   const [activeTab, setActiveTab] = useState("upload");
   const [processing, setProcessing] = useState(false);
@@ -49,6 +43,16 @@ export const useProposalsState = () => {
   const [companyData, setCompanyData] = useState<CompanyData | null>(null);
   const [processingStatus, setProcessingStatus] = useState<string>("");
   
+  // Stable fetchProposals function that avoids infinite loops
+  const fetchProposals = useCallback(async () => {
+    console.log("fetchProposals called from useProposalsState");
+    try {
+      await fetchProposalsOriginal();
+    } catch (error) {
+      console.error("Error in fetchProposals:", error);
+    }
+  }, [fetchProposalsOriginal]);
+  
   // Update executive data when user changes
   useEffect(() => {
     if (user) {
@@ -58,7 +62,7 @@ export const useProposalsState = () => {
         executiveEmail: user.email || ''
       }));
     }
-  }, [user]);
+  }, [user?.id, user?.name, user?.email]); // Only trigger on these specific changes
   
   // Use our custom hooks
   const { fetchCompanyDataByCnpj } = useFetchCompanyData({ 

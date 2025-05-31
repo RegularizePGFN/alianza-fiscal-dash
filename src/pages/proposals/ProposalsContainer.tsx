@@ -34,29 +34,46 @@ const ProposalsContainer = () => {
     user: proposalsState.user,
   });
 
-  // ✅ Load proposals automatically when component mounts
+  // Load proposals on mount and when user changes
   useEffect(() => {
-    console.log("ProposalsContainer mounted, loading proposals...");
-    proposalsState.fetchProposals();
-  }, [proposalsState.fetchProposals]);
+    let mounted = true;
+    
+    const loadData = async () => {
+      if (user && mounted) {
+        console.log("Loading proposals for user:", user.name, user.role);
+        try {
+          await proposalsState.fetchProposals();
+        } catch (error) {
+          console.error("Failed to load proposals:", error);
+        }
+      }
+    };
 
-  // ✅ Refresh proposals when user changes (important for role-based filtering)
-  useEffect(() => {
-    if (user) {
-      console.log("User changed, refreshing proposals for:", user.name, user.role);
-      proposalsState.fetchProposals();
-    }
-  }, [user?.id, user?.role, proposalsState.fetchProposals]);
+    loadData();
+    
+    return () => {
+      mounted = false;
+    };
+  }, [user?.id]); // Only depend on user ID to avoid loops
 
   const shouldShowDashboard = isAdmin && proposalsState.activeTab === "upload";
 
   const handleRefreshClick = async () => {
     console.log("Manual refresh triggered");
-    await proposalsState.fetchProposals();
-    toast({
-      title: "Dados atualizados",
-      description: "As propostas foram recarregadas com sucesso.",
-    });
+    try {
+      await proposalsState.fetchProposals();
+      toast({
+        title: "Dados atualizados",
+        description: "As propostas foram recarregadas com sucesso.",
+      });
+    } catch (error) {
+      console.error("Error during manual refresh:", error);
+      toast({
+        title: "Erro ao atualizar",
+        description: "Não foi possível recarregar as propostas.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

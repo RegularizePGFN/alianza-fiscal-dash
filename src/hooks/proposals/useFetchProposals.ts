@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Proposal } from '@/lib/types/proposals';
 import { useAuth } from '@/contexts/auth';
@@ -22,8 +22,11 @@ export const useFetchProposals = () => {
     }
   };
 
-  const fetchProposals = async () => {
-    if (!user) return;
+  const fetchProposals = useCallback(async () => {
+    if (!user) {
+      console.log("No user found, skipping proposals fetch");
+      return;
+    }
 
     setIsLoading(true);
 
@@ -33,32 +36,63 @@ export const useFetchProposals = () => {
 
       const isAdmin = user.role === UserRole.ADMIN;
 
-      let proposalsQuery = supabase.from('proposals').select('*');
+      let proposalsQuery = supabase
+        .from('proposals')
+        .select(`
+          id,
+          user_id,
+          created_at,
+          cnpj,
+          debt_number,
+          total_debt,
+          discounted_value,
+          discount_percentage,
+          entry_value,
+          entry_installments,
+          installments,
+          installment_value,
+          fees_value,
+          client_name,
+          client_email,
+          client_phone,
+          business_activity,
+          creation_date,
+          validity_date,
+          status
+        `)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(100); // Limit to improve performance
 
       if (!isAdmin) {
         proposalsQuery = proposalsQuery.eq('user_id', user.id);
       }
 
-      proposalsQuery = proposalsQuery.order('created_at', { ascending: false });
-
       const { data, error } = await proposalsQuery;
 
-      console.log("Proposals query result:", { data: data?.length || 0, error });
-      console.log("Raw proposals data:", data?.slice(0, 3));
+      console.log("Proposals query result:", { count: data?.length || 0, error });
 
       if (error) {
-        throw new Error(error.message);
+        console.error("Supabase error:", error);
+        throw new Error(`Database error: ${error.message}`);
       }
 
-      const uniqueUserIds = [...new Set((data || []).map(p => p.user_id))];
+      if (!data || data.length === 0) {
+        console.log("No proposals found");
+        setProposals([]);
+        return;
+      }
+
+      // Get unique user IDs from proposals
+      const uniqueUserIds = [...new Set(data.map(p => p.user_id))];
 
       if (uniqueUserIds.length === 0) {
         console.log("No user IDs found in proposals");
         setProposals([]);
-        setIsLoading(false);
         return;
       }
 
+      // Fetch users data
       const { data: usersData, error: usersError } = await supabase
         .from('profiles')
         .select('id, name, role')
@@ -66,12 +100,13 @@ export const useFetchProposals = () => {
 
       if (usersError) {
         console.error('Error fetching users:', usersError);
+        // Continue without user names rather than failing completely
       }
 
       console.log("Users data fetched:", usersData?.length || 0);
 
-      let finalProposals = data || [];
-
+      // Filter for vendors if admin
+      let finalProposals = data;
       if (isAdmin && usersData) {
         const vendorUserIds = usersData
           .filter(user => user.role === 'vendedor')
@@ -80,27 +115,29 @@ export const useFetchProposals = () => {
         console.log("Vendor user IDs:", vendorUserIds);
 
         if (vendorUserIds.length > 0) {
-          finalProposals = finalProposals.filter(proposal =>
+          finalProposals = data.filter(proposal =>
             vendorUserIds.includes(proposal.user_id)
           );
         } else {
-          console.log("No vendor users found, returning empty");
+          console.log("No vendor users found");
           finalProposals = [];
         }
       }
 
+      // Create user mapping
       const userMap = (usersData || []).reduce((acc, user) => {
         acc[user.id] = { name: user.name, role: user.role };
         return acc;
       }, {} as Record<string, { name: string; role: string }>);
 
-      const formattedProposals = finalProposals.map((item: any): Proposal => {
-        const totalDebt = parseFloat(item.total_debt || '0');
-        const discountedValue = parseFloat(item.discounted_value || '0');
-        const economyValue = totalDebt - discountedValue;
-
-        let feesValue = parseFloat(item.fees_value || '');
+      // Format proposals
+      const formattedProposals = finalProposals.map((item): Proposal => {
+        const totalDebt = parseFloat(item.total_debt?.toString() || '0');
+        const discountedValue = parseFloat(item.discounted_value?.toString() || '0');
+        
+        let feesValue = parseFloat(item.fees_value?.toString() || '0');
         if (!Number.isFinite(feesValue) || feesValue === 0) {
+          const economyValue = totalDebt - discountedValue;
           feesValue = Number.isFinite(economyValue) ? economyValue * 0.2 : 0;
         }
 
@@ -114,31 +151,30 @@ export const useFetchProposals = () => {
           creationDate: item.creation_date,
           validityDate: item.validity_date,
           data: {
-            cnpj: item.cnpj,
+            cnpj: item.cnpj || '',
             totalDebt: totalDebt.toString(),
             discountedValue: discountedValue.toString(),
-            discountPercentage: parseFloat(item.discount_percentage || '0').toString(),
-            entryValue: parseFloat(item.entry_value || '0').toString(),
-            entryInstallments: item.entry_installments?.toString() || '1',
-            installments: item.installments?.toString() || '0',
-            installmentValue: parseFloat(item.installment_value || '0').toString(),
+            discountPercentage: (item.discount_percentage?.toString() || '0'),
+            entryValue: (item.entry_value?.toString() || '0'),
+            entryInstallments: (item.entry_installments?.toString() || '1'),
+            installments: (item.installments?.toString() || '0'),
+            installmentValue: (item.installment_value?.toString() || '0'),
             debtNumber: item.debt_number || '',
             feesValue: feesValue.toString(),
-            clientName: item.client_name,
-            clientEmail: item.client_email,
-            clientPhone: item.client_phone,
-            businessActivity: item.business_activity,
+            clientName: item.client_name || '',
+            clientEmail: item.client_email || '',
+            clientPhone: item.client_phone || '',
+            businessActivity: item.business_activity || '',
             creationDate: item.creation_date ? formatDateBR(item.creation_date) : undefined,
             validityDate: item.validity_date ? formatDateBR(item.validity_date) : undefined,
           },
-          imageUrl: item.image_url || '',
+          imageUrl: '', // Remove image URL to improve performance
         };
       });
 
-      console.log("Formatted proposals:", formattedProposals.length);
-      console.log("Sample proposal preview:", formattedProposals.slice(0, 3));
-
+      console.log("Successfully formatted proposals:", formattedProposals.length);
       setProposals(formattedProposals);
+
     } catch (error: any) {
       console.error('Error fetching proposals:', error);
       toast({
@@ -146,10 +182,11 @@ export const useFetchProposals = () => {
         description: error.message || "Não foi possível carregar as propostas.",
         variant: "destructive",
       });
+      setProposals([]); // Set empty array on error
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user?.id, user?.role, toast]); // Only depend on user ID and role
 
   const deleteProposal = async (id: string) => {
     try {
@@ -160,6 +197,7 @@ export const useFetchProposals = () => {
 
       if (error) throw new Error(error.message);
 
+      // Update local state immediately
       setProposals(prevProposals => prevProposals.filter(p => p.id !== id));
 
       toast({
