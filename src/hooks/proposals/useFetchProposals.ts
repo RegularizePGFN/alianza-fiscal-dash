@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Proposal } from '@/lib/types/proposals';
@@ -114,15 +115,15 @@ export const useFetchProposals = () => {
           validityDate: item.validity_date,
           data: {
             cnpj: item.cnpj,
-            totalDebt: totalDebt,
-            discountedValue: discountedValue,
-            discountPercentage: parseFloat(item.discount_percentage || '0'),
-            entryValue: parseFloat(item.entry_value || '0'),
+            totalDebt: totalDebt.toString(),
+            discountedValue: discountedValue.toString(),
+            discountPercentage: parseFloat(item.discount_percentage || '0').toString(),
+            entryValue: parseFloat(item.entry_value || '0').toString(),
             entryInstallments: item.entry_installments?.toString() || '1',
             installments: item.installments?.toString() || '0',
-            installmentValue: parseFloat(item.installment_value || '0'),
+            installmentValue: parseFloat(item.installment_value || '0').toString(),
             debtNumber: item.debt_number || '',
-            feesValue: feesValue,
+            feesValue: feesValue.toString(),
             clientName: item.client_name,
             clientEmail: item.client_email,
             clientPhone: item.client_phone,
