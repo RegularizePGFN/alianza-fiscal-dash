@@ -18,7 +18,6 @@ interface UploadTabContentProps {
   proposals: Proposal[];
   loadingProposals: boolean;
   onProcessComplete: (data: any, preview: string) => void;
-  onViewProposal: (proposal: Proposal) => void;
   onDeleteProposal: (id: string) => Promise<boolean>;
   setProcessingStatus: (status: string) => void;
 }
@@ -31,7 +30,6 @@ const UploadTabContent = ({
   proposals,
   loadingProposals,
   onProcessComplete,
-  onViewProposal,
   onDeleteProposal,
   setProcessingStatus,
 }: UploadTabContentProps) => {
@@ -179,7 +177,6 @@ const UploadTabContent = ({
         <ProposalHistory
           proposals={proposals}
           loading={loadingProposals}
-          onViewProposal={onViewProposal}
           onDeleteProposal={onDeleteProposal}
         />
       </motion.div>
