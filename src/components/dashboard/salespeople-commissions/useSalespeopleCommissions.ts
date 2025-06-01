@@ -3,17 +3,22 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
-import { SalespersonCommissionData, SummaryTotals } from "./types";
+import { SalespersonCommissionData, SummaryTotals, SortColumn, SortDirection } from "./types";
 import { calculateCommissionRate, calculateCommission } from "./utils";
-
-type SortColumn = 'name' | 'totalSales' | 'grossValue' | 'netValue' | 'commission' | 'goal' | 'goalProgress';
-type SortDirection = 'asc' | 'desc';
 
 export const useSalespeopleCommissions = (selectedMonth?: number, selectedYear?: number) => {
   const { user } = useAuth();
   const [salespeople, setSalespeople] = useState<SalespersonCommissionData[]>([]);
   const [summaryTotals, setSummaryTotals] = useState<SummaryTotals>({
+    salesCount: 0,
     totalSales: 0,
+    goalAmount: 0,
+    commissionGoalAmount: 0,
+    goalPercentage: 0,
+    metaGap: 0,
+    remainingDailyTarget: 0,
+    projectedCommission: 0,
+    zeroDaysCount: 0,
     totalGross: 0,
     totalNet: 0,
     totalCommission: 0,
@@ -129,7 +134,15 @@ export const useSalespeopleCommissions = (selectedMonth?: number, selectedYear?:
       
       // Calculate summary totals
       const totals: SummaryTotals = {
-        totalSales: salespeopleData.reduce((sum, person) => sum + person.totalSales, 0),
+        salesCount: salespeopleData.reduce((sum, person) => sum + person.totalSales, 0),
+        totalSales: salespeopleData.reduce((sum, person) => sum + person.netValue, 0),
+        goalAmount: salespeopleData.reduce((sum, person) => sum + person.goal, 0),
+        commissionGoalAmount: 0,
+        goalPercentage: 0,
+        metaGap: 0,
+        remainingDailyTarget: 0,
+        projectedCommission: salespeopleData.reduce((sum, person) => sum + person.commission, 0),
+        zeroDaysCount: 0,
         totalGross: salespeopleData.reduce((sum, person) => sum + person.grossValue, 0),
         totalNet: salespeopleData.reduce((sum, person) => sum + person.netValue, 0),
         totalCommission: salespeopleData.reduce((sum, person) => sum + person.commission, 0),

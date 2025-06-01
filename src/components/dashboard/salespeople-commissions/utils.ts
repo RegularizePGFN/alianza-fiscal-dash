@@ -29,3 +29,17 @@ export function getBusinessDaysElapsedUntilToday(): number {
   }
   return count;
 }
+
+/**
+ * Calculate commission rate based on gross amount
+ */
+export function calculateCommissionRate(grossAmount: number): number {
+  return grossAmount >= 10000 ? 25 : 20; // 25% if >= 10k, otherwise 20%
+}
+
+/**
+ * Calculate commission amount
+ */
+export function calculateCommission(grossAmount: number, rate: number): number {
+  return grossAmount * (rate / 100);
+}

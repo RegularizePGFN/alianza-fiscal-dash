@@ -14,6 +14,17 @@ export type SalespersonCommission = {
   zeroDaysCount: number; // New field for days with zero sales
 };
 
+export type SalespersonCommissionData = {
+  id: string;
+  name: string;
+  totalSales: number;
+  grossValue: number;
+  netValue: number;
+  commission: number;
+  goal: number;
+  goalProgress: number;
+};
+
 export type SortColumn = 
   | 'name' 
   | 'salesCount' 
@@ -22,7 +33,12 @@ export type SortColumn =
   | 'metaGap'
   | 'remainingDailyTarget'
   | 'projectedCommission'
-  | 'zeroDaysCount'; // Add new sortable column
+  | 'zeroDaysCount'
+  | 'grossValue'
+  | 'netValue'
+  | 'commission'
+  | 'goal'
+  | 'goalProgress'; // Add new sortable columns
 
 export type SortDirection = 'asc' | 'desc';
 
@@ -36,4 +52,9 @@ export type SummaryTotals = {
   remainingDailyTarget: number;
   projectedCommission: number;
   zeroDaysCount: number; // New field for days with zero sales
+  totalGross: number;
+  totalNet: number;
+  totalCommission: number;
+  totalGoal: number;
+  averageGoalProgress: number;
 };
