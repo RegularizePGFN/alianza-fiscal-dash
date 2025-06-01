@@ -4,7 +4,6 @@ import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
 import { SalespersonCommissionData, SummaryTotals, SortColumn, SortDirection } from "./types";
-import { calculateCommissionRate, calculateCommission } from "./utils";
 
 export const useSalespeopleCommissions = (selectedMonth?: number, selectedYear?: number) => {
   const { user } = useAuth();
@@ -110,15 +109,21 @@ export const useSalespeopleCommissions = (selectedMonth?: number, selectedYear?:
         const grossValue = personSales.reduce((sum, sale) => sum + Number(sale.gross_amount), 0);
         const netValue = grossValue; // Using gross as net for now
         
-        // Calculate commission using the same logic
-        const commission = personSales.reduce((sum, sale) => {
-          const saleGross = Number(sale.gross_amount);
-          const rate = calculateCommissionRate(saleGross);
-          return sum + calculateCommission(saleGross, rate);
-        }, 0);
+        // Calculate commission using correct logic:
+        // 25% if total monthly sales >= 10,000, otherwise 20%
+        let commission = 0;
+        if (grossValue >= 10000) {
+          // 25% on total amount if reached 10k threshold
+          commission = grossValue * 0.25;
+        } else {
+          // 20% on total amount if below 10k threshold
+          commission = grossValue * 0.20;
+        }
         
         const goalAmount = personGoal ? Number(personGoal.goal_amount) : 0;
         const goalProgress = goalAmount > 0 ? (netValue / goalAmount) * 100 : 0;
+        
+        console.log(`${profile.name}: grossValue=${grossValue}, commission=${commission}, rate=${grossValue >= 10000 ? '25%' : '20%'}`);
         
         return {
           id: profile.id,

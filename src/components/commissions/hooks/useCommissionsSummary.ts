@@ -38,20 +38,28 @@ export const useCommissionsSummary = (selectedMonth: number, selectedYear: numbe
 
         if (sales && sales.length > 0) {
           const totalGross = sales.reduce((sum, sale) => sum + Number(sale.gross_amount), 0);
-          const uniqueSalespeople = new Set(sales.map(sale => sale.salesperson_id)).size;
+          const uniqueSalespeople = new Set(sales.map(sale => sale.salesperson_id));
           
-          // Calcular comissões usando a mesma lógica existente
-          const totalCommission = sales.reduce((sum, sale) => {
-            const grossAmount = Number(sale.gross_amount);
-            const rate = grossAmount >= 10000 ? 0.25 : 0.20; // 25% se >= 10k, senão 20%
-            return sum + (grossAmount * rate);
-          }, 0);
+          // Calcular comissões por vendedor usando a lógica correta:
+          // 25% se o total do vendedor no mês >= 10.000, senão 20%
+          let totalCommission = 0;
+          
+          uniqueSalespeople.forEach(salespersonId => {
+            const personSales = sales.filter(sale => sale.salesperson_id === salespersonId);
+            const personTotal = personSales.reduce((sum, sale) => sum + Number(sale.gross_amount), 0);
+            
+            if (personTotal >= 10000) {
+              totalCommission += personTotal * 0.25; // 25% no total
+            } else {
+              totalCommission += personTotal * 0.20; // 20% no total
+            }
+          });
 
           setSummary({
             totalSales: sales.length,
             totalGross,
             totalCommission,
-            totalSalespeople: uniqueSalespeople
+            totalSalespeople: uniqueSalespeople.size
           });
         } else {
           setSummary({
