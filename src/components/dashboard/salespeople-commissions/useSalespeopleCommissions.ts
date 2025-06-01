@@ -1,214 +1,198 @@
 
 import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/auth";
+import { UserRole } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { SalespersonCommission, SortColumn, SortDirection, SummaryTotals } from "./types";
-import { getBusinessDaysInMonth, getBusinessDaysElapsedUntilToday } from "./utils";
-import { COMMISSION_GOAL_AMOUNT, COMMISSION_RATE_ABOVE_GOAL, COMMISSION_RATE_BELOW_GOAL } from "@/lib/constants";
-import { format, isWeekend } from "date-fns";
+import { SalespersonCommissionData, SummaryTotals } from "./types";
+import { calculateCommissionRate, calculateCommission } from "./utils";
 
-export function useSalespeopleCommissions() {
-  const [salespeople, setSalespeople] = useState<SalespersonCommission[]>([]);
+type SortColumn = 'name' | 'totalSales' | 'grossValue' | 'netValue' | 'commission' | 'goal' | 'goalProgress';
+type SortDirection = 'asc' | 'desc';
+
+export const useSalespeopleCommissions = (selectedMonth?: number, selectedYear?: number) => {
+  const { user } = useAuth();
+  const [salespeople, setSalespeople] = useState<SalespersonCommissionData[]>([]);
+  const [summaryTotals, setSummaryTotals] = useState<SummaryTotals>({
+    totalSales: 0,
+    totalGross: 0,
+    totalNet: 0,
+    totalCommission: 0,
+    totalGoal: 0,
+    averageGoalProgress: 0
+  });
   const [loading, setLoading] = useState(true);
-  const [sortColumn, setSortColumn] = useState<SortColumn>('name');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  const { toast } = useToast();
-  
-  // Function to sort salespeople based on column and direction
-  const sortSalespeople = (
-    data: SalespersonCommission[], 
-    column: SortColumn, 
-    direction: SortDirection
-  ) => {
-    const sortedData = [...data].sort((a, b) => {
-      if (column === 'name') {
-        return direction === 'asc'
-          ? a.name.localeCompare(b.name)
-          : b.name.localeCompare(a.name);
-      }
-      
-      const aValue = a[column];
-      const bValue = b[column];
-      
-      if (direction === 'asc') {
-        return (aValue as number) - (bValue as number);
-      } else {
-        return (bValue as number) - (aValue as number);
-      }
-    });
+  const [sortColumn, setSortColumn] = useState<SortColumn>('commission');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  const fetchSalespeopleCommissions = async () => {
+    if (!user || user.role !== UserRole.ADMIN) return;
     
-    setSalespeople(sortedData);
+    setLoading(true);
+    
+    try {
+      console.log("=== SALESPEOPLE COMMISSIONS FETCH DEBUG ===");
+      
+      // Determine date range
+      let startDate: string;
+      let endDate: string;
+      
+      if (selectedMonth && selectedYear) {
+        // Use selected month/year
+        startDate = `${selectedYear}-${selectedMonth.toString().padStart(2, '0')}-01`;
+        const nextMonth = selectedMonth === 12 ? 1 : selectedMonth + 1;
+        const nextYear = selectedMonth === 12 ? selectedYear + 1 : selectedYear;
+        endDate = `${nextYear}-${nextMonth.toString().padStart(2, '0')}-01`;
+        console.log("Using selected period:", startDate, "to", endDate);
+      } else {
+        // Use current month
+        const currentDate = new Date();
+        const currentMonth = currentDate.getMonth() + 1;
+        const currentYear = currentDate.getFullYear();
+        startDate = `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`;
+        const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+        const nextYear = currentMonth === 12 ? currentYear + 1 : currentYear;
+        endDate = `${nextYear}-${nextMonth.toString().padStart(2, '0')}-01`;
+        console.log("Using current month period:", startDate, "to", endDate);
+      }
+      
+      // Get all vendedor profiles
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, name")
+        .eq("role", "vendedor");
+      
+      if (profilesError) throw profilesError;
+      
+      console.log("Vendedor profiles found:", profiles?.length || 0);
+      
+      if (!profiles || profiles.length === 0) {
+        setSalespeople([]);
+        return;
+      }
+      
+      // Get sales for the period
+      const { data: sales, error: salesError } = await supabase
+        .from("sales")
+        .select("*")
+        .gte('sale_date', startDate)
+        .lt('sale_date', endDate);
+      
+      if (salesError) throw salesError;
+      
+      console.log("Sales data fetched:", sales?.length || 0, "sales");
+      
+      // Get goals for the period
+      const goalMonth = selectedMonth || new Date().getMonth() + 1;
+      const goalYear = selectedYear || new Date().getFullYear();
+      
+      const { data: goals, error: goalsError } = await supabase
+        .from("monthly_goals")
+        .select("*")
+        .eq("month", goalMonth)
+        .eq("year", goalYear)
+        .in("user_id", profiles.map(p => p.id));
+      
+      if (goalsError) throw goalsError;
+      
+      console.log("Goals data fetched:", goals?.length || 0, "goals");
+      
+      // Process data for each salesperson
+      const salespeopleData: SalespersonCommissionData[] = profiles.map(profile => {
+        const personSales = sales?.filter(sale => sale.salesperson_id === profile.id) || [];
+        const personGoal = goals?.find(goal => goal.user_id === profile.id);
+        
+        const totalSales = personSales.length;
+        const grossValue = personSales.reduce((sum, sale) => sum + Number(sale.gross_amount), 0);
+        const netValue = grossValue; // Using gross as net for now
+        
+        // Calculate commission using the same logic
+        const commission = personSales.reduce((sum, sale) => {
+          const saleGross = Number(sale.gross_amount);
+          const rate = calculateCommissionRate(saleGross);
+          return sum + calculateCommission(saleGross, rate);
+        }, 0);
+        
+        const goalAmount = personGoal ? Number(personGoal.goal_amount) : 0;
+        const goalProgress = goalAmount > 0 ? (netValue / goalAmount) * 100 : 0;
+        
+        return {
+          id: profile.id,
+          name: profile.name,
+          totalSales,
+          grossValue,
+          netValue,
+          commission,
+          goal: goalAmount,
+          goalProgress
+        };
+      });
+      
+      // Calculate summary totals
+      const totals: SummaryTotals = {
+        totalSales: salespeopleData.reduce((sum, person) => sum + person.totalSales, 0),
+        totalGross: salespeopleData.reduce((sum, person) => sum + person.grossValue, 0),
+        totalNet: salespeopleData.reduce((sum, person) => sum + person.netValue, 0),
+        totalCommission: salespeopleData.reduce((sum, person) => sum + person.commission, 0),
+        totalGoal: salespeopleData.reduce((sum, person) => sum + person.goal, 0),
+        averageGoalProgress: salespeopleData.length > 0 
+          ? salespeopleData.reduce((sum, person) => sum + person.goalProgress, 0) / salespeopleData.length 
+          : 0
+      };
+      
+      setSalespeople(salespeopleData);
+      setSummaryTotals(totals);
+      
+      console.log("Summary totals:", totals);
+    } catch (error) {
+      console.error("Error fetching salespeople commissions:", error);
+    } finally {
+      setLoading(false);
+    }
   };
-  
-  // Handle header click for sorting
+
   const handleSort = (column: SortColumn) => {
-    const newDirection = sortColumn === column && sortDirection === 'asc' ? 'desc' : 'asc';
-    setSortColumn(column);
-    setSortDirection(newDirection);
-    sortSalespeople(salespeople, column, newDirection);
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('desc');
+    }
   };
+
+  // Sort the data
+  const sortedSalespeople = [...salespeople].sort((a, b) => {
+    const multiplier = sortDirection === 'asc' ? 1 : -1;
+    
+    switch (sortColumn) {
+      case 'name':
+        return multiplier * a.name.localeCompare(b.name);
+      case 'totalSales':
+        return multiplier * (a.totalSales - b.totalSales);
+      case 'grossValue':
+        return multiplier * (a.grossValue - b.grossValue);
+      case 'netValue':
+        return multiplier * (a.netValue - b.netValue);
+      case 'commission':
+        return multiplier * (a.commission - b.commission);
+      case 'goal':
+        return multiplier * (a.goal - b.goal);
+      case 'goalProgress':
+        return multiplier * (a.goalProgress - b.goalProgress);
+      default:
+        return 0;
+    }
+  });
 
   useEffect(() => {
-    const fetchSalespeopleCommissions = async () => {
-      try {
-        setLoading(true);
-        const today = new Date();
-        const currentMonth = today.getMonth() + 1;
-        const currentYear = today.getFullYear();
-        const totalBusinessDays = getBusinessDaysInMonth(currentMonth, currentYear);
-        const businessDaysElapsed = getBusinessDaysElapsedUntilToday();
-        const businessDaysRemaining = totalBusinessDays - businessDaysElapsed;
-        
-        const { data: profilesData, error: profilesError } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("role", "vendedor");
-          
-        if (profilesError) {
-          console.error("Error fetching salespeople:", profilesError);
-          toast({
-            title: "Erro ao carregar vendedores",
-            description: "Não foi possível carregar os dados dos vendedores.",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        // Get all business days of the current month up to today
-        const allBusinessDays = getAllBusinessDaysUntilToday(currentMonth, currentYear);
-        
-        const commissionData = await Promise.all(
-          profilesData.map(async (profile) => {
-            const startDate = `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`;
-            const endDate = new Date(currentYear, currentMonth, 0).toISOString().split('T')[0];
-            
-            const { data: salesData, error: salesError } = await supabase
-              .from("sales")
-              .select("*")
-              .eq("salesperson_id", profile.id)
-              .gte("sale_date", startDate)
-              .lte("sale_date", endDate);
-              
-            if (salesError) {
-              console.error(`Error fetching sales for ${profile.name}:`, salesError);
-              return null;
-            }
-            
-            const { data: goalData } = await supabase
-              .from("monthly_goals")
-              .select("goal_amount")
-              .eq("user_id", profile.id)
-              .eq("month", currentMonth)
-              .eq("year", currentYear)
-              .maybeSingle();
-              
-            const totalSales = salesData?.reduce((sum, sale) => sum + Number(sale.gross_amount), 0) || 0;
-            const salesCount = salesData?.length || 0;
-            const goalAmount = goalData?.goal_amount ? Number(goalData.goal_amount) : 0;
-            
-            // For commission calculation, we use the FIXED COMMISSION GOAL AMOUNT
-            const commissionRate = totalSales >= COMMISSION_GOAL_AMOUNT 
-              ? COMMISSION_RATE_ABOVE_GOAL 
-              : COMMISSION_RATE_BELOW_GOAL;
-              
-            const projectedCommission = totalSales * commissionRate;
-            
-            const dailyTarget = goalAmount / totalBusinessDays;
-            const expectedProgress = dailyTarget * businessDaysElapsed;
-            const metaGap = totalSales - expectedProgress;
-            
-            // Goal percentage is calculated based on the personal goal, not commission goal
-            const goalPercentage = expectedProgress > 0 ? (totalSales / expectedProgress) * 100 : 0;
-            
-            const remainingAmount = goalAmount - totalSales;
-            const remainingDailyTarget = businessDaysRemaining > 0 ? remainingAmount / businessDaysRemaining : 0;
-            
-            // Calculate zero days count - days when the salesperson had no sales
-            const salesDates = new Set(
-              salesData?.map(sale => sale.sale_date) || []
-            );
-            
-            // Count business days with zero sales
-            const zeroDaysCount = allBusinessDays.filter(day => !salesDates.has(day)).length;
-            
-            return {
-              id: profile.id,
-              name: profile.name || "Sem nome",
-              totalSales,
-              goalAmount,
-              commissionGoalAmount: COMMISSION_GOAL_AMOUNT, // Fixed commission goal
-              projectedCommission,
-              goalPercentage,
-              salesCount,
-              metaGap,
-              expectedProgress,
-              remainingDailyTarget,
-              zeroDaysCount, // New field for days with zero sales
-            };
-          })
-        );
-        
-        const validCommissions = commissionData.filter(Boolean) as SalespersonCommission[];
-        
-        // Apply initial sort
-        sortSalespeople(validCommissions, sortColumn, sortDirection);
-      } catch (error) {
-        console.error("Error fetching salespeople commissions:", error);
-        toast({
-          title: "Erro ao buscar dados",
-          description: "Não foi possível carregar os dados de comissões.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    
     fetchSalespeopleCommissions();
-  }, []);
-  
-  // Get all business days of the current month until today
-  function getAllBusinessDaysUntilToday(month: number, year: number): string[] {
-    const result: string[] = [];
-    const today = new Date();
-    const lastDay = today.getDate();
-    
-    for (let day = 1; day <= lastDay; day++) {
-      const date = new Date(year, month - 1, day);
-      if (date > today) break; // Don't include future days
-      
-      // Skip weekends
-      if (!isWeekend(date)) {
-        // Format as YYYY-MM-DD to match database format
-        const formattedDate = format(date, 'yyyy-MM-dd');
-        result.push(formattedDate);
-      }
-    }
-    
-    return result;
-  }
-  
-  // Calculate summary totals
-  const summaryTotals: SummaryTotals = {
-    salesCount: salespeople.reduce((sum, person) => sum + person.salesCount, 0),
-    totalSales: salespeople.reduce((sum, person) => sum + person.totalSales, 0),
-    goalAmount: salespeople.reduce((sum, person) => sum + person.goalAmount, 0),
-    commissionGoalAmount: salespeople.reduce((sum, person) => sum + person.commissionGoalAmount, 0),
-    goalPercentage: salespeople.length > 0 
-      ? salespeople.reduce((sum, person) => sum + person.goalPercentage, 0) / salespeople.length 
-      : 0,
-    metaGap: salespeople.reduce((sum, person) => sum + person.metaGap, 0),
-    remainingDailyTarget: salespeople.reduce((sum, person) => sum + person.remainingDailyTarget, 0),
-    projectedCommission: salespeople.reduce((sum, person) => sum + person.projectedCommission, 0),
-    zeroDaysCount: 0, // Not applicable for summary row
-  };
-  
+  }, [user, selectedMonth, selectedYear]);
+
   return {
-    salespeople,
+    salespeople: sortedSalespeople,
     summaryTotals,
     loading,
     sortColumn,
     sortDirection,
     handleSort
   };
-}
+};

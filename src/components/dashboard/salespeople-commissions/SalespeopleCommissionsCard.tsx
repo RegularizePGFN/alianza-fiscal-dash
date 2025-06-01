@@ -8,7 +8,12 @@ import { SalespersonRow } from "./SalespersonRow";
 import { SummaryRow } from "./SummaryRow";
 import { useSalespeopleCommissions } from "./useSalespeopleCommissions";
 
-export function SalespeopleCommissionsCard() {
+interface SalespeopleCommissionsCardProps {
+  selectedMonth?: number;
+  selectedYear?: number;
+}
+
+export function SalespeopleCommissionsCard({ selectedMonth, selectedYear }: SalespeopleCommissionsCardProps) {
   const { user } = useAuth();
   const { 
     salespeople, 
@@ -17,7 +22,7 @@ export function SalespeopleCommissionsCard() {
     sortColumn, 
     sortDirection, 
     handleSort 
-  } = useSalespeopleCommissions();
+  } = useSalespeopleCommissions(selectedMonth, selectedYear);
   
   if (user?.role !== UserRole.ADMIN) {
     return null;
@@ -28,7 +33,10 @@ export function SalespeopleCommissionsCard() {
       <Card className="w-full">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg font-medium">
-            Projeção de Comissões (Vendedores)
+            {selectedMonth && selectedYear 
+              ? `Consolidado Vendedores - ${selectedMonth}/${selectedYear}`
+              : "Projeção de Comissões (Vendedores)"
+            }
           </CardTitle>
         </CardHeader>
         <CardContent className="flex justify-center py-6">
@@ -42,7 +50,10 @@ export function SalespeopleCommissionsCard() {
     <Card className="w-full">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg font-medium">
-          Consolidado Vendedores
+          {selectedMonth && selectedYear 
+            ? `Consolidado Vendedores - ${selectedMonth}/${selectedYear}`
+            : "Consolidado Vendedores"
+          }
         </CardTitle>
       </CardHeader>
       <CardContent>
