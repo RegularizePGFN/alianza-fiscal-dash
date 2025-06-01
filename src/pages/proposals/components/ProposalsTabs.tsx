@@ -113,7 +113,6 @@ const ProposalsTabs = ({
           ) : (
             <ProposalTabContent
               formData={formData}
-              selectedProposal={selectedProposal}
               onInputChange={onInputChange}
               onReset={onReset}
             />

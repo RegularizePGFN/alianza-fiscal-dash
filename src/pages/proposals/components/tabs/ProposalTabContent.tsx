@@ -10,16 +10,12 @@ import ViewModeOptions from './proposal-tab/ViewModeOptions';
 
 interface ProposalTabContentProps {
   formData: Partial<ExtractedData>;
-  imagePreview: string | null;
-  companyData?: CompanyData | null;
   onReset: () => void;
   onInputChange: (name: string, value: string) => void;
 }
 
 const ProposalTabContent = ({
   formData,
-  imagePreview,
-  companyData,
   onReset,
   onInputChange
 }: ProposalTabContentProps) => {
@@ -74,8 +70,6 @@ const ProposalTabContent = ({
           {/* Preview of the proposal */}
           <ProposalCard
             data={formData}
-            imageUrl={imagePreview || undefined}
-            companyData={companyData}
           />
         </>
       )}
