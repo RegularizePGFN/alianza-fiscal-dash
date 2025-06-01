@@ -45,6 +45,22 @@ export function SalespeopleCommissionsCard({ selectedMonth, selectedYear }: Sale
       </Card>
     );
   }
+
+  // Convert SalespersonCommissionData to SalespersonCommission for display
+  const convertedSalespeople = salespeople.map(person => ({
+    id: person.id,
+    name: person.name,
+    totalSales: person.netValue,
+    goalAmount: person.goal,
+    commissionGoalAmount: 0,
+    projectedCommission: person.commission,
+    goalPercentage: person.goalProgress,
+    salesCount: person.totalSales,
+    metaGap: person.netValue - person.goal,
+    expectedProgress: 0,
+    remainingDailyTarget: Math.max(0, person.goal - person.netValue),
+    zeroDaysCount: 0
+  }));
   
   return (
     <Card className="w-full">
@@ -65,20 +81,20 @@ export function SalespeopleCommissionsCard({ selectedMonth, selectedYear }: Sale
               handleSort={handleSort}
             />
             <tbody>
-              {salespeople.length === 0 ? (
+              {convertedSalespeople.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-4 text-center text-gray-500">
+                  <td colSpan={9} className="py-4 text-center text-gray-500">
                     Nenhum vendedor encontrado
                   </td>
                 </tr>
               ) : (
-                salespeople.map((person) => (
+                convertedSalespeople.map((person) => (
                   <SalespersonRow key={person.id} person={person} />
                 ))
               )}
               
               {/* Summary row */}
-              {salespeople.length > 0 && (
+              {convertedSalespeople.length > 0 && (
                 <SummaryRow summaryTotals={summaryTotals} />
               )}
             </tbody>
