@@ -9,6 +9,12 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
 };
 
+// Function to validate UUID format
+function isValidUUID(uuid: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -151,6 +157,13 @@ serve(async (req) => {
     if (method === 'PUT' && pathSegments.length === 1) {
       // Update user - PUT /admin-users/{userId}
       const userId = pathSegments[0];
+      
+      // Validate UUID format
+      if (!isValidUUID(userId)) {
+        console.error('Invalid UUID format:', userId);
+        throw new Error('Invalid user ID format');
+      }
+      
       const body = await req.json();
       const { email, name, role, password } = body;
 
@@ -222,7 +235,21 @@ serve(async (req) => {
       // Delete user - DELETE /admin-users/{userId}
       const userId = pathSegments[0];
 
-      console.log('Deleting user:', userId);
+      console.log('Attempting to delete user with ID:', userId);
+      
+      // Validate UUID format
+      if (!isValidUUID(userId)) {
+        console.error('Invalid UUID format:', userId);
+        return new Response(JSON.stringify({ 
+          data: null, 
+          error: { message: 'Invalid user ID format. Must be a valid UUID.' }
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      console.log('UUID validation passed, proceeding with deletion...');
 
       try {
         // Step 1: Delete user from auth.users (this will cascade to profiles via trigger)
@@ -275,6 +302,12 @@ serve(async (req) => {
     if (method === 'GET' && pathSegments.length === 1) {
       // Get user by ID - GET /admin-users/{userId}
       const userId = pathSegments[0];
+      
+      // Validate UUID format
+      if (!isValidUUID(userId)) {
+        console.error('Invalid UUID format:', userId);
+        throw new Error('Invalid user ID format');
+      }
 
       console.log('Getting user by ID:', userId);
 

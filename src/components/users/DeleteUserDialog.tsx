@@ -42,6 +42,23 @@ export function DeleteUserDialog({
     
     if (!user) return;
     
+    console.log('User object:', user);
+    console.log('User ID to delete:', user.id);
+    console.log('User ID type:', typeof user.id);
+    console.log('User ID length:', user.id?.length);
+    
+    // Validate UUID format on frontend too
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(user.id)) {
+      console.error('Invalid UUID format on frontend:', user.id);
+      toast({
+        title: "Erro",
+        description: "ID do usuário em formato inválido.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsLoading(true);
     try {
       console.log('Attempting to delete user:', user.id);
@@ -71,6 +88,8 @@ export function DeleteUserDialog({
         errorMessage = "Erro de conexão. Verifique sua internet e tente novamente.";
       } else if (error.message?.includes('permissions')) {
         errorMessage = "Você não tem permissão para excluir este usuário.";
+      } else if (error.message?.includes('Invalid user ID format')) {
+        errorMessage = "ID do usuário em formato inválido.";
       } else if (error.message) {
         errorMessage = error.message;
       }
