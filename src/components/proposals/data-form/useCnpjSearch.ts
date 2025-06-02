@@ -15,16 +15,109 @@ export const useCnpjSearch = ({
   onInputChange,
   setProcessingStatus 
 }: UseCnpjSearchProps) => {
-  const [isSearchingCnpj] = useState<boolean>(false); // Always false since we don't have manual search
+  const [isSearchingCnpj, setIsSearchingCnpj] = useState<boolean>(false);
   const [companyData, setCompanyData] = useState<CompanyData | null>(null);
   const { toast } = useToast();
   
-  // This function is kept for compatibility but does nothing since search is automatic
   const handleSearchCnpj = async () => {
-    toast({
-      title: "Busca automática ativa",
-      description: "Os dados do CNPJ são buscados automaticamente quando você digita um CNPJ válido",
-    });
+    if (!formData.cnpj) {
+      toast({
+        title: "CNPJ não informado",
+        description: "Por favor, digite um CNPJ válido para consulta",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsSearchingCnpj(true);
+    if (setProcessingStatus) {
+      setProcessingStatus("Consultando dados do CNPJ...");
+    }
+    
+    try {
+      const result = await fetchCnpjData(formData.cnpj);
+      
+      if (result) {
+        setCompanyData(result);
+        
+        // Update form data with company information
+        if (result.company?.name) {
+          const event = {
+            target: {
+              name: 'clientName',
+              value: result.company.name
+            }
+          } as React.ChangeEvent<HTMLInputElement>;
+          onInputChange(event);
+        }
+        
+        // If there's an email, use the first one
+        if (result.emails && result.emails.length > 0) {
+          const emailEvent = {
+            target: {
+              name: 'clientEmail',
+              value: result.emails[0].address
+            }
+          } as React.ChangeEvent<HTMLInputElement>;
+          onInputChange(emailEvent);
+        }
+        
+        // If there's a phone, use the first one
+        if (result.phones && result.phones.length > 0) {
+          const phone = result.phones[0];
+          const phoneEvent = {
+            target: {
+              name: 'clientPhone',
+              value: `${phone.area}${phone.number}`
+            }
+          } as React.ChangeEvent<HTMLInputElement>;
+          onInputChange(phoneEvent);
+        }
+        
+        // If there's business activity, use the first side activity or main activity
+        if (result.sideActivities && result.sideActivities.length > 0) {
+          const activity = result.sideActivities[0];
+          const activityEvent = {
+            target: {
+              name: 'businessActivity',
+              value: `${activity.id} | ${activity.text}`
+            }
+          } as React.ChangeEvent<HTMLInputElement>;
+          onInputChange(activityEvent);
+        } else if (result.mainActivity) {
+          const activityEvent = {
+            target: {
+              name: 'businessActivity',
+              value: `${result.mainActivity.id} | ${result.mainActivity.text}`
+            }
+          } as React.ChangeEvent<HTMLInputElement>;
+          onInputChange(activityEvent);
+        }
+        
+        toast({
+          title: "Dados obtidos com sucesso",
+          description: `Informações de ${result.company?.name || 'empresa'} preenchidas automaticamente`,
+        });
+      } else {
+        toast({
+          title: "CNPJ não encontrado",
+          description: "Não foi possível encontrar informações para este CNPJ",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao buscar dados do CNPJ:", error);
+      toast({
+        title: "Erro na consulta",
+        description: "Ocorreu um erro ao consultar os dados do CNPJ",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSearchingCnpj(false);
+      if (setProcessingStatus) {
+        setProcessingStatus("");
+      }
+    }
   };
 
   return {

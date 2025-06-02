@@ -2,8 +2,9 @@
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle } from "lucide-react";
+import { Search, User, Building, Loader2 } from "lucide-react";
 import { CompanyData } from "@/lib/types/proposals";
 import CompanyDetailsPanel from "./CompanyDetailsPanel";
 
@@ -25,6 +26,8 @@ interface ClientInfoSectionProps {
 const ClientInfoSection = ({
   formData,
   onInputChange,
+  isSearchingCnpj,
+  handleSearchCnpj,
   companyData
 }: ClientInfoSectionProps) => {
   return (
@@ -32,29 +35,40 @@ const ClientInfoSection = ({
       <h2 className="text-lg font-medium">Dados do Cliente</h2>
       
       <div className="space-y-4">
-        {/* CNPJ Section with automatic fetch indicator */}
+        {/* CNPJ Search Section */}
         <div>
           <Label htmlFor="cnpj" className="flex items-center gap-2 mb-2">
             CNPJ do Cliente
-            {companyData && (
-              <CheckCircle className="h-4 w-4 text-green-500" />
-            )}
           </Label>
-          <div className="space-y-2">
+          <div className="flex gap-2">
             <Input
               id="cnpj"
               name="cnpj"
               value={formData.cnpj || ''}
               onChange={onInputChange}
               placeholder="00.000.000/0000-00"
+              className="flex-1"
               maxLength={18}
             />
-            {formData.cnpj && formData.cnpj.length >= 14 && (
-              <p className="text-xs text-blue-600 flex items-center gap-1">
-                <CheckCircle className="h-3 w-3" />
-                Dados serão buscados automaticamente
-              </p>
-            )}
+            <Button
+              type="button"
+              variant="outline"
+              className="shrink-0 w-32"
+              onClick={handleSearchCnpj}
+              disabled={isSearchingCnpj || !formData.cnpj || formData.cnpj.length < 14}
+            >
+              {isSearchingCnpj ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                  Buscando...
+                </>
+              ) : (
+                <>
+                  <Search className="h-4 w-4 mr-1" />
+                  Buscar CNPJ
+                </>
+              )}
+            </Button>
           </div>
         </div>
         
@@ -73,11 +87,7 @@ const ClientInfoSection = ({
               value={formData.clientName || ''}
               onChange={onInputChange}
               placeholder="Nome completo do cliente"
-              className={companyData ? "bg-blue-50 border-blue-200" : ""}
             />
-            {companyData && (
-              <p className="text-xs text-blue-600">Preenchido automaticamente via CNPJ</p>
-            )}
           </div>
           
           <div className="space-y-2">
@@ -99,11 +109,7 @@ const ClientInfoSection = ({
               value={formData.clientPhone || ''}
               onChange={onInputChange}
               placeholder="(99) 99999-9999"
-              className={companyData ? "bg-blue-50 border-blue-200" : ""}
             />
-            {companyData && (
-              <p className="text-xs text-blue-600">Preenchido automaticamente via CNPJ</p>
-            )}
           </div>
           
           <div className="space-y-2">
@@ -115,11 +121,7 @@ const ClientInfoSection = ({
               onChange={onInputChange}
               placeholder="cliente@exemplo.com"
               type="email"
-              className={companyData ? "bg-blue-50 border-blue-200" : ""}
             />
-            {companyData && (
-              <p className="text-xs text-blue-600">Preenchido automaticamente via CNPJ</p>
-            )}
           </div>
           
           <div className="space-y-2 col-span-full">
@@ -130,11 +132,7 @@ const ClientInfoSection = ({
               value={formData.businessActivity || ''}
               onChange={onInputChange}
               placeholder="Ramo de atividade da empresa"
-              className={companyData ? "bg-blue-50 border-blue-200" : ""}
             />
-            {companyData && (
-              <p className="text-xs text-blue-600">Preenchido automaticamente via CNPJ</p>
-            )}
           </div>
         </div>
       </div>

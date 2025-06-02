@@ -27,9 +27,11 @@ const DataTabContent = ({
   searchCnpj,
   isSearchingCnpj = false
 }: DataTabContentProps) => {
-  // Placeholder function since search is now automatic
+  // Handle CNPJ search
   const handleSearchCnpj = () => {
-    console.log("Manual CNPJ search is disabled - search is now automatic");
+    if (formData.cnpj && searchCnpj) {
+      searchCnpj(formData.cnpj);
+    }
   };
 
   // Calculate entry installment value
