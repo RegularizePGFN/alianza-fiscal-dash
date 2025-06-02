@@ -2,6 +2,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 import { ChangeEvent } from "react";
+import { DateFilterType, DateRange } from "@/components/proposals/ProposalsDateFilter";
 
 import UploadTabContent from "./tabs/UploadTabContent";
 import DataTabContent from "./tabs/DataTabContent";
@@ -28,6 +29,9 @@ interface ProposalsTabsProps {
   onProcessComplete: (data: Partial<ExtractedData>, preview: string) => void;
   onReset: () => void;
   setProcessingStatus: (status: string) => void;
+  filterType: DateFilterType;
+  customDateRange: DateRange;
+  onFilterChange: (type: DateFilterType, range?: DateRange) => void;
 }
 
 const ProposalsTabs = ({
@@ -50,7 +54,10 @@ const ProposalsTabs = ({
   onDeleteProposal,
   onProcessComplete,
   onReset,
-  setProcessingStatus
+  setProcessingStatus,
+  filterType,
+  customDateRange,
+  onFilterChange
 }: ProposalsTabsProps) => {
   // Create a function that adapts onInputChange to the format expected by DataTabContent
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -81,6 +88,9 @@ const ProposalsTabs = ({
           onDeleteProposal={onDeleteProposal}
           onProcessComplete={onProcessComplete}
           setProcessingStatus={setProcessingStatus}
+          filterType={filterType}
+          customDateRange={customDateRange}
+          onFilterChange={onFilterChange}
         />
       </TabsContent>
       

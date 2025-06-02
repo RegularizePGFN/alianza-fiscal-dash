@@ -3,6 +3,7 @@ import { ExtractedData, Proposal } from "@/lib/types/proposals";
 import AIImageProcessor from "@/components/proposals/AIImageProcessor";
 import ProposalHistory from "@/components/proposals/ProposalHistory";
 import { ProposalsSummaryCards } from "@/components/proposals/ProposalsSummaryCards";
+import { ProposalsDateFilter, DateFilterType, DateRange } from "@/components/proposals/ProposalsDateFilter";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -17,6 +18,9 @@ interface UploadTabContentProps {
   onDeleteProposal: (id: string) => Promise<boolean>;
   onProcessComplete: (data: Partial<ExtractedData>, preview: string) => void;
   setProcessingStatus: (status: string) => void;
+  filterType: DateFilterType;
+  customDateRange: DateRange;
+  onFilterChange: (type: DateFilterType, range?: DateRange) => void;
 }
 
 const UploadTabContent = ({
@@ -29,7 +33,10 @@ const UploadTabContent = ({
   onViewProposal,
   onDeleteProposal,
   onProcessComplete,
-  setProcessingStatus
+  setProcessingStatus,
+  filterType,
+  customDateRange,
+  onFilterChange
 }: UploadTabContentProps) => {
   return (
     <div className="space-y-6">
@@ -45,6 +52,15 @@ const UploadTabContent = ({
       </div>
       
       <Separator className="my-8" />
+      
+      {/* Date Filter */}
+      <div className="flex justify-between items-center">
+        <ProposalsDateFilter
+          filterType={filterType}
+          dateRange={customDateRange}
+          onFilterChange={onFilterChange}
+        />
+      </div>
       
       {/* Summary Cards */}
       <ProposalsSummaryCards proposals={proposals} />

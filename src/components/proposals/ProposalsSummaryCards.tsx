@@ -43,6 +43,9 @@ export function ProposalsSummaryCards({ proposals }: ProposalsSummaryCardsProps)
       }, 0) / proposals.length
     : 0;
 
+  // Format average discount to 2 decimal places
+  const formattedAverageDiscount = Number(averageDiscount.toFixed(2));
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
       <SalesSummaryCard
@@ -50,7 +53,7 @@ export function ProposalsSummaryCards({ proposals }: ProposalsSummaryCardsProps)
         numericValue={totalProposals}
         hideAmount={true}
         icon={<FileText className="h-4 w-4" />}
-        description="Propostas cadastradas no sistema"
+        description="Propostas cadastradas no período"
       />
       
       <SalesSummaryCard
@@ -84,10 +87,10 @@ export function ProposalsSummaryCards({ proposals }: ProposalsSummaryCardsProps)
       
       <SalesSummaryCard
         title="Desconto Médio"
-        numericValue={averageDiscount}
+        numericValue={formattedAverageDiscount}
         hideAmount={true}
         icon={<TrendingDown className="h-4 w-4" />}
-        description={`${averageDiscount.toFixed(1)}% de desconto médio`}
+        description={`${formattedAverageDiscount}% de desconto médio`}
       />
     </div>
   );

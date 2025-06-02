@@ -3,15 +3,15 @@ import { RefreshCcw, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProposalsHeader from "./components/ProposalsHeader";
 import ProposalsTabs from "./components/ProposalsTabs";
-import { useProposalsState } from "@/hooks/proposals";
+import { useProposalsStateWithFilter } from "@/hooks/proposals/useProposalsStateWithFilter";
 import { useProposalHandlers } from "@/hooks/proposals";
 import { ProposalsDashboard } from "@/components/proposals/dashboard";
 import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
 
 const ProposalsContainer = () => {
-  // Get state from our custom hook
-  const proposalsState = useProposalsState();
+  // Get state from our custom hook with filter support
+  const proposalsState = useProposalsStateWithFilter();
   const { user } = useAuth();
   const isAdmin = user?.role === UserRole.ADMIN;
   
@@ -80,6 +80,9 @@ const ProposalsContainer = () => {
         onProcessComplete={handlers.handleProcessComplete} 
         onReset={handlers.handleReset}
         setProcessingStatus={proposalsState.setProcessingStatus}
+        filterType={proposalsState.filterType}
+        customDateRange={proposalsState.customDateRange}
+        onFilterChange={proposalsState.handleFilterChange}
       />
       
       {/* Mostrar o dashboard apenas na aba "upload" */}
