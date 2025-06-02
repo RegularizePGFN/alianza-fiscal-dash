@@ -1,10 +1,9 @@
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, DollarSign, Calculator } from "lucide-react";
-import { useCosts } from "@/hooks/financeiro/useCosts";
+import { TrendingUp, DollarSign, Minus, Plus } from "lucide-react";
 import { useSalesData } from "@/hooks/financeiro/useSalesData";
+import { useCosts } from "@/hooks/financeiro/useCosts";
 
 interface LucroLiquidoProps {
   refreshTrigger?: number;
@@ -12,13 +11,14 @@ interface LucroLiquidoProps {
 }
 
 export function LucroLiquido({ refreshTrigger, detailed = false }: LucroLiquidoProps) {
-  const { costs, fetchCosts } = useCosts();
-  const { salesData, fetchSalesData } = useSalesData();
+  const { salesData, loading: salesLoading } = useSalesData();
+  const { costs, loading: costsLoading, fetchCosts } = useCosts();
 
   useEffect(() => {
-    fetchCosts();
-    fetchSalesData();
-  }, [refreshTrigger]);
+    if (refreshTrigger) {
+      fetchCosts();
+    }
+  }, [refreshTrigger, fetchCosts]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -27,16 +27,7 @@ export function LucroLiquido({ refreshTrigger, detailed = false }: LucroLiquidoP
     }).format(value);
   };
 
-  // Calcular totais
-  const totalFixedCosts = costs.filter(cost => cost.type === 'fixed' && cost.is_active)
-    .reduce((sum, cost) => sum + parseFloat(cost.amount || 0), 0);
-
-  const totalVariableCosts = costs.filter(cost => cost.type === 'variable' && cost.is_active)
-    .reduce((sum, cost) => sum + parseFloat(cost.amount || 0), 0);
-
-  const totalCosts = totalFixedCosts + totalVariableCosts;
-
-  // Receita total do mês atual
+  // Calcular receita mensal atual
   const currentMonth = new Date().getMonth() + 1;
   const currentYear = new Date().getFullYear();
   
@@ -45,99 +36,130 @@ export function LucroLiquido({ refreshTrigger, detailed = false }: LucroLiquidoP
       const saleDate = new Date(sale.sale_date);
       return saleDate.getMonth() + 1 === currentMonth && saleDate.getFullYear() === currentYear;
     })
-    .reduce((sum, sale) => sum + parseFloat(sale.gross_amount || 0), 0);
+    .reduce((total, sale) => total + Number(sale.gross_amount), 0);
 
+  // Calcular custos totais
+  const totalFixedCosts = costs
+    .filter(cost => cost.type === 'fixed')
+    .reduce((total, cost) => total + Number(cost.amount), 0);
+
+  const totalVariableCosts = costs
+    .filter(cost => cost.type === 'variable')
+    .reduce((total, cost) => total + Number(cost.amount), 0);
+
+  const totalCosts = totalFixedCosts + totalVariableCosts;
+
+  // Calcular lucro líquido
   const netProfit = monthlyRevenue - totalCosts;
   const profitMargin = monthlyRevenue > 0 ? (netProfit / monthlyRevenue) * 100 : 0;
 
+  if (salesLoading || costsLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i} className="animate-pulse">
+            <CardHeader className="pb-2">
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-8 bg-gray-200 rounded w-full"></div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  const summaryCards = [
+    {
+      title: "Receita Mensal",
+      value: monthlyRevenue,
+      description: "Vendas do mês atual",
+      icon: DollarSign,
+      color: "text-blue-600"
+    },
+    {
+      title: "Custos Totais",
+      value: totalCosts,
+      description: "Fixos + Variáveis",
+      icon: Minus,
+      color: "text-red-600"
+    },
+    {
+      title: "Lucro Líquido",
+      value: netProfit,
+      description: "Receita - Custos",
+      icon: netProfit >= 0 ? TrendingUp : Minus,
+      color: netProfit >= 0 ? "text-green-600" : "text-red-600"
+    },
+    {
+      title: "Margem de Lucro",
+      value: profitMargin,
+      description: "% da receita",
+      icon: TrendingUp,
+      color: profitMargin >= 0 ? "text-green-600" : "text-red-600",
+      isPercentage: true
+    }
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Receita Mensal</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {formatCurrency(monthlyRevenue)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Vendas do mês atual
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Custos Totais</CardTitle>
-            <TrendingDown className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {formatCurrency(totalCosts)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Fixos + Variáveis
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Lucro Líquido</CardTitle>
-            <Calculator className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {formatCurrency(netProfit)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Receita - Custos
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Margem de Lucro</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${profitMargin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {profitMargin.toFixed(1)}%
-            </div>
-            <p className="text-xs text-muted-foreground">
-              % da receita
-            </p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {summaryCards.map((card) => (
+          <Card key={card.title}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                {card.title}
+              </CardTitle>
+              <card.icon className={`h-4 w-4 ${card.color}`} />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${card.color}`}>
+                {card.isPercentage 
+                  ? `${card.value.toFixed(1)}%`
+                  : formatCurrency(card.value)
+                }
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {card.description}
+              </p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {detailed && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Breakdown de Custos</CardTitle>
-              <CardDescription>Distribuição dos custos por tipo</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <Minus className="h-5 w-5 text-red-600" />
+                Breakdown de Custos
+              </CardTitle>
+              <CardDescription>
+                Detalhamento dos custos fixos e variáveis
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">Custos Fixos</Badge>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Custos Fixos</span>
+                  <span className="text-sm font-semibold text-red-600">
+                    {formatCurrency(totalFixedCosts)}
+                  </span>
                 </div>
-                <span className="font-semibold">{formatCurrency(totalFixedCosts)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">Custos Variáveis</Badge>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Custos Variáveis</span>
+                  <span className="text-sm font-semibold text-red-600">
+                    {formatCurrency(totalVariableCosts)}
+                  </span>
                 </div>
-                <span className="font-semibold">{formatCurrency(totalVariableCosts)}</span>
-              </div>
-              <div className="border-t pt-2">
-                <div className="flex items-center justify-between font-bold">
-                  <span>Total</span>
-                  <span>{formatCurrency(totalCosts)}</span>
+                <hr />
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Total de Custos</span>
+                  <span className="font-bold text-red-600">
+                    {formatCurrency(totalCosts)}
+                  </span>
                 </div>
               </div>
             </CardContent>
@@ -145,25 +167,35 @@ export function LucroLiquido({ refreshTrigger, detailed = false }: LucroLiquidoP
 
           <Card>
             <CardHeader>
-              <CardTitle>Análise Financeira</CardTitle>
-              <CardDescription>Indicadores chave de performance</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-green-600" />
+                Análise de Rentabilidade
+              </CardTitle>
+              <CardDescription>
+                Indicadores de performance financeira
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span>Ponto de Equilíbrio</span>
-                <span className="font-semibold">{formatCurrency(totalCosts)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Resultado Operacional</span>
-                <span className={`font-semibold ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {netProfit >= 0 ? 'Lucro' : 'Prejuízo'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Status Financeiro</span>
-                <Badge variant={netProfit >= 0 ? 'default' : 'destructive'}>
-                  {netProfit >= 0 ? 'Saudável' : 'Atenção'}
-                </Badge>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Receita Bruta</span>
+                  <span className="text-sm font-semibold text-blue-600">
+                    {formatCurrency(monthlyRevenue)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Custos (%)</span>
+                  <span className="text-sm font-semibold text-red-600">
+                    {monthlyRevenue > 0 ? ((totalCosts / monthlyRevenue) * 100).toFixed(1) : 0}%
+                  </span>
+                </div>
+                <hr />
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Lucro Líquido</span>
+                  <span className={`font-bold ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {formatCurrency(netProfit)}
+                  </span>
+                </div>
               </div>
             </CardContent>
           </Card>
