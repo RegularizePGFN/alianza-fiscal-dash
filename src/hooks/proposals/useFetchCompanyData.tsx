@@ -33,9 +33,15 @@ export const useFetchCompanyData = ({
       if (data) {
         setCompanyData(data);
 
-        // Update form with company information
+        // IMPORTANTE: Atualizar formulário APENAS com informações da empresa, NUNCA do vendedor
         setFormData(prev => ({
           ...prev,
+          // Preservar dados do vendedor que já estavam no formulário
+          specialistName: prev.specialistName,
+          executiveName: prev.executiveName,
+          executiveEmail: prev.executiveEmail,
+          executivePhone: prev.executivePhone,
+          // Preencher APENAS dados do cliente com informações da empresa
           clientName: data.company?.name || prev.clientName || '',
           clientEmail: data.emails?.[0]?.address || prev.clientEmail || '',
           clientPhone: data.phones?.[0] ? `${data.phones[0].area}${data.phones[0].number}` : prev.clientPhone || '',

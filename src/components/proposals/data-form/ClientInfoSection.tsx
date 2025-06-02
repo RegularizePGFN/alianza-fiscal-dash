@@ -70,6 +70,9 @@ const ClientInfoSection = ({
               )}
             </Button>
           </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Busca automática será realizada quando o CNPJ for preenchido
+          </p>
         </div>
         
         {/* Display Company Data if Available */}

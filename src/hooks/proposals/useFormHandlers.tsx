@@ -32,6 +32,20 @@ export const useFormHandlers = ({
           const data = await fetchCnpjData(debouncedCnpj);
           if (data) {
             setCompanyData(data);
+            
+            // IMPORTANTE: Preencher APENAS os dados da empresa, NUNCA do vendedor
+            setFormData((prev) => ({
+              ...prev,
+              clientName: data.company?.name || prev.clientName || '',
+              clientEmail: data.emails?.[0]?.address || prev.clientEmail || '',
+              clientPhone: data.phones?.[0] ? `${data.phones[0].area}${data.phones[0].number}` : prev.clientPhone || '',
+              businessActivity: data.sideActivities?.[0] ? `${data.sideActivities[0].id} | ${data.sideActivities[0].text}` : data.mainActivity ? `${data.mainActivity.id} | ${data.mainActivity.text}` : prev.businessActivity || ''
+            }));
+            
+            toast({
+              title: "Dados da empresa obtidos",
+              description: `Informações de ${data.company?.name} preenchidas automaticamente.`
+            });
           }
         } catch (error) {
           console.error("Error fetching company data:", error);
@@ -40,13 +54,14 @@ export const useFormHandlers = ({
       
       loadCompanyData();
     }
-  }, [debouncedCnpj, setCompanyData]);
+  }, [debouncedCnpj, setCompanyData, setFormData, toast]);
   
   // Handle OCR completion and data extraction
   const handleProcessComplete = (extractedData: Partial<ExtractedData>, imagePreview: string) => {
     setFormData((prevData) => ({
       ...prevData,
       ...extractedData,
+      // IMPORTANTE: Manter apenas o nome do especialista do usuário logado, não sobrescrever dados do cliente
       specialistName: user?.name || extractedData.specialistName || '',
     }));
     
@@ -76,7 +91,7 @@ export const useFormHandlers = ({
         [name]: value
       }));
       
-      // Special handling for CNPJ to fetch company data
+      // Special handling for CNPJ to fetch company data automatically
       if (name === 'cnpj' && value && value.length >= 14) {
         setDebouncedCnpj(value);
       }
@@ -88,7 +103,7 @@ export const useFormHandlers = ({
         [name]: value
       }));
       
-      // Special handling for CNPJ to fetch company data
+      // Special handling for CNPJ to fetch company data automatically
       if (name === 'cnpj' && value.length >= 14) {
         setDebouncedCnpj(value);
       }

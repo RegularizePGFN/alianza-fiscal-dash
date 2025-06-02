@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
 import { ClientInfoSection, FinancialInfoSection } from "@/components/proposals/data-form";
 import { ArrowRight } from "lucide-react";
+import { useCnpjSearch } from "@/components/proposals/data-form/useCnpjSearch";
 
 interface DataTabContentProps {
   formData: Partial<ExtractedData>;
@@ -27,12 +28,21 @@ const DataTabContent = ({
   searchCnpj,
   isSearchingCnpj = false
 }: DataTabContentProps) => {
-  // Handle CNPJ search
-  const handleSearchCnpj = () => {
-    if (formData.cnpj && searchCnpj) {
-      searchCnpj(formData.cnpj);
-    }
-  };
+  // Use the CNPJ search hook for manual search functionality
+  const {
+    isSearchingCnpj: hookIsSearching,
+    companyData: hookCompanyData,
+    handleSearchCnpj
+  } = useCnpjSearch({ 
+    formData, 
+    onInputChange,
+    setProcessingStatus
+  });
+
+  // Use props if available, otherwise use hook values
+  const finalIsSearching = isSearchingCnpj || hookIsSearching;
+  const finalCompanyData = companyData || hookCompanyData;
+  const finalHandleSearch = searchCnpj ? () => searchCnpj(formData.cnpj || '') : handleSearchCnpj;
 
   // Calculate entry installment value
   const calculateEntryInstallmentValue = () => {
@@ -58,9 +68,9 @@ const DataTabContent = ({
           <ClientInfoSection
             formData={formData}
             onInputChange={onInputChange}
-            isSearchingCnpj={isSearchingCnpj}
-            handleSearchCnpj={handleSearchCnpj}
-            companyData={companyData}
+            isSearchingCnpj={finalIsSearching}
+            handleSearchCnpj={finalHandleSearch}
+            companyData={finalCompanyData}
           />
           
           <FinancialInfoSection
