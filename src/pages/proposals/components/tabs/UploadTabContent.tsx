@@ -2,6 +2,7 @@
 import { ExtractedData, Proposal } from "@/lib/types/proposals";
 import AIImageProcessor from "@/components/proposals/AIImageProcessor";
 import ProposalHistory from "@/components/proposals/ProposalHistory";
+import { ProposalsSummaryCards } from "@/components/proposals/ProposalsSummaryCards";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -45,6 +46,10 @@ const UploadTabContent = ({
       
       <Separator className="my-8" />
       
+      {/* Summary Cards */}
+      <ProposalsSummaryCards proposals={proposals} />
+      
+      {/* Proposals History */}
       <Card className="border-af-blue-200 shadow-md rounded-xl bg-white">
         <CardHeader className="border-b border-af-blue-100 bg-gradient-to-r from-gray-50 to-white">
           <CardTitle className="text-lg font-semibold">Histórico de Propostas</CardTitle>

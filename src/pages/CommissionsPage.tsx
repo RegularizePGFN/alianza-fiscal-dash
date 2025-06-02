@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SalespeopleCommissionsCard } from "@/components/dashboard/salespeople-commissions";
 import { SalesSummaryCard } from "@/components/dashboard/SalesSummaryCard";
+import { SalesHistoryCard } from "@/components/commissions/SalesHistoryCard";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useCommissionsData } from "@/hooks/useCommissionsData";
