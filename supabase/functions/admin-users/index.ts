@@ -93,24 +93,18 @@ serve(async (req) => {
     const pathname = url.pathname;
     console.log('Full pathname:', pathname);
     
-    // Extract path after /functions/v1/admin-users
-    const adminUsersPrefix = '/functions/v1/admin-users';
-    let routePath = '';
+    // Split the pathname and filter out empty segments
+    const pathSegments = pathname.split('/').filter(segment => segment.length > 0);
+    console.log('All path segments:', pathSegments);
     
-    if (pathname.startsWith(adminUsersPrefix)) {
-      routePath = pathname.substring(adminUsersPrefix.length);
-    }
+    // Find the index of 'admin-users' and get segments after it
+    const adminUsersIndex = pathSegments.findIndex(segment => segment === 'admin-users');
+    const routeSegments = adminUsersIndex >= 0 ? pathSegments.slice(adminUsersIndex + 1) : [];
     
-    // Remove leading slash and split into segments
-    if (routePath.startsWith('/')) {
-      routePath = routePath.substring(1);
-    }
-    
-    const pathSegments = routePath ? routePath.split('/').filter(Boolean) : [];
-    console.log('Route path:', routePath, 'Path segments:', pathSegments);
+    console.log('Route segments after admin-users:', routeSegments);
 
     // Handle different admin operations based on method and path
-    if (method === 'GET' && pathSegments.length === 0) {
+    if (method === 'GET' && routeSegments.length === 0) {
       // List users - GET /admin-users
       console.log('Listing users...');
       const { data, error } = await supabaseAdmin.auth.admin.listUsers();
@@ -134,7 +128,7 @@ serve(async (req) => {
       });
     }
 
-    if (method === 'POST' && pathSegments.length === 0) {
+    if (method === 'POST' && routeSegments.length === 0) {
       // Create user - POST /admin-users
       const body = await req.json();
       const { email, password, name, role } = body;
@@ -166,9 +160,9 @@ serve(async (req) => {
       });
     }
 
-    if (method === 'PUT' && pathSegments.length === 1) {
+    if (method === 'PUT' && routeSegments.length === 1) {
       // Update user - PUT /admin-users/{userId}
-      const userId = pathSegments[0];
+      const userId = routeSegments[0];
       console.log('Extracted userId for update:', userId);
       
       // Validate UUID format
@@ -244,9 +238,9 @@ serve(async (req) => {
       }
     }
 
-    if (method === 'DELETE' && pathSegments.length === 1) {
+    if (method === 'DELETE' && routeSegments.length === 1) {
       // Delete user - DELETE /admin-users/{userId}
-      const userId = pathSegments[0];
+      const userId = routeSegments[0];
       console.log('Extracted userId for deletion:', userId);
       console.log('UserId type:', typeof userId);
       console.log('UserId length:', userId.length);
@@ -313,9 +307,9 @@ serve(async (req) => {
       }
     }
 
-    if (method === 'GET' && pathSegments.length === 1) {
+    if (method === 'GET' && routeSegments.length === 1) {
       // Get user by ID - GET /admin-users/{userId}
-      const userId = pathSegments[0];
+      const userId = routeSegments[0];
       console.log('Extracted userId for get:', userId);
       
       // Validate UUID format
@@ -339,8 +333,8 @@ serve(async (req) => {
     }
 
     // If we get here, no route matched
-    console.error('No route matched - Method:', method, 'Path segments:', pathSegments);
-    throw new Error(`Endpoint not found: ${method} ${routePath}`);
+    console.error('No route matched - Method:', method, 'Route segments:', routeSegments);
+    throw new Error(`Endpoint not found: ${method} ${routeSegments.join('/')}`);
 
   } catch (error: any) {
     console.error('Admin users function error:', error);
