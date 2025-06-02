@@ -29,17 +29,13 @@ const UploadTabContent = ({
   setProcessingStatus,
 }: UploadTabContentProps) => {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-6"
-    >
-      {/* Upload Section */}
+    <div className="w-full max-w-none space-y-6">
+      {/* Upload Section - Full Width */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3, delay: 0.1 }}
+        className="w-full"
       >
         <AIImageProcessor
           onProcessComplete={onProcessComplete}
@@ -51,11 +47,12 @@ const UploadTabContent = ({
         />
       </motion.div>
 
-      {/* Proposal History */}
+      {/* Proposal History - Full Width */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.3 }}
+        className="w-full"
       >
         <ProposalHistory
           proposals={proposals}
@@ -63,7 +60,7 @@ const UploadTabContent = ({
           onDeleteProposal={onDeleteProposal}
         />
       </motion.div>
-    </motion.div>
+    </div>
   );
 };
 
