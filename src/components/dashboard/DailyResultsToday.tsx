@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { getTodayISO } from "@/lib/utils";
 import { FileText, DollarSign, TrendingUp } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 
@@ -30,26 +29,37 @@ export function DailyResultsToday() {
 
       try {
         setLoading(true);
-        const today = getTodayISO();
         
-        // Fetch today's proposals for the current user
+        // Get today's date in the user's timezone
+        const now = new Date();
+        const today = now.toISOString().split('T')[0]; // YYYY-MM-DD format
+        
+        // Create start and end timestamps for today
+        const startOfDay = `${today}T00:00:00`;
+        const endOfDay = `${today}T23:59:59`;
+        
+        console.log('Fetching data for date:', today);
+        console.log('Time range:', startOfDay, 'to', endOfDay);
+        
+        // Fetch today's proposals for the current user - using broader time range
         const { data: proposalsData, error: proposalsError } = await supabase
           .from('proposals')
           .select('fees_value')
           .eq('user_id', user.id)
-          .gte('created_at', `${today}T00:00:00.000Z`)
-          .lt('created_at', `${today}T23:59:59.999Z`);
+          .gte('created_at', startOfDay)
+          .lte('created_at', endOfDay);
 
         if (proposalsError) {
           console.error('Error fetching proposals:', proposalsError);
-          return;
+        } else {
+          console.log('Proposals found:', proposalsData?.length || 0);
         }
 
         const proposalsCount = proposalsData?.length || 0;
         const totalFees = proposalsData?.reduce((sum, proposal) => 
           sum + (proposal.fees_value || 0), 0) || 0;
 
-        // Fetch today's sales for the current user
+        // Fetch today's sales for the current user - using exact date match
         const { data: salesData, error: salesError } = await supabase
           .from('sales')
           .select('gross_amount')
@@ -58,10 +68,12 @@ export function DailyResultsToday() {
 
         if (salesError) {
           console.error('Error fetching sales:', salesError);
-          return;
+        } else {
+          console.log('Sales found:', salesData?.length || 0);
         }
 
         if (!salesData || salesData.length === 0) {
+          console.log('No sales found for today, setting commissions to 0');
           setResults({
             proposalsCount,
             totalFees,
@@ -83,6 +95,7 @@ export function DailyResultsToday() {
         }
 
         const contractType = profileData?.contract_type || 'PJ';
+        console.log('User contract type:', contractType);
 
         // Calculate commissions based on contract type
         const totalCommissions = salesData.reduce((sum, sale) => {
@@ -97,6 +110,12 @@ export function DailyResultsToday() {
           
           return sum + (saleAmount * commissionRate);
         }, 0);
+
+        console.log('Final results:', {
+          proposalsCount,
+          totalFees,
+          totalCommissions
+        });
 
         setResults({
           proposalsCount,
