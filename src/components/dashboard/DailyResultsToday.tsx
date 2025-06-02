@@ -1,10 +1,10 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { SalesSummaryCard } from "@/components/dashboard/SalesSummaryCard";
 import { supabase } from "@/integrations/supabase/client";
 import { getTodayISO } from "@/lib/utils";
 import { FileText, DollarSign, TrendingUp } from "lucide-react";
+import { useAuth } from "@/contexts/auth";
 
 interface TodayResults {
   proposalsCount: number;
@@ -13,6 +13,7 @@ interface TodayResults {
 }
 
 export function DailyResultsToday() {
+  const { user } = useAuth();
   const [results, setResults] = useState<TodayResults>({
     proposalsCount: 0,
     totalFees: 0,
@@ -22,14 +23,20 @@ export function DailyResultsToday() {
 
   useEffect(() => {
     const fetchTodayResults = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         const today = getTodayISO();
         
-        // Fetch today's proposals
+        // Fetch today's proposals for the current user
         const { data: proposalsData, error: proposalsError } = await supabase
           .from('proposals')
           .select('fees_value')
+          .eq('user_id', user.id)
           .gte('created_at', `${today}T00:00:00.000Z`)
           .lt('created_at', `${today}T23:59:59.999Z`);
 
@@ -42,13 +49,11 @@ export function DailyResultsToday() {
         const totalFees = proposalsData?.reduce((sum, proposal) => 
           sum + (proposal.fees_value || 0), 0) || 0;
 
-        // Fetch today's sales with salesperson profiles
+        // Fetch today's sales for the current user
         const { data: salesData, error: salesError } = await supabase
           .from('sales')
-          .select(`
-            gross_amount,
-            salesperson_id
-          `)
+          .select('gross_amount')
+          .eq('salesperson_id', user.id)
           .eq('sale_date', today);
 
         if (salesError) {
@@ -65,29 +70,22 @@ export function DailyResultsToday() {
           return;
         }
 
-        // Get unique salesperson IDs
-        const salespersonIds = [...new Set(salesData.map(sale => sale.salesperson_id))];
-
-        // Fetch profiles for all salespeople
-        const { data: profilesData, error: profilesError } = await supabase
+        // Get user's contract type
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('id, contract_type')
-          .in('id', salespersonIds);
+          .select('contract_type')
+          .eq('id', user.id)
+          .single();
 
-        if (profilesError) {
-          console.error('Error fetching profiles:', profilesError);
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
           return;
         }
 
-        // Create a map of salesperson ID to contract type
-        const contractTypeMap = new Map();
-        profilesData?.forEach(profile => {
-          contractTypeMap.set(profile.id, profile.contract_type || 'PJ');
-        });
+        const contractType = profileData?.contract_type || 'PJ';
 
         // Calculate commissions based on contract type
         const totalCommissions = salesData.reduce((sum, sale) => {
-          const contractType = contractTypeMap.get(sale.salesperson_id) || 'PJ';
           const saleAmount = Number(sale.gross_amount) || 0;
           
           let commissionRate = 0;
@@ -113,7 +111,7 @@ export function DailyResultsToday() {
     };
 
     fetchTodayResults();
-  }, []);
+  }, [user]);
 
   if (loading) {
     return (
@@ -138,7 +136,7 @@ export function DailyResultsToday() {
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <div>
             <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300">
-              Propostas Hoje
+              Minhas Propostas Hoje
             </CardTitle>
             <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">
               {results.proposalsCount}
@@ -149,7 +147,7 @@ export function DailyResultsToday() {
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-xs text-blue-600 dark:text-blue-400">Propostas criadas hoje</p>
+          <p className="text-xs text-blue-600 dark:text-blue-400">Propostas que criei hoje</p>
         </CardContent>
       </Card>
       
@@ -157,7 +155,7 @@ export function DailyResultsToday() {
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <div>
             <CardTitle className="text-sm font-medium text-green-700 dark:text-green-300">
-              Honorários Hoje
+              Meus Honorários Hoje
             </CardTitle>
             <div className="text-2xl font-bold text-green-900 dark:text-green-100">
               {new Intl.NumberFormat('pt-BR', {
@@ -171,7 +169,7 @@ export function DailyResultsToday() {
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-xs text-green-600 dark:text-green-400">Total de honorários de hoje</p>
+          <p className="text-xs text-green-600 dark:text-green-400">Honorários das minhas propostas</p>
         </CardContent>
       </Card>
       
@@ -179,7 +177,7 @@ export function DailyResultsToday() {
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <div>
             <CardTitle className="text-sm font-medium text-purple-700 dark:text-purple-300">
-              Comissões Hoje
+              Minhas Comissões Hoje
             </CardTitle>
             <div className="text-2xl font-bold text-purple-900 dark:text-purple-100">
               {new Intl.NumberFormat('pt-BR', {
@@ -193,7 +191,7 @@ export function DailyResultsToday() {
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-xs text-purple-600 dark:text-purple-400">Total de comissões de hoje</p>
+          <p className="text-xs text-purple-600 dark:text-purple-400">Comissões das minhas vendas hoje</p>
         </CardContent>
       </Card>
     </div>
