@@ -31,7 +31,6 @@ export function DeleteUserDialog({
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Melhorado para evitar fechamento durante o carregamento
   const handleDialogClose = (open: boolean) => {
     if (!isLoading && !open) {
       onClose();
@@ -45,10 +44,16 @@ export function DeleteUserDialog({
     
     setIsLoading(true);
     try {
+      console.log('Attempting to delete user:', user.id);
+      
       // Delete user through secure admin API
-      const { error } = await adminAPI.deleteUser(user.id);
+      const response = await adminAPI.deleteUser(user.id);
+      console.log('Delete response:', response);
 
-      if (error) throw new Error(error.message);
+      if (response.error) {
+        console.error('Delete API returned error:', response.error);
+        throw new Error(response.error.message);
+      }
 
       toast({
         title: "Usuário excluído",
@@ -56,15 +61,27 @@ export function DeleteUserDialog({
       });
 
       onSuccess();
+      onClose();
     } catch (error: any) {
       console.error("Error deleting user:", error);
+      
+      let errorMessage = "Ocorreu um erro ao excluir o usuário.";
+      
+      if (error.message === "Failed to fetch") {
+        errorMessage = "Erro de conexão. Verifique sua internet e tente novamente.";
+      } else if (error.message?.includes('permissions')) {
+        errorMessage = "Você não tem permissão para excluir este usuário.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Erro ao excluir usuário",
-        description: error.message || "Ocorreu um erro ao excluir o usuário.",
+        description: errorMessage,
         variant: "destructive",
       });
-      // Importante: fechar o modal mesmo em caso de erro
-      onClose();
+      
+      // Don't close the modal on error so user can try again
     } finally {
       setIsLoading(false);
     }
