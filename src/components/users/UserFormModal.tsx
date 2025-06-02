@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { User, UserRole } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, adminAPI } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
@@ -93,7 +93,7 @@ export function UserFormModal({
 
     try {
       if (user) {
-        // Update existing user
+        // Update existing user using secure admin API
         console.log("Updating user role to:", formData.role);
         
         // First update the profile directly in the profiles table
@@ -111,34 +111,22 @@ export function UserFormModal({
           throw profileUpdateError;
         }
 
-        // Update user metadata (including role)
-        const { error: authUpdateError } = await supabase.auth.admin.updateUserById(
-          user.id,
-          { 
-            email: formData.email, 
-            user_metadata: {
-              name: formData.name,
-              role: formData.role
-            }
-          }
-        );
+        // Update user metadata through secure admin API
+        const updateData: any = { 
+          email: formData.email, 
+          name: formData.name,
+          role: formData.role
+        };
+
+        if (formData.password) {
+          updateData.password = formData.password;
+        }
+
+        const { error: authUpdateError } = await adminAPI.updateUserById(user.id, updateData);
         
         if (authUpdateError) {
           console.error("Error updating auth metadata:", authUpdateError);
-          // Don't throw here as the profile update was successful
-        }
-
-        // Update password only if provided
-        if (formData.password) {
-          const { error: passwordError } = await supabase.auth.admin.updateUserById(
-            user.id,
-            { password: formData.password }
-          );
-          
-          if (passwordError) {
-            console.error("Error updating password:", passwordError);
-            throw passwordError;
-          }
+          throw new Error(authUpdateError.message);
         }
 
         // If we're updating the current user's own profile, refresh the auth context
@@ -152,19 +140,16 @@ export function UserFormModal({
           description: `${formData.name} foi atualizado com sucesso.`,
         });
       } else {
-        // Create new user
-        const { data: signUpData, error: signUpError } = await supabase.auth.admin.createUser({
+        // Create new user using secure admin API
+        const { data, error } = await adminAPI.createUser({
           email: formData.email,
           password: formData.password,
-          email_confirm: true,
-          user_metadata: {
-            name: formData.name,
-            role: formData.role
-          },
+          name: formData.name,
+          role: formData.role
         });
 
-        if (signUpError) {
-          throw signUpError;
+        if (error) {
+          throw new Error(error.message);
         }
 
         toast({

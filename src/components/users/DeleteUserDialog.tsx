@@ -11,7 +11,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { User } from "@/lib/types";
-import { supabase } from "@/integrations/supabase/client";
+import { adminAPI } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
@@ -45,10 +45,10 @@ export function DeleteUserDialog({
     
     setIsLoading(true);
     try {
-      // Delete user through our custom admin API implementation
-      const { error } = await supabase.auth.admin.deleteUser(user.id);
+      // Delete user through secure admin API
+      const { error } = await adminAPI.deleteUser(user.id);
 
-      if (error) throw error;
+      if (error) throw new Error(error.message);
 
       toast({
         title: "Usuário excluído",

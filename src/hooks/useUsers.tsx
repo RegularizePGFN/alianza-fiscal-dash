@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { User, UserRole } from "@/lib/types";
-import { supabase } from "@/integrations/supabase/client";
+import { adminAPI } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { mapUserRole } from "@/contexts/auth/utils";
 
@@ -15,7 +15,7 @@ export function useUsers() {
   // Adicionar uma ref para controlar requisições em andamento
   const isFetchingRef = useRef(false);
   
-  // Fetch users from Supabase
+  // Fetch users using secure admin API
   const fetchUsers = async () => {
     // Evitar chamadas duplicadas
     if (isFetchingRef.current) return;
@@ -25,40 +25,39 @@ export function useUsers() {
     setError(null);
     
     try {
-      // Fetch profiles directly from the profiles table
-      const { data: profilesData, error: profilesError } = await supabase
-        .from("profiles")
-        .select("*");
-        
-      if (profilesError) {
-        console.error("Error fetching profiles:", profilesError);
-        throw profilesError;
+      const response = await adminAPI.listUsers();
+      
+      if (response.error) {
+        console.error("Error fetching users:", response.error);
+        throw new Error(response.error.message);
       }
       
-      console.log("Profiles data:", profilesData);
+      console.log("Users data:", response.data);
       
-      if (!profilesData || profilesData.length === 0) {
+      if (!response.data?.users || response.data.users.length === 0) {
         setUsers([]);
         setIsLoading(false);
-        isFetchingRef.current = false; // Important: reset the flag before returning
+        isFetchingRef.current = false;
         return;
       }
       
-      // Convert profiles to users
-      const mappedUsers = profilesData.map(profile => {
-        const email = profile.email || '';
+      // Convert auth users to our user format
+      const mappedUsers = response.data.users.map((authUser: any) => {
+        const email = authUser.email || '';
+        const name = authUser.user_metadata?.name || email.split('@')[0] || 'Usuário';
+        const role = authUser.user_metadata?.role || 'vendedor';
         
         // Use the mapUserRole function to convert string role to UserRole enum
-        const userRole = mapUserRole(profile.role, email);
+        const userRole = mapUserRole(role, email);
         
-        console.log(`Mapping user ${profile.name} with role ${profile.role} to ${userRole}`);
+        console.log(`Mapping user ${name} with role ${role} to ${userRole}`);
         
         return {
-          id: profile.id,
-          name: profile.name || email.split('@')[0] || 'Usuário',
+          id: authUser.id,
+          name: name,
           email: email,
           role: userRole,
-          created_at: profile.created_at,
+          created_at: authUser.created_at,
         };
       });
       
