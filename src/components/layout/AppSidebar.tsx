@@ -15,8 +15,7 @@ import {
   ChevronLeft,
   Settings,
   FileText,
-  User,
-  Calculator
+  User
 } from "lucide-react";
 
 interface SidebarLinkProps {
@@ -212,13 +211,6 @@ export function AppSidebar() {
                 label="Relatórios" 
                 expanded={expanded}
                 active={location.pathname === "/relatorios"}
-              />
-              <SidebarLink 
-                to="/comissoes" 
-                icon={<Calculator size={20} />} 
-                label="Comissões" 
-                expanded={expanded}
-                active={location.pathname === "/comissoes"}
               />
               <SidebarLink 
                 to="/configuracoes" 

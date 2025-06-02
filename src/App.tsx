@@ -15,7 +15,6 @@ import ProposalsPage from "./pages/proposals";
 import ProfilePage from "./pages/ProfilePage";
 import NotFound from "./pages/NotFound";
 import CalculatorPage from "./pages/CalculatorPage";
-import CommissionsPage from "./pages/CommissionsPage";
 
 const App = () => (
   <TooltipProvider>
@@ -26,7 +25,6 @@ const App = () => (
       <Route path="/vendas" element={<SalesPage />} />
       <Route path="/usuarios" element={<UsersPage />} />
       <Route path="/relatorios" element={<ReportsPage />} />
-      <Route path="/comissoes" element={<CommissionsPage />} />
       <Route path="/configuracoes" element={<SettingsPage />} />
       <Route path="/propostas" element={<ProposalsPage />} />
       <Route path="/perfil" element={<ProfilePage />} />
