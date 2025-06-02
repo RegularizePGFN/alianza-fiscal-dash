@@ -31,9 +31,15 @@ export const useDashboardData = () => {
     setLoading(true);
     
     try {
-      console.log("Buscando dados de vendas para", user.name);
+      console.log("🔄 Iniciando busca de dados do dashboard para:", user.name, `(${user.role})`);
       
-      // Get current month dates
+      // Get current month dates - using the actual current date
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1; // JavaScript months are 0-indexed
+      const currentYear = now.getFullYear();
+      
+      console.log(`📅 Mês atual: ${currentMonth}/${currentYear}`);
+      
       const { start: currentMonthStart, end: currentMonthEnd } = getCurrentMonthDates();
       
       // Calculate previous month dates
@@ -48,8 +54,8 @@ export const useDashboardData = () => {
       const prevStartStr = prevMonthStart.toISOString().split('T')[0];
       const prevEndStr = prevMonthEnd.toISOString().split('T')[0];
       
-      console.log("Current month period:", currentStartStr, "to", currentEndStr);
-      console.log("Previous month period:", prevStartStr, "to", prevEndStr);
+      console.log("📊 Período atual:", currentStartStr, "até", currentEndStr);
+      console.log("📊 Período anterior:", prevStartStr, "até", prevEndStr);
       
       // Fetch sales data
       const formattedSales = await fetchSalesData(user, currentStartStr, currentEndStr);
@@ -57,12 +63,10 @@ export const useDashboardData = () => {
       // Fetch previous month sales for comparison
       const prevMonthSales = await fetchPreviousMonthSales(user, prevStartStr, prevEndStr);
       
-      // Get monthly goal
-      const currentDate = new Date();
-      const currentMonth = currentDate.getMonth() + 1; // Months are 0-indexed in JS
-      const currentYear = currentDate.getFullYear();
-      
+      // Get monthly goal with correct current month/year
+      console.log(`🎯 Buscando meta mensal para ${currentMonth}/${currentYear}`);
       const monthlyGoal = await fetchMonthlyGoal(user, currentMonth, currentYear);
+      console.log(`🎯 Meta obtida: R$ ${monthlyGoal}`);
       
       // Calculate summary and trends
       if (formattedSales.length > 0) {
@@ -74,9 +78,9 @@ export const useDashboardData = () => {
         setSummary(result.summary);
         setTrends(result.trends);
         
-        console.log("Resumo calculado:", result.summary);
+        console.log("✅ Resumo calculado:", result.summary);
       } else {
-        console.log("Nenhuma venda encontrada");
+        console.log("⚠️ Nenhuma venda encontrada para o período");
         // Set empty data
         setSalesData([]);
         setSummary({
@@ -93,7 +97,7 @@ export const useDashboardData = () => {
         });
       }
     } catch (error: any) {
-      console.error("Erro ao buscar dados:", error);
+      console.error("❌ Erro ao buscar dados:", error);
       toast({
         title: "Erro ao carregar dados",
         description: "Não foi possível carregar os dados do dashboard.",
@@ -106,10 +110,10 @@ export const useDashboardData = () => {
   
   useEffect(() => {
     if (user) {
-      console.log("Authenticated user, fetching sales");
+      console.log("👤 Usuário autenticado, buscando dados de vendas");
       fetchDashboardData();
     } else {
-      console.log("No authenticated user, skipping sales fetch");
+      console.log("❌ Nenhum usuário autenticado, pulando busca de vendas");
     }
   }, [user]);
   
