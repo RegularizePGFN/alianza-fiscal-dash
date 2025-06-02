@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { FileText, DollarSign, TrendingUp } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
+import { UserRole } from "@/lib/types";
 
 interface TodayResults {
   proposalsCount: number;
@@ -40,14 +40,23 @@ export function DailyResultsToday() {
         
         console.log('Fetching data for date:', today);
         console.log('Time range:', startOfDay, 'to', endOfDay);
+        console.log('User role:', user.role);
         
-        // Fetch today's proposals for the current user - using broader time range
-        const { data: proposalsData, error: proposalsError } = await supabase
+        // Determine if user is admin and should see consolidated data
+        const isAdmin = user.role === UserRole.ADMIN;
+        
+        // Fetch today's proposals - for admin: all proposals, for others: only their own
+        const proposalsQuery = supabase
           .from('proposals')
-          .select('fees_value')
-          .eq('user_id', user.id)
+          .select('fees_value, user_id')
           .gte('created_at', startOfDay)
           .lte('created_at', endOfDay);
+          
+        if (!isAdmin) {
+          proposalsQuery.eq('user_id', user.id);
+        }
+
+        const { data: proposalsData, error: proposalsError } = await proposalsQuery;
 
         if (proposalsError) {
           console.error('Error fetching proposals:', proposalsError);
@@ -59,12 +68,17 @@ export function DailyResultsToday() {
         const totalFees = proposalsData?.reduce((sum, proposal) => 
           sum + (proposal.fees_value || 0), 0) || 0;
 
-        // Fetch today's sales for the current user - using exact date match
-        const { data: salesData, error: salesError } = await supabase
+        // Fetch today's sales - for admin: all sales, for others: only their own
+        const salesQuery = supabase
           .from('sales')
-          .select('gross_amount')
-          .eq('salesperson_id', user.id)
+          .select('gross_amount, salesperson_id')
           .eq('sale_date', today);
+          
+        if (!isAdmin) {
+          salesQuery.eq('salesperson_id', user.id);
+        }
+
+        const { data: salesData, error: salesError } = await salesQuery;
 
         if (salesError) {
           console.error('Error fetching sales:', salesError);
@@ -82,39 +96,86 @@ export function DailyResultsToday() {
           return;
         }
 
-        // Get user's contract type
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('contract_type')
-          .eq('id', user.id)
-          .single();
+        // For admin, we need to calculate commissions for each salesperson
+        let totalCommissions = 0;
+        
+        if (isAdmin) {
+          // Group sales by salesperson and calculate commissions for each
+          const salesBySalesperson = salesData.reduce((acc, sale) => {
+            if (!acc[sale.salesperson_id]) {
+              acc[sale.salesperson_id] = [];
+            }
+            acc[sale.salesperson_id].push(sale);
+            return acc;
+          }, {} as Record<string, typeof salesData>);
 
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
-          return;
-        }
+          // Get contract types for all salespersons
+          const salespersonIds = Object.keys(salesBySalesperson);
+          const { data: profilesData, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, contract_type')
+            .in('id', salespersonIds);
 
-        const contractType = profileData?.contract_type || 'PJ';
-        console.log('User contract type:', contractType);
-
-        // Calculate commissions based on contract type
-        const totalCommissions = salesData.reduce((sum, sale) => {
-          const saleAmount = Number(sale.gross_amount) || 0;
-          
-          let commissionRate = 0;
-          if (contractType === 'CLT') {
-            commissionRate = saleAmount >= 10000 ? 0.1 : 0.05; // 10% or 5%
-          } else {
-            commissionRate = saleAmount >= 10000 ? 0.25 : 0.2; // 25% or 20%
+          if (profilesError) {
+            console.error('Error fetching profiles:', profilesError);
+            return;
           }
-          
-          return sum + (saleAmount * commissionRate);
-        }, 0);
+
+          // Calculate commissions for each salesperson
+          Object.entries(salesBySalesperson).forEach(([salespersonId, sales]) => {
+            const profile = profilesData?.find(p => p.id === salespersonId);
+            const contractType = profile?.contract_type || 'PJ';
+            
+            const salespersonCommissions = sales.reduce((sum, sale) => {
+              const saleAmount = Number(sale.gross_amount) || 0;
+              
+              let commissionRate = 0;
+              if (contractType === 'CLT') {
+                commissionRate = saleAmount >= 10000 ? 0.1 : 0.05; // 10% or 5%
+              } else {
+                commissionRate = saleAmount >= 10000 ? 0.25 : 0.2; // 25% or 20%
+              }
+              
+              return sum + (saleAmount * commissionRate);
+            }, 0);
+            
+            totalCommissions += salespersonCommissions;
+          });
+        } else {
+          // For non-admin users, calculate only their own commissions
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('contract_type')
+            .eq('id', user.id)
+            .single();
+
+          if (profileError) {
+            console.error('Error fetching profile:', profileError);
+            return;
+          }
+
+          const contractType = profileData?.contract_type || 'PJ';
+          console.log('User contract type:', contractType);
+
+          totalCommissions = salesData.reduce((sum, sale) => {
+            const saleAmount = Number(sale.gross_amount) || 0;
+            
+            let commissionRate = 0;
+            if (contractType === 'CLT') {
+              commissionRate = saleAmount >= 10000 ? 0.1 : 0.05; // 10% or 5%
+            } else {
+              commissionRate = saleAmount >= 10000 ? 0.25 : 0.2; // 25% or 20%
+            }
+            
+            return sum + (saleAmount * commissionRate);
+          }, 0);
+        }
 
         console.log('Final results:', {
           proposalsCount,
           totalFees,
-          totalCommissions
+          totalCommissions,
+          isAdmin
         });
 
         setResults({
@@ -149,13 +210,15 @@ export function DailyResultsToday() {
     );
   }
 
+  const isAdmin = user?.role === UserRole.ADMIN;
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <Card className="transition-all duration-300 hover:shadow-md dark:border-gray-700 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <div>
             <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300">
-              Minhas Propostas Hoje
+              {isAdmin ? "Propostas da Equipe Hoje" : "Minhas Propostas Hoje"}
             </CardTitle>
             <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">
               {results.proposalsCount}
@@ -166,7 +229,9 @@ export function DailyResultsToday() {
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-xs text-blue-600 dark:text-blue-400">Propostas que criei hoje</p>
+          <p className="text-xs text-blue-600 dark:text-blue-400">
+            {isAdmin ? "Propostas criadas pela equipe hoje" : "Propostas que criei hoje"}
+          </p>
         </CardContent>
       </Card>
       
@@ -174,7 +239,7 @@ export function DailyResultsToday() {
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <div>
             <CardTitle className="text-sm font-medium text-green-700 dark:text-green-300">
-              Meus Honorários Hoje
+              {isAdmin ? "Honorários da Equipe Hoje" : "Meus Honorários Hoje"}
             </CardTitle>
             <div className="text-2xl font-bold text-green-900 dark:text-green-100">
               {new Intl.NumberFormat('pt-BR', {
@@ -188,7 +253,9 @@ export function DailyResultsToday() {
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-xs text-green-600 dark:text-green-400">Honorários das minhas propostas</p>
+          <p className="text-xs text-green-600 dark:text-green-400">
+            {isAdmin ? "Honorários das propostas da equipe" : "Honorários das minhas propostas"}
+          </p>
         </CardContent>
       </Card>
       
@@ -196,7 +263,7 @@ export function DailyResultsToday() {
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <div>
             <CardTitle className="text-sm font-medium text-purple-700 dark:text-purple-300">
-              Minhas Comissões Hoje
+              {isAdmin ? "Comissões da Equipe Hoje" : "Minhas Comissões Hoje"}
             </CardTitle>
             <div className="text-2xl font-bold text-purple-900 dark:text-purple-100">
               {new Intl.NumberFormat('pt-BR', {
@@ -210,7 +277,9 @@ export function DailyResultsToday() {
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-xs text-purple-600 dark:text-purple-400">Comissões das minhas vendas hoje</p>
+          <p className="text-xs text-purple-600 dark:text-purple-400">
+            {isAdmin ? "Comissões das vendas da equipe hoje" : "Comissões das minhas vendas hoje"}
+          </p>
         </CardContent>
       </Card>
     </div>
