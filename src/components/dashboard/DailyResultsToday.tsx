@@ -119,11 +119,11 @@ export function DailyResultsToday() {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[1, 2, 3].map((i) => (
-          <Card key={i} className="h-32">
+          <Card key={i} className="transition-all duration-300 hover:shadow-md dark:border-gray-700">
             <CardContent className="p-6">
               <div className="animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded w-3/4 mb-2"></div>
+                <div className="h-8 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded w-1/2"></div>
               </div>
             </CardContent>
           </Card>
@@ -134,27 +134,68 @@ export function DailyResultsToday() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <SalesSummaryCard
-        title="Propostas Hoje"
-        numericValue={results.proposalsCount}
-        hideAmount={true}
-        icon={<FileText className="h-4 w-4" />}
-        description="Propostas criadas hoje"
-      />
+      <Card className="transition-all duration-300 hover:shadow-md dark:border-gray-700 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <div>
+            <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300">
+              Propostas Hoje
+            </CardTitle>
+            <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+              {results.proposalsCount}
+            </div>
+          </div>
+          <div className="rounded-md bg-blue-100 dark:bg-blue-800/50 p-2 text-blue-700 dark:text-blue-300">
+            <FileText className="h-4 w-4" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <p className="text-xs text-blue-600 dark:text-blue-400">Propostas criadas hoje</p>
+        </CardContent>
+      </Card>
       
-      <SalesSummaryCard
-        title="Honorários Hoje"
-        amount={results.totalFees}
-        icon={<DollarSign className="h-4 w-4" />}
-        description="Total de honorários de hoje"
-      />
+      <Card className="transition-all duration-300 hover:shadow-md dark:border-gray-700 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <div>
+            <CardTitle className="text-sm font-medium text-green-700 dark:text-green-300">
+              Honorários Hoje
+            </CardTitle>
+            <div className="text-2xl font-bold text-green-900 dark:text-green-100">
+              {new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+              }).format(results.totalFees)}
+            </div>
+          </div>
+          <div className="rounded-md bg-green-100 dark:bg-green-800/50 p-2 text-green-700 dark:text-green-300">
+            <DollarSign className="h-4 w-4" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <p className="text-xs text-green-600 dark:text-green-400">Total de honorários de hoje</p>
+        </CardContent>
+      </Card>
       
-      <SalesSummaryCard
-        title="Comissões Hoje"
-        amount={results.totalCommissions}
-        icon={<TrendingUp className="h-4 w-4" />}
-        description="Total de comissões de hoje"
-      />
+      <Card className="transition-all duration-300 hover:shadow-md dark:border-gray-700 bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 border-purple-200 dark:border-purple-800">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <div>
+            <CardTitle className="text-sm font-medium text-purple-700 dark:text-purple-300">
+              Comissões Hoje
+            </CardTitle>
+            <div className="text-2xl font-bold text-purple-900 dark:text-purple-100">
+              {new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+              }).format(results.totalCommissions)}
+            </div>
+          </div>
+          <div className="rounded-md bg-purple-100 dark:bg-purple-800/50 p-2 text-purple-700 dark:text-purple-300">
+            <TrendingUp className="h-4 w-4" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <p className="text-xs text-purple-600 dark:text-purple-400">Total de comissões de hoje</p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
