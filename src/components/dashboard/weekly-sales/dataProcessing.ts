@@ -1,3 +1,4 @@
+
 import { parseISO } from 'date-fns';
 import { Sale } from "@/lib/types";
 import { SalespersonData, WeeklyDataResult } from "./types";
@@ -15,18 +16,21 @@ export const processWeeklyData = (salesData: Sale[]): WeeklyDataResult => {
     weekRanges: []
   };
   
-  // Get current date info
-  const now = new Date();
-  const currentMonth = now.getMonth() + 1; // JavaScript months are 0-indexed
-  const currentYear = now.getFullYear();
+  // Get the month and year from the first sale to determine which period we're processing
+  const firstSaleDate = parseISO(salesData[0].sale_date);
+  const currentMonth = firstSaleDate.getMonth() + 1;
+  const currentYear = firstSaleDate.getFullYear();
   
   console.log(`Processing weekly data for ${currentMonth}/${currentYear}`);
   
-  // Calculate week ranges based on business days
+  // Calculate week ranges based on business days for the specific month/year
   const weekRanges = calculateBusinessDayWeeks(currentYear, currentMonth);
   
-  // Find current week using current date
-  const currentWeek = getWeekNumberForDate(now, weekRanges) || 1;
+  // Find current week using current date (only if processing current month)
+  const now = new Date();
+  const isCurrentMonth = now.getMonth() + 1 === currentMonth && now.getFullYear() === currentYear;
+  const currentWeek = isCurrentMonth ? (getWeekNumberForDate(now, weekRanges) || 1) : 1;
+  
   console.log(`Current week: ${currentWeek}`);
   
   // Initialize salesperson data map
@@ -42,9 +46,9 @@ export const processWeeklyData = (salesData: Sale[]): WeeklyDataResult => {
     // Parse sale date - it comes as a string in format YYYY-MM-DD
     const saleDate = parseISO(sale.sale_date);
     
-    // Skip if not in the current month/year
+    // Skip if not in the target month/year (safety check)
     if (saleDate.getMonth() !== currentMonth - 1 || saleDate.getFullYear() !== currentYear) {
-      console.log(`Sale date ${sale.sale_date} is not in current month, skipping`);
+      console.log(`Sale date ${sale.sale_date} is not in target month, skipping`);
       return;
     }
     

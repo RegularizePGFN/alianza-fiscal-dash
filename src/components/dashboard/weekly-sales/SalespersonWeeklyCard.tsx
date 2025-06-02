@@ -6,7 +6,6 @@ import { useAuth } from "@/contexts/auth";
 import { Sale, UserRole } from "@/lib/types";
 import { WeeklyTable } from "./WeeklyTable";
 import { processWeeklyData } from "./dataProcessing";
-import { getCurrentMonthWeeks } from "./weekCalculations";
 
 interface SalespersonWeeklyCardProps {
   salesData: Sale[];
@@ -20,11 +19,6 @@ export function SalespersonWeeklyCard({ salesData, selectedMonth, selectedYear }
 
   const isAdmin = user?.role === UserRole.ADMIN;
 
-  // Get weeks for the selected month/year
-  const weeks = useMemo(() => {
-    return getCurrentMonthWeeks(selectedMonth, selectedYear);
-  }, [selectedMonth, selectedYear]);
-
   // Filter sales data for the selected month/year
   const filteredSalesData = useMemo(() => {
     return salesData.filter(sale => {
@@ -33,10 +27,19 @@ export function SalespersonWeeklyCard({ salesData, selectedMonth, selectedYear }
     });
   }, [salesData, selectedMonth, selectedYear]);
 
-  const weeklyData = useMemo(() => {
-    if (!filteredSalesData.length) return [];
-    return processWeeklyData(filteredSalesData, weeks, isAdmin, user);
-  }, [filteredSalesData, weeks, isAdmin, user]);
+  const weeklyDataResult = useMemo(() => {
+    if (!filteredSalesData.length) {
+      return { 
+        weeklyData: [], 
+        availableWeeks: [], 
+        currentWeek: 1,
+        weeklyTotals: {},
+        weeklyGoals: {},
+        weekRanges: []
+      };
+    }
+    return processWeeklyData(filteredSalesData);
+  }, [filteredSalesData]);
 
   if (loading) {
     return (
@@ -57,7 +60,19 @@ export function SalespersonWeeklyCard({ salesData, selectedMonth, selectedYear }
         <CardTitle>Relatório Semanal - {selectedMonth}/{selectedYear}</CardTitle>
       </CardHeader>
       <CardContent>
-        <WeeklyTable data={weeklyData} weeks={weeks} />
+        <WeeklyTable 
+          weeklyData={weeklyDataResult.weeklyData}
+          availableWeeks={weeklyDataResult.availableWeeks}
+          currentWeek={weeklyDataResult.currentWeek}
+          weeklyTotals={weeklyDataResult.weeklyTotals}
+          weeklyGoals={weeklyDataResult.weeklyGoals}
+          weekRanges={weeklyDataResult.weekRanges}
+          sortState={{ week: null, field: null, direction: null }}
+          onSort={(week, field) => {
+            // TODO: Implement sorting functionality if needed
+            console.log('Sort requested:', week, field);
+          }}
+        />
       </CardContent>
     </Card>
   );
