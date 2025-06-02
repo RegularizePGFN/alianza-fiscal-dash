@@ -62,7 +62,12 @@ const ProposalsTabs = ({
   };
 
   console.log('ProposalsTabs - processing:', processing, 'progressPercent:', progressPercent);
+  console.log('ProposalsTabs - formData has data:', Object.keys(formData).length > 0);
+  console.log('ProposalsTabs - imagePreview exists:', !!imagePreview);
 
+  // Check if we have extracted data (either from image processing or selected proposal)
+  const hasExtractedData = (formData && Object.keys(formData).length > 2) || selectedProposal;
+  
   return (
     <Card className="shadow-md">
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
@@ -75,8 +80,13 @@ const ProposalsTabs = ({
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="data" disabled={!imagePreview && !selectedProposal}>
+          <TabsTrigger value="data" disabled={!hasExtractedData}>
             Dados Extraídos
+            {hasExtractedData && (
+              <Badge variant="default" className="ml-2">
+                ✓
+              </Badge>
+            )}
           </TabsTrigger>
           <TabsTrigger value="proposal" disabled={!generatedProposal && !selectedProposal}>
             Proposta

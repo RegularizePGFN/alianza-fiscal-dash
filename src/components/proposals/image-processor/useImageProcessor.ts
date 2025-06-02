@@ -72,10 +72,18 @@ export const useImageProcessor = ({
           }
         );
         
-        console.log('Dados extraídos:', extractedData);
+        console.log('Dados extraídos com sucesso:', extractedData);
         
-        onProcessComplete(extractedData, imageBase64);
-        updateProcessingStatus('Processamento concluído com sucesso!');
+        // Ensure we have some extracted data before calling onProcessComplete
+        if (extractedData && Object.keys(extractedData).length > 0) {
+          console.log('Chamando onProcessComplete com dados extraídos');
+          onProcessComplete(extractedData, imageBase64);
+          updateProcessingStatus('Processamento concluído com sucesso!');
+        } else {
+          console.warn('Nenhum dado foi extraído da imagem');
+          setError('Não foi possível extrair dados da imagem. Verifique se é uma simulação PGFN válida.');
+          updateProcessingStatus('Erro: Nenhum dado extraído');
+        }
         
       } catch (err) {
         console.error('Erro no processamento da imagem:', err);

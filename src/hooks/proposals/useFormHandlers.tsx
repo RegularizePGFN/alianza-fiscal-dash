@@ -44,11 +44,17 @@ export const useFormHandlers = ({
   
   // Handle OCR completion and data extraction
   const handleProcessComplete = (extractedData: Partial<ExtractedData>, imagePreview: string) => {
-    setFormData((prevData) => ({
-      ...prevData,
-      ...extractedData,
-      specialistName: user?.name || extractedData.specialistName || '',
-    }));
+    console.log('handleProcessComplete called with:', extractedData);
+    
+    setFormData((prevData) => {
+      const updatedData = {
+        ...prevData,
+        ...extractedData,
+        specialistName: user?.name || extractedData.specialistName || '',
+      };
+      console.log('Form data updated to:', updatedData);
+      return updatedData;
+    });
     
     setImagePreview(imagePreview);
     
@@ -59,11 +65,14 @@ export const useFormHandlers = ({
     
     toast({
       title: "Processamento concluído",
-      description: "Todos os dados foram extraídos com sucesso!"
+      description: "Dados extraídos da imagem com sucesso!"
     });
     
-    // Navigate to the data tab
-    setActiveTab("data");
+    // Navigate to the data tab after a brief delay to ensure state updates
+    setTimeout(() => {
+      console.log('Switching to data tab');
+      setActiveTab("data");
+    }, 100);
   };
   
   // Handle form input changes
