@@ -13,11 +13,18 @@ export function useCosts() {
       setLoading(true);
       console.log('Fetching costs...');
       
+      // Adicionar timeout personalizado para evitar statement timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos
+      
       const { data, error } = await supabase
         .from('company_costs')
         .select('*')
         .eq('is_active', true)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .abortSignal(controller.signal);
+
+      clearTimeout(timeoutId);
 
       console.log('Costs query result:', { data, error });
 
@@ -30,11 +37,20 @@ export function useCosts() {
       console.log('Costs loaded successfully:', data?.length || 0, 'items');
     } catch (error: any) {
       console.error('Erro ao buscar custos:', error);
-      toast({
-        title: "Erro",
-        description: `Não foi possível carregar os custos: ${error.message}`,
-        variant: "destructive"
-      });
+      
+      if (error.name === 'AbortError') {
+        toast({
+          title: "Timeout",
+          description: "A consulta demorou muito para responder. Tente novamente.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Erro",
+          description: `Não foi possível carregar os custos: ${error.message}`,
+          variant: "destructive"
+        });
+      }
       setCosts([]);
     } finally {
       setLoading(false);

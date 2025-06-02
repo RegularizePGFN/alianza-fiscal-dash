@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, DollarSign, Minus, Plus } from "lucide-react";
 import { useSalesData } from "@/hooks/financeiro/useSalesData";
@@ -27,31 +27,43 @@ export function LucroLiquido({ refreshTrigger, detailed = false }: LucroLiquidoP
     }).format(value);
   };
 
-  // Calcular receita mensal atual
-  const currentMonth = new Date().getMonth() + 1;
-  const currentYear = new Date().getFullYear();
-  
-  const monthlyRevenue = salesData
-    .filter(sale => {
-      const saleDate = new Date(sale.sale_date);
-      return saleDate.getMonth() + 1 === currentMonth && saleDate.getFullYear() === currentYear;
-    })
-    .reduce((total, sale) => total + Number(sale.gross_amount), 0);
+  // Memoizar cálculos para evitar recálculos desnecessários
+  const calculations = useMemo(() => {
+    // Calcular receita mensal atual
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
+    
+    const monthlyRevenue = salesData
+      .filter(sale => {
+        const saleDate = new Date(sale.sale_date);
+        return saleDate.getMonth() + 1 === currentMonth && saleDate.getFullYear() === currentYear;
+      })
+      .reduce((total, sale) => total + Number(sale.gross_amount), 0);
 
-  // Calcular custos totais
-  const totalFixedCosts = costs
-    .filter(cost => cost.type === 'fixed')
-    .reduce((total, cost) => total + Number(cost.amount), 0);
+    // Calcular custos totais
+    const totalFixedCosts = costs
+      .filter(cost => cost.type === 'fixed')
+      .reduce((total, cost) => total + Number(cost.amount), 0);
 
-  const totalVariableCosts = costs
-    .filter(cost => cost.type === 'variable')
-    .reduce((total, cost) => total + Number(cost.amount), 0);
+    const totalVariableCosts = costs
+      .filter(cost => cost.type === 'variable')
+      .reduce((total, cost) => total + Number(cost.amount), 0);
 
-  const totalCosts = totalFixedCosts + totalVariableCosts;
+    const totalCosts = totalFixedCosts + totalVariableCosts;
 
-  // Calcular lucro líquido
-  const netProfit = monthlyRevenue - totalCosts;
-  const profitMargin = monthlyRevenue > 0 ? (netProfit / monthlyRevenue) * 100 : 0;
+    // Calcular lucro líquido
+    const netProfit = monthlyRevenue - totalCosts;
+    const profitMargin = monthlyRevenue > 0 ? (netProfit / monthlyRevenue) * 100 : 0;
+
+    return {
+      monthlyRevenue,
+      totalFixedCosts,
+      totalVariableCosts,
+      totalCosts,
+      netProfit,
+      profitMargin
+    };
+  }, [salesData, costs]);
 
   if (salesLoading || costsLoading) {
     return (
@@ -73,31 +85,31 @@ export function LucroLiquido({ refreshTrigger, detailed = false }: LucroLiquidoP
   const summaryCards = [
     {
       title: "Receita Mensal",
-      value: monthlyRevenue,
+      value: calculations.monthlyRevenue,
       description: "Vendas do mês atual",
       icon: DollarSign,
       color: "text-blue-600"
     },
     {
       title: "Custos Totais",
-      value: totalCosts,
+      value: calculations.totalCosts,
       description: "Fixos + Variáveis",
       icon: Minus,
       color: "text-red-600"
     },
     {
       title: "Lucro Líquido",
-      value: netProfit,
+      value: calculations.netProfit,
       description: "Receita - Custos",
-      icon: netProfit >= 0 ? TrendingUp : Minus,
-      color: netProfit >= 0 ? "text-green-600" : "text-red-600"
+      icon: calculations.netProfit >= 0 ? TrendingUp : Minus,
+      color: calculations.netProfit >= 0 ? "text-green-600" : "text-red-600"
     },
     {
       title: "Margem de Lucro",
-      value: profitMargin,
+      value: calculations.profitMargin,
       description: "% da receita",
       icon: TrendingUp,
-      color: profitMargin >= 0 ? "text-green-600" : "text-red-600",
+      color: calculations.profitMargin >= 0 ? "text-green-600" : "text-red-600",
       isPercentage: true
     }
   ];
@@ -145,20 +157,20 @@ export function LucroLiquido({ refreshTrigger, detailed = false }: LucroLiquidoP
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">Custos Fixos</span>
                   <span className="text-sm font-semibold text-red-600">
-                    {formatCurrency(totalFixedCosts)}
+                    {formatCurrency(calculations.totalFixedCosts)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">Custos Variáveis</span>
                   <span className="text-sm font-semibold text-red-600">
-                    {formatCurrency(totalVariableCosts)}
+                    {formatCurrency(calculations.totalVariableCosts)}
                   </span>
                 </div>
                 <hr />
                 <div className="flex justify-between items-center">
                   <span className="font-medium">Total de Custos</span>
                   <span className="font-bold text-red-600">
-                    {formatCurrency(totalCosts)}
+                    {formatCurrency(calculations.totalCosts)}
                   </span>
                 </div>
               </div>
@@ -180,20 +192,20 @@ export function LucroLiquido({ refreshTrigger, detailed = false }: LucroLiquidoP
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">Receita Bruta</span>
                   <span className="text-sm font-semibold text-blue-600">
-                    {formatCurrency(monthlyRevenue)}
+                    {formatCurrency(calculations.monthlyRevenue)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">Custos (%)</span>
                   <span className="text-sm font-semibold text-red-600">
-                    {monthlyRevenue > 0 ? ((totalCosts / monthlyRevenue) * 100).toFixed(1) : 0}%
+                    {calculations.monthlyRevenue > 0 ? ((calculations.totalCosts / calculations.monthlyRevenue) * 100).toFixed(1) : 0}%
                   </span>
                 </div>
                 <hr />
                 <div className="flex justify-between items-center">
                   <span className="font-medium">Lucro Líquido</span>
-                  <span className={`font-bold ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {formatCurrency(netProfit)}
+                  <span className={`font-bold ${calculations.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {formatCurrency(calculations.netProfit)}
                   </span>
                 </div>
               </div>
