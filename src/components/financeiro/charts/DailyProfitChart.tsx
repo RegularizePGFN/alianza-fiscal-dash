@@ -80,10 +80,23 @@ export function DailyProfitChart({ salesData, totalCosts, selectedMonth, selecte
                 tick={{ fontSize: 12 }}
               />
               <Tooltip 
-                formatter={(value: number, name: string) => [
-                  formatCurrency(value), 
-                  name === 'receita' ? 'Receita' : name === 'custos' ? 'Custos' : 'Lucro'
-                ]}
+                formatter={(value: number, name: string) => {
+                  let label = '';
+                  switch(name) {
+                    case 'receita':
+                      label = 'Receita';
+                      break;
+                    case 'custos':
+                      label = 'Custos';
+                      break;
+                    case 'lucro':
+                      label = 'Lucro';
+                      break;
+                    default:
+                      label = name;
+                  }
+                  return [formatCurrency(value), label];
+                }}
                 labelFormatter={(label) => `Dia ${label}`}
                 contentStyle={{ 
                   backgroundColor: "white", 
