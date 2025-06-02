@@ -4,7 +4,6 @@ import AIImageProcessor from "@/components/proposals/AIImageProcessor";
 import ProposalHistory from "@/components/proposals/ProposalHistory";
 import { ProposalsSummaryCards } from "@/components/proposals/ProposalsSummaryCards";
 import { ProposalsDateFilter, DateFilterType, DateRange } from "@/components/proposals/ProposalsDateFilter";
-import { DuplicateProposalsManager } from "@/components/proposals/DuplicateProposalsManager";
 import { ProposalsDuplicateChecker } from "@/components/proposals/ProposalsDuplicateChecker";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -69,9 +68,6 @@ const UploadTabContent = ({
       
       {/* Summary Cards */}
       <ProposalsSummaryCards proposals={proposals} />
-      
-      {/* Duplicate Manager */}
-      <DuplicateProposalsManager />
       
       {/* Proposals History */}
       <Card className="border-af-blue-200 shadow-md rounded-xl bg-white">

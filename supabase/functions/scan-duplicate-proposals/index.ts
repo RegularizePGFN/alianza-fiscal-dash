@@ -36,7 +36,7 @@ serve(async (req) => {
     }
 
     // Group by CNPJ + total_debt and find duplicates
-    const grouped = data.reduce((acc: any, proposal: any) => {
+    const grouped = (data || []).reduce((acc: any, proposal: any) => {
       const key = `${proposal.cnpj}-${proposal.total_debt}`
       if (!acc[key]) {
         acc[key] = []
@@ -47,16 +47,17 @@ serve(async (req) => {
 
     // Find groups with more than 1 proposal
     const duplicateGroups = Object.entries(grouped)
-      .filter(([_, proposals]: [string, any]) => proposals.length > 1)
+      .filter(([_, proposals]: [string, any]) => (proposals as any[]).length > 1)
       .map(([key, proposals]: [string, any]) => {
         const [cnpj, total_debt] = key.split('-')
-        const sortedProposals = proposals.sort((a: any, b: any) => 
+        const proposalArray = proposals as any[]
+        const sortedProposals = proposalArray.sort((a: any, b: any) => 
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         )
         return {
           cnpj,
           total_debt: parseFloat(total_debt),
-          count: proposals.length,
+          count: proposalArray.length,
           latest_created_at: sortedProposals[0].created_at
         }
       })

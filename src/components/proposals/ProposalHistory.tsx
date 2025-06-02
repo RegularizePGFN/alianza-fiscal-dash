@@ -6,6 +6,7 @@ import { Eye, Trash2 } from 'lucide-react';
 import { Proposal } from '@/lib/types/proposals';
 import { formatBrazilianCurrency } from '@/lib/utils';
 import { DataPagination } from '@/components/ui/data-pagination';
+import { DuplicatesButton } from './DuplicatesButton';
 
 interface ProposalHistoryProps {
   proposals: Proposal[];
@@ -62,6 +63,12 @@ const ProposalHistory = ({ proposals, loading, onViewProposal, onDeleteProposal 
 
   return (
     <div className="space-y-4">
+      {/* Header with title and duplicates button */}
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">Histórico de Propostas</h3>
+        <DuplicatesButton />
+      </div>
+
       {/* Search bar */}
       <div>
         <Input
