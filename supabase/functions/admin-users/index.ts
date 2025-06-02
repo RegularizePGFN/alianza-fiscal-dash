@@ -37,19 +37,47 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
     
     if (userError || !user) {
+      console.error('Authentication error:', userError);
       throw new Error('Invalid authentication token');
     }
 
-    // Check if user is admin
-    const { data: profile, error: profileError } = await supabaseClient
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
+    console.log('Authenticated user:', user.email);
 
-    if (profileError || profile?.role !== 'administrador') {
+    // Check if user is admin - first check the admin emails list
+    const adminEmails = [
+      'felipe.souza@socialcriativo.com',
+      'gustavo.felipe@aliancafiscal.com',
+      'vanessa@aliancafiscal.com',   
+      'brenda@aliancafiscal.com'
+    ];
+
+    const isAdminByEmail = adminEmails.includes(user.email?.toLowerCase() || '');
+    console.log('Is admin by email:', isAdminByEmail);
+
+    // Also check the profile role
+    let isAdminByRole = false;
+    try {
+      const { data: profile, error: profileError } = await supabaseClient
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (!profileError && profile) {
+        isAdminByRole = profile.role === 'administrador' || profile.role === 'admin';
+        console.log('Profile role:', profile.role, 'Is admin by role:', isAdminByRole);
+      }
+    } catch (err) {
+      console.log('Could not fetch profile, checking email only');
+    }
+
+    // User is admin if they're in the admin emails list OR have admin role
+    if (!isAdminByEmail && !isAdminByRole) {
+      console.error('User not authorized - Email:', user.email, 'Admin by email:', isAdminByEmail, 'Admin by role:', isAdminByRole);
       throw new Error('Insufficient permissions');
     }
+
+    console.log('User authorized as admin');
 
     const { method } = req;
     const url = new URL(req.url);
@@ -58,11 +86,15 @@ serve(async (req) => {
     // Handle different admin operations
     if (method === 'GET' && pathSegments.length === 2) {
       // List users
+      console.log('Listing users...');
       const { data, error } = await supabaseAdmin.auth.admin.listUsers();
       
       if (error) {
+        console.error('Error listing users:', error);
         throw error;
       }
+
+      console.log('Successfully retrieved users:', data.users?.length || 0);
 
       return new Response(JSON.stringify({ 
         data: { 
@@ -81,6 +113,8 @@ serve(async (req) => {
       const body = await req.json();
       const { email, password, name, role } = body;
 
+      console.log('Creating user:', email);
+
       const { data, error } = await supabaseAdmin.auth.admin.createUser({
         email,
         password,
@@ -92,11 +126,14 @@ serve(async (req) => {
       });
 
       if (error) {
+        console.error('Error creating user:', error);
         if (error.message?.includes('already exists')) {
           throw new Error('Este e-mail já está cadastrado no sistema');
         }
         throw error;
       }
+
+      console.log('User created successfully:', data.user?.id);
 
       return new Response(JSON.stringify({ data: { user: data.user }, error: null }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -108,6 +145,8 @@ serve(async (req) => {
       const userId = pathSegments[2];
       const body = await req.json();
       const { email, name, role, password } = body;
+
+      console.log('Updating user:', userId);
 
       // Update auth user
       const updateData: any = {
@@ -122,6 +161,7 @@ serve(async (req) => {
       const { data, error } = await supabaseAdmin.auth.admin.updateUserById(userId, updateData);
 
       if (error) {
+        console.error('Error updating user:', error);
         throw error;
       }
 
@@ -130,6 +170,8 @@ serve(async (req) => {
         .from('profiles')
         .update({ name, email, role })
         .eq('id', userId);
+
+      console.log('User updated successfully:', userId);
 
       return new Response(JSON.stringify({ data: { user: data.user }, error: null }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -140,11 +182,16 @@ serve(async (req) => {
       // Delete user
       const userId = pathSegments[2];
 
+      console.log('Deleting user:', userId);
+
       const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
       if (error) {
+        console.error('Error deleting user:', error);
         throw error;
       }
+
+      console.log('User deleted successfully:', userId);
 
       return new Response(JSON.stringify({ data: { user: null }, error: null }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -155,9 +202,12 @@ serve(async (req) => {
       // Get user by ID
       const userId = pathSegments[2];
 
+      console.log('Getting user by ID:', userId);
+
       const { data, error } = await supabaseAdmin.auth.admin.getUserById(userId);
 
       if (error) {
+        console.error('Error getting user:', error);
         throw error;
       }
 

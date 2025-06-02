@@ -24,7 +24,7 @@ export const mapUserRole = (role?: string, email?: string): UserRole => {
     const lowerRole = role.toLowerCase();
     
     // Check for admin role (case insensitive)
-    if (lowerRole === 'admin') {
+    if (lowerRole === 'admin' || lowerRole === 'administrador') {
       console.log("Role is explicitly admin, returning ADMIN");
       return UserRole.ADMIN;
     }
