@@ -1,0 +1,2 @@
+
+export { DailyResultsToday } from './DailyResultsToday';
