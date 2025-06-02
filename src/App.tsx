@@ -14,6 +14,7 @@ import CommissionsPage from "./pages/CommissionsPage";
 import SettingsPage from "./pages/SettingsPage";
 import ProposalsPage from "./pages/proposals"; 
 import ProfilePage from "./pages/ProfilePage";
+import FinanceiroPage from "./pages/FinanceiroPage";
 import NotFound from "./pages/NotFound";
 import CalculatorPage from "./pages/CalculatorPage";
 
@@ -30,6 +31,7 @@ const App = () => (
       <Route path="/configuracoes" element={<SettingsPage />} />
       <Route path="/propostas" element={<ProposalsPage />} />
       <Route path="/perfil" element={<ProfilePage />} />
+      <Route path="/financeiro" element={<FinanceiroPage />} />
       <Route path="/calculadora" element={<CalculatorPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>

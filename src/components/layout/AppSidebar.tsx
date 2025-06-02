@@ -16,7 +16,8 @@ import {
   Settings,
   FileText,
   User,
-  DollarSign
+  DollarSign,
+  Calculator
 } from "lucide-react";
 
 interface SidebarLinkProps {
@@ -121,6 +122,9 @@ export function AppSidebar() {
   // Check if user has admin privileges
   const isAdmin = user?.role === UserRole.ADMIN;
   
+  // Check if user has access to financial section
+  const hasFinanceAccess = user?.email === 'felipe.souza@socialcriativo.com';
+  
   return (
     <motion.div 
       className={cn(
@@ -195,6 +199,17 @@ export function AppSidebar() {
             active={location.pathname === "/propostas"}
             isBeta={true}
           />
+          
+          {/* Financial section - only for specific user */}
+          {hasFinanceAccess && (
+            <SidebarLink 
+              to="/financeiro" 
+              icon={<Calculator size={20} />} 
+              label="Financeiro" 
+              expanded={expanded}
+              active={location.pathname === "/financeiro"}
+            />
+          )}
           
           {/* Admin links */}
           {isAdmin && (
