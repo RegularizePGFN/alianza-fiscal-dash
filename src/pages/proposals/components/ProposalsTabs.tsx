@@ -61,6 +61,8 @@ const ProposalsTabs = ({
     onInputChange(name, value);
   };
 
+  console.log('ProposalsTabs - processing:', processing, 'progressPercent:', progressPercent);
+
   return (
     <Card className="shadow-md">
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
@@ -92,6 +94,8 @@ const ProposalsTabs = ({
             onProcessComplete={onProcessComplete}
             onDeleteProposal={onDeleteProposal}
             setProcessingStatus={setProcessingStatus}
+            setProcessing={setProcessing}
+            setProgressPercent={setProgressPercent}
           />
         </TabsContent>
 

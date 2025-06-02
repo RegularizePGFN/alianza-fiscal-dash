@@ -15,6 +15,8 @@ interface UploadTabContentProps {
   onProcessComplete: (data: any, preview: string) => void;
   onDeleteProposal: (id: string) => Promise<boolean>;
   setProcessingStatus: (status: string) => void;
+  setProcessing: (processing: boolean) => void;
+  setProgressPercent: (percent: number) => void;
 }
 
 const UploadTabContent = ({
@@ -27,7 +29,11 @@ const UploadTabContent = ({
   onProcessComplete,
   onDeleteProposal,
   setProcessingStatus,
+  setProcessing,
+  setProgressPercent,
 }: UploadTabContentProps) => {
+  console.log('UploadTabContent - processing:', processing, 'progressPercent:', progressPercent);
+  
   return (
     <div className="w-full max-w-none space-y-6">
       {/* Upload Section - Full Width */}
@@ -40,9 +46,9 @@ const UploadTabContent = ({
         <AIImageProcessor
           onProcessComplete={onProcessComplete}
           processing={processing}
-          setProcessing={() => {}}
+          setProcessing={setProcessing}
           progressPercent={progressPercent}
-          setProgressPercent={() => {}}
+          setProgressPercent={setProgressPercent}
           updateStatus={setProcessingStatus}
         />
       </motion.div>
