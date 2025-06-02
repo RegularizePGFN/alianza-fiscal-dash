@@ -2,25 +2,20 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Trash2, User } from 'lucide-react';
+import { Eye, Trash2 } from 'lucide-react';
 import { Proposal } from '@/lib/types/proposals';
 import { formatBrazilianCurrency } from '@/lib/utils';
-import { useAuth } from '@/contexts/auth';
-import { UserRole } from '@/lib/types';
 
 interface ProposalHistoryProps {
   proposals: Proposal[];
   loading: boolean;
+  onViewProposal: (proposal: Proposal) => void;
   onDeleteProposal: (id: string) => Promise<boolean>;
 }
 
-const ProposalHistory = ({ proposals, loading, onDeleteProposal }: ProposalHistoryProps) => {
+const ProposalHistory = ({ proposals, loading, onViewProposal, onDeleteProposal }: ProposalHistoryProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const { user } = useAuth();
-
-  // Check if current user is admin
-  const isAdmin = user?.role === UserRole.ADMIN;
 
   // Filter proposals based on search term
   const filteredProposals = proposals.filter(proposal => {
@@ -51,15 +46,7 @@ const ProposalHistory = ({ proposals, loading, onDeleteProposal }: ProposalHisto
   return (
     <Card className="shadow-md rounded-xl">
       <CardHeader id="history-card-header" className="bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 border-b dark:border-gray-700">
-        <CardTitle className="text-lg font-medium flex items-center gap-2">
-          <User className="h-5 w-5" />
-          Histórico de Propostas
-          {isAdmin && (
-            <span className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 px-2 py-1 rounded-full">
-              Todas as propostas
-            </span>
-          )}
-        </CardTitle>
+        <CardTitle className="text-lg font-medium">Histórico de Propostas</CardTitle>
       </CardHeader>
       <CardContent className="p-4 space-y-4">
         {/* Search bar */}
@@ -82,16 +69,13 @@ const ProposalHistory = ({ proposals, loading, onDeleteProposal }: ProposalHisto
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr>
-                  <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">CNPJ</th>
-                  <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nome / Razão Social</th>
-                  {isAdmin && (
-                    <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Vendedor</th>
-                  )}
-                  <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Valor Consolidado</th>
-                  <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Valor com Reduções</th>
-                  <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Desconto</th>
-                  <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Honorários</th>
-                  <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Data</th>
+                  <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">CNPJ ↕</th>
+                  <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nome / Razão Social ↕</th>
+                  <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Usuário ↕</th>
+                  <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Valor Consolidado ↕</th>
+                  <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Valor com Reduções ↕</th>
+                  <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Desconto ↕</th>
+                  <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Honorários ↕</th>
                   <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ações</th>
                 </tr>
               </thead>
@@ -100,9 +84,7 @@ const ProposalHistory = ({ proposals, loading, onDeleteProposal }: ProposalHisto
                   <tr key={proposal.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                     <td className="px-2 py-2 whitespace-nowrap text-xs text-gray-900 dark:text-gray-200">{proposal.data.cnpj}</td>
                     <td className="px-2 py-2 whitespace-nowrap text-xs text-gray-900 dark:text-gray-200">{proposal.data.clientName}</td>
-                    {isAdmin && (
-                      <td className="px-2 py-2 whitespace-nowrap text-xs text-purple-600 dark:text-purple-400 font-medium">{proposal.userName}</td>
-                    )}
+                    <td className="px-2 py-2 whitespace-nowrap text-xs text-gray-900 dark:text-gray-200">{proposal.userName}</td>
                     <td className="px-2 py-2 whitespace-nowrap text-xs text-right text-gray-900 dark:text-gray-200">
                       R$ {formatBrazilianCurrency(proposal.data.totalDebt)}
                     </td>
@@ -115,11 +97,15 @@ const ProposalHistory = ({ proposals, loading, onDeleteProposal }: ProposalHisto
                     <td className="px-2 py-2 whitespace-nowrap text-xs text-right text-purple-700 dark:text-purple-400 font-semibold">
                       R$ {formatBrazilianCurrency(proposal.data.feesValue)}
                     </td>
-                    <td className="px-2 py-2 whitespace-nowrap text-xs text-center text-gray-900 dark:text-gray-200">
-                      {proposal.data.creationDate}
-                    </td>
                     <td className="px-2 py-2 whitespace-nowrap text-right text-xs font-medium">
                       <div className="flex justify-center space-x-2">
+                        <button
+                          onClick={() => onViewProposal(proposal)}
+                          className="text-af-blue-600 hover:text-af-blue-900 dark:text-af-blue-400 dark:hover:text-af-blue-300"
+                          title="Visualizar proposta"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
                         <button
                           onClick={() => handleDelete(proposal.id)}
                           disabled={deletingId === proposal.id}

@@ -14,73 +14,74 @@ export const fetchMonthlyGoal = async (
   if (!user) return DEFAULT_GOAL_AMOUNT;
 
   try {
-    console.log(`=== FETCH MONTHLY GOAL DEBUG ===`);
-    console.log(`User: ${user.id}, Role: ${user.role}, Month: ${currentMonth}, Year: ${currentYear}`);
-
-    // For admin users, sum all vendedor users' goals
+    // For admin users, sum all users' goals
     if (user.role === UserRole.ADMIN) {
-      console.log("Fetching team goals for admin user");
+      console.log("Fetching total goals for admin user");
       
-      // First, get all vendedor users
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, role")
-        .eq("role", "vendedor"); // Only get vendedor users
-      
-      if (profilesError) {
-        console.error("Error fetching vendedor profiles:", profilesError);
-        throw profilesError;
-      }
-      
-      console.log("Vendedor profiles found:", profiles?.length || 0);
-      
-      if (!profiles || profiles.length === 0) {
-        console.log("No vendedor users found, using default goal");
-        return DEFAULT_GOAL_AMOUNT;
-      }
-      
-      // Get the user IDs of all vendedor users
-      const vendedorUserIds = profiles.map(profile => profile.id);
-      console.log("Vendedor user IDs:", vendedorUserIds);
-      
-      // Get goals for all vendedor users for the current month/year
+      // Get all goals for the current month/year
       const { data: goalsData, error: goalsError } = await supabase
         .from("monthly_goals")
         .select("goal_amount, user_id")
         .eq("month", currentMonth)
-        .eq("year", currentYear)
-        .in("user_id", vendedorUserIds);
+        .eq("year", currentYear);
         
       if (goalsError) {
-        console.error("Error fetching goals:", goalsError);
+        console.error("Erro ao buscar metas:", goalsError);
         throw goalsError;
       }
       
-      console.log("Goals data fetched:", goalsData);
+      console.log("Metas obtidas:", goalsData);
       
-      if (goalsData && goalsData.length > 0) {
-        // Sum all vendedor goals
-        const totalGoal = goalsData.reduce((sum, goal) => {
+      // Get profiles to identify salespeople
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, role");
+      
+      if (profilesError) {
+        console.error("Erro ao buscar perfis:", profilesError);
+        throw profilesError;
+      }
+      
+      // Create a map of user roles for quick lookup
+      const userRoles = new Map();
+      profiles?.forEach(profile => {
+        userRoles.set(profile.id, profile.role?.toLowerCase());
+      });
+      
+      console.log("Mapa de perfis:", Array.from(userRoles.entries()));
+      
+      // Filter goals to include ONLY goals for salespeople, NOT admins
+      const salesGoals = goalsData?.filter(goal => {
+        const userRole = userRoles.get(goal.user_id);
+        // Só incluir vendedores, excluir explicitamente admins
+        return userRole && userRole !== 'admin';
+      });
+      
+      console.log("Metas filtradas de vendedores:", salesGoals);
+      
+      if (salesGoals && salesGoals.length > 0) {
+        // Sum goals for salespeople only
+        // Fix: Ensure goal_amount is treated as a number before adding it to the sum
+        const totalGoal = salesGoals.reduce((sum, goal) => {
+          // Parse goal_amount as number to ensure correct addition
           const goalAmount = typeof goal.goal_amount === 'string' 
             ? parseFloat(goal.goal_amount) 
             : Number(goal.goal_amount);
           
-          console.log(`Adding goal for user ${goal.user_id}: ${goalAmount}`);
           return sum + (isNaN(goalAmount) ? 0 : goalAmount);
         }, 0);
         
-        console.log(`Total team goal calculated: ${totalGoal} from ${goalsData.length} vendedor goals`);
+        console.log(`Meta total para admins (soma de ${salesGoals.length} metas de vendedores):`, totalGoal);
         return totalGoal > 0 ? totalGoal : DEFAULT_GOAL_AMOUNT;
       }
       
-      // If no goals found for vendedores, use default * number of vendedores
-      const defaultTeamGoal = DEFAULT_GOAL_AMOUNT * profiles.length;
-      console.log(`No goals found for vendedores, using default * ${profiles.length} = ${defaultTeamGoal}`);
-      return defaultTeamGoal;
+      // If no explicit goals are found, use default goal amount
+      console.log("Nenhuma meta encontrada para vendedores, usando valor padrão");
+      return DEFAULT_GOAL_AMOUNT;
     } 
-    // For vendedor users, get their specific goal
+    // For regular users (vendedores), just get their specific goal
     else {
-      console.log(`Fetching individual goal for vendedor (user_id: ${user.id})`);
+      console.log(`Buscando meta para vendedor (user_id: ${user.id})`);
       
       const { data: goalData, error: goalError } = await supabase
         .from("monthly_goals")
@@ -91,23 +92,22 @@ export const fetchMonthlyGoal = async (
         .maybeSingle();
 
       if (goalError) {
-        console.error("Error fetching individual goal:", goalError);
+        console.error("Erro ao buscar meta:", goalError);
         return DEFAULT_GOAL_AMOUNT;
       }
 
       if (goalData && goalData.goal_amount) {
-        const goalAmount = typeof goalData.goal_amount === 'string' 
+        console.log("Meta mensal encontrada:", goalData.goal_amount);
+        return typeof goalData.goal_amount === 'string' 
           ? parseFloat(goalData.goal_amount) 
           : Number(goalData.goal_amount);
-        console.log("Individual goal found:", goalAmount);
-        return isNaN(goalAmount) ? DEFAULT_GOAL_AMOUNT : goalAmount;
       }
       
-      console.log("No individual goal configured, using default");
+      console.log("Nenhuma meta configurada para este vendedor, usando valor padrão");
       return DEFAULT_GOAL_AMOUNT;
     }
   } catch (error: any) {
-    console.error("Error fetching goal:", error);
+    console.error("Erro ao buscar meta:", error);
     return DEFAULT_GOAL_AMOUNT;
   }
 };

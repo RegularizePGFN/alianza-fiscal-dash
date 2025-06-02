@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -30,8 +31,7 @@ export const useDashboardData = () => {
     setLoading(true);
     
     try {
-      console.log("=== DASHBOARD DATA FETCH DEBUG ===");
-      console.log("Fetching dashboard data for user:", user.name, "Role:", user.role);
+      console.log("Buscando dados de vendas para", user.name);
       
       // Get current month dates
       const { start: currentMonthStart, end: currentMonthEnd } = getCurrentMonthDates();
@@ -53,22 +53,16 @@ export const useDashboardData = () => {
       
       // Fetch sales data
       const formattedSales = await fetchSalesData(user, currentStartStr, currentEndStr);
-      console.log("Sales data fetched:", formattedSales.length, "sales");
       
       // Fetch previous month sales for comparison
       const prevMonthSales = await fetchPreviousMonthSales(user, prevStartStr, prevEndStr);
-      console.log("Previous month sales fetched:", prevMonthSales.length, "sales");
       
-      // Get monthly goal - ensure we're using the CURRENT month and year
+      // Get monthly goal
       const currentDate = new Date();
-      const currentMonth = currentDate.getMonth() + 1; // Months are 0-indexed in JS (junho = 6)
+      const currentMonth = currentDate.getMonth() + 1; // Months are 0-indexed in JS
       const currentYear = currentDate.getFullYear();
       
-      console.log("Fetching goal for month:", currentMonth, "year:", currentYear);
-      console.log("Today's date:", currentDate.toLocaleDateString('pt-BR'));
-      
       const monthlyGoal = await fetchMonthlyGoal(user, currentMonth, currentYear);
-      console.log("Monthly goal fetched:", monthlyGoal);
       
       // Calculate summary and trends
       if (formattedSales.length > 0) {
@@ -80,11 +74,10 @@ export const useDashboardData = () => {
         setSummary(result.summary);
         setTrends(result.trends);
         
-        console.log("Summary calculated:", result.summary);
-        console.log("Goal percentage:", ((result.summary.total_net / monthlyGoal) * 100).toFixed(1) + "%");
+        console.log("Resumo calculado:", result.summary);
       } else {
-        console.log("No sales found for current period");
-        // Set empty data but keep the goal
+        console.log("Nenhuma venda encontrada");
+        // Set empty data
         setSalesData([]);
         setSummary({
           total_sales: 0,
@@ -100,7 +93,7 @@ export const useDashboardData = () => {
         });
       }
     } catch (error: any) {
-      console.error("Error fetching dashboard data:", error);
+      console.error("Erro ao buscar dados:", error);
       toast({
         title: "Erro ao carregar dados",
         description: "Não foi possível carregar os dados do dashboard.",
@@ -113,12 +106,12 @@ export const useDashboardData = () => {
   
   useEffect(() => {
     if (user) {
-      console.log("User authenticated, fetching dashboard data");
+      console.log("Authenticated user, fetching sales");
       fetchDashboardData();
     } else {
-      console.log("No authenticated user, skipping dashboard data fetch");
+      console.log("No authenticated user, skipping sales fetch");
     }
-  }, [user?.id, user?.role]); // Only depend on essential user properties
+  }, [user]);
   
   return {
     salesData,

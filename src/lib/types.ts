@@ -1,7 +1,8 @@
+
 // User roles
 export enum UserRole {
   ADMIN = 'admin',
-  SALESPERSON = 'vendedor', // Changed to match database value
+  SALESPERSON = 'vendedor',
 }
 
 // User interface

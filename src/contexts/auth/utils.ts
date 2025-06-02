@@ -19,7 +19,7 @@ export const mapUserRole = (role?: string, email?: string): UserRole => {
     return UserRole.ADMIN;
   }
   
-  // Map database roles correctly
+  // If explicitly set to admin role, return admin
   if (role) {
     const lowerRole = role.toLowerCase();
     
@@ -27,12 +27,6 @@ export const mapUserRole = (role?: string, email?: string): UserRole => {
     if (lowerRole === 'admin') {
       console.log("Role is explicitly admin, returning ADMIN");
       return UserRole.ADMIN;
-    }
-    
-    // Map vendedor to SALESPERSON
-    if (lowerRole === 'vendedor') {
-      console.log("Role is vendedor, returning SALESPERSON");
-      return UserRole.SALESPERSON;
     }
   }
   

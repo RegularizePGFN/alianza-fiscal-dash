@@ -1,8 +1,6 @@
 
-import { useEffect } from "react";
 import { RefreshCcw, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 import ProposalsHeader from "./components/ProposalsHeader";
 import ProposalsTabs from "./components/ProposalsTabs";
 import { useProposalsState } from "@/hooks/proposals";
@@ -12,12 +10,12 @@ import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
 
 const ProposalsContainer = () => {
+  // Get state from our custom hook
   const proposalsState = useProposalsState();
   const { user } = useAuth();
-  const { toast } = useToast();
-
   const isAdmin = user?.role === UserRole.ADMIN;
-
+  
+  // Get handlers from our custom hook
   const handlers = useProposalHandlers({
     formData: proposalsState.formData,
     setFormData: proposalsState.setFormData,
@@ -33,49 +31,10 @@ const ProposalsContainer = () => {
     deleteProposal: proposalsState.deleteProposal,
     user: proposalsState.user,
   });
-
-  // Load proposals on mount and when user changes
-  useEffect(() => {
-    let mounted = true;
-    
-    const loadData = async () => {
-      if (user && mounted) {
-        console.log("Loading proposals for user:", user.name, user.role);
-        try {
-          await proposalsState.fetchProposals();
-        } catch (error) {
-          console.error("Failed to load proposals:", error);
-        }
-      }
-    };
-
-    loadData();
-    
-    return () => {
-      mounted = false;
-    };
-  }, [user?.id]); // Only depend on user ID to avoid loops
-
+  
+  // Mostrar dashboard apenas na aba "upload"
   const shouldShowDashboard = isAdmin && proposalsState.activeTab === "upload";
-
-  const handleRefreshClick = async () => {
-    console.log("Manual refresh triggered");
-    try {
-      await proposalsState.fetchProposals();
-      toast({
-        title: "Dados atualizados",
-        description: "As propostas foram recarregadas com sucesso.",
-      });
-    } catch (error) {
-      console.error("Error during manual refresh:", error);
-      toast({
-        title: "Erro ao atualizar",
-        description: "Não foi possível recarregar as propostas.",
-        variant: "destructive",
-      });
-    }
-  };
-
+  
   return (
     <div className="container py-6">
       <div className="flex justify-between items-center mb-6">
@@ -83,7 +42,7 @@ const ProposalsContainer = () => {
         <div className="flex gap-2">
           <Button 
             variant="outline" 
-            onClick={handleRefreshClick}
+            onClick={() => proposalsState.fetchProposals()}
             disabled={proposalsState.loadingProposals}
             className="flex items-center gap-2"
           >
@@ -99,7 +58,7 @@ const ProposalsContainer = () => {
           </Button>
         </div>
       </div>
-
+      
       <ProposalsTabs 
         activeTab={proposalsState.activeTab} 
         setActiveTab={proposalsState.setActiveTab} 
@@ -122,7 +81,8 @@ const ProposalsContainer = () => {
         onReset={handlers.handleReset}
         setProcessingStatus={proposalsState.setProcessingStatus}
       />
-
+      
+      {/* Mostrar o dashboard apenas na aba "upload" */}
       {shouldShowDashboard && <ProposalsDashboard />}
     </div>
   );

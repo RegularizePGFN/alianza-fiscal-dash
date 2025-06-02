@@ -3,7 +3,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
-import { UserRole } from '@/lib/types';
 import { 
   ProposalData, 
   UserData, 
@@ -26,83 +25,35 @@ export function useDashboardData() {
       
       setIsLoading(true);
       try {
-        console.log("=== DASHBOARD DATA DEBUG ===");
-        console.log("Dashboard - Current user:", user.name, "Role:", user.role, "Email:", user.email);
+        // Get current month date range
+        const now = new Date();
+        const monthStart = startOfMonth(now);
+        const monthEnd = endOfMonth(now);
         
-        const isAdmin = user.role === UserRole.ADMIN;
-        console.log("Dashboard - Is admin:", isAdmin);
+        // Format for database query
+        const startDate = monthStart.toISOString();
+        const endDate = monthEnd.toISOString();
         
-        // Simplified query focusing only on essential fields
-        let query = supabase
+        // Fetch proposals for the current month
+        const { data: proposals, error: proposalsError } = await supabase
           .from('proposals')
-          .select('id, user_id, created_at, fees_value')
-          .eq('status', 'active')
-          .order('created_at', { ascending: false })
-          .limit(500); // Reasonable limit for performance
-        
-        if (!isAdmin) {
-          console.log("Dashboard - Regular user, showing own proposals only");
-          query = query.eq('user_id', user.id);
-        }
-        
-        const { data: proposals, error: proposalsError } = await query;
-        
-        console.log("Dashboard - Proposals query result:", { count: proposals?.length || 0, error: proposalsError });
+          .select('id, user_id, created_at, total_debt, discounted_value, fees_value')
+          .gte('created_at', startDate)
+          .lte('created_at', endDate);
         
         if (proposalsError) {
-          console.error('Dashboard - Error fetching proposals:', proposalsError);
+          console.error('Error fetching proposals:', proposalsError);
           return;
         }
         
-        if (!proposals || proposals.length === 0) {
-          console.log("Dashboard - No proposals found");
-          setProposalsData([]);
-          setUsersData({});
-          return;
-        }
-        
-        // Get unique user IDs from proposals
-        const uniqueUserIds = [...new Set(proposals.map(p => p.user_id))];
-        console.log("Dashboard - Unique user IDs from proposals:", uniqueUserIds.length);
-        
-        if (uniqueUserIds.length === 0) {
-          console.log("Dashboard - No user IDs found in proposals");
-          setProposalsData([]);
-          setUsersData({});
-          return;
-        }
-        
-        // Fetch users based on the user_ids from proposals
+        // Fetch users data for mapping
         const { data: users, error: usersError } = await supabase
           .from('profiles')
-          .select('id, name, role')
-          .in('id', uniqueUserIds);
+          .select('id, name');
         
         if (usersError) {
-          console.error('Dashboard - Error fetching users:', usersError);
-          // Continue without user names rather than failing completely
-        }
-        
-        console.log("Dashboard - Users data fetched:", users?.length || 0);
-        
-        // For admins, filter proposals to show only from vendedor users
-        let finalProposals = proposals;
-        if (isAdmin && users) {
-          const vendorUserIds = users
-            .filter(user => user.role === 'vendedor')
-            .map(user => user.id);
-          
-          console.log("Dashboard - Vendor user IDs:", vendorUserIds.length);
-          
-          if (vendorUserIds.length > 0) {
-            finalProposals = proposals.filter(proposal => 
-              vendorUserIds.includes(proposal.user_id)
-            );
-            console.log("Dashboard - Filtered proposals for vendors:", finalProposals.length);
-          } else {
-            console.log("Dashboard - No vendor users found, showing empty result");
-            finalProposals = [];
-          }
+          console.error('Error fetching users:', usersError);
+          return;
         }
         
         // Create a mapping of user IDs to names
@@ -111,38 +62,20 @@ export function useDashboardData() {
           return acc;
         }, {} as Record<string, string>);
         
-        console.log('Dashboard - User mapping created:', Object.keys(userMap).length, 'users');
-        
-        // Convert to ProposalData format
-        const formattedProposals = finalProposals.map(proposal => ({
-          id: proposal.id,
-          user_id: proposal.user_id,
-          created_at: proposal.created_at,
-          fees_value: parseFloat(proposal.fees_value?.toString() || '0')
-        }));
-        
-        setProposalsData(formattedProposals);
+        setProposalsData(proposals || []);
         setUsersData(userMap);
-        
-        console.log("Dashboard - Final data set:", {
-          proposalsCount: formattedProposals.length,
-          usersCount: Object.keys(userMap).length,
-        });
       } catch (error) {
-        console.error('Dashboard - Error processing data:', error);
+        console.error('Error processing dashboard data:', error);
       } finally {
         setIsLoading(false);
       }
     };
     
     fetchData();
-  }, [user?.id, user?.role]); // Only depend on essential user properties
+  }, [user]);
   
   // Daily proposals count for the current month
   const dailyProposalsData = useMemo(() => {
-    console.log("=== DAILY PROPOSALS CALCULATION ===");
-    console.log("Proposals data for daily calc:", proposalsData.length);
-    
     if (!proposalsData.length) return [];
     
     const now = new Date();
@@ -154,8 +87,6 @@ export function useDashboardData() {
       start: monthStart,
       end: now // Only count up to today
     });
-    
-    console.log("Days in month to calculate:", daysInMonth.length);
     
     // Initialize counts for each day
     const dailyCounts: Record<string, DailyProposalCount> = {};
@@ -181,21 +112,14 @@ export function useDashboardData() {
       }
     });
     
-    const result = Object.values(dailyCounts).sort((a, b) => 
+    // Convert to array and sort by date
+    return Object.values(dailyCounts).sort((a, b) => 
       a.date.localeCompare(b.date)
     );
-    
-    console.log("Daily proposals result sample:", result.slice(0, 3));
-    console.log("Total daily proposals:", result.reduce((sum, day) => sum + day.count, 0));
-    return result;
   }, [proposalsData]);
   
   // User proposals statistics
   const userProposalsData = useMemo(() => {
-    console.log("=== USER PROPOSALS CALCULATION ===");
-    console.log("Proposals data for user calc:", proposalsData.length);
-    console.log("Users data keys:", Object.keys(usersData).length);
-    
     if (!proposalsData.length || !Object.keys(usersData).length) return [];
     
     // Count proposals per user
@@ -209,35 +133,24 @@ export function useDashboardData() {
       userCounts[proposal.user_id].fees += proposal.fees_value || 0;
     });
     
-    console.log("User counts calculated:", Object.keys(userCounts).length, "users");
-    
     // Convert to array with user names
-    const result = Object.entries(userCounts).map(([userId, stats], index) => ({
+    return Object.entries(userCounts).map(([userId, stats], index) => ({
       name: usersData[userId] || 'Unknown',
       count: stats.count,
       fees: stats.fees,
       color: COLORS[index % COLORS.length]
     })).sort((a, b) => b.count - a.count);
-    
-    console.log("User proposals result:", result.length, "users");
-    return result;
   }, [proposalsData, usersData]);
   
   // Summary statistics
   const summaryStats = useMemo(() => {
-    console.log("=== SUMMARY STATS CALCULATION ===");
-    console.log("Proposals data for summary:", proposalsData.length);
-    
     if (!proposalsData.length) return { total: 0, totalFees: 0, averageFees: 0 };
     
     const total = proposalsData.length;
     const totalFees = proposalsData.reduce((sum, proposal) => sum + (proposal.fees_value || 0), 0);
     const averageFees = totalFees / total;
     
-    const result = { total, totalFees, averageFees };
-    console.log('Dashboard summary stats calculated:', result);
-    
-    return result;
+    return { total, totalFees, averageFees };
   }, [proposalsData]);
   
   return { 

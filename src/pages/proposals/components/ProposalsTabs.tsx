@@ -1,12 +1,11 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
+import { ChangeEvent } from "react";
+
 import UploadTabContent from "./tabs/UploadTabContent";
 import DataTabContent from "./tabs/DataTabContent";
 import ProposalTabContent from "./tabs/ProposalTabContent";
-import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 
 interface ProposalsTabsProps {
   activeTab: string;
@@ -22,8 +21,9 @@ interface ProposalsTabsProps {
   selectedProposal: Proposal | null;
   proposals: Proposal[];
   loadingProposals: boolean;
-  onInputChange: (field: string, value: string) => void;
-  onGenerateProposal: () => void;
+  onInputChange: (nameOrEvent: string | ChangeEvent<HTMLInputElement>, value?: string) => void;
+  onGenerateProposal: () => Promise<void>;
+  onViewProposal: (proposal: Proposal) => void;
   onDeleteProposal: (id: string) => Promise<boolean>;
   onProcessComplete: (data: Partial<ExtractedData>, preview: string) => void;
   onReset: () => void;
@@ -46,81 +46,64 @@ const ProposalsTabs = ({
   loadingProposals,
   onInputChange,
   onGenerateProposal,
+  onViewProposal,
   onDeleteProposal,
   onProcessComplete,
   onReset,
-  setProcessingStatus,
+  setProcessingStatus
 }: ProposalsTabsProps) => {
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
+  // Create a function that adapts onInputChange to the format expected by DataTabContent
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    onInputChange(e);
   };
 
   return (
-    <Card className="shadow-md">
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-6">
-          <TabsTrigger value="upload" className="relative">
-            Upload & Análise
-            {processing && (
-              <Badge variant="secondary" className="ml-2 animate-pulse">
-                Processando
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="data" disabled={!imagePreview && !selectedProposal}>
-            Dados Extraídos
-          </TabsTrigger>
-          <TabsTrigger value="proposal" disabled={!generatedProposal && !selectedProposal}>
-            Proposta
-          </TabsTrigger>
-        </TabsList>
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <TabsList className="grid w-full grid-cols-3 mb-6">
+        <TabsTrigger value="upload">Upload de Imagem</TabsTrigger>
+        <TabsTrigger value="data" disabled={!formData.cnpj && !generatedProposal}>
+          Dados Extraídos
+        </TabsTrigger>
+        <TabsTrigger value="proposal" disabled={!formData.cnpj && !generatedProposal}>
+          Proposta
+        </TabsTrigger>
+      </TabsList>
+      
+      <TabsContent value="upload" className="space-y-6">
+        <UploadTabContent
+          processing={processing}
+          setProcessing={setProcessing}
+          progressPercent={progressPercent}
+          setProgressPercent={setProgressPercent}
+          proposals={proposals}
+          loadingProposals={loadingProposals}
+          onViewProposal={onViewProposal}
+          onDeleteProposal={onDeleteProposal}
+          onProcessComplete={onProcessComplete}
+          setProcessingStatus={setProcessingStatus}
+        />
+      </TabsContent>
+      
+      <TabsContent value="data" className="space-y-6">
+        <DataTabContent
+          formData={formData}
+          processing={processing}
+          onInputChange={handleInputChange}
+          onGenerateProposal={onGenerateProposal}
+          setProcessingStatus={setProcessingStatus}
+        />
+      </TabsContent>
 
-        <TabsContent value="upload">
-          <UploadTabContent
-            imagePreview={imagePreview}
-            processing={processing}
-            progressPercent={progressPercent}
-            companyData={companyData}
-            proposals={proposals}
-            loadingProposals={loadingProposals}
-            onProcessComplete={onProcessComplete}
-            onDeleteProposal={onDeleteProposal}
-            setProcessingStatus={setProcessingStatus}
-          />
-        </TabsContent>
-
-        <TabsContent value="data">
-          {loadingProposals ? (
-            <div className="flex justify-center py-8">
-              <LoadingSpinner />
-            </div>
-          ) : (
-            <DataTabContent
-              formData={formData}
-              companyData={companyData}
-              onInputChange={onInputChange}
-              onGenerateProposal={onGenerateProposal}
-              selectedProposal={selectedProposal}
-            />
-          )}
-        </TabsContent>
-
-        <TabsContent value="proposal">
-          {loadingProposals ? (
-            <div className="flex justify-center py-8">
-              <LoadingSpinner />
-            </div>
-          ) : (
-            <ProposalTabContent
-              formData={formData}
-              selectedProposal={selectedProposal}
-              onInputChange={onInputChange}
-              onReset={onReset}
-            />
-          )}
-        </TabsContent>
-      </Tabs>
-    </Card>
+      <TabsContent value="proposal" className="space-y-6">
+        <ProposalTabContent
+          formData={formData}
+          imagePreview={imagePreview}
+          companyData={companyData}
+          onReset={onReset}
+          onInputChange={onInputChange}
+        />
+      </TabsContent>
+    </Tabs>
   );
 };
 

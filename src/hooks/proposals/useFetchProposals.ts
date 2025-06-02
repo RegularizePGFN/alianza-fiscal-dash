@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Proposal } from '@/lib/types/proposals';
 import { useAuth } from '@/contexts/auth';
@@ -13,7 +13,7 @@ export const useFetchProposals = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
-
+  
   const formatDateBR = (date: string) => {
     try {
       return format(new Date(date), 'dd/MM/yyyy HH:mm', { locale: ptBR });
@@ -21,160 +21,91 @@ export const useFetchProposals = () => {
       return date;
     }
   };
-
-  const fetchProposals = useCallback(async () => {
-    if (!user) {
-      console.log("No user found, skipping proposals fetch");
-      return;
-    }
-
+  
+  const fetchProposals = async () => {
+    if (!user) return;
+    
     setIsLoading(true);
-
+    
     try {
-      console.log("=== FETCH PROPOSALS DEBUG ===");
-      console.log("Current user:", user.name, "Role:", user.role, "Email:", user.email);
-
+      // Check if user is admin to fetch all proposals or just their own
       const isAdmin = user.role === UserRole.ADMIN;
-
-      let proposalsQuery = supabase
-        .from('proposals')
-        .select(`
-          id,
-          user_id,
-          created_at,
-          cnpj,
-          debt_number,
-          total_debt,
-          discounted_value,
-          discount_percentage,
-          entry_value,
-          entry_installments,
-          installments,
-          installment_value,
-          fees_value,
-          client_name,
-          client_email,
-          client_phone,
-          business_activity,
-          creation_date,
-          validity_date,
-          status
-        `)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .limit(100); // Limit to improve performance
-
+      
+      // Query based on user role
+      let query = supabase.from('proposals').select('*');
+      
+      // Only filter by user_id if not an admin
       if (!isAdmin) {
-        proposalsQuery = proposalsQuery.eq('user_id', user.id);
+        query = query.eq('user_id', user.id);
       }
-
-      const { data, error } = await proposalsQuery;
-
-      console.log("Proposals query result:", { count: data?.length || 0, error });
-
+      
+      // Order by created_at desc
+      query = query.order('created_at', { ascending: false });
+      
+      const { data, error } = await query;
+      
       if (error) {
-        console.error("Supabase error:", error);
-        throw new Error(`Database error: ${error.message}`);
+        throw new Error(error.message);
       }
-
-      if (!data || data.length === 0) {
-        console.log("No proposals found");
-        setProposals([]);
-        return;
-      }
-
-      // Get unique user IDs from proposals
-      const uniqueUserIds = [...new Set(data.map(p => p.user_id))];
-
-      if (uniqueUserIds.length === 0) {
-        console.log("No user IDs found in proposals");
-        setProposals([]);
-        return;
-      }
-
-      // Fetch users data
+      
+      // Fetch all users for mapping names to proposals (especially for admins)
       const { data: usersData, error: usersError } = await supabase
         .from('profiles')
-        .select('id, name, role')
-        .in('id', uniqueUserIds);
-
+        .select('id, name');
+      
       if (usersError) {
         console.error('Error fetching users:', usersError);
-        // Continue without user names rather than failing completely
       }
-
-      console.log("Users data fetched:", usersData?.length || 0);
-
-      // Filter for vendors if admin
-      let finalProposals = data;
-      if (isAdmin && usersData) {
-        const vendorUserIds = usersData
-          .filter(user => user.role === 'vendedor')
-          .map(user => user.id);
-
-        console.log("Vendor user IDs:", vendorUserIds);
-
-        if (vendorUserIds.length > 0) {
-          finalProposals = data.filter(proposal =>
-            vendorUserIds.includes(proposal.user_id)
-          );
-        } else {
-          console.log("No vendor users found");
-          finalProposals = [];
-        }
-      }
-
-      // Create user mapping
+      
+      // Create a map of user IDs to names for quick lookup
       const userMap = (usersData || []).reduce((acc, user) => {
-        acc[user.id] = { name: user.name, role: user.role };
+        acc[user.id] = user.name;
         return acc;
-      }, {} as Record<string, { name: string; role: string }>);
-
-      // Format proposals
-      const formattedProposals = finalProposals.map((item): Proposal => {
-        const totalDebt = parseFloat(item.total_debt?.toString() || '0');
-        const discountedValue = parseFloat(item.discounted_value?.toString() || '0');
-        
-        let feesValue = parseFloat(item.fees_value?.toString() || '0');
-        if (!Number.isFinite(feesValue) || feesValue === 0) {
+      }, {} as Record<string, string>);
+      
+      const formattedProposals = data.map((item: any): Proposal => {
+        // Calculate fees if not present but we have the necessary values
+        let feesValue = item.fees_value;
+        if (item.total_debt && item.discounted_value && !feesValue) {
+          const totalDebt = parseFloat(String(item.total_debt));
+          const discountedValue = parseFloat(String(item.discounted_value));
           const economyValue = totalDebt - discountedValue;
-          feesValue = Number.isFinite(economyValue) ? economyValue * 0.2 : 0;
+          feesValue = economyValue * 0.2; // 20% of the savings
         }
-
-        const userInfo = userMap[item.user_id] || { name: 'Usuário desconhecido', role: 'USER' };
-
+        
+        // Get user name from the map or fallback to user's own name
+        const userName = userMap[item.user_id] || user.name || 'Unknown User';
+        
         return {
           id: item.id,
           userId: item.user_id,
-          userName: userInfo.name,
+          userName: userName,
           createdAt: item.created_at,
           creationDate: item.creation_date,
           validityDate: item.validity_date,
           data: {
-            cnpj: item.cnpj || '',
-            totalDebt: totalDebt.toString(),
-            discountedValue: discountedValue.toString(),
-            discountPercentage: (item.discount_percentage?.toString() || '0'),
-            entryValue: (item.entry_value?.toString() || '0'),
-            entryInstallments: (item.entry_installments?.toString() || '1'),
-            installments: (item.installments?.toString() || '0'),
-            installmentValue: (item.installment_value?.toString() || '0'),
+            cnpj: item.cnpj,
+            totalDebt: item.total_debt?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00',
+            discountedValue: item.discounted_value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00',
+            discountPercentage: item.discount_percentage?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00',
+            entryValue: item.entry_value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00',
+            entryInstallments: item.entry_installments?.toString() || '1',
+            installments: item.installments?.toString() || '0',
+            installmentValue: item.installment_value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00',
             debtNumber: item.debt_number || '',
-            feesValue: feesValue.toString(),
-            clientName: item.client_name || '',
-            clientEmail: item.client_email || '',
-            clientPhone: item.client_phone || '',
-            businessActivity: item.business_activity || '',
+            feesValue: feesValue?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00',
+            clientName: item.client_name,
+            clientEmail: item.client_email,
+            clientPhone: item.client_phone,
+            businessActivity: item.business_activity,
             creationDate: item.creation_date ? formatDateBR(item.creation_date) : undefined,
             validityDate: item.validity_date ? formatDateBR(item.validity_date) : undefined,
           },
-          imageUrl: '', // Remove image URL to improve performance
+          imageUrl: item.image_url || '',
         };
       });
-
-      console.log("Successfully formatted proposals:", formattedProposals.length);
+      
       setProposals(formattedProposals);
-
     } catch (error: any) {
       console.error('Error fetching proposals:', error);
       toast({
@@ -182,29 +113,30 @@ export const useFetchProposals = () => {
         description: error.message || "Não foi possível carregar as propostas.",
         variant: "destructive",
       });
-      setProposals([]); // Set empty array on error
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id, user?.role, toast]); // Only depend on user ID and role
-
+  };
+  
   const deleteProposal = async (id: string) => {
     try {
       const { error } = await supabase
         .from('proposals')
         .delete()
         .eq('id', id);
-
-      if (error) throw new Error(error.message);
-
-      // Update local state immediately
-      setProposals(prevProposals => prevProposals.filter(p => p.id !== id));
-
+      
+      if (error) {
+        throw new Error(error.message);
+      }
+      
+      // Update local state by removing the deleted proposal
+      setProposals(prevProposals => prevProposals.filter(proposal => proposal.id !== id));
+      
       toast({
         title: "Proposta excluída",
         description: "A proposta foi excluída com sucesso."
       });
-
+      
       return true;
     } catch (error: any) {
       console.error('Error deleting proposal:', error);
@@ -216,6 +148,6 @@ export const useFetchProposals = () => {
       return false;
     }
   };
-
+  
   return { proposals, isLoading, fetchProposals, deleteProposal };
 };

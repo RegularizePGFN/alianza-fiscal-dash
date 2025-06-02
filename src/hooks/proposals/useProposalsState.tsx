@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth";
 import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
@@ -17,7 +17,7 @@ export const useProposalsState = () => {
   const {
     proposals,
     isLoading: loadingProposals,
-    fetchProposals: fetchProposalsOriginal,
+    fetchProposals,
     deleteProposal
   } = useFetchProposals();
   
@@ -43,15 +43,10 @@ export const useProposalsState = () => {
   const [companyData, setCompanyData] = useState<CompanyData | null>(null);
   const [processingStatus, setProcessingStatus] = useState<string>("");
   
-  // Stable fetchProposals function that avoids infinite loops
-  const fetchProposals = useCallback(async () => {
-    console.log("fetchProposals called from useProposalsState");
-    try {
-      await fetchProposalsOriginal();
-    } catch (error) {
-      console.error("Error in fetchProposals:", error);
-    }
-  }, [fetchProposalsOriginal]);
+  // Fetch proposals when component mounts
+  useEffect(() => {
+    fetchProposals();
+  }, []);
   
   // Update executive data when user changes
   useEffect(() => {
@@ -62,7 +57,7 @@ export const useProposalsState = () => {
         executiveEmail: user.email || ''
       }));
     }
-  }, [user?.id, user?.name, user?.email]); // Only trigger on these specific changes
+  }, [user]);
   
   // Use our custom hooks
   const { fetchCompanyDataByCnpj } = useFetchCompanyData({ 
@@ -82,14 +77,14 @@ export const useProposalsState = () => {
     if (formData.cnpj && formData.cnpj.length >= 14) {
       fetchCompanyDataByCnpj(formData.cnpj);
     }
-  }, [formData.cnpj, fetchCompanyDataByCnpj]);
+  }, [formData.cnpj]);
   
   // Generate payment dates when needed
   useEffect(() => {
     if (activeTab === 'proposal' && formData.entryValue && formData.installmentValue && formData.installments) {
       generatePaymentDates();
     }
-  }, [activeTab, formData.entryValue, formData.entryInstallments, formData.installmentValue, formData.installments, generatePaymentDates]);
+  }, [activeTab, formData.entryValue, formData.entryInstallments, formData.installmentValue, formData.installments]);
 
   return {
     // State

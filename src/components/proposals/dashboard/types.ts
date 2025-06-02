@@ -3,6 +3,8 @@ export interface ProposalData {
   id: string;
   user_id: string;
   created_at: string;
+  total_debt: number;
+  discounted_value: number;
   fees_value: number;
 }
 
