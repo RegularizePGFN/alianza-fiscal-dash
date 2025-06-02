@@ -79,8 +79,3 @@ export const calculateWeekDateRanges = (): WeekRange[] => {
   const now = new Date();
   return calculateBusinessDayWeeks(now.getFullYear(), now.getMonth() + 1);
 };
-
-// Get weeks for a specific month/year (alias for calculateBusinessDayWeeks for backward compatibility)
-export const getCurrentMonthWeeks = (month: number, year: number): WeekRange[] => {
-  return calculateBusinessDayWeeks(year, month);
-};

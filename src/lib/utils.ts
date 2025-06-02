@@ -27,25 +27,21 @@ export function formatCurrency(value: string | number): string {
   }).format(value as number);
 }
 
-// Format Brazilian currency (fixed to show correct decimal places)
+// Format Brazilian currency (added this function)
 export function formatBrazilianCurrency(value: string | number): string {
-  let numericValue: number;
-  
   if (typeof value === 'string') {
-    // Handle string values - parse as float directly
-    numericValue = parseFloat(value);
-  } else {
-    numericValue = value;
+    // Remove non-numeric characters except for decimal point and handle thousands separators
+    value = parseFloat(value.replace(/\./g, '').replace(',', '.'));
   }
   
-  if (isNaN(numericValue)) {
+  if (isNaN(value as number)) {
     return '0,00';
   }
   
   return new Intl.NumberFormat('pt-BR', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
-  }).format(numericValue);
+  }).format(value as number);
 }
 
 // Enhanced format date function to handle different date formats consistently

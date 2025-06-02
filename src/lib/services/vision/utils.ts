@@ -23,34 +23,9 @@ export const getEdgeFunctionUrl = (): string => {
  * Mapeia os resultados da AI para o formato usado pela aplicação
  */
 export const mapAIResponseToExtractedData = (aiResponse: AIAnalysisResponse): Partial<ExtractedData> => {
-  console.log('=== MAPEANDO DADOS DA IA ===');
-  console.log('Resposta bruta da IA:', aiResponse);
-  
-  // Função auxiliar para limpar valores monetários
-  const cleanMonetaryValue = (value: string | undefined | null): string => {
-    if (!value) return '0,00';
-    return value.replace('R$', '').trim();
-  };
-  
-  // Função auxiliar para limpar percentual
-  const cleanPercentage = (value: string | undefined | null): string => {
-    if (!value) return '0';
-    return value.replace('%', '').trim();
-  };
-  
-  // Extract the values from AI response with better error handling
-  const totalDebt = cleanMonetaryValue(aiResponse.valor_total_sem_reducao);
-  const discountedValue = cleanMonetaryValue(aiResponse.valor_total_com_reducao);
-  const entryValue = cleanMonetaryValue(aiResponse.valor_da_entrada_total);
-  const installmentValue = cleanMonetaryValue(aiResponse.parcelamento_principal?.valor_parcela);
-  const discountPercentage = cleanPercentage(aiResponse.percentual_de_reducao);
-  
-  console.log('Valores extraídos:');
-  console.log('- Total da dívida:', totalDebt);
-  console.log('- Valor com desconto:', discountedValue);
-  console.log('- Valor de entrada:', entryValue);
-  console.log('- Valor da parcela:', installmentValue);
-  console.log('- Percentual de desconto:', discountPercentage);
+  // Extract the values from AI response
+  const totalDebt = aiResponse.valor_total_sem_reducao?.replace('R$', '').trim() || '0,00';
+  const discountedValue = aiResponse.valor_total_com_reducao?.replace('R$', '').trim() || '0,00';
   
   // Calculate fees as 20% of the savings
   let feesValue = '0,00';
@@ -58,7 +33,7 @@ export const mapAIResponseToExtractedData = (aiResponse: AIAnalysisResponse): Pa
     const totalDebtNum = parseFloat(totalDebt.replace(/\./g, '').replace(',', '.'));
     const discountedValueNum = parseFloat(discountedValue.replace(/\./g, '').replace(',', '.'));
     
-    if (!isNaN(totalDebtNum) && !isNaN(discountedValueNum) && totalDebtNum > 0 && discountedValueNum > 0) {
+    if (!isNaN(totalDebtNum) && !isNaN(discountedValueNum)) {
       const savings = totalDebtNum - discountedValueNum;
       const fees = savings * 0.2; // 20% of the savings
       
@@ -67,29 +42,21 @@ export const mapAIResponseToExtractedData = (aiResponse: AIAnalysisResponse): Pa
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       });
-      console.log('Honorários calculados:', feesValue);
-    } else {
-      console.log('Não foi possível calcular honorários - valores inválidos');
     }
   } catch (error) {
     console.error("Error calculating fees:", error);
   }
   
-  const extractedData = {
+  return {
     cnpj: aiResponse.cnpj || '',
     debtNumber: aiResponse.numero_processo || '',
     totalDebt: totalDebt,
     discountedValue: discountedValue,
-    discountPercentage: discountPercentage,
-    entryValue: entryValue,
+    discountPercentage: aiResponse.percentual_de_reducao?.replace('%', '').trim() || '0',
+    entryValue: aiResponse.valor_da_entrada_total?.replace('R$', '').trim() || '0,00',
     entryInstallments: String(aiResponse.entrada_parcelada?.quantidade_parcelas || 1),
     installments: String(aiResponse.parcelamento_principal?.quantidade_parcelas || 0),
-    installmentValue: installmentValue,
+    installmentValue: aiResponse.parcelamento_principal?.valor_parcela?.replace('R$', '').trim() || '0,00',
     feesValue: feesValue
   };
-  
-  console.log('Dados finais mapeados:', extractedData);
-  console.log('=== FIM DO MAPEAMENTO ===');
-  
-  return extractedData;
 };

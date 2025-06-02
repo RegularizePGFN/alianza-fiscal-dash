@@ -33,9 +33,9 @@ export function ProposalsReportsTab() {
   const years = [2023, 2024, 2025, 2026];
 
   return (
-    <div className="w-full max-w-none space-y-6">
-      {/* Filtros - Full Width */}
-      <div className="w-full bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 transition-colors duration-300">
+    <div className="space-y-6">
+      {/* Filtros */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 transition-colors duration-300">
         <h3 className="text-lg font-medium mb-4">Filtros do Relatório</h3>
         <div className="flex gap-4">
           <div className="min-w-[120px]">
@@ -72,8 +72,8 @@ export function ProposalsReportsTab() {
         </div>
       </div>
 
-      {/* Resumo das Propostas - Full Width */}
-      <Card className="w-full">
+      {/* Resumo das Propostas */}
+      <Card>
         <CardHeader>
           <CardTitle>
             Resumo de Propostas - {months.find(m => m.value === selectedMonth)?.label}/{selectedYear}
@@ -85,7 +85,7 @@ export function ProposalsReportsTab() {
               <LoadingSpinner />
             </div>
           ) : (
-            <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
               <div className="text-center p-4 bg-blue-50 rounded-lg">
                 <div className="text-2xl font-bold text-blue-600">
                   {summary.totalProposals}
@@ -132,15 +132,15 @@ export function ProposalsReportsTab() {
         </CardContent>
       </Card>
 
-      {/* Gráficos e Análises - Full Width */}
-      <div className="w-full bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 transition-colors duration-300">
+      {/* Gráficos e Análises */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 transition-colors duration-300">
         <h3 className="text-lg font-medium mb-4">Gráficos e Análises</h3>
         {loading ? (
           <div className="flex justify-center py-6">
             <LoadingSpinner />
           </div>
         ) : (
-          <div className="w-full mt-6 grid gap-4 md:grid-cols-2">
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
             <MonthlyProposalsChart 
               dailyProposalsData={dailyProposalsData} 
               summaryStats={{
@@ -157,8 +157,8 @@ export function ProposalsReportsTab() {
         )}
       </div>
 
-      {/* Tabela Detalhada das Propostas - Full Width */}
-      <Card className="w-full">
+      {/* Tabela Detalhada das Propostas */}
+      <Card>
         <CardHeader>
           <CardTitle>Propostas Detalhadas</CardTitle>
         </CardHeader>
@@ -172,7 +172,7 @@ export function ProposalsReportsTab() {
               Nenhuma proposta encontrada para o período selecionado.
             </div>
           ) : (
-            <div className="w-full overflow-x-auto">
+            <div className="overflow-x-auto">
               <table className="w-full table-auto">
                 <thead>
                   <tr className="border-b">

@@ -26,8 +26,6 @@ const AIImageProcessor = ({
   setProgressPercent,
   updateStatus
 }: AIImageProcessorProps) => {
-  console.log('AIImageProcessor renderizado com processing:', processing);
-  
   const {
     imagePreview,
     processingStatus,
@@ -38,14 +36,6 @@ const AIImageProcessor = ({
     setProcessing,
     setProgressPercent,
     updateStatus
-  });
-
-  console.log('AIImageProcessor estado:', { 
-    processing, 
-    progressPercent, 
-    processingStatus, 
-    imagePreview: !!imagePreview,
-    error 
   });
 
   return (
