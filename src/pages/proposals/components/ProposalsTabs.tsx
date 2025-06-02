@@ -55,12 +55,6 @@ const ProposalsTabs = ({
     setActiveTab(value);
   };
 
-  // Convert field/value handler to event handler for DataTabContent
-  const handleDataInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    onInputChange(name, value);
-  };
-
   return (
     <Card className="shadow-md">
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
@@ -103,10 +97,10 @@ const ProposalsTabs = ({
           ) : (
             <DataTabContent
               formData={formData}
-              processing={processing}
-              onInputChange={handleDataInputChange}
+              companyData={companyData}
+              onInputChange={onInputChange}
               onGenerateProposal={onGenerateProposal}
-              setProcessingStatus={setProcessingStatus}
+              selectedProposal={selectedProposal}
             />
           )}
         </TabsContent>
@@ -119,6 +113,7 @@ const ProposalsTabs = ({
           ) : (
             <ProposalTabContent
               formData={formData}
+              selectedProposal={selectedProposal}
               onInputChange={onInputChange}
               onReset={onReset}
             />
