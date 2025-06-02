@@ -1,11 +1,12 @@
+
 import { ExtractedData, Proposal } from "@/lib/types/proposals";
 import AIImageProcessor from "@/components/proposals/AIImageProcessor";
 import ProposalHistory from "@/components/proposals/ProposalHistory";
 import { ProposalsSummaryCards } from "@/components/proposals/ProposalsSummaryCards";
 import { ProposalsDateFilter, DateFilterType, DateRange } from "@/components/proposals/ProposalsDateFilter";
-import { ProposalsDuplicateChecker } from "@/components/proposals/ProposalsDuplicateChecker";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 interface UploadTabContentProps {
   processing: boolean;
   setProcessing: (processing: boolean) => void;
@@ -21,6 +22,7 @@ interface UploadTabContentProps {
   customDateRange: DateRange;
   onFilterChange: (type: DateFilterType, range?: DateRange) => void;
 }
+
 const UploadTabContent = ({
   processing,
   setProcessing,
@@ -43,9 +45,6 @@ const UploadTabContent = ({
       
       <Separator className="my-8" />
       
-      {/* Duplicate Checker Alert */}
-      <ProposalsDuplicateChecker proposals={proposals} />
-      
       {/* Date Filter */}
       <div className="flex justify-between items-center">
         <ProposalsDateFilter filterType={filterType} dateRange={customDateRange} onFilterChange={onFilterChange} />
@@ -56,11 +55,11 @@ const UploadTabContent = ({
       
       {/* Proposals History */}
       <Card className="border-af-blue-200 shadow-md rounded-xl bg-white">
-        
         <CardContent className="p-4">
           <ProposalHistory proposals={proposals} loading={loadingProposals} onViewProposal={onViewProposal} onDeleteProposal={onDeleteProposal} />
         </CardContent>
       </Card>
     </div>;
 };
+
 export default UploadTabContent;
