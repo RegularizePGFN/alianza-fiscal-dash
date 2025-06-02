@@ -6,7 +6,7 @@ import { GoalsCommissionsSection } from "@/components/dashboard/GoalsCommissions
 import { SalespeopleCommissionsCard } from "@/components/dashboard/salespeople-commissions";
 import { DailyResultsCard } from "@/components/dashboard/daily-results";
 import { SalespersonWeeklyCard } from "@/components/dashboard/weekly-sales";
-import { DailyResultsToday } from "@/components/dashboard/DailyResultsToday";
+import { DailyResultsToday } from "@/components/dashboard/daily-results-today";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
