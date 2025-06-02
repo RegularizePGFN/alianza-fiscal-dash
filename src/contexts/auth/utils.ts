@@ -13,13 +13,7 @@ export const ADMIN_EMAILS = [
 export const mapUserRole = (role?: string, email?: string): UserRole => {
   console.log(`Mapping role: "${role}" for email: ${email}`);
   
-  // Check if email is in admin list
-  if (email && ADMIN_EMAILS.includes(email.toLowerCase())) {
-    console.log("Email is in admin list, returning ADMIN role");
-    return UserRole.ADMIN;
-  }
-  
-  // If explicitly set to admin role, return admin
+  // First priority: If role is explicitly set in database, use it
   if (role) {
     const lowerRole = role.toLowerCase();
     
@@ -28,6 +22,18 @@ export const mapUserRole = (role?: string, email?: string): UserRole => {
       console.log("Role is explicitly admin, returning ADMIN");
       return UserRole.ADMIN;
     }
+    
+    // Check for salesperson role (case insensitive)
+    if (lowerRole === 'vendedor' || lowerRole === 'salesperson') {
+      console.log("Role is explicitly vendedor/salesperson, returning SALESPERSON");
+      return UserRole.SALESPERSON;
+    }
+  }
+  
+  // Second priority: Check if email is in admin list (only if no explicit role is set)
+  if (!role && email && ADMIN_EMAILS.includes(email.toLowerCase())) {
+    console.log("No role set but email is in admin list, returning ADMIN role");
+    return UserRole.ADMIN;
   }
   
   // Default to SALESPERSON for any other role or no role

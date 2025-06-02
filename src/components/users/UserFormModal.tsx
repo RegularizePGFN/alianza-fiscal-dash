@@ -99,7 +99,7 @@ export function UserFormModal({
       });
 
       if (user) {
-        // Update existing user - ONLY using Edge Function
+        // Update existing user
         console.log("Updating user through Edge Function:", user.id);
         
         const updateData: any = { 
@@ -112,7 +112,7 @@ export function UserFormModal({
           updateData.password = formData.password;
         }
 
-        console.log('Calling adminAPI.updateUserById with:', updateData);
+        console.log('Calling adminAPI.updateUserById with:', { ...updateData, password: updateData.password ? '[HIDDEN]' : 'not provided' });
         
         const response = await adminAPI.updateUserById(user.id, updateData);
         
