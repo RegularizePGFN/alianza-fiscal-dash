@@ -8,6 +8,7 @@ import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { DateRange as ReactDayPickerDateRange } from 'react-day-picker';
 
 export type DateFilterType = 'last7days' | 'last30days' | 'custom';
 
@@ -83,10 +84,14 @@ export function ProposalsDateFilter({ filterType, dateRange, onFilterChange }: P
           <PopoverContent className="w-auto p-0" align="start">
             <Calendar
               mode="range"
-              selected={dateRange}
-              onSelect={(range) => {
+              selected={dateRange as ReactDayPickerDateRange}
+              onSelect={(range: ReactDayPickerDateRange | undefined) => {
                 if (range) {
-                  handleCustomDateChange(range);
+                  const convertedRange: DateRange = {
+                    from: range.from,
+                    to: range.to
+                  };
+                  handleCustomDateChange(convertedRange);
                   if (range.from && range.to) {
                     setIsCalendarOpen(false);
                   }

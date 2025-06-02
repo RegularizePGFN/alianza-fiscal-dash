@@ -75,9 +75,9 @@ export const useProposalsStateWithFilter = () => {
     }
   };
 
-  // Refresh proposals with current filter
-  const refreshProposals = () => {
-    fetchProposals(filterType, filterType === 'custom' ? customDateRange : undefined);
+  // Refresh proposals with current filter - return Promise<void>
+  const refreshProposals = async (): Promise<void> => {
+    await fetchProposals(filterType, filterType === 'custom' ? customDateRange : undefined);
   };
   
   // Use our custom hooks
