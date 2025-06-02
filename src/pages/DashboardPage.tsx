@@ -6,17 +6,20 @@ import { GoalsCommissionsSection } from "@/components/dashboard/GoalsCommissions
 import { RecentSalesSection } from "@/components/dashboard/RecentSalesSection";
 import { WeeklyReportSection } from "@/components/dashboard/WeeklyReportSection";
 import { DailyResultsToday } from "@/components/dashboard/daily-results-today";
+import { useDashboardData } from "@/hooks/useDashboardData";
 
 const DashboardPage = () => {
+  const { salesData, summary, trends, loading } = useDashboardData();
+
   return (
     <AppLayout>
       <div className="space-y-6">
-        <DashboardHeader />
+        <DashboardHeader isLoading={loading} />
         <DailyResultsToday />
-        <SalesSummarySection />
-        <GoalsCommissionsSection />
-        <RecentSalesSection />
-        <WeeklyReportSection />
+        <SalesSummarySection summary={summary} trends={trends} />
+        <GoalsCommissionsSection summary={summary} salesData={salesData} />
+        <RecentSalesSection salesData={salesData} />
+        <WeeklyReportSection salesData={salesData} isLoading={loading} />
       </div>
     </AppLayout>
   );
