@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { fetchCnpjData } from "@/lib/api";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
 import { useToast } from "@/hooks/use-toast";
@@ -18,37 +18,46 @@ export const useFetchCompanyData = ({
   setProcessingStatus
 }: UseFetchCompanyDataProps) => {
   const { toast } = useToast();
+  const [isSearching, setIsSearching] = useState(false);
   
-  const fetchCompanyDataByCnpj = async (cnpj: string) => {
-    if (cnpj && cnpj.length >= 14) {
-      setProcessingStatus("Consultando dados do CNPJ...");
-      try {
-        const data = await fetchCnpjData(cnpj);
-        if (data) {
-          setCompanyData(data);
-
-          // Update form with company information
-          setFormData(prev => ({
-            ...prev,
-            clientName: data.company?.name || prev.clientName || '',
-            clientEmail: data.emails?.[0]?.address || prev.clientEmail || '',
-            clientPhone: data.phones?.[0] ? `${data.phones[0].area}${data.phones[0].number}` : prev.clientPhone || '',
-            businessActivity: data.sideActivities?.[0] ? `${data.sideActivities[0].id} | ${data.sideActivities[0].text}` : data.mainActivity ? `${data.mainActivity.id} | ${data.mainActivity.text}` : prev.businessActivity || ''
-          }));
-          toast({
-            title: "Dados da empresa obtidos",
-            description: `Informações de ${data.company?.name} preenchidas automaticamente.`
-          });
-        }
-      } catch (error) {
-        console.error("Erro ao buscar dados do CNPJ:", error);
-      } finally {
-        setProcessingStatus("");
-      }
+  const fetchCompanyDataByCnpj = useCallback(async (cnpj: string) => {
+    if (!cnpj || cnpj.length < 14 || isSearching) {
+      return;
     }
-  };
+
+    setIsSearching(true);
+    setProcessingStatus("Consultando dados do CNPJ...");
+    
+    try {
+      const data = await fetchCnpjData(cnpj);
+      if (data) {
+        setCompanyData(data);
+
+        // Update form with company information
+        setFormData(prev => ({
+          ...prev,
+          clientName: data.company?.name || prev.clientName || '',
+          clientEmail: data.emails?.[0]?.address || prev.clientEmail || '',
+          clientPhone: data.phones?.[0] ? `${data.phones[0].area}${data.phones[0].number}` : prev.clientPhone || '',
+          businessActivity: data.sideActivities?.[0] ? `${data.sideActivities[0].id} | ${data.sideActivities[0].text}` : data.mainActivity ? `${data.mainActivity.id} | ${data.mainActivity.text}` : prev.businessActivity || ''
+        }));
+        
+        toast({
+          title: "Dados da empresa obtidos",
+          description: `Informações de ${data.company?.name} preenchidas automaticamente.`
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao buscar dados do CNPJ:", error);
+      // Não mostrar toast de erro para evitar spam de notificações
+    } finally {
+      setIsSearching(false);
+      setProcessingStatus("");
+    }
+  }, [setCompanyData, setFormData, setProcessingStatus, toast, isSearching]);
 
   return {
-    fetchCompanyDataByCnpj
+    fetchCompanyDataByCnpj,
+    isSearching
   };
 };

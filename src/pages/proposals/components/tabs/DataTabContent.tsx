@@ -12,6 +12,9 @@ interface DataTabContentProps {
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onGenerateProposal: () => void;
   setProcessingStatus: (status: string) => void;
+  companyData?: CompanyData | null;
+  searchCnpj?: (cnpj: string) => void;
+  isSearchingCnpj?: boolean;
 }
 
 const DataTabContent = ({
@@ -19,18 +22,16 @@ const DataTabContent = ({
   processing,
   onInputChange,
   onGenerateProposal,
-  setProcessingStatus
+  setProcessingStatus,
+  companyData,
+  searchCnpj,
+  isSearchingCnpj = false
 }: DataTabContentProps) => {
-  // State para rastrear se estamos buscando um CNPJ
-  const [isSearchingCnpj, setIsSearchingCnpj] = React.useState(false);
-  // Estado para armazenar dados da empresa (temporariamente)
-  const [companyData, setCompanyData] = React.useState<CompanyData | null>(null);
-  
-  // Função para lidar com a busca de CNPJ
+  // Handle CNPJ search
   const handleSearchCnpj = () => {
-    setIsSearchingCnpj(true);
-    // Após tempo suficiente para simular busca, desabilitar
-    setTimeout(() => setIsSearchingCnpj(false), 1000);
+    if (formData.cnpj && searchCnpj) {
+      searchCnpj(formData.cnpj);
+    }
   };
 
   // Calculate entry installment value

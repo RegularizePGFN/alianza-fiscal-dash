@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth";
 import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
@@ -48,6 +48,7 @@ export const useProposalsStateWithFilter = () => {
   const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
   const [companyData, setCompanyData] = useState<CompanyData | null>(null);
   const [processingStatus, setProcessingStatus] = useState<string>("");
+  const [lastSearchedCnpj, setLastSearchedCnpj] = useState<string>("");
   
   // Fetch proposals when component mounts or filter changes
   useEffect(() => {
@@ -81,7 +82,7 @@ export const useProposalsStateWithFilter = () => {
   };
   
   // Use our custom hooks
-  const { fetchCompanyDataByCnpj } = useFetchCompanyData({ 
+  const { fetchCompanyDataByCnpj, isSearching } = useFetchCompanyData({ 
     formData, 
     setFormData, 
     setCompanyData, 
@@ -93,12 +94,19 @@ export const useProposalsStateWithFilter = () => {
   useTemplateDefaults({ setFormData });
   useUserData({ user, setFormData });
   
-  // Automatically fetch CNPJ data whenever formData.cnpj changes
-  useEffect(() => {
-    if (formData.cnpj && formData.cnpj.length >= 14) {
-      fetchCompanyDataByCnpj(formData.cnpj);
+  // Debounced CNPJ search - only search when CNPJ changes and is different from last searched
+  const debouncedCnpjSearch = useCallback((cnpj: string) => {
+    if (cnpj && cnpj.length >= 14 && cnpj !== lastSearchedCnpj && !isSearching) {
+      setLastSearchedCnpj(cnpj);
+      fetchCompanyDataByCnpj(cnpj);
     }
-  }, [formData.cnpj, fetchCompanyDataByCnpj]);
+  }, [fetchCompanyDataByCnpj, lastSearchedCnpj, isSearching]);
+  
+  // Only fetch CNPJ data when explicitly triggered, not automatically
+  useEffect(() => {
+    // Remove automatic CNPJ fetching to prevent loops
+    // CNPJ data will only be fetched when user clicks "Buscar CNPJ" button
+  }, []);
   
   // Generate payment dates when needed
   useEffect(() => {
@@ -142,5 +150,9 @@ export const useProposalsStateWithFilter = () => {
     saveProposal,
     fetchProposals: refreshProposals,
     deleteProposal,
+    
+    // CNPJ search method for manual triggering
+    searchCnpj: debouncedCnpjSearch,
+    isSearchingCnpj: isSearching
   };
 };

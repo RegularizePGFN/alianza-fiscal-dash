@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Search, User, Building } from "lucide-react";
+import { Search, User, Building, Loader2 } from "lucide-react";
 import { CompanyData } from "@/lib/types/proposals";
 import CompanyDetailsPanel from "./CompanyDetailsPanel";
 
@@ -57,7 +57,17 @@ const ClientInfoSection = ({
               onClick={handleSearchCnpj}
               disabled={isSearchingCnpj || !formData.cnpj || formData.cnpj.length < 14}
             >
-              {isSearchingCnpj ? 'Buscando...' : 'Buscar CNPJ'}
+              {isSearchingCnpj ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                  Buscando...
+                </>
+              ) : (
+                <>
+                  <Search className="h-4 w-4 mr-1" />
+                  Buscar CNPJ
+                </>
+              )}
             </Button>
           </div>
         </div>
