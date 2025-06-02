@@ -1,116 +1,64 @@
 
-import React, { useMemo, useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sale } from "@/lib/types";
-import { SalespersonWeeklyCardProps, WeeklyDataResult, SortState } from "./types";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { useAuth } from "@/contexts/auth";
+import { Sale, UserRole } from "@/lib/types";
 import { WeeklyTable } from "./WeeklyTable";
-import { processWeeklyData } from "./utils";
-export function SalespersonWeeklyCard({
-  salesData,
-  isLoading = false
-}: SalespersonWeeklyCardProps) {
-  const [sortState, setSortState] = useState<SortState>({
-    week: null,
-    field: null,
-    direction: null
-  });
+import { processWeeklyData } from "./dataProcessing";
+import { getCurrentMonthWeeks } from "./weekCalculations";
 
-  // Process weekly data
-  const baseData = useMemo<WeeklyDataResult>(() => {
-    return processWeeklyData(salesData);
-  }, [salesData]);
+interface SalespersonWeeklyCardProps {
+  salesData: Sale[];
+  selectedMonth: number;
+  selectedYear: number;
+}
 
-  // Apply sorting to the weekly data
-  const {
-    weeklyData,
-    availableWeeks,
-    currentWeek,
-    weeklyTotals,
-    weeklyGoals,
-    weekRanges
-  } = useMemo(() => {
-    const result = {
-      ...baseData
-    };
-    if (sortState.week !== null && sortState.field !== null && sortState.direction !== null) {
-      result.weeklyData = [...baseData.weeklyData].sort((a, b) => {
-        const weekA = a.weeklyStats[sortState.week!]?.[sortState.field!] || 0;
-        const weekB = b.weeklyStats[sortState.week!]?.[sortState.field!] || 0;
-        return sortState.direction === 'asc' ? weekA - weekB : weekB - weekA;
-      });
-    }
-    return result;
-  }, [baseData, sortState]);
-  const handleSort = (week: number, field: "count" | "amount") => {
-    setSortState(prevState => {
-      // Se já está ordenando por essa coluna, alterna a direção ou remove a ordenação
-      if (prevState.week === week && prevState.field === field) {
-        if (prevState.direction === 'asc') {
-          return {
-            ...prevState,
-            direction: 'desc'
-          };
-        } else if (prevState.direction === 'desc') {
-          return {
-            week: null,
-            field: null,
-            direction: null
-          };
-        } else {
-          return {
-            week,
-            field,
-            direction: 'asc'
-          };
-        }
-      }
-      // Se está ordenando por uma nova coluna
-      else {
-        return {
-          week,
-          field,
-          direction: 'asc'
-        };
-      }
+export function SalespersonWeeklyCard({ salesData, selectedMonth, selectedYear }: SalespersonWeeklyCardProps) {
+  const { user } = useAuth();
+  const [loading] = useState(false);
+
+  const isAdmin = user?.role === UserRole.ADMIN;
+
+  // Get weeks for the selected month/year
+  const weeks = useMemo(() => {
+    return getCurrentMonthWeeks(selectedMonth, selectedYear);
+  }, [selectedMonth, selectedYear]);
+
+  // Filter sales data for the selected month/year
+  const filteredSalesData = useMemo(() => {
+    return salesData.filter(sale => {
+      const saleDate = new Date(sale.sale_date);
+      return saleDate.getMonth() + 1 === selectedMonth && saleDate.getFullYear() === selectedYear;
     });
-  };
-  if (isLoading) {
-    return <Card className="w-full">
+  }, [salesData, selectedMonth, selectedYear]);
+
+  const weeklyData = useMemo(() => {
+    if (!filteredSalesData.length) return [];
+    return processWeeklyData(filteredSalesData, weeks, isAdmin, user);
+  }, [filteredSalesData, weeks, isAdmin, user]);
+
+  if (loading) {
+    return (
+      <Card>
         <CardHeader>
-          <CardTitle>Desempenho Semanal</CardTitle>
+          <CardTitle>Relatório Semanal - {selectedMonth}/{selectedYear}</CardTitle>
         </CardHeader>
-        <CardContent className="h-80 flex items-center justify-center">
-          <p>Carregando dados...</p>
+        <CardContent className="flex justify-center py-6">
+          <LoadingSpinner />
         </CardContent>
-      </Card>;
+      </Card>
+    );
   }
 
-  // No data scenario
-  if (!availableWeeks || availableWeeks.length === 0) {
-    return <Card className="w-full">
-        <CardHeader>
-          <CardTitle>Desempenho Semanal</CardTitle>
-        </CardHeader>
-        <CardContent className="flex items-center justify-center h-80">
-          <p className="text-muted-foreground">Não há dados de vendas para exibir neste mês.</p>
-        </CardContent>
-      </Card>;
-  }
-  return <Card className="w-full">
+  return (
+    <Card>
       <CardHeader>
-        <CardTitle className="font-medium text-muted-foreground text-lg my-0 px-[20px]">Desempenho Semanal</CardTitle>
+        <CardTitle>Relatório Semanal - {selectedMonth}/{selectedYear}</CardTitle>
       </CardHeader>
-      <CardContent className="overflow-auto">
-        <WeeklyTable 
-          weeklyData={weeklyData} 
-          availableWeeks={availableWeeks} 
-          currentWeek={currentWeek} 
-          weeklyTotals={weeklyTotals} 
-          weeklyGoals={weeklyGoals} 
-          weekRanges={weekRanges} 
-          sortState={sortState} 
-          onSort={handleSort} 
-        />
+      <CardContent>
+        <WeeklyTable data={weeklyData} weeks={weeks} />
       </CardContent>
-    </Card>;
+    </Card>
+  );
 }

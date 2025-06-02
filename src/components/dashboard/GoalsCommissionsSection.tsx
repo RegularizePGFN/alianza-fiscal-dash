@@ -10,9 +10,11 @@ import { Sale } from "@/lib/types";
 interface GoalsCommissionsSectionProps {
   summary: SalesSummary;
   salesData: Sale[];
+  selectedMonth: number;
+  selectedYear: number;
 }
 
-export function GoalsCommissionsSection({ summary, salesData }: GoalsCommissionsSectionProps) {
+export function GoalsCommissionsSection({ summary, salesData, selectedMonth, selectedYear }: GoalsCommissionsSectionProps) {
   const { user } = useAuth();
   const isAdmin = user?.role === UserRole.ADMIN;
   
