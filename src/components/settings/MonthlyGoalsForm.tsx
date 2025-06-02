@@ -64,7 +64,9 @@ export function MonthlyGoalsForm({ user, month, year, onClose }: MonthlyGoalsFor
       // Update user's contract type in profiles table
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ contract_type: contractType })
+        .update({ 
+          contract_type: contractType 
+        })
         .eq('id', user.id);
 
       if (profileError) {

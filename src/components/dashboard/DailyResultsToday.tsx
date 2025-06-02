@@ -42,13 +42,12 @@ export function DailyResultsToday() {
         const totalFees = proposalsData?.reduce((sum, proposal) => 
           sum + (proposal.fees_value || 0), 0) || 0;
 
-        // Fetch today's sales for commission calculation
+        // Fetch today's sales with salesperson profiles
         const { data: salesData, error: salesError } = await supabase
           .from('sales')
           .select(`
             gross_amount,
-            salesperson_id,
-            profiles!inner(contract_type)
+            salesperson_id
           `)
           .eq('sale_date', today);
 
@@ -57,9 +56,38 @@ export function DailyResultsToday() {
           return;
         }
 
+        if (!salesData || salesData.length === 0) {
+          setResults({
+            proposalsCount,
+            totalFees,
+            totalCommissions: 0
+          });
+          return;
+        }
+
+        // Get unique salesperson IDs
+        const salespersonIds = [...new Set(salesData.map(sale => sale.salesperson_id))];
+
+        // Fetch profiles for all salespeople
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, contract_type')
+          .in('id', salespersonIds);
+
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
+          return;
+        }
+
+        // Create a map of salesperson ID to contract type
+        const contractTypeMap = new Map();
+        profilesData?.forEach(profile => {
+          contractTypeMap.set(profile.id, profile.contract_type || 'PJ');
+        });
+
         // Calculate commissions based on contract type
-        const totalCommissions = salesData?.reduce((sum, sale) => {
-          const contractType = sale.profiles?.contract_type || 'PJ';
+        const totalCommissions = salesData.reduce((sum, sale) => {
+          const contractType = contractTypeMap.get(sale.salesperson_id) || 'PJ';
           const saleAmount = Number(sale.gross_amount) || 0;
           
           let commissionRate = 0;
@@ -70,7 +98,7 @@ export function DailyResultsToday() {
           }
           
           return sum + (saleAmount * commissionRate);
-        }, 0) || 0;
+        }, 0);
 
         setResults({
           proposalsCount,

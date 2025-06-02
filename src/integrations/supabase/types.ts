@@ -68,6 +68,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          contract_type: string | null
           created_at: string
           email: string
           id: string
@@ -75,6 +76,7 @@ export type Database = {
           role: string
         }
         Insert: {
+          contract_type?: string | null
           created_at?: string
           email: string
           id: string
@@ -82,6 +84,7 @@ export type Database = {
           role: string
         }
         Update: {
+          contract_type?: string | null
           created_at?: string
           email?: string
           id?: string
