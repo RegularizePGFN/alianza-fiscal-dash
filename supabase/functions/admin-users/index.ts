@@ -153,10 +153,11 @@ serve(async (req) => {
       const body = await req.json();
       const { email, name, role, password } = body;
 
-      console.log('Updating user:', userId, 'with data:', { email, name, role });
+      console.log('Updating user:', userId, 'with data:', { email, name, role, hasPassword: !!password });
 
       try {
-        // First, update the profile in the database
+        // Step 1: Update the profile in the database first
+        console.log('Step 1: Updating profile in database...');
         const { error: profileError } = await supabaseAdmin
           .from('profiles')
           .update({ 
@@ -170,8 +171,10 @@ serve(async (req) => {
           console.error('Error updating profile:', profileError);
           throw new Error(`Failed to update profile: ${profileError.message}`);
         }
+        console.log('Profile updated successfully');
 
-        // Then update auth user metadata
+        // Step 2: Update auth user metadata
+        console.log('Step 2: Updating auth user metadata...');
         const updateData: any = {
           email,
           user_metadata: { 
@@ -182,6 +185,7 @@ serve(async (req) => {
 
         if (password && password.trim()) {
           updateData.password = password;
+          console.log('Password will be updated');
         }
 
         const { data, error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, updateData);
@@ -191,7 +195,8 @@ serve(async (req) => {
           throw new Error(`Failed to update user authentication: ${authError.message}`);
         }
 
-        console.log('User updated successfully:', userId);
+        console.log('Auth user updated successfully');
+        console.log('User update completed successfully:', userId);
 
         return new Response(JSON.stringify({ 
           data: { user: data.user }, 
@@ -202,7 +207,13 @@ serve(async (req) => {
 
       } catch (updateError: any) {
         console.error('Update operation failed:', updateError);
-        throw new Error(updateError.message || 'Failed to update user');
+        return new Response(JSON.stringify({ 
+          data: null, 
+          error: { message: updateError.message || 'Failed to update user' }
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
     }
 
@@ -252,7 +263,7 @@ serve(async (req) => {
     console.error('Admin users function error:', error);
     return new Response(
       JSON.stringify({ 
-        data: { user: null }, 
+        data: null, 
         error: { message: error.message || 'Internal server error' }
       }),
       {

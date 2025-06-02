@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { User, UserRole } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase, adminAPI } from "@/integrations/supabase/client";
+import { adminAPI } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
@@ -92,46 +92,40 @@ export function UserFormModal({
     setIsLoading(true);
 
     try {
-      if (user) {
-        // Update existing user using secure admin API
-        console.log("Updating user role to:", formData.role);
-        
-        // First update the profile directly in the profiles table
-        const { error: profileUpdateError } = await supabase
-          .from('profiles')
-          .update({
-            name: formData.name,
-            email: formData.email,
-            role: formData.role
-          })
-          .eq('id', user.id);
-        
-        if (profileUpdateError) {
-          console.error("Error updating profile:", profileUpdateError);
-          throw profileUpdateError;
-        }
+      console.log('Starting user operation:', { 
+        isEdit: !!user, 
+        userId: user?.id,
+        formData: { ...formData, password: formData.password ? '[HIDDEN]' : '' }
+      });
 
-        // Update user metadata through secure admin API
+      if (user) {
+        // Update existing user - ONLY using Edge Function
+        console.log("Updating user through Edge Function:", user.id);
+        
         const updateData: any = { 
           email: formData.email, 
           name: formData.name,
           role: formData.role
         };
 
-        if (formData.password) {
+        if (formData.password && formData.password.trim()) {
           updateData.password = formData.password;
         }
 
-        const { error: authUpdateError } = await adminAPI.updateUserById(user.id, updateData);
+        console.log('Calling adminAPI.updateUserById with:', updateData);
         
-        if (authUpdateError) {
-          console.error("Error updating auth metadata:", authUpdateError);
-          throw new Error(authUpdateError.message);
+        const response = await adminAPI.updateUserById(user.id, updateData);
+        
+        console.log('Edge Function response:', response);
+        
+        if (response.error) {
+          console.error("Edge Function returned error:", response.error);
+          throw new Error(response.error.message || 'Erro ao atualizar usuário');
         }
 
         // If we're updating the current user's own profile, refresh the auth context
-        const { data: { user: currentUser } } = await supabase.auth.getUser();
-        if (currentUser && currentUser.id === user.id) {
+        const currentUser = await fetch('/api/current-user').catch(() => null);
+        if (currentUser && user.id === currentUser.id) {
           await refreshUser();
         }
 
@@ -140,16 +134,25 @@ export function UserFormModal({
           description: `${formData.name} foi atualizado com sucesso.`,
         });
       } else {
-        // Create new user using secure admin API
-        const { data, error } = await adminAPI.createUser({
+        // Create new user using Edge Function
+        console.log("Creating new user through Edge Function");
+        
+        const createData = {
           email: formData.email,
           password: formData.password,
           name: formData.name,
           role: formData.role
-        });
+        };
 
-        if (error) {
-          throw new Error(error.message);
+        console.log('Calling adminAPI.createUser with:', { ...createData, password: '[HIDDEN]' });
+        
+        const response = await adminAPI.createUser(createData);
+        
+        console.log('Edge Function response:', response);
+
+        if (response.error) {
+          console.error("Edge Function returned error:", response.error);
+          throw new Error(response.error.message || 'Erro ao criar usuário');
         }
 
         toast({
@@ -158,14 +161,30 @@ export function UserFormModal({
         });
       }
 
-      // Call these functions only after successful operation
+      // Call success callbacks
       onSuccess();
       onClose();
     } catch (error: any) {
-      console.error("User operation error:", error);
+      console.error("User operation failed:", error);
+      
+      // Show user-friendly error message
+      let errorMessage = "Ocorreu um erro ao processar o usuário.";
+      
+      if (error.message) {
+        if (error.message.includes('already exists')) {
+          errorMessage = 'Este e-mail já está cadastrado no sistema.';
+        } else if (error.message.includes('Failed to fetch')) {
+          errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+        } else if (error.message.includes('permissions')) {
+          errorMessage = 'Você não tem permissão para realizar esta operação.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
         title: "Erro",
-        description: error.message || "Ocorreu um erro ao processar o usuário.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -173,7 +192,6 @@ export function UserFormModal({
     }
   };
 
-  // Modificado para não fechar o dialog quando está carregando
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
       if (!open && !isLoading) {
