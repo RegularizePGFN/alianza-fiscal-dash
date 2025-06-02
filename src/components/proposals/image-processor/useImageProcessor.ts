@@ -29,6 +29,7 @@ export const useImageProcessor = ({
 
   // This function now handles file input events directly
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('=== INÍCIO DO PROCESSAMENTO DE IMAGEM ===');
     console.log('handleImageChange chamado');
     
     if (!e.target.files || e.target.files.length === 0) {
@@ -72,26 +73,44 @@ export const useImageProcessor = ({
           }
         );
         
+        console.log('=== DADOS EXTRAÍDOS RECEBIDOS ===');
         console.log('Dados extraídos com sucesso:', extractedData);
         
-        // Ensure we have some extracted data before calling onProcessComplete
-        if (extractedData && Object.keys(extractedData).length > 0) {
+        // Validate extracted data
+        const hasValidData = extractedData && (
+          extractedData.cnpj || 
+          extractedData.totalDebt || 
+          extractedData.discountedValue ||
+          extractedData.debtNumber
+        );
+        
+        console.log('Dados válidos encontrados:', hasValidData);
+        console.log('Verificação de campos:');
+        console.log('- CNPJ:', extractedData.cnpj);
+        console.log('- Total da dívida:', extractedData.totalDebt);
+        console.log('- Valor com desconto:', extractedData.discountedValue);
+        console.log('- Número do processo:', extractedData.debtNumber);
+        
+        if (hasValidData) {
           console.log('Chamando onProcessComplete com dados extraídos');
           onProcessComplete(extractedData, imageBase64);
           updateProcessingStatus('Processamento concluído com sucesso!');
         } else {
-          console.warn('Nenhum dado foi extraído da imagem');
-          setError('Não foi possível extrair dados da imagem. Verifique se é uma simulação PGFN válida.');
-          updateProcessingStatus('Erro: Nenhum dado extraído');
+          console.warn('Nenhum dado válido foi extraído da imagem');
+          console.log('Dados extraídos completos:', JSON.stringify(extractedData, null, 2));
+          setError('Não foi possível extrair dados válidos da imagem. Verifique se é uma simulação PGFN válida.');
+          updateProcessingStatus('Erro: Nenhum dado válido extraído');
         }
         
       } catch (err) {
+        console.error('=== ERRO NO PROCESSAMENTO ===');
         console.error('Erro no processamento da imagem:', err);
         const errorMsg = handleErrorMessage(err);
         setError(errorMsg);
         updateProcessingStatus('Erro no processamento');
       } finally {
         setProcessing(false);
+        console.log('=== FIM DO PROCESSAMENTO ===');
       }
     };
     
