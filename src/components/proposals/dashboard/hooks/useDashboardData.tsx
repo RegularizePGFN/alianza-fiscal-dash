@@ -14,7 +14,7 @@ import {
 
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#af19ff', '#00C49F', '#FFBB28', '#FF8042'];
 
-export function useDashboardData(selectedMonth?: number, selectedYear?: number) {
+export function useDashboardData() {
   const [proposalsData, setProposalsData] = useState<ProposalData[]>([]);
   const [usersData, setUsersData] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -39,13 +39,6 @@ export function useDashboardData(selectedMonth?: number, selectedYear?: number) 
           .eq('status', 'active')
           .order('created_at', { ascending: false })
           .limit(500); // Reasonable limit for performance
-        
-        // Apply date filters if provided
-        if (selectedMonth && selectedYear) {
-          const startDate = `${selectedYear}-${selectedMonth.toString().padStart(2, '0')}-01`;
-          const endDate = `${selectedYear}-${(selectedMonth + 1).toString().padStart(2, '0')}-01`;
-          query = query.gte('created_at', startDate).lt('created_at', endDate);
-        }
         
         if (!isAdmin) {
           console.log("Dashboard - Regular user, showing own proposals only");
@@ -143,9 +136,9 @@ export function useDashboardData(selectedMonth?: number, selectedYear?: number) 
     };
     
     fetchData();
-  }, [user?.id, user?.role, selectedMonth, selectedYear]); // Add selectedMonth and selectedYear to dependencies
+  }, [user?.id, user?.role]); // Only depend on essential user properties
   
-  // Daily proposals count for the selected month or current month
+  // Daily proposals count for the current month
   const dailyProposalsData = useMemo(() => {
     console.log("=== DAILY PROPOSALS CALCULATION ===");
     console.log("Proposals data for daily calc:", proposalsData.length);
@@ -153,19 +146,13 @@ export function useDashboardData(selectedMonth?: number, selectedYear?: number) 
     if (!proposalsData.length) return [];
     
     const now = new Date();
-    const targetDate = selectedMonth && selectedYear 
-      ? new Date(selectedYear, selectedMonth - 1, 1)
-      : now;
-    
-    const monthStart = startOfMonth(targetDate);
-    const monthEnd = selectedMonth && selectedYear 
-      ? endOfMonth(targetDate)
-      : now; // Only count up to today for current month
+    const monthStart = startOfMonth(now);
+    const monthEnd = endOfMonth(now);
     
     // Create array of dates for the month
     const daysInMonth = eachDayOfInterval({
       start: monthStart,
-      end: monthEnd
+      end: now // Only count up to today
     });
     
     console.log("Days in month to calculate:", daysInMonth.length);
@@ -201,7 +188,7 @@ export function useDashboardData(selectedMonth?: number, selectedYear?: number) 
     console.log("Daily proposals result sample:", result.slice(0, 3));
     console.log("Total daily proposals:", result.reduce((sum, day) => sum + day.count, 0));
     return result;
-  }, [proposalsData, selectedMonth, selectedYear]);
+  }, [proposalsData]);
   
   // User proposals statistics
   const userProposalsData = useMemo(() => {

@@ -6,18 +6,13 @@ import { MonthlyProposalsChart } from './charts/MonthlyProposalsChart';
 import { SalespeopleProposalsChart } from './charts/SalespeopleProposalsChart';
 import { useDashboardData } from './hooks/useDashboardData';
 
-interface ProposalsDashboardProps {
-  selectedMonth?: number;
-  selectedYear?: number;
-}
-
-export function ProposalsDashboard({ selectedMonth, selectedYear }: ProposalsDashboardProps) {
+export function ProposalsDashboard() {
   const { 
     dailyProposalsData, 
     userProposalsData, 
     summaryStats, 
     isLoading 
-  } = useDashboardData(selectedMonth, selectedYear);
+  } = useDashboardData();
   
   if (isLoading) {
     return <LoadingState />;
