@@ -81,11 +81,18 @@ serve(async (req) => {
 
     const { method } = req;
     const url = new URL(req.url);
-    const pathSegments = url.pathname.split('/').filter(Boolean);
+    
+    // Extract path after /functions/v1/admin-users
+    const fullPath = url.pathname;
+    const basePath = '/functions/v1/admin-users';
+    const routePath = fullPath.substring(basePath.length) || '/';
+    const pathSegments = routePath.split('/').filter(Boolean);
+    
+    console.log('Route path:', routePath, 'Path segments:', pathSegments);
 
-    // Handle different admin operations
-    if (method === 'GET' && pathSegments.length === 2) {
-      // List users
+    // Handle different admin operations based on method and path
+    if (method === 'GET' && pathSegments.length === 0) {
+      // List users - GET /admin-users
       console.log('Listing users...');
       const { data, error } = await supabaseAdmin.auth.admin.listUsers();
       
@@ -108,8 +115,8 @@ serve(async (req) => {
       });
     }
 
-    if (method === 'POST' && pathSegments.length === 2) {
-      // Create user
+    if (method === 'POST' && pathSegments.length === 0) {
+      // Create user - POST /admin-users
       const body = await req.json();
       const { email, password, name, role } = body;
 
@@ -140,9 +147,9 @@ serve(async (req) => {
       });
     }
 
-    if (method === 'PUT' && pathSegments.length === 3) {
-      // Update user
-      const userId = pathSegments[2];
+    if (method === 'PUT' && pathSegments.length === 1) {
+      // Update user - PUT /admin-users/{userId}
+      const userId = pathSegments[0];
       const body = await req.json();
       const { email, name, role, password } = body;
 
@@ -178,9 +185,9 @@ serve(async (req) => {
       });
     }
 
-    if (method === 'DELETE' && pathSegments.length === 3) {
-      // Delete user
-      const userId = pathSegments[2];
+    if (method === 'DELETE' && pathSegments.length === 1) {
+      // Delete user - DELETE /admin-users/{userId}
+      const userId = pathSegments[0];
 
       console.log('Deleting user:', userId);
 
@@ -198,9 +205,9 @@ serve(async (req) => {
       });
     }
 
-    if (method === 'GET' && pathSegments.length === 3) {
-      // Get user by ID
-      const userId = pathSegments[2];
+    if (method === 'GET' && pathSegments.length === 1) {
+      // Get user by ID - GET /admin-users/{userId}
+      const userId = pathSegments[0];
 
       console.log('Getting user by ID:', userId);
 
@@ -216,7 +223,9 @@ serve(async (req) => {
       });
     }
 
-    throw new Error('Invalid endpoint');
+    // If we get here, no route matched
+    console.error('No route matched - Method:', method, 'Path segments:', pathSegments);
+    throw new Error(`Endpoint not found: ${method} ${routePath}`);
 
   } catch (error: any) {
     console.error('Admin users function error:', error);
