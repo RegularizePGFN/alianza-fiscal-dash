@@ -10,6 +10,7 @@ import DashboardPage from "./pages/DashboardPage";
 import SalesPage from "./pages/SalesPage";
 import UsersPage from "./pages/UsersPage";
 import ReportsPage from "./pages/ReportsPage";
+import CommissionsPage from "./pages/CommissionsPage";
 import SettingsPage from "./pages/SettingsPage";
 import ProposalsPage from "./pages/proposals"; 
 import ProfilePage from "./pages/ProfilePage";
@@ -25,6 +26,7 @@ const App = () => (
       <Route path="/vendas" element={<SalesPage />} />
       <Route path="/usuarios" element={<UsersPage />} />
       <Route path="/relatorios" element={<ReportsPage />} />
+      <Route path="/comissoes" element={<CommissionsPage />} />
       <Route path="/configuracoes" element={<SettingsPage />} />
       <Route path="/propostas" element={<ProposalsPage />} />
       <Route path="/perfil" element={<ProfilePage />} />

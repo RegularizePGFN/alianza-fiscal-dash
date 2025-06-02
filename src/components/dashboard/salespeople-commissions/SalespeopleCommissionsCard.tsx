@@ -7,9 +7,22 @@ import { TableHeader } from "./TableHeader";
 import { SalespersonRow } from "./SalespersonRow";
 import { SummaryRow } from "./SummaryRow";
 import { useSalespeopleCommissions } from "./useSalespeopleCommissions";
+import { useCommissionsData } from "@/hooks/useCommissionsData";
 
-export function SalespeopleCommissionsCard() {
+interface SalespeopleCommissionsCardProps {
+  selectedMonth?: string; // Format: "YYYY-MM"
+}
+
+export function SalespeopleCommissionsCard({ selectedMonth }: SalespeopleCommissionsCardProps) {
   const { user } = useAuth();
+  
+  // Use different hooks based on whether we have a selected month
+  const currentMonthData = useSalespeopleCommissions();
+  const selectedMonthData = useCommissionsData({ 
+    selectedMonth: selectedMonth || `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}` 
+  });
+  
+  // Choose data source based on whether we have a selected month
   const { 
     salespeople, 
     summaryTotals, 
@@ -17,7 +30,12 @@ export function SalespeopleCommissionsCard() {
     sortColumn, 
     sortDirection, 
     handleSort 
-  } = useSalespeopleCommissions();
+  } = selectedMonth ? {
+    ...selectedMonthData,
+    sortColumn: 'name' as const,
+    sortDirection: 'asc' as const,
+    handleSort: () => {}
+  } : currentMonthData;
   
   if (user?.role !== UserRole.ADMIN) {
     return null;
@@ -28,7 +46,7 @@ export function SalespeopleCommissionsCard() {
       <Card className="w-full">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg font-medium">
-            Projeção de Comissões (Vendedores)
+            Consolidado Vendedores
           </CardTitle>
         </CardHeader>
         <CardContent className="flex justify-center py-6">

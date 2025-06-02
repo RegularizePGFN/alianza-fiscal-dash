@@ -1,31 +1,63 @@
 
-/**
- * Returns the number of business days in a month
- */
 export function getBusinessDaysInMonth(month: number, year: number): number {
-  let count = 0;
-  const daysInMonth = new Date(year, month, 0).getDate();
-  for (let i = 1; i <= daysInMonth; i++) {
-    const date = new Date(year, month - 1, i);
-    const day = date.getDay();
-    if (day !== 0 && day !== 6) count++;
+  const lastDay = new Date(year, month, 0).getDate();
+  let businessDays = 0;
+  
+  for (let day = 1; day <= lastDay; day++) {
+    const date = new Date(year, month - 1, day);
+    const dayOfWeek = date.getDay();
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      businessDays++;
+    }
   }
-  return count;
+  
+  return businessDays;
 }
 
-/**
- * Returns the number of business days elapsed until today
- */
 export function getBusinessDaysElapsedUntilToday(): number {
   const today = new Date();
-  const start = new Date(today.getFullYear(), today.getMonth(), 1);
-  let count = 0;
-  while (start <= today) {
-    const dayOfWeek = start.getDay();
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const currentDay = today.getDate();
+  let businessDaysElapsed = 0;
+  
+  for (let day = 1; day <= currentDay; day++) {
+    const date = new Date(year, month, day);
+    const dayOfWeek = date.getDay();
     if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-      count++;
+      businessDaysElapsed++;
     }
-    start.setDate(start.getDate() + 1);
   }
-  return count;
+  
+  return businessDaysElapsed;
+}
+
+export function getBusinessDaysElapsedInMonth(month: number, year: number): number {
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth() + 1;
+  
+  // If it's a future month, no days elapsed
+  if (year > currentYear || (year === currentYear && month > currentMonth)) {
+    return 0;
+  }
+  
+  // If it's a past month, all business days elapsed
+  if (year < currentYear || (year === currentYear && month < currentMonth)) {
+    return getBusinessDaysInMonth(month, year);
+  }
+  
+  // If it's the current month, calculate elapsed days
+  const currentDay = today.getDate();
+  let businessDaysElapsed = 0;
+  
+  for (let day = 1; day <= currentDay; day++) {
+    const date = new Date(year, month - 1, day);
+    const dayOfWeek = date.getDay();
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      businessDaysElapsed++;
+    }
+  }
+  
+  return businessDaysElapsed;
 }
