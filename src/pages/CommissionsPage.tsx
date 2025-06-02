@@ -22,7 +22,7 @@ export default function CommissionsPage() {
 
   // Get commission data based on user role
   const adminData = useCommissionsData({ selectedMonth });
-  const salespersonData = useSalespersonCommissionData({ selectedMonth });
+  const salespersonHookData = useSalespersonCommissionData({ selectedMonth });
   
   const isAdmin = user?.role === UserRole.ADMIN;
 
@@ -193,7 +193,7 @@ export default function CommissionsPage() {
   }
 
   // Salesperson view
-  const { salespersonData, loading } = salespersonData;
+  const { salespersonData, loading } = salespersonHookData;
 
   return (
     <AppLayout>
