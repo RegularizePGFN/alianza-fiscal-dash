@@ -4,7 +4,15 @@ import { twMerge } from "tailwind-merge"
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PaymentMethod } from "./types"
-import { COMMISSION_RATE_BELOW_GOAL, COMMISSION_RATE_ABOVE_GOAL, COMMISSION_GOAL_AMOUNT } from './constants';
+import { 
+  COMMISSION_RATE_PJ_BELOW_GOAL, 
+  COMMISSION_RATE_PJ_ABOVE_GOAL, 
+  COMMISSION_RATE_CLT_BELOW_GOAL,
+  COMMISSION_RATE_CLT_ABOVE_GOAL,
+  COMMISSION_GOAL_AMOUNT,
+  CONTRACT_TYPE_PJ,
+  CONTRACT_TYPE_CLT
+} from './constants';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -89,18 +97,26 @@ export function parseISODateString(dateString: string): Date {
   return new Date(year, month - 1, day);
 }
 
-// Calculate commission based on fixed commission goal amount
-export const calculateCommission = (totalSales: number, goalAmount: number) => {
-  // We use the fixed COMMISSION_GOAL_AMOUNT, not the person's goal amount
-  const rate = totalSales >= COMMISSION_GOAL_AMOUNT 
-    ? COMMISSION_RATE_ABOVE_GOAL 
-    : COMMISSION_RATE_BELOW_GOAL;
-    
+// Calculate commission based on contract type (PJ or CLT)
+export const calculateCommission = (totalSales: number, contractType: string = CONTRACT_TYPE_PJ) => {
+  let belowGoalRate: number;
+  let aboveGoalRate: number;
+  
+  if (contractType === CONTRACT_TYPE_CLT) {
+    belowGoalRate = COMMISSION_RATE_CLT_BELOW_GOAL;
+    aboveGoalRate = COMMISSION_RATE_CLT_ABOVE_GOAL;
+  } else {
+    belowGoalRate = COMMISSION_RATE_PJ_BELOW_GOAL;
+    aboveGoalRate = COMMISSION_RATE_PJ_ABOVE_GOAL;
+  }
+  
+  const rate = totalSales >= COMMISSION_GOAL_AMOUNT ? aboveGoalRate : belowGoalRate;
   const amount = totalSales * rate;
   
   return {
     rate,
     amount,
+    contractType
   };
 };
 

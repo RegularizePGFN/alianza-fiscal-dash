@@ -5,9 +5,21 @@ export const DEFAULT_GOAL_AMOUNT = 10000;
 // Fixed commission goal amount - triggers the higher commission rate
 export const COMMISSION_GOAL_AMOUNT = 10000;
 
-// Commission rates
-export const COMMISSION_RATE_BELOW_GOAL = 0.2; // 20%
-export const COMMISSION_RATE_ABOVE_GOAL = 0.25; // 25%
+// Commission rates for PJ (Pessoa Jurídica) - current system
+export const COMMISSION_RATE_PJ_BELOW_GOAL = 0.2; // 20%
+export const COMMISSION_RATE_PJ_ABOVE_GOAL = 0.25; // 25%
+
+// Commission rates for CLT (Consolidação das Leis do Trabalho) - new system
+export const COMMISSION_RATE_CLT_BELOW_GOAL = 0.05; // 5%
+export const COMMISSION_RATE_CLT_ABOVE_GOAL = 0.1; // 10%
+
+// Legacy constants for backward compatibility
+export const COMMISSION_RATE_BELOW_GOAL = COMMISSION_RATE_PJ_BELOW_GOAL;
+export const COMMISSION_RATE_ABOVE_GOAL = COMMISSION_RATE_PJ_ABOVE_GOAL;
+
+// Contract types
+export const CONTRACT_TYPE_PJ = 'PJ';
+export const CONTRACT_TYPE_CLT = 'CLT';
 
 // Payment processing fees (Asaas)
 export const PAYMENT_FEES = {

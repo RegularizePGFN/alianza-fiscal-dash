@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { SalespersonCommission, SortColumn, SortDirection, SummaryTotals } from "./types";
 import { getBusinessDaysInMonth, getBusinessDaysElapsedUntilToday } from "./utils";
-import { COMMISSION_GOAL_AMOUNT, COMMISSION_RATE_ABOVE_GOAL, COMMISSION_RATE_BELOW_GOAL } from "@/lib/constants";
+import { COMMISSION_GOAL_AMOUNT, CONTRACT_TYPE_PJ } from "@/lib/constants";
+import { calculateCommission } from "@/lib/utils";
 import { format, isWeekend } from "date-fns";
 
 export function useSalespeopleCommissions() {
@@ -106,12 +107,11 @@ export function useSalespeopleCommissions() {
             const salesCount = salesData?.length || 0;
             const goalAmount = goalData?.goal_amount ? Number(goalData.goal_amount) : 0;
             
-            // For commission calculation, we use the FIXED COMMISSION GOAL AMOUNT
-            const commissionRate = totalSales >= COMMISSION_GOAL_AMOUNT 
-              ? COMMISSION_RATE_ABOVE_GOAL 
-              : COMMISSION_RATE_BELOW_GOAL;
-              
-            const projectedCommission = totalSales * commissionRate;
+            // Get contract type from profile, default to PJ
+            const contractType = profile.contract_type || CONTRACT_TYPE_PJ;
+            
+            // Calculate commission based on contract type
+            const commission = calculateCommission(totalSales, contractType);
             
             const dailyTarget = goalAmount / totalBusinessDays;
             const expectedProgress = dailyTarget * businessDaysElapsed;
@@ -137,7 +137,7 @@ export function useSalespeopleCommissions() {
               totalSales,
               goalAmount,
               commissionGoalAmount: COMMISSION_GOAL_AMOUNT, // Fixed commission goal
-              projectedCommission,
+              projectedCommission: commission.amount,
               goalPercentage,
               salesCount,
               metaGap,

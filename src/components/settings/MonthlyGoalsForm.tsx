@@ -1,179 +1,141 @@
 
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/auth";
-import { COMMISSION_GOAL_AMOUNT } from "@/lib/constants";
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  goal_amount?: number;
-}
+import { CONTRACT_TYPE_PJ, CONTRACT_TYPE_CLT } from "@/lib/constants";
 
 interface MonthlyGoalsFormProps {
-  user: User;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    goal_amount?: number;
+    contract_type?: string;
+  };
   month: number;
   year: number;
   onClose: () => void;
 }
 
-// Define the form schema
-const formSchema = z.object({
-  goal_amount: z.preprocess(
-    (val) => (val === '' ? undefined : Number(val)),
-    z.number().min(0, "Meta não pode ser negativa").optional()
-  ),
-});
-
 export function MonthlyGoalsForm({ user, month, year, onClose }: MonthlyGoalsFormProps) {
   const { toast } = useToast();
-  const { user: currentUser } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [goalAmount, setGoalAmount] = useState(user.goal_amount?.toString() || "");
+  const [contractType, setContractType] = useState(user.contract_type || CONTRACT_TYPE_PJ);
+  const [loading, setLoading] = useState(false);
 
-  // Initialize react-hook-form
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      goal_amount: user.goal_amount,
-    },
-  });
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!goalAmount || isNaN(Number(goalAmount))) {
+      toast({
+        title: "Erro",
+        description: "Por favor, insira um valor válido para a meta.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setLoading(true);
+
     try {
-      setIsSubmitting(true);
-
-      // Check if a goal entry already exists for this user/month/year
-      const { data: existingGoal, error: fetchError } = await supabase
+      // Update or insert monthly goal
+      const { error: goalError } = await supabase
         .from('monthly_goals')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('month', month)
-        .eq('year', year)
-        .maybeSingle();
-
-      if (fetchError) throw fetchError;
-
-      let result;
-
-      if (existingGoal) {
-        // Update existing goal
-        result = await supabase
-          .from('monthly_goals')
-          .update({ goal_amount: values.goal_amount })
-          .eq('id', existingGoal.id);
-      } else {
-        // Create new goal
-        result = await supabase
-          .from('monthly_goals')
-          .insert({
-            user_id: user.id,
-            month,
-            year,
-            goal_amount: values.goal_amount,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
-      }
-
-      if (result.error) throw result.error;
-
-      // Create a notification for the user
-      const notificationResult = await supabase
-        .from('notifications')
-        .insert({
+        .upsert({
           user_id: user.id,
-          message: `Sua meta mensal para ${month}/${year} foi ${existingGoal ? 'atualizada' : 'definida'} como R$ ${values.goal_amount?.toLocaleString('pt-BR')}.`,
-          type: 'goal_update',
-          read: false
+          month,
+          year,
+          goal_amount: Number(goalAmount),
+        }, {
+          onConflict: 'user_id,month,year'
         });
 
-      if (notificationResult.error) {
-        console.error('Error creating notification:', notificationResult.error);
+      if (goalError) {
+        console.error('Error saving goal:', goalError);
+        throw goalError;
+      }
+
+      // Update user's contract type in profiles table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ contract_type: contractType })
+        .eq('id', user.id);
+
+      if (profileError) {
+        console.error('Error updating contract type:', profileError);
+        throw profileError;
       }
 
       toast({
-        title: "Meta atualizada com sucesso",
-        description: `A meta pessoal de ${user.name} foi atualizada.`,
+        title: "Sucesso",
+        description: `Meta e modelo de contrato atualizados para ${user.name}.`,
       });
 
       onClose();
     } catch (error: any) {
-      console.error('Error saving goal:', error);
+      console.error('Error saving data:', error);
       toast({
-        title: "Erro ao salvar meta",
-        description: error.message || "Não foi possível salvar a meta. Tente novamente.",
+        title: "Erro ao salvar",
+        description: error.message || "Não foi possível salvar as informações. Tente novamente.",
         variant: "destructive",
       });
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Editar Meta Mensal</CardTitle>
-        <CardDescription>
-          Definir meta pessoal para {user.name} referente ao mês {month}/{year}
-        </CardDescription>
+        <CardTitle>Editar Meta e Modelo de Contrato - {user.name}</CardTitle>
       </CardHeader>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4">
-            <div className="bg-blue-50 p-4 rounded-md mb-4 text-sm">
-              <p className="font-medium mb-1 text-blue-700">Informação sobre metas</p>
-              <p className="text-blue-700">
-                A meta pessoal define os objetivos administrativos do vendedor e é usada nos cálculos de progresso e dashboards.
-              </p>
-              <p className="text-blue-700 mt-2">
-                A meta de comissão é fixa em R$ {COMMISSION_GOAL_AMOUNT.toLocaleString('pt-BR')} para todos os vendedores.
-              </p>
-            </div>
-            
-            <FormField
-              control={form.control}
-              name="goal_amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Valor da Meta Pessoal (R$)</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Digite o valor da meta"
-                      type="number"
-                      min="0"
-                      step="100"
-                      {...field}
-                      value={field.value === undefined ? '' : field.value}
-                      onChange={(e) => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Defina a meta pessoal de vendas em reais.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="goalAmount">Meta para {month}/{year}</Label>
+            <Input
+              id="goalAmount"
+              type="number"
+              value={goalAmount}
+              onChange={(e) => setGoalAmount(e.target.value)}
+              placeholder="Ex: 15000"
+              required
             />
-          </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button variant="outline" onClick={onClose} type="button">
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="contractType">Modelo de Contrato</Label>
+            <Select value={contractType} onValueChange={setContractType}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o modelo de contrato" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={CONTRACT_TYPE_PJ}>
+                  PJ - Pessoa Jurídica (20% até R$10k, 25% acima)
+                </SelectItem>
+                <SelectItem value={CONTRACT_TYPE_CLT}>
+                  CLT - Consolidação das Leis do Trabalho (5% até R$10k, 10% acima)
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex gap-2 justify-end">
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Salvando..." : "Salvar"}
+            <Button type="submit" disabled={loading}>
+              {loading ? "Salvando..." : "Salvar"}
             </Button>
-          </CardFooter>
+          </div>
         </form>
-      </Form>
+      </CardContent>
     </Card>
   );
 }

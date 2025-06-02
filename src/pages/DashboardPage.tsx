@@ -6,6 +6,7 @@ import { GoalsCommissionsSection } from "@/components/dashboard/GoalsCommissions
 import { SalespeopleCommissionsCard } from "@/components/dashboard/salespeople-commissions";
 import { DailyResultsCard } from "@/components/dashboard/daily-results";
 import { SalespersonWeeklyCard } from "@/components/dashboard/weekly-sales";
+import { DailyResultsToday } from "@/components/dashboard/DailyResultsToday";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
@@ -24,6 +25,9 @@ export default function DashboardPage() {
           <LoadingSpinner />
         ) : (
           <div className="space-y-6 animate-fade-in">
+            {/* Daily Results Cards - visible to all users */}
+            <DailyResultsToday />
+            
             {/* DailyResultsCard - only visible to admin users */}
             {isAdmin && <DailyResultsCard salesData={salesData} />}
             

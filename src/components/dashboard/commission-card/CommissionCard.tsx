@@ -3,7 +3,8 @@ import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sale, UserRole } from "@/lib/types";
 import { useAuth } from "@/contexts/auth";
-import { COMMISSION_GOAL_AMOUNT, COMMISSION_RATE_ABOVE_GOAL, COMMISSION_RATE_BELOW_GOAL } from "@/lib/constants";
+import { COMMISSION_GOAL_AMOUNT, CONTRACT_TYPE_PJ } from "@/lib/constants";
+import { calculateCommission } from "@/lib/utils";
 import { SalesChart } from "./SalesChart";
 import { MonthlySummary } from "./MonthlySummary";
 import { CommissionSummary } from "./CommissionSummary";
@@ -43,9 +44,11 @@ export function CommissionCard({
     );
   }
 
-  // IMPORTANT: For salespeople, we use the fixed COMMISSION_GOAL_AMOUNT, not the personal goal
-  const commissionRate = totalSales >= COMMISSION_GOAL_AMOUNT ? COMMISSION_RATE_ABOVE_GOAL : COMMISSION_RATE_BELOW_GOAL;
-  const commissionAmount = totalSales * commissionRate;
+  // Get user's contract type from user context or default to PJ
+  const contractType = (user as any)?.contract_type || CONTRACT_TYPE_PJ;
+  
+  // Calculate commission based on user's contract type
+  const commission = calculateCommission(totalSales, contractType);
   const isCommissionGoalMet = totalSales >= COMMISSION_GOAL_AMOUNT;
 
   // Generate daily data for the chart
@@ -62,13 +65,13 @@ export function CommissionCard({
     <Card className="h-full">
       <CardHeader>
         <CardTitle className="text-sm font-medium text-muted-foreground">
-          Comissão Projetada
+          Comissão Projetada ({contractType})
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <CommissionSummary
-          commissionAmount={commissionAmount}
-          commissionRate={commissionRate}
+          commissionAmount={commission.amount}
+          commissionRate={commission.rate}
           isCommissionGoalMet={isCommissionGoalMet}
         />
         
