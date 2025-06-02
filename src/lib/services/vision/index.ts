@@ -20,12 +20,14 @@ export const analyzeImageWithAI = async (
   updateStatus: (status: string) => void
 ): Promise<Partial<ExtractedData>> => {
   try {
+    console.log('analyzeImageWithAI: Iniciando análise');
     progressCallback(10);
     
     updateStatus('Enviando imagem para GPT-4o via Supabase...');
     
     progressCallback(30);
     
+    console.log('analyzeImageWithAI: Enviando para API');
     // Send the image to the API
     const data = await sendImageToAnalysis(imageBase64);
     
@@ -36,11 +38,13 @@ export const analyzeImageWithAI = async (
     
     progressCallback(70);
     
+    console.log('analyzeImageWithAI: Processando resposta da IA');
     const aiResponse: AIAnalysisResponse = JSON.parse(data.jsonContent);
     console.log('Resposta da AI processada com sucesso:', aiResponse);
     
     // Map the AI response to our application format
     const extractedData = mapAIResponseToExtractedData(aiResponse);
+    console.log('Dados mapeados:', extractedData);
 
     progressCallback(100);
     return extractedData;

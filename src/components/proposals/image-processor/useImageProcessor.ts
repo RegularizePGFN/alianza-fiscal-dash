@@ -22,27 +22,34 @@ export const useImageProcessor = ({
   const [error, setError] = useState<string | null>(null);
   
   const updateProcessingStatus = (status: string) => {
+    console.log('Status atualizado:', status);
     setProcessingStatus(status);
-    if (updateStatus) {
-      updateStatus(status);
-    }
+    updateStatus(status);
   };
 
   // This function now handles file input events directly
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('handleImageChange chamado');
+    
     if (!e.target.files || e.target.files.length === 0) {
+      console.log('Nenhum arquivo selecionado');
       return;
     }
     
     const file = e.target.files[0];
+    console.log('Arquivo selecionado:', file.name, file.type, file.size);
+    
     const reader = new FileReader();
     
     reader.onload = async (event) => {
       if (!event.target || typeof event.target.result !== 'string') {
+        console.error('Erro ao ler arquivo');
         return;
       }
       
       const imageBase64 = event.target.result;
+      console.log('Imagem convertida para base64, tamanho:', imageBase64.length);
+      
       setImagePreview(imageBase64);
       setError(null);
       setProcessing(true);
@@ -50,12 +57,22 @@ export const useImageProcessor = ({
       updateProcessingStatus('Iniciando processamento da imagem...');
       
       try {
+        console.log('Iniciando análise com IA...');
+        
         // Analyze with AI Vision
         const extractedData = await analyzeImageWithAI(
           imageBase64, 
-          setProgressPercent,
-          updateProcessingStatus
+          (progress) => {
+            console.log('Progresso:', progress);
+            setProgressPercent(progress);
+          },
+          (status) => {
+            console.log('Status da análise:', status);
+            updateProcessingStatus(status);
+          }
         );
+        
+        console.log('Dados extraídos:', extractedData);
         
         onProcessComplete(extractedData, imageBase64);
         updateProcessingStatus('Processamento concluído com sucesso!');
@@ -68,6 +85,12 @@ export const useImageProcessor = ({
       } finally {
         setProcessing(false);
       }
+    };
+    
+    reader.onerror = (error) => {
+      console.error('Erro ao ler arquivo:', error);
+      setError('Erro ao ler o arquivo de imagem');
+      setProcessing(false);
     };
     
     reader.readAsDataURL(file);
