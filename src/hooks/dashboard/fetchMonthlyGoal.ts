@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/lib/types";
 import { DEFAULT_GOAL_AMOUNT } from "@/lib/constants";
+import { ADMIN_EMAILS } from "@/contexts/auth/utils";
 
 /**
  * Fetches the monthly goal for a user
@@ -14,9 +15,9 @@ export const fetchMonthlyGoal = async (
   if (!user) return DEFAULT_GOAL_AMOUNT;
 
   try {
-    // For admin users, sum all users' goals
+    // For admin users, sum all salespeople goals (excluding other admins)
     if (user.role === UserRole.ADMIN) {
-      console.log("Fetching total goals for admin user");
+      console.log(`Fetching total goals for admin user for ${currentMonth}/${currentYear}`);
       
       // Get all goals for the current month/year
       const { data: goalsData, error: goalsError } = await supabase
@@ -30,58 +31,67 @@ export const fetchMonthlyGoal = async (
         throw goalsError;
       }
       
-      console.log("Metas obtidas:", goalsData);
+      console.log("Metas obtidas para o mês:", goalsData);
       
-      // Get profiles to identify salespeople
+      // Get profiles to identify salespeople (exclude admins by email and role)
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .select("id, role");
+        .select("id, role, email");
       
       if (profilesError) {
         console.error("Erro ao buscar perfis:", profilesError);
         throw profilesError;
       }
       
-      // Create a map of user roles for quick lookup
-      const userRoles = new Map();
-      profiles?.forEach(profile => {
-        userRoles.set(profile.id, profile.role?.toLowerCase());
+      console.log("Todos os perfis:", profiles);
+      
+      // Filter profiles to get only salespeople (exclude admins by email and role)
+      const salespeopleProfiles = profiles?.filter(profile => {
+        const email = profile.email?.toLowerCase() || '';
+        const role = profile.role?.toLowerCase() || '';
+        
+        // Exclude if email is in admin list OR role is admin
+        const isAdmin = ADMIN_EMAILS.includes(email) || role === 'admin';
+        const isSalesperson = role === 'vendedor' || role === 'salesperson';
+        
+        console.log(`Profile ${profile.id} (${email}, ${role}): isAdmin=${isAdmin}, isSalesperson=${isSalesperson}`);
+        
+        return !isAdmin && isSalesperson;
       });
       
-      console.log("Mapa de perfis:", Array.from(userRoles.entries()));
+      console.log("Perfis de vendedores filtrados:", salespeopleProfiles);
       
-      // Filter goals to include ONLY goals for salespeople, NOT admins
+      // Get goal amounts only for salespeople
       const salesGoals = goalsData?.filter(goal => {
-        const userRole = userRoles.get(goal.user_id);
-        // Só incluir vendedores, excluir explicitamente admins
-        return userRole && userRole !== 'admin';
+        const isSalespersonGoal = salespeopleProfiles?.some(profile => profile.id === goal.user_id);
+        console.log(`Goal for user ${goal.user_id}: isSalespersonGoal=${isSalespersonGoal}, amount=${goal.goal_amount}`);
+        return isSalespersonGoal;
       });
       
-      console.log("Metas filtradas de vendedores:", salesGoals);
+      console.log("Metas de vendedores filtradas:", salesGoals);
       
       if (salesGoals && salesGoals.length > 0) {
         // Sum goals for salespeople only
-        // Fix: Ensure goal_amount is treated as a number before adding it to the sum
         const totalGoal = salesGoals.reduce((sum, goal) => {
-          // Parse goal_amount as number to ensure correct addition
           const goalAmount = typeof goal.goal_amount === 'string' 
             ? parseFloat(goal.goal_amount) 
             : Number(goal.goal_amount);
           
-          return sum + (isNaN(goalAmount) ? 0 : goalAmount);
+          const validAmount = isNaN(goalAmount) ? 0 : goalAmount;
+          console.log(`Adding goal amount: ${validAmount} to sum: ${sum}`);
+          return sum + validAmount;
         }, 0);
         
-        console.log(`Meta total para admins (soma de ${salesGoals.length} metas de vendedores):`, totalGoal);
+        console.log(`Meta total da equipe (${salesGoals.length} vendedores): R$ ${totalGoal}`);
         return totalGoal > 0 ? totalGoal : DEFAULT_GOAL_AMOUNT;
       }
       
-      // If no explicit goals are found, use default goal amount
-      console.log("Nenhuma meta encontrada para vendedores, usando valor padrão");
+      console.log("Nenhuma meta encontrada para vendedores no mês atual, usando valor padrão");
       return DEFAULT_GOAL_AMOUNT;
     } 
     // For regular users (vendedores), just get their specific goal
     else {
-      console.log(`Buscando meta para vendedor (user_id: ${user.id})`);
+      console.log(`Buscando meta individual para vendedor (user_id: ${user.id}) - ${currentMonth}/${currentYear}`);
       
       const { data: goalData, error: goalError } = await supabase
         .from("monthly_goals")
@@ -92,18 +102,19 @@ export const fetchMonthlyGoal = async (
         .maybeSingle();
 
       if (goalError) {
-        console.error("Erro ao buscar meta:", goalError);
+        console.error("Erro ao buscar meta individual:", goalError);
         return DEFAULT_GOAL_AMOUNT;
       }
 
       if (goalData && goalData.goal_amount) {
-        console.log("Meta mensal encontrada:", goalData.goal_amount);
-        return typeof goalData.goal_amount === 'string' 
+        const goalAmount = typeof goalData.goal_amount === 'string' 
           ? parseFloat(goalData.goal_amount) 
           : Number(goalData.goal_amount);
+        console.log("Meta individual encontrada:", goalAmount);
+        return goalAmount;
       }
       
-      console.log("Nenhuma meta configurada para este vendedor, usando valor padrão");
+      console.log("Nenhuma meta individual configurada, usando valor padrão");
       return DEFAULT_GOAL_AMOUNT;
     }
   } catch (error: any) {

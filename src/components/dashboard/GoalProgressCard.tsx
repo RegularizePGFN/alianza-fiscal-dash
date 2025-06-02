@@ -70,6 +70,11 @@ export function GoalProgressCard({ currentValue, goalValue }: GoalProgressCardPr
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {isAdmin ? 'Meta Mensal da Equipe' : 'Meta Mensal'}
         </CardTitle>
+        {isAdmin && (
+          <p className="text-xs text-muted-foreground">
+            Soma das metas dos vendedores para {today.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+          </p>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex justify-between">
@@ -111,7 +116,9 @@ export function GoalProgressCard({ currentValue, goalValue }: GoalProgressCardPr
         {/* Daily target information */}
         {!isGoalMet && remainingBusinessDays > 0 && (
           <div className="mt-4 p-4 border rounded-md bg-muted/30 space-y-2 animate-fade-in">
-            <h4 className="text-sm font-medium">Meta diária para atingir o objetivo</h4>
+            <h4 className="text-sm font-medium">
+              {isAdmin ? 'Meta diária da equipe para atingir o objetivo' : 'Meta diária para atingir o objetivo'}
+            </h4>
             <div className="flex justify-between items-center">
               <div>
                 <span className="text-xl font-semibold">{formatCurrency(dailyTarget)}</span>

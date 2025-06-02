@@ -47,35 +47,39 @@ export function MonthlyGoalsSettings() {
         throw profilesError;
       }
 
-      // Log all profiles for debugging
-      console.log('All fetched profiles:', profiles);
+      console.log('Todos os perfis obtidos:', profiles);
       
-      // Filter out admin users using role and ADMIN_EMAILS list
+      // Filter to get ONLY salespeople - exclude admins by email AND role
       const salespeople = profiles?.filter(profile => {
         const email = profile.email?.toLowerCase() || '';
         const role = profile.role?.toLowerCase() || '';
         
-        console.log(`Checking user ${profile.name} with email ${email} and role ${role}`);
+        console.log(`Verificando usuário: ${profile.name} (${email}) - Role: ${role}`);
         
-        // Check if user is salesperson based on role field OR not in admin emails
-        const isSalesperson = (role === 'vendedor' || role === 'salesperson') || 
-                             (!ADMIN_EMAILS.includes(email) && role !== 'admin');
+        // Exclude if email is in admin list OR role is admin
+        const isAdmin = ADMIN_EMAILS.includes(email) || role === 'admin';
+        const isSalesperson = role === 'vendedor' || role === 'salesperson';
         
-        console.log(`User ${profile.name} is salesperson: ${isSalesperson}`);
+        console.log(`  - É admin (email ou role): ${isAdmin}`);
+        console.log(`  - É vendedor (role): ${isSalesperson}`);
         
-        return isSalesperson;
+        // Include only if NOT admin AND is salesperson
+        const shouldInclude = !isAdmin && isSalesperson;
+        console.log(`  - Incluir na lista: ${shouldInclude}`);
+        
+        return shouldInclude;
       });
       
-      console.log('Filtered salespeople:', salespeople);
+      console.log('Vendedores filtrados (sem admins):', salespeople);
       
       if (!salespeople || salespeople.length === 0) {
-        console.log('No salesperson profiles found');
+        console.log('Nenhum vendedor encontrado');
         setUsers([]);
         setLoading(false);
         return;
       }
 
-      // Fetch all monthly goals for the current month/year
+      // Fetch monthly goals for current month/year
       const { data: goals, error: goalsError } = await supabase
         .from('monthly_goals')
         .select('*')
@@ -87,9 +91,9 @@ export function MonthlyGoalsSettings() {
         throw goalsError;
       }
 
-      console.log('Fetched goals:', goals);
+      console.log(`Metas obtidas para ${currentMonth}/${currentYear}:`, goals);
 
-      // Merge the data
+      // Merge salespeople with their goals
       const usersWithGoals = salespeople.map(user => {
         const userGoal = goals?.find(g => g.user_id === user.id);
         return {
@@ -98,10 +102,10 @@ export function MonthlyGoalsSettings() {
         };
       });
 
-      console.log('Users with goals:', usersWithGoals);
+      console.log('Vendedores com metas:', usersWithGoals);
       setUsers(usersWithGoals);
     } catch (error: any) {
-      console.error('Error fetching users:', error);
+      console.error('Erro ao carregar usuários:', error);
       toast({
         title: "Erro ao carregar usuários",
         description: error.message || "Não foi possível carregar os usuários. Tente novamente.",
@@ -129,7 +133,8 @@ export function MonthlyGoalsSettings() {
         <CardHeader className="pb-3">
           <CardTitle>Metas Mensais dos Vendedores</CardTitle>
           <CardDescription>
-            Defina as metas mensais para cada vendedor para o mês atual ({currentMonth}/{currentYear})
+            Defina as metas mensais para cada vendedor para o mês atual ({currentMonth}/{currentYear}).
+            Admins não aparecem nesta lista pois sua meta é a soma das metas da equipe.
           </CardDescription>
         </CardHeader>
         <CardContent>
