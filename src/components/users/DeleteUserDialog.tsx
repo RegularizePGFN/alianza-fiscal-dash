@@ -42,11 +42,6 @@ export function DeleteUserDialog({
     
     if (!user) return;
     
-    console.log('User object:', user);
-    console.log('User ID to delete:', user.id);
-    console.log('User ID type:', typeof user.id);
-    console.log('User ID length:', user.id?.length);
-    
     // Validate UUID format on frontend too
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(user.id)) {

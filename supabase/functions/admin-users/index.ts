@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -89,12 +88,24 @@ serve(async (req) => {
     const { method } = req;
     const url = new URL(req.url);
     
-    // Extract path after /functions/v1/admin-users
-    const fullPath = url.pathname;
-    const basePath = '/functions/v1/admin-users';
-    const routePath = fullPath.substring(basePath.length) || '/';
-    const pathSegments = routePath.split('/').filter(Boolean);
+    // Better URL parsing to handle the user ID correctly
+    const pathname = url.pathname;
+    console.log('Full pathname:', pathname);
     
+    // Remove the /functions/v1/admin-users part and get the remaining path
+    const adminUsersPrefix = '/functions/v1/admin-users';
+    let routePath = '';
+    
+    if (pathname.startsWith(adminUsersPrefix)) {
+      routePath = pathname.substring(adminUsersPrefix.length);
+    }
+    
+    // Clean up the route path and split into segments
+    if (routePath.startsWith('/')) {
+      routePath = routePath.substring(1);
+    }
+    
+    const pathSegments = routePath ? routePath.split('/').filter(Boolean) : [];
     console.log('Route path:', routePath, 'Path segments:', pathSegments);
 
     // Handle different admin operations based on method and path
@@ -157,10 +168,11 @@ serve(async (req) => {
     if (method === 'PUT' && pathSegments.length === 1) {
       // Update user - PUT /admin-users/{userId}
       const userId = pathSegments[0];
+      console.log('Extracted userId for update:', userId);
       
       // Validate UUID format
       if (!isValidUUID(userId)) {
-        console.error('Invalid UUID format:', userId);
+        console.error('Invalid UUID format for update:', userId);
         throw new Error('Invalid user ID format');
       }
       
@@ -169,77 +181,77 @@ serve(async (req) => {
 
       console.log('Updating user:', userId, 'with data:', { email, name, role, hasPassword: !!password });
 
-      try {
-        // Step 1: Update the profile in the database first
-        console.log('Step 1: Updating profile in database...');
-        const { error: profileError } = await supabaseAdmin
-          .from('profiles')
-          .update({ 
-            name: name,
-            email: email,
-            role: role 
-          })
-          .eq('id', userId);
+      // Step 1: Update the profile in the database first
+      console.log('Step 1: Updating profile in database...');
+      const { error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .update({ 
+          name: name,
+          email: email,
+          role: role 
+        })
+        .eq('id', userId);
 
-        if (profileError) {
-          console.error('Error updating profile:', profileError);
-          throw new Error(`Failed to update profile: ${profileError.message}`);
-        }
-        console.log('Profile updated successfully');
-
-        // Step 2: Update auth user metadata
-        console.log('Step 2: Updating auth user metadata...');
-        const updateData: any = {
-          email,
-          user_metadata: { 
-            name, 
-            role 
-          }
-        };
-
-        if (password && password.trim()) {
-          updateData.password = password;
-          console.log('Password will be updated');
-        }
-
-        const { data, error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, updateData);
-
-        if (authError) {
-          console.error('Error updating auth user:', authError);
-          throw new Error(`Failed to update user authentication: ${authError.message}`);
-        }
-
-        console.log('Auth user updated successfully');
-        console.log('User update completed successfully:', userId);
-
-        return new Response(JSON.stringify({ 
-          data: { user: data.user }, 
-          error: null 
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-
-      } catch (updateError: any) {
-        console.error('Update operation failed:', updateError);
-        return new Response(JSON.stringify({ 
-          data: null, 
-          error: { message: updateError.message || 'Failed to update user' }
-        }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+      if (profileError) {
+        console.error('Error updating profile:', profileError);
+        throw new Error(`Failed to update profile: ${profileError.message}`);
       }
+      console.log('Profile updated successfully');
+
+      // Step 2: Update auth user metadata
+      console.log('Step 2: Updating auth user metadata...');
+      const updateData: any = {
+        email,
+        user_metadata: { 
+          name, 
+          role 
+        }
+      };
+
+      if (password && password.trim()) {
+        updateData.password = password;
+        console.log('Password will be updated');
+      }
+
+      const { data, error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, updateData);
+
+      if (authError) {
+        console.error('Error updating auth user:', authError);
+        throw new Error(`Failed to update user authentication: ${authError.message}`);
+      }
+
+      console.log('Auth user updated successfully');
+      console.log('User update completed successfully:', userId);
+
+      return new Response(JSON.stringify({ 
+        data: { user: data.user }, 
+        error: null 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+
+    } catch (updateError: any) {
+      console.error('Update operation failed:', updateError);
+      return new Response(JSON.stringify({ 
+        data: null, 
+        error: { message: updateError.message || 'Failed to update user' }
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     }
 
     if (method === 'DELETE' && pathSegments.length === 1) {
       // Delete user - DELETE /admin-users/{userId}
       const userId = pathSegments[0];
+      console.log('Extracted userId for deletion:', userId);
+      console.log('UserId type:', typeof userId);
+      console.log('UserId length:', userId.length);
 
-      console.log('Attempting to delete user with ID:', userId);
-      
       // Validate UUID format
       if (!isValidUUID(userId)) {
-        console.error('Invalid UUID format:', userId);
+        console.error('Invalid UUID format for deletion:', userId);
         return new Response(JSON.stringify({ 
           data: null, 
           error: { message: 'Invalid user ID format. Must be a valid UUID.' }
@@ -302,10 +314,11 @@ serve(async (req) => {
     if (method === 'GET' && pathSegments.length === 1) {
       // Get user by ID - GET /admin-users/{userId}
       const userId = pathSegments[0];
+      console.log('Extracted userId for get:', userId);
       
       // Validate UUID format
       if (!isValidUUID(userId)) {
-        console.error('Invalid UUID format:', userId);
+        console.error('Invalid UUID format for get:', userId);
         throw new Error('Invalid user ID format');
       }
 
