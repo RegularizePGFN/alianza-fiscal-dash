@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -88,11 +89,11 @@ serve(async (req) => {
     const { method } = req;
     const url = new URL(req.url);
     
-    // Better URL parsing to handle the user ID correctly
+    // Parse the URL to extract the user ID correctly
     const pathname = url.pathname;
     console.log('Full pathname:', pathname);
     
-    // Remove the /functions/v1/admin-users part and get the remaining path
+    // Extract path after /functions/v1/admin-users
     const adminUsersPrefix = '/functions/v1/admin-users';
     let routePath = '';
     
@@ -100,7 +101,7 @@ serve(async (req) => {
       routePath = pathname.substring(adminUsersPrefix.length);
     }
     
-    // Clean up the route path and split into segments
+    // Remove leading slash and split into segments
     if (routePath.startsWith('/')) {
       routePath = routePath.substring(1);
     }
@@ -181,65 +182,66 @@ serve(async (req) => {
 
       console.log('Updating user:', userId, 'with data:', { email, name, role, hasPassword: !!password });
 
-      // Step 1: Update the profile in the database first
-      console.log('Step 1: Updating profile in database...');
-      const { error: profileError } = await supabaseAdmin
-        .from('profiles')
-        .update({ 
-          name: name,
-          email: email,
-          role: role 
-        })
-        .eq('id', userId);
+      try {
+        // Step 1: Update the profile in the database first
+        console.log('Step 1: Updating profile in database...');
+        const { error: profileError } = await supabaseAdmin
+          .from('profiles')
+          .update({ 
+            name: name,
+            email: email,
+            role: role 
+          })
+          .eq('id', userId);
 
-      if (profileError) {
-        console.error('Error updating profile:', profileError);
-        throw new Error(`Failed to update profile: ${profileError.message}`);
-      }
-      console.log('Profile updated successfully');
-
-      // Step 2: Update auth user metadata
-      console.log('Step 2: Updating auth user metadata...');
-      const updateData: any = {
-        email,
-        user_metadata: { 
-          name, 
-          role 
+        if (profileError) {
+          console.error('Error updating profile:', profileError);
+          throw new Error(`Failed to update profile: ${profileError.message}`);
         }
-      };
+        console.log('Profile updated successfully');
 
-      if (password && password.trim()) {
-        updateData.password = password;
-        console.log('Password will be updated');
+        // Step 2: Update auth user metadata
+        console.log('Step 2: Updating auth user metadata...');
+        const updateData: any = {
+          email,
+          user_metadata: { 
+            name, 
+            role 
+          }
+        };
+
+        if (password && password.trim()) {
+          updateData.password = password;
+          console.log('Password will be updated');
+        }
+
+        const { data, error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, updateData);
+
+        if (authError) {
+          console.error('Error updating auth user:', authError);
+          throw new Error(`Failed to update user authentication: ${authError.message}`);
+        }
+
+        console.log('Auth user updated successfully');
+        console.log('User update completed successfully:', userId);
+
+        return new Response(JSON.stringify({ 
+          data: { user: data.user }, 
+          error: null 
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+
+      } catch (updateError: any) {
+        console.error('Update operation failed:', updateError);
+        return new Response(JSON.stringify({ 
+          data: null, 
+          error: { message: updateError.message || 'Failed to update user' }
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
-
-      const { data, error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, updateData);
-
-      if (authError) {
-        console.error('Error updating auth user:', authError);
-        throw new Error(`Failed to update user authentication: ${authError.message}`);
-      }
-
-      console.log('Auth user updated successfully');
-      console.log('User update completed successfully:', userId);
-
-      return new Response(JSON.stringify({ 
-        data: { user: data.user }, 
-        error: null 
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-
-    } catch (updateError: any) {
-      console.error('Update operation failed:', updateError);
-      return new Response(JSON.stringify({ 
-        data: null, 
-        error: { message: updateError.message || 'Failed to update user' }
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
     }
 
     if (method === 'DELETE' && pathSegments.length === 1) {
