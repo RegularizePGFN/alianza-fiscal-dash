@@ -11,7 +11,9 @@ export function ProposalsDashboard() {
     dailyProposalsData, 
     userProposalsData, 
     summaryStats, 
-    isLoading 
+    isLoading,
+    dateRange,
+    setDateRange
   } = useDashboardData();
   
   if (isLoading) {
@@ -23,6 +25,8 @@ export function ProposalsDashboard() {
       <MonthlyProposalsChart 
         dailyProposalsData={dailyProposalsData} 
         summaryStats={summaryStats}
+        onDateRangeChange={setDateRange}
+        dateRange={dateRange}
       />
       
       <SalespeopleProposalsChart 

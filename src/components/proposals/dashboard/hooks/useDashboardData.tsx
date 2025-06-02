@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useMemo } from 'react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+import { format, eachDayOfInterval, startOfMonth, endOfMonth } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { 
@@ -13,28 +13,34 @@ import {
 
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#af19ff', '#00C49F', '#FFBB28', '#FF8042'];
 
+interface DateRange {
+  from: Date | undefined;
+  to: Date | undefined;
+}
+
 export function useDashboardData() {
   const [proposalsData, setProposalsData] = useState<ProposalData[]>([]);
   const [usersData, setUsersData] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [dateRange, setDateRange] = useState<DateRange>(() => {
+    const now = new Date();
+    const monthStart = startOfMonth(now);
+    const monthEnd = endOfMonth(now);
+    return { from: monthStart, to: monthEnd };
+  });
   const { user } = useAuth();
   
   useEffect(() => {
     const fetchData = async () => {
-      if (!user) return;
+      if (!user || !dateRange.from || !dateRange.to) return;
       
       setIsLoading(true);
       try {
-        // Get current month date range
-        const now = new Date();
-        const monthStart = startOfMonth(now);
-        const monthEnd = endOfMonth(now);
-        
         // Format for database query
-        const startDate = monthStart.toISOString();
-        const endDate = monthEnd.toISOString();
+        const startDate = dateRange.from.toISOString();
+        const endDate = dateRange.to.toISOString();
         
-        // Fetch proposals for the current month
+        // Fetch proposals for the selected date range
         const { data: proposals, error: proposalsError } = await supabase
           .from('proposals')
           .select('id, user_id, created_at, total_debt, discounted_value, fees_value')
@@ -72,26 +78,22 @@ export function useDashboardData() {
     };
     
     fetchData();
-  }, [user]);
+  }, [user, dateRange]);
   
-  // Daily proposals count for the current month
+  // Daily proposals count for the selected date range
   const dailyProposalsData = useMemo(() => {
-    if (!proposalsData.length) return [];
+    if (!proposalsData.length || !dateRange.from || !dateRange.to) return [];
     
-    const now = new Date();
-    const monthStart = startOfMonth(now);
-    const monthEnd = endOfMonth(now);
-    
-    // Create array of dates for the month
-    const daysInMonth = eachDayOfInterval({
-      start: monthStart,
-      end: now // Only count up to today
+    // Create array of dates for the selected range
+    const daysInRange = eachDayOfInterval({
+      start: dateRange.from,
+      end: dateRange.to
     });
     
     // Initialize counts for each day
     const dailyCounts: Record<string, DailyProposalCount> = {};
     
-    daysInMonth.forEach(day => {
+    daysInRange.forEach(day => {
       const dateStr = format(day, 'yyyy-MM-dd');
       const formattedDate = format(day, 'dd/MM');
       
@@ -116,7 +118,7 @@ export function useDashboardData() {
     return Object.values(dailyCounts).sort((a, b) => 
       a.date.localeCompare(b.date)
     );
-  }, [proposalsData]);
+  }, [proposalsData, dateRange]);
   
   // User proposals statistics
   const userProposalsData = useMemo(() => {
@@ -157,6 +159,8 @@ export function useDashboardData() {
     dailyProposalsData,
     userProposalsData,
     summaryStats,
-    isLoading
+    isLoading,
+    dateRange,
+    setDateRange
   };
 }
