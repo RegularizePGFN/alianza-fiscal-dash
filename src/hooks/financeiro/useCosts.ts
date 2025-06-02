@@ -30,22 +30,11 @@ export function useCosts() {
       console.log('Costs loaded successfully:', data?.length || 0, 'items');
     } catch (error: any) {
       console.error('Erro ao buscar custos:', error);
-      
-      // Verificar se é um erro de permissão
-      if (error.code === 'PGRST116' || error.message?.includes('permission denied')) {
-        toast({
-          title: "Acesso negado",
-          description: "Você não tem permissão para acessar os dados financeiros.",
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Erro",
-          description: `Não foi possível carregar os custos: ${error.message}`,
-          variant: "destructive"
-        });
-      }
-      
+      toast({
+        title: "Erro",
+        description: `Não foi possível carregar os custos: ${error.message}`,
+        variant: "destructive"
+      });
       setCosts([]);
     } finally {
       setLoading(false);
