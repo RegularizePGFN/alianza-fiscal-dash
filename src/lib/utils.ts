@@ -97,35 +97,21 @@ export function parseISODateString(dateString: string): Date {
   return new Date(year, month - 1, day);
 }
 
-// Calculate commission based on contract type (PJ or CLT) with detailed logging
+// Calculate commission based on contract type (PJ or CLT)
 export const calculateCommission = (totalSales: number, contractType: string = CONTRACT_TYPE_PJ) => {
-  console.log('calculateCommission called with:', { totalSales, contractType });
-  
   let belowGoalRate: number;
   let aboveGoalRate: number;
   
   if (contractType === CONTRACT_TYPE_CLT) {
-    belowGoalRate = COMMISSION_RATE_CLT_BELOW_GOAL; // 0.05 (5%)
-    aboveGoalRate = COMMISSION_RATE_CLT_ABOVE_GOAL;  // 0.10 (10%)
-    console.log('Using CLT rates:', { belowGoalRate, aboveGoalRate });
+    belowGoalRate = COMMISSION_RATE_CLT_BELOW_GOAL;
+    aboveGoalRate = COMMISSION_RATE_CLT_ABOVE_GOAL;
   } else {
-    belowGoalRate = COMMISSION_RATE_PJ_BELOW_GOAL;   // 0.20 (20%)
-    aboveGoalRate = COMMISSION_RATE_PJ_ABOVE_GOAL;   // 0.25 (25%)
-    console.log('Using PJ rates:', { belowGoalRate, aboveGoalRate });
+    belowGoalRate = COMMISSION_RATE_PJ_BELOW_GOAL;
+    aboveGoalRate = COMMISSION_RATE_PJ_ABOVE_GOAL;
   }
   
-  const isAboveGoal = totalSales >= COMMISSION_GOAL_AMOUNT;
-  const rate = isAboveGoal ? aboveGoalRate : belowGoalRate;
+  const rate = totalSales >= COMMISSION_GOAL_AMOUNT ? aboveGoalRate : belowGoalRate;
   const amount = totalSales * rate;
-  
-  console.log('Commission calculation result:', {
-    totalSales,
-    COMMISSION_GOAL_AMOUNT,
-    isAboveGoal,
-    rate,
-    amount,
-    contractType
-  });
   
   return {
     rate,

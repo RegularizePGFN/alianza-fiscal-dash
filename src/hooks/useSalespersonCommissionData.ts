@@ -5,20 +5,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth";
 import { SalespersonCommission } from "@/components/dashboard/salespeople-commissions/types";
 import { getBusinessDaysInMonth, getBusinessDaysElapsedInMonth } from "@/components/dashboard/salespeople-commissions/utils";
-import { COMMISSION_GOAL_AMOUNT } from "@/lib/constants";
-import { calculateCommission } from "@/lib/utils";
+import { COMMISSION_GOAL_AMOUNT, COMMISSION_RATE_ABOVE_GOAL, COMMISSION_RATE_BELOW_GOAL } from "@/lib/constants";
 
 interface UseSalespersonCommissionDataProps {
   selectedMonth: string; // Format: "YYYY-MM"
 }
 
-// Extend the interface to include contract type
-interface ExtendedSalespersonCommission extends SalespersonCommission {
-  contractType: string;
-}
-
 export function useSalespersonCommissionData({ selectedMonth }: UseSalespersonCommissionDataProps) {
-  const [salespersonData, setSalespersonData] = useState<ExtendedSalespersonCommission | null>(null);
+  const [salespersonData, setSalespersonData] = useState<SalespersonCommission | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -62,22 +56,17 @@ export function useSalespersonCommissionData({ selectedMonth }: UseSalespersonCo
           .eq("month", month)
           .eq("year", year)
           .maybeSingle();
-
-        // Get the user's contract type
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("contract_type")
-          .eq("id", user.id)
-          .single();
           
         const totalSales = salesData?.reduce((sum, sale) => sum + Number(sale.gross_amount), 0) || 0;
         const salesCount = salesData?.length || 0;
         const goalAmount = goalData?.goal_amount ? Number(goalData.goal_amount) : 0;
-        const contractType = profileData?.contract_type || 'PJ';
         
-        // Use the unified commission calculation function
-        const commission = calculateCommission(totalSales, contractType);
-        const projectedCommission = commission.amount;
+        // For commission calculation, we use the FIXED COMMISSION GOAL AMOUNT
+        const commissionRate = totalSales >= COMMISSION_GOAL_AMOUNT 
+          ? COMMISSION_RATE_ABOVE_GOAL 
+          : COMMISSION_RATE_BELOW_GOAL;
+          
+        const projectedCommission = totalSales * commissionRate;
         
         const dailyTarget = goalAmount / totalBusinessDays;
         const expectedProgress = dailyTarget * businessDaysElapsed;
@@ -109,7 +98,6 @@ export function useSalespersonCommissionData({ selectedMonth }: UseSalespersonCo
           expectedProgress,
           remainingDailyTarget,
           zeroDaysCount,
-          contractType, // Include contract type in the response
         });
       } catch (error) {
         console.error("Error fetching salesperson commission data:", error);

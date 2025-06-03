@@ -26,107 +26,25 @@ export function useUsers() {
     setError(null);
     
     try {
-      console.log("Starting fetchUsers...");
-      
-      // Check if user is authenticated first with better session handling
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error('Session error:', sessionError);
-        throw new Error('Erro na sessão: ' + sessionError.message);
-      }
-      
-      if (!session?.access_token) {
-        console.error('No valid session or access token found');
-        throw new Error('Usuário não autenticado - faça login novamente');
-      }
-      
-      console.log("Valid session found, user:", session.user?.email);
-      console.log("Access token length:", session.access_token.length);
-      
-      // Call admin API with improved error handling
-      console.log("Calling admin API...");
+      console.log("Fetching users from admin API...");
       const response = await adminAPI.listUsers();
       
       if (response.error) {
-        console.error("Admin API error:", response.error);
-        
-        // Handle specific authentication errors with retry logic
-        if (response.error.message?.includes('authentication') || 
-            response.error.message?.includes('Invalid authentication token') ||
-            response.error.message?.includes('Auth session missing')) {
-          
-          console.log("Authentication error detected, attempting session refresh...");
-          
-          // Try to refresh the session
-          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-          
-          if (refreshError) {
-            console.error("Session refresh failed:", refreshError);
-            throw new Error('Sessão expirada. Faça login novamente.');
-          }
-          
-          if (refreshData.session?.access_token) {
-            console.log("Session refreshed successfully, retrying admin API call...");
-            
-            // Wait a bit for the session to be properly set
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            // Retry the admin API call with new session
-            const retryResponse = await adminAPI.listUsers();
-            
-            if (retryResponse.error) {
-              console.error("Retry also failed:", retryResponse.error);
-              throw new Error(retryResponse.error.message || 'Erro ao buscar usuários após refresh da sessão');
-            }
-            
-            // Continue with the retry response
-            if (!retryResponse.data?.users) {
-              setUsers([]);
-              return;
-            }
-            
-            // Process the retry response data
-            await processUsersData(retryResponse.data.users);
-            return;
-          } else {
-            throw new Error('Não foi possível renovar a sessão. Faça login novamente.');
-          }
-        }
-        
-        throw new Error(response.error.message || 'Erro ao buscar usuários');
+        console.error("Error fetching users:", response.error);
+        throw new Error(response.error.message);
       }
       
-      console.log("Admin API response received:", response.data);
+      console.log("Auth users data:", response.data);
       
       if (!response.data?.users || response.data.users.length === 0) {
-        console.log("No users found in response");
         setUsers([]);
+        setIsLoading(false);
+        isFetchingRef.current = false;
         return;
       }
 
-      await processUsersData(response.data.users);
-      
-    } catch (err: any) {
-      console.error("Error in fetchUsers:", err);
-      const errorMessage = err.message || "Falha ao carregar os usuários.";
-      setError(errorMessage);
-      toast({
-        title: "Erro",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-      isFetchingRef.current = false;
-    }
-  };
-
-  // Helper function to process users data
-  const processUsersData = async (authUsers: any[]) => {
-    try {
       // Fetch profile data for all users
-      console.log("Fetching profile data for", authUsers.length, "users...");
+      console.log("Fetching profile data...");
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, name, email, role');
@@ -136,10 +54,10 @@ export function useUsers() {
         // Continue without profile data if there's an error
       }
 
-      console.log("Profiles data received:", profilesData?.length || 0, "profiles");
+      console.log("Profiles data:", profilesData);
       
       // Convert auth users to our user format, merging with profile data
-      const mappedUsers = authUsers.map((authUser: any) => {
+      const mappedUsers = response.data.users.map((authUser: any) => {
         const email = authUser.email || '';
         
         // Find corresponding profile data
@@ -173,12 +91,20 @@ export function useUsers() {
         };
       });
       
-      console.log("Final users list:", mappedUsers.length, "users processed");
+      console.log("Final users list:", mappedUsers);
       setUsers(mappedUsers);
-      
-    } catch (error) {
-      console.error("Error processing users data:", error);
-      throw error;
+    } catch (err: any) {
+      console.error("Error fetching users:", err);
+      setError(err.message || "Falha ao carregar os usuários.");
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os usuários.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+      // Importante: resetar a flag após a conclusão
+      isFetchingRef.current = false;
     }
   };
 
