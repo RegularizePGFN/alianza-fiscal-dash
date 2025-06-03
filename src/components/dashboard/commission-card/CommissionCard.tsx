@@ -1,3 +1,4 @@
+
 import { useMemo, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sale, UserRole } from "@/lib/types";
@@ -22,14 +23,28 @@ export function CommissionCard({
   salesData
 }: CommissionCardProps) {
   const { user } = useAuth();
-  const isAdmin = user?.role === UserRole.ADMIN;
   const [contractType, setContractType] = useState<string>(CONTRACT_TYPE_PJ);
   const [isLoadingContract, setIsLoadingContract] = useState(true);
 
-  // Fetch user's contract type from profiles table
+  // Always call all hooks at the top level - never conditional
+  const isAdmin = user?.role === UserRole.ADMIN;
+  
+  // Always generate daily data, even for admin users
+  const dailyData = useMemo(() => {
+    if (!salesData || !user?.id) return [];
+    return generateDailyData(salesData, user.id);
+  }, [salesData, user?.id]);
+
+  // Always calculate totals, even for admin users
+  const totals = useMemo(() => {
+    if (!dailyData) return { totalSales: 0, totalCommission: 0 };
+    return calculateTotals(dailyData);
+  }, [dailyData]);
+
+  // Always call useEffect hooks
   useEffect(() => {
     const fetchContractType = async () => {
-      if (!user?.id) {
+      if (!user?.id || isAdmin) {
         setIsLoadingContract(false);
         return;
       }
@@ -60,9 +75,9 @@ export function CommissionCard({
     };
     
     fetchContractType();
-  }, [user?.id]);
+  }, [user?.id, isAdmin]);
 
-  // If admin, we don't calculate commission
+  // Early return for admin after all hooks are called
   if (isAdmin) {
     return (
       <Card className="h-full">
@@ -106,16 +121,6 @@ export function CommissionCard({
   const isCommissionGoalMet = totalSales >= COMMISSION_GOAL_AMOUNT;
 
   console.log('Commission result:', commission);
-
-  // Generate daily data for the chart
-  const dailyData = useMemo(() => 
-    generateDailyData(salesData, user?.id), 
-  [salesData, user]);
-
-  // Calculate the totals
-  const totals = useMemo(() => 
-    calculateTotals(dailyData),
-  [dailyData]);
   
   return (
     <Card className="h-full">

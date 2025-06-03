@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { User, UserRole } from '@/lib/types';
@@ -27,18 +26,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
     isProcessingAuthChange.current = true;
     
-    if (!session) {
-      console.log("❌ [AUTH] No session found, setting unauthenticated state");
-      setAuthState({
-        isAuthenticated: false,
-        user: null,
-        isLoading: false,
-      });
-      isProcessingAuthChange.current = false;
-      return;
-    }
-    
     try {
+      if (!session) {
+        console.log("❌ [AUTH] No session found, setting unauthenticated state");
+        setAuthState({
+          isAuthenticated: false,
+          user: null,
+          isLoading: false,
+        });
+        return;
+      }
+      
       console.log("🔍 [AUTH] Session found, fetching user profile for:", session.user.id);
       
       // Get user profile data from profiles table if available
@@ -83,15 +81,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.error("💥 [AUTH] Error stack:", error instanceof Error ? error.stack : 'No stack trace');
       
       // Fallback with admin email check
-      const email = session.user.email || '';
+      const email = session?.user?.email || '';
       
       console.log("🔄 [AUTH] Using fallback authentication for:", email);
       
       setAuthState({
         isAuthenticated: true,
         user: {
-          id: session.user.id,
-          name: session.user.email?.split('@')[0] || 'Usuário',
+          id: session?.user?.id || '',
+          name: session?.user?.email?.split('@')[0] || 'Usuário',
           email: email,
           role: mapUserRole(undefined, email),
         },

@@ -14,6 +14,8 @@ import { UserRole } from "@/lib/types";
 export default function DashboardPage() {
   const { user } = useAuth();
   const { salesData, summary, trends, loading } = useDashboardData();
+  
+  // Always call hooks at the top level
   const isAdmin = user?.role === UserRole.ADMIN;
 
   console.log("📊 [DASHBOARD] Dashboard render:", {
@@ -35,37 +37,41 @@ export default function DashboardPage() {
 
   if (loading) {
     console.log("⏳ [DASHBOARD] Showing loading spinner");
+    return (
+      <AppLayout>
+        <div className="space-y-6">
+          <DashboardHeader isLoading={loading} />
+          <LoadingSpinner />
+        </div>
+      </AppLayout>
+    );
   }
 
   return (
     <AppLayout>
       <div className="space-y-6">
         <DashboardHeader isLoading={loading} />
-
-        {loading ? (
-          <LoadingSpinner />
-        ) : (
-          <div className="space-y-6 animate-fade-in">
-            {/* DailyResultsCard - only visible to admin users */}
-            {isAdmin && (
-              <>
-                <DailyResultsCard salesData={salesData} />
-                <DailyResultsToday />
-              </>
-            )}
-            
-            {/* Daily Results Cards - positioned between the main cards */}
-            {!isAdmin && <DailyResultsToday />}
-            
-            <GoalsCommissionsSection summary={summary} salesData={salesData} />
-            
-            {/* Admin-only commission projections card */}
-            {isAdmin && <SalespeopleCommissionsCard />}
-            
-            {/* Weekly Reports - Single full width card */}
-            <SalespersonWeeklyCard salesData={salesData} />
-          </div>
-        )}
+        
+        <div className="space-y-6 animate-fade-in">
+          {/* DailyResultsCard - only visible to admin users */}
+          {isAdmin && (
+            <>
+              <DailyResultsCard salesData={salesData} />
+              <DailyResultsToday />
+            </>
+          )}
+          
+          {/* Daily Results Cards - positioned between the main cards */}
+          {!isAdmin && <DailyResultsToday />}
+          
+          <GoalsCommissionsSection summary={summary} salesData={salesData} />
+          
+          {/* Admin-only commission projections card */}
+          {isAdmin && <SalespeopleCommissionsCard />}
+          
+          {/* Weekly Reports - Single full width card */}
+          <SalespersonWeeklyCard salesData={salesData} />
+        </div>
       </div>
     </AppLayout>
   );
