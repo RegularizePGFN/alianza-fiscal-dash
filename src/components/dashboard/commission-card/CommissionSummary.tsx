@@ -1,18 +1,24 @@
 
 import { formatCurrency, formatPercentage } from "@/lib/utils";
-import { COMMISSION_GOAL_AMOUNT } from "@/lib/constants";
+import { COMMISSION_GOAL_AMOUNT, CONTRACT_TYPE_CLT } from "@/lib/constants";
 
 interface CommissionSummaryProps {
   commissionAmount: number;
   commissionRate: number;
   isCommissionGoalMet: boolean;
+  contractType: string;
 }
 
 export function CommissionSummary({
   commissionAmount,
   commissionRate,
-  isCommissionGoalMet
+  isCommissionGoalMet,
+  contractType
 }: CommissionSummaryProps) {
+  const isCLT = contractType === CONTRACT_TYPE_CLT;
+  const higherRate = isCLT ? 0.10 : 0.25; // 10% for CLT, 25% for PJ
+  const formattedHigherRate = formatPercentage(higherRate);
+  
   return (
     <>
       <div className="flex justify-between items-end">
@@ -30,7 +36,7 @@ export function CommissionSummary({
         ) : (
           <p>
             Taxa atual: {formatPercentage(commissionRate)}. 
-            Atinja R$ {COMMISSION_GOAL_AMOUNT.toLocaleString('pt-BR')} em vendas para aumentar para 25%.
+            Atinja R$ {COMMISSION_GOAL_AMOUNT.toLocaleString('pt-BR')} em vendas para aumentar para {formattedHigherRate}.
           </p>
         )}
       </div>

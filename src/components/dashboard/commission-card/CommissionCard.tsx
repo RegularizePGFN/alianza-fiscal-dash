@@ -1,5 +1,4 @@
-
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sale, UserRole } from "@/lib/types";
 import { useAuth } from "@/contexts/auth";
@@ -9,6 +8,7 @@ import { SalesChart } from "./SalesChart";
 import { MonthlySummary } from "./MonthlySummary";
 import { CommissionSummary } from "./CommissionSummary";
 import { generateDailyData, calculateTotals } from "./utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CommissionCardProps {
   totalSales: number;
@@ -23,6 +23,31 @@ export function CommissionCard({
 }: CommissionCardProps) {
   const { user } = useAuth();
   const isAdmin = user?.role === UserRole.ADMIN;
+  const [contractType, setContractType] = useState<string>(CONTRACT_TYPE_PJ);
+
+  // Fetch user's contract type from profiles table
+  useEffect(() => {
+    const fetchContractType = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("contract_type")
+          .eq("id", user.id)
+          .single();
+          
+        if (profile?.contract_type) {
+          setContractType(profile.contract_type);
+        }
+      } catch (error) {
+        console.error("Error fetching contract type:", error);
+        // Keep default CONTRACT_TYPE_PJ if error
+      }
+    };
+    
+    fetchContractType();
+  }, [user?.id]);
 
   // If admin, we don't calculate commission
   if (isAdmin) {
@@ -44,10 +69,7 @@ export function CommissionCard({
     );
   }
 
-  // Get user's contract type from user context or default to PJ
-  const contractType = (user as any)?.contract_type || CONTRACT_TYPE_PJ;
-  
-  // Calculate commission based on user's contract type
+  // Calculate commission based on user's actual contract type
   const commission = calculateCommission(totalSales, contractType);
   const isCommissionGoalMet = totalSales >= COMMISSION_GOAL_AMOUNT;
 
@@ -73,6 +95,7 @@ export function CommissionCard({
           commissionAmount={commission.amount}
           commissionRate={commission.rate}
           isCommissionGoalMet={isCommissionGoalMet}
+          contractType={contractType}
         />
         
         {/* Monthly summary section */}
