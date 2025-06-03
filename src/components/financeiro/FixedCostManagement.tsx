@@ -34,47 +34,46 @@ export function FixedCostManagement({ onCostChange }: FixedCostManagementProps) 
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Building className="h-6 w-6 text-green-600" />
-              <div>
-                <CardTitle>Custos Fixos</CardTitle>
-                <CardDescription>
-                  Gerencie custos recorrentes mensais (aluguel, salários, etc.)
-                </CardDescription>
-              </div>
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Building className="h-6 w-6 text-green-600" />
+            <div>
+              <CardTitle>Custos Fixos</CardTitle>
+              <CardDescription>
+                Gerencie custos recorrentes mensais (aluguel, salários, etc.)
+              </CardDescription>
             </div>
-            <Button onClick={() => setShowForm(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar Custo Fixo
-            </Button>
           </div>
-        </CardHeader>
-        <CardContent>
-          {showForm && (
-            <div className="mb-6">
-              <CostForm
-                cost={editingCost}
-                onSave={handleCostSaved}
-                onCancel={() => {
-                  setShowForm(false);
-                  setEditingCost(null);
-                }}
-              />
-            </div>
-          )}
-          
-          <FixedCostList
-            costs={costs}
-            loading={loading}
-            onEdit={handleEdit}
-            onDelete={handleCostDeleted}
-          />
-        </CardContent>
-      </Card>
-    </div>
+          <Button onClick={() => setShowForm(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Adicionar Custo Fixo
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {showForm && (
+          <div className="mb-6">
+            <CostForm
+              cost={editingCost}
+              costType="fixed"
+              onSave={handleCostSaved}
+              onCancel={() => {
+                setShowForm(false);
+                setEditingCost(null);
+              }}
+            />
+          </div>
+        )}
+        
+        <FixedCostList
+          costs={costs}
+          loading={loading}
+          onEdit={handleEdit}
+          onDelete={handleCostDeleted}
+        />
+      </CardContent>
+    </Card>
   );
 }

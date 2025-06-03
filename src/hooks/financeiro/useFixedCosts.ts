@@ -3,8 +3,22 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+interface FixedCost {
+  id: string;
+  name: string;
+  description: string;
+  amount: number;
+  category: string;
+  type: string;
+  start_date: string | null;
+  end_date: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export function useFixedCosts() {
-  const [costs, setCosts] = useState<any[]>([]);
+  const [costs, setCosts] = useState<FixedCost[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const abortControllerRef = useRef<AbortController | null>(null);

@@ -57,64 +57,63 @@ export function VariableCostManagement({ onCostChange }: VariableCostManagementP
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <TrendingUp className="h-6 w-6 text-blue-600" />
-              <div>
-                <CardTitle>Custos Variáveis</CardTitle>
-                <CardDescription>
-                  Gerencie custos com datas específicas (parcelas, funcionários temporários, etc.)
-                </CardDescription>
-              </div>
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <TrendingUp className="h-6 w-6 text-blue-600" />
+            <div>
+              <CardTitle>Custos Variáveis</CardTitle>
+              <CardDescription>
+                Gerencie custos com datas específicas (parcelas, funcionários temporários, etc.)
+              </CardDescription>
             </div>
-            <Button onClick={() => setShowForm(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar Custo Variável
-            </Button>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-4 mb-6">
-            <label className="text-sm font-medium">Filtrar por mês:</label>
-            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {generateMonthOptions().map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Button onClick={() => setShowForm(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Adicionar Custo Variável
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center gap-4 mb-6">
+          <label className="text-sm font-medium">Filtrar por mês:</label>
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {generateMonthOptions().map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-          {showForm && (
-            <div className="mb-6">
-              <CostForm
-                cost={editingCost}
-                onSave={handleCostSaved}
-                onCancel={() => {
-                  setShowForm(false);
-                  setEditingCost(null);
-                }}
-              />
-            </div>
-          )}
-          
-          <VariableCostList
-            costs={costs}
-            loading={loading}
-            onEdit={handleEdit}
-            onDelete={handleCostDeleted}
-            selectedMonth={selectedMonth}
-          />
-        </CardContent>
-      </Card>
-    </div>
+        {showForm && (
+          <div className="mb-6">
+            <CostForm
+              cost={editingCost}
+              costType="variable"
+              onSave={handleCostSaved}
+              onCancel={() => {
+                setShowForm(false);
+                setEditingCost(null);
+              }}
+            />
+          </div>
+        )}
+        
+        <VariableCostList
+          costs={costs}
+          loading={loading}
+          onEdit={handleEdit}
+          onDelete={handleCostDeleted}
+          selectedMonth={selectedMonth}
+        />
+      </CardContent>
+    </Card>
   );
 }

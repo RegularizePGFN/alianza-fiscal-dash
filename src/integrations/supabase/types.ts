@@ -15,9 +15,11 @@ export type Database = {
           category: string | null
           created_at: string
           description: string | null
+          end_date: string | null
           id: string
           is_active: boolean
           name: string
+          start_date: string | null
           type: string
           updated_at: string
         }
@@ -26,9 +28,11 @@ export type Database = {
           category?: string | null
           created_at?: string
           description?: string | null
+          end_date?: string | null
           id?: string
           is_active?: boolean
           name: string
+          start_date?: string | null
           type: string
           updated_at?: string
         }
@@ -37,9 +41,11 @@ export type Database = {
           category?: string | null
           created_at?: string
           description?: string | null
+          end_date?: string | null
           id?: string
           is_active?: boolean
           name?: string
+          start_date?: string | null
           type?: string
           updated_at?: string
         }
