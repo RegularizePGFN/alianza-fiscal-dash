@@ -87,12 +87,12 @@ export function DailyProfitChart({ salesData, totalCosts, selectedMonth, selecte
           }}
         >
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
+            <LineChart data={chartData} margin={{ bottom: 60 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
               <XAxis 
                 dataKey="day" 
                 tick={{ fontSize: 12 }}
-                label={{ value: 'Dia do Mês (Úteis)', position: 'insideBottom', offset: -10 }}
+                label={{ value: 'Dia do Mês (Úteis)', position: 'insideBottom', offset: -30 }}
               />
               <YAxis 
                 tickFormatter={formatCurrency}
@@ -123,7 +123,7 @@ export function DailyProfitChart({ salesData, totalCosts, selectedMonth, selecte
                   boxShadow: "0 4px 12px rgba(0,0,0,0.1)" 
                 }}
               />
-              <Legend />
+              <Legend wrapperStyle={{ paddingTop: '20px' }} />
               <Line 
                 type="monotone" 
                 dataKey="receita" 
