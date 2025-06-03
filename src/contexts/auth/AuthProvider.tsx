@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { User, UserRole } from '@/lib/types';
@@ -12,15 +13,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   // Add reference to track processing state to prevent duplicate updates
   const isProcessingAuthChange = useRef(false);
+  const sessionCheckRef = useRef(false);
   
   // Reference to store original user session when impersonating
   const originalUserSessionRef = useRef<{ user: User | null, session: Session | null } | null>(null);
 
   // Handle session update - memoized to prevent recreating on each render
-  const handleSession = useCallback(async (session: Session | null) => {
+  const handleSession = useCallback(async (session: Session | null, skipProcessingCheck = false) => {
     console.log("🔄 [AUTH] Starting handleSession with session:", session?.user?.id || 'null');
     
-    if (isProcessingAuthChange.current) {
+    if (!skipProcessingCheck && isProcessingAuthChange.current) {
       console.log("⚠️ [AUTH] Already processing auth change, skipping");
       return;
     }
@@ -164,19 +166,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     console.log("🚀 [AUTH] Setting up authentication listeners");
     
-    // Set up auth state listener first with debouncing to prevent excessive calls
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log("🔔 [AUTH] Auth state changed:", event, session?.user?.id || 'no user');
-        
-        // Use timeout to debounce auth state changes
-        setTimeout(() => {
-          handleSession(session);
-        }, 100);
-      }
-    );
+    // Prevent multiple session checks
+    if (sessionCheckRef.current) {
+      console.log("⚠️ [AUTH] Session check already in progress, skipping");
+      return;
+    }
+    sessionCheckRef.current = true;
     
-    // Check for existing session
+    let subscription: any;
+    
+    // Check for existing session first
     const checkSession = async () => {
       try {
         console.log("🔍 [AUTH] Checking for existing session...");
@@ -192,7 +191,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
         
         console.log("📋 [AUTH] Existing session:", session?.user?.id || 'no session');
-        handleSession(session);
+        await handleSession(session, true);
       } catch (error) {
         console.error("💥 [AUTH] Session restoration error:", error);
         console.error("💥 [AUTH] Error details:", error instanceof Error ? error.message : 'Unknown error');
@@ -203,14 +202,63 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     };
 
-    checkSession();
+    // Set up auth state listener after checking existing session
+    const setupListener = async () => {
+      await checkSession();
+      
+      const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          console.log("🔔 [AUTH] Auth state changed:", event, session?.user?.id || 'no user');
+          
+          // Don't process session events during initialization
+          if (event === 'INITIAL_SESSION') {
+            console.log("⚠️ [AUTH] Skipping initial session event");
+            return;
+          }
+          
+          // Handle token refresh without full re-authentication
+          if (event === 'TOKEN_REFRESHED') {
+            console.log("🔄 [AUTH] Token refreshed, updating session");
+            setAuthState(prevState => ({
+              ...prevState,
+              isLoading: false
+            }));
+            return;
+          }
+          
+          // Handle sign out
+          if (event === 'SIGNED_OUT') {
+            console.log("🚪 [AUTH] User signed out");
+            setAuthState({
+              isAuthenticated: false,
+              user: null,
+              isLoading: false,
+            });
+            return;
+          }
+          
+          // Handle sign in and other events
+          if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+            console.log("🔐 [AUTH] User signed in or updated");
+            await handleSession(session);
+          }
+        }
+      );
+      
+      subscription = authSubscription;
+    };
+
+    setupListener();
 
     // Cleanup subscription
     return () => {
       console.log("🧹 [AUTH] Cleaning up auth listeners");
-      subscription.unsubscribe();
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+      sessionCheckRef.current = false;
     };
-  }, [handleSession]);
+  }, []); // Remove handleSession from dependencies to prevent re-initialization
 
   // Login function
   const login = async (email: string, password: string): Promise<boolean> => {
