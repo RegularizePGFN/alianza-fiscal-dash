@@ -1,26 +1,13 @@
-import React from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
+
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, UserRound } from "lucide-react";
-import { User, UserRole } from "@/lib/types";
-import { formatDate } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { useAuth } from "@/contexts/auth";
-import { useToast } from "@/hooks/use-toast";
+import { Pencil, Trash2, Eye, Users, AlertCircle } from "lucide-react";
+import { User, UserRole } from "@/lib/types";
+import { UserProfileView } from "./UserProfileView";
 
 interface UsersTableProps {
   users: User[];
@@ -31,152 +18,143 @@ interface UsersTableProps {
   onDeleteUser: (user: User) => void;
 }
 
-export function UsersTable({
-  users,
-  isLoading,
-  error,
-  onRetry,
-  onEditUser,
-  onDeleteUser,
-}: UsersTableProps) {
-  const { user: currentUser, impersonateUser } = useAuth();
-  const { toast } = useToast();
+export function UsersTable({ users, isLoading, error, onRetry, onEditUser, onDeleteUser }: UsersTableProps) {
+  const [viewingUser, setViewingUser] = useState<User | null>(null);
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   const getRoleBadge = (role: UserRole) => {
-    switch (role) {
-      case UserRole.ADMIN:
-        return <Badge className="bg-destructive">Administrador</Badge>;
-      case UserRole.SALESPERSON:
-        return <Badge variant="outline">Vendedor</Badge>;
-      default:
-        return null;
-    }
+    const roleConfig = {
+      [UserRole.ADMIN]: { label: 'Admin', variant: 'destructive' as const },
+      [UserRole.VENDEDOR]: { label: 'Vendedor', variant: 'default' as const },
+    };
+
+    const config = roleConfig[role] || { label: 'Unknown', variant: 'secondary' as const };
+    return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const handleImpersonateUser = async (e: React.MouseEvent, userToImpersonate: User) => {
-    // Prevent default behavior to avoid page reload
-    e.preventDefault();
-    e.stopPropagation();
-    
-    try {
-      await impersonateUser(userToImpersonate.id);
-      
-      toast({
-        title: "Sucesso",
-        description: `Agora você está visualizando como ${userToImpersonate.name}`,
-      });
-    } catch (error) {
-      console.error("Erro ao impersonar usuário:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível acessar a conta do usuário",
-        variant: "destructive",
-      });
-    }
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR');
   };
+
+  if (viewingUser) {
+    return (
+      <UserProfileView 
+        user={viewingUser} 
+        onBack={() => setViewingUser(null)} 
+      />
+    );
+  }
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-10">
-        <LoadingSpinner size="lg" />
+      <div className="flex justify-center items-center py-8">
+        <LoadingSpinner />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center py-10 text-destructive">
-        <p>{error}</p>
-        <Button variant="outline" onClick={onRetry} className="mt-4">
+      <div className="text-center py-8 space-y-4">
+        <div className="flex items-center justify-center gap-2 text-red-600">
+          <AlertCircle className="h-5 w-5" />
+          <p className="font-medium">Erro ao carregar usuários</p>
+        </div>
+        <p className="text-gray-600 text-sm">{error}</p>
+        <Button onClick={onRetry} variant="outline" size="sm">
           Tentar novamente
         </Button>
       </div>
     );
   }
 
-  const isAdmin = currentUser?.role === UserRole.ADMIN;
+  if (users.length === 0) {
+    return (
+      <div className="text-center py-8 space-y-4">
+        <div className="flex items-center justify-center gap-2 text-gray-500">
+          <Users className="h-8 w-8" />
+        </div>
+        <div>
+          <p className="font-medium text-gray-900 dark:text-white">Nenhum usuário encontrado</p>
+          <p className="text-gray-600 dark:text-gray-300 text-sm">
+            Não há usuários cadastrados no sistema ainda.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Nome</TableHead>
-          <TableHead>Email</TableHead>
-          <TableHead>Função</TableHead>
-          <TableHead>Data de Criação</TableHead>
-          {isAdmin && <TableHead className="w-[70px]">Acessar</TableHead>}
-          <TableHead className="w-[70px]">Ações</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {users.length === 0 ? (
-          <TableRow>
-            <TableCell colSpan={isAdmin ? 6 : 5} className="text-center py-6">
-              Nenhum usuário encontrado
-            </TableCell>
+    <div className="rounded-md border dark:border-gray-700">
+      <Table>
+        <TableHeader>
+          <TableRow className="dark:border-gray-700">
+            <TableHead className="dark:text-gray-300">Usuário</TableHead>
+            <TableHead className="dark:text-gray-300">Email</TableHead>
+            <TableHead className="dark:text-gray-300">Função</TableHead>
+            <TableHead className="dark:text-gray-300">Cadastrado em</TableHead>
+            <TableHead className="text-right dark:text-gray-300">Ações</TableHead>
           </TableRow>
-        ) : (
-          users.map((user) => (
-            <TableRow key={user.id}>
-              <TableCell>{user.name}</TableCell>
-              <TableCell>{user.email}</TableCell>
+        </TableHeader>
+        <TableBody>
+          {users.map((user) => (
+            <TableRow key={user.id} className="dark:border-gray-700">
+              <TableCell className="font-medium">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
+                      {getInitials(user.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="dark:text-white">{user.name}</span>
+                </div>
+              </TableCell>
+              <TableCell className="dark:text-gray-300">{user.email}</TableCell>
               <TableCell>{getRoleBadge(user.role)}</TableCell>
-              <TableCell>{user.created_at && formatDate(user.created_at)}</TableCell>
-              {isAdmin && (
-                <TableCell>
-                  {user.id !== currentUser?.id && user.role !== UserRole.ADMIN && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      onClick={(e) => handleImpersonateUser(e, user)}
-                      title={`Entrar como ${user.name}`}
-                    >
-                      <UserRound className="h-4 w-4" />
-                      <span className="sr-only">Entrar como {user.name}</span>
-                    </Button>
-                  )}
-                </TableCell>
-              )}
-              <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0"
-                      onClick={(e) => {
-                        // Prevent dropdown from causing page reload
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                    >
-                      <span className="sr-only">Abrir menu</span>
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onEditUser(user);
-                    }}>
-                      Editar
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-destructive"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        onDeleteUser(user);
-                      }}
-                    >
-                      Excluir
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              <TableCell className="dark:text-gray-300">{formatDate(user.created_at)}</TableCell>
+              <TableCell className="text-right">
+                <div className="flex items-center justify-end gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setViewingUser(user)}
+                    className="h-8 w-8 p-0 hover:bg-blue-100 dark:hover:bg-blue-900"
+                    title="Visualizar como usuário"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onEditUser(user)}
+                    className="h-8 w-8 p-0 hover:bg-blue-100 dark:hover:bg-blue-900"
+                    title="Editar usuário"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDeleteUser(user)}
+                    className="h-8 w-8 p-0 hover:bg-red-100 dark:hover:bg-red-900 text-red-600 dark:text-red-400"
+                    title="Excluir usuário"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 }
