@@ -24,25 +24,38 @@ export function CommissionCard({
   const { user } = useAuth();
   const isAdmin = user?.role === UserRole.ADMIN;
   const [contractType, setContractType] = useState<string>(CONTRACT_TYPE_PJ);
+  const [isLoadingContract, setIsLoadingContract] = useState(true);
 
   // Fetch user's contract type from profiles table
   useEffect(() => {
     const fetchContractType = async () => {
-      if (!user?.id) return;
+      if (!user?.id) {
+        setIsLoadingContract(false);
+        return;
+      }
       
       try {
-        const { data: profile } = await supabase
+        console.log('Fetching contract type for user:', user.id);
+        const { data: profile, error } = await supabase
           .from("profiles")
           .select("contract_type")
           .eq("id", user.id)
           .single();
           
-        if (profile?.contract_type) {
+        if (error) {
+          console.error("Error fetching contract type:", error);
+          // Keep default CONTRACT_TYPE_PJ if error
+        } else if (profile?.contract_type) {
+          console.log('Contract type fetched:', profile.contract_type);
           setContractType(profile.contract_type);
+        } else {
+          console.log('No contract type found, using default PJ');
         }
       } catch (error) {
         console.error("Error fetching contract type:", error);
         // Keep default CONTRACT_TYPE_PJ if error
+      } finally {
+        setIsLoadingContract(false);
       }
     };
     
@@ -69,9 +82,30 @@ export function CommissionCard({
     );
   }
 
+  // Show loading state while fetching contract type
+  if (isLoadingContract) {
+    return (
+      <Card className="h-full">
+        <CardHeader>
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            Comissão Projetada
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="text-sm text-muted-foreground">
+            <p>Carregando informações de comissão...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   // Calculate commission based on user's actual contract type
+  console.log('Calculating commission with:', { totalSales, contractType });
   const commission = calculateCommission(totalSales, contractType);
   const isCommissionGoalMet = totalSales >= COMMISSION_GOAL_AMOUNT;
+
+  console.log('Commission result:', commission);
 
   // Generate daily data for the chart
   const dailyData = useMemo(() => 
