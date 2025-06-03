@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -7,28 +7,17 @@ export function useCosts() {
   const [costs, setCosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const abortControllerRef = useRef<AbortController | null>(null);
 
   const fetchCosts = async () => {
     try {
       setLoading(true);
       console.log('Fetching costs...');
-      
-      // Cancel previous request if it exists
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      
-      // Create new abort controller
-      abortControllerRef.current = new AbortController();
-      const signal = abortControllerRef.current.signal;
 
       const { data, error } = await supabase
         .from('company_costs')
         .select('*')
         .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .abortSignal(signal);
+        .order('created_at', { ascending: false });
 
       console.log('Costs query result:', { data, error });
 
@@ -37,18 +26,9 @@ export function useCosts() {
         throw error;
       }
 
-      // Only update state if the request wasn't aborted
-      if (!signal.aborted) {
-        setCosts(data || []);
-        console.log('Costs loaded successfully:', data?.length || 0, 'items');
-      }
+      setCosts(data || []);
+      console.log('Costs loaded successfully:', data?.length || 0, 'items');
     } catch (error: any) {
-      // Don't show error if request was aborted (expected behavior)
-      if (error.name === 'AbortError') {
-        console.log('Request was aborted - this is expected when switching between requests');
-        return;
-      }
-      
       console.error('Erro ao buscar custos:', error);
       toast({
         title: "Erro",
@@ -63,13 +43,6 @@ export function useCosts() {
 
   useEffect(() => {
     fetchCosts();
-    
-    // Cleanup function to abort request when component unmounts
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
   }, []);
 
   return {

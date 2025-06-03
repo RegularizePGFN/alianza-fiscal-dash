@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -21,21 +21,11 @@ export function useVariableCosts(selectedMonth: string) {
   const [costs, setCosts] = useState<VariableCost[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const abortControllerRef = useRef<AbortController | null>(null);
 
   const fetchCosts = async () => {
     try {
       setLoading(true);
       console.log('Fetching variable costs for month:', selectedMonth);
-      
-      // Cancel previous request if it exists
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      
-      // Create new abort controller
-      abortControllerRef.current = new AbortController();
-      const signal = abortControllerRef.current.signal;
 
       // Parse the selected month
       const [year, month] = selectedMonth.split('-');
@@ -47,10 +37,7 @@ export function useVariableCosts(selectedMonth: string) {
         .select('*')
         .eq('type', 'variable')
         .eq('is_active', true)
-        .or(`start_date.is.null,start_date.lte.${endDate}`)
-        .or(`end_date.is.null,end_date.gte.${startDate}`)
-        .order('created_at', { ascending: false })
-        .abortSignal(signal);
+        .order('created_at', { ascending: false });
 
       console.log('Variable costs query result:', { data, error });
 
@@ -78,18 +65,9 @@ export function useVariableCosts(selectedMonth: string) {
         return true;
       }) || [];
 
-      // Only update state if the request wasn't aborted
-      if (!signal.aborted) {
-        setCosts(filteredCosts);
-        console.log('Variable costs loaded successfully:', filteredCosts.length, 'items');
-      }
+      setCosts(filteredCosts);
+      console.log('Variable costs loaded successfully:', filteredCosts.length, 'items');
     } catch (error: any) {
-      // Don't show error if request was aborted (expected behavior)
-      if (error.name === 'AbortError') {
-        console.log('Request was aborted - this is expected when switching between requests');
-        return;
-      }
-      
       console.error('Erro ao buscar custos variáveis:', error);
       toast({
         title: "Erro",
@@ -104,13 +82,6 @@ export function useVariableCosts(selectedMonth: string) {
 
   useEffect(() => {
     fetchCosts();
-    
-    // Cleanup function to abort request when component unmounts
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
   }, [selectedMonth]);
 
   return {
