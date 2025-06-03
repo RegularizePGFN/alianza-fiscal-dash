@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { SalespersonCommission, SortColumn, SortDirection, SummaryTotals } from "./types";
 import { getBusinessDaysInMonth, getBusinessDaysElapsedUntilToday } from "./utils";
-import { COMMISSION_GOAL_AMOUNT, CONTRACT_TYPE_PJ } from "@/lib/constants";
+import { COMMISSION_GOAL_AMOUNT } from "@/lib/constants";
 import { calculateCommission } from "@/lib/utils";
 import { format, isWeekend } from "date-fns";
 
@@ -108,10 +108,17 @@ export function useSalespeopleCommissions() {
             const goalAmount = goalData?.goal_amount ? Number(goalData.goal_amount) : 0;
             
             // Get contract type from profile, default to PJ
-            const contractType = profile.contract_type || CONTRACT_TYPE_PJ;
+            const contractType = profile.contract_type || 'PJ';
             
-            // Calculate commission based on contract type
+            // Calculate commission based on contract type using the unified function
             const commission = calculateCommission(totalSales, contractType);
+            
+            console.log(`Commission calculated for ${profile.name}:`, {
+              totalSales,
+              contractType,
+              commissionAmount: commission.amount,
+              commissionRate: commission.rate
+            });
             
             const dailyTarget = goalAmount / totalBusinessDays;
             const expectedProgress = dailyTarget * businessDaysElapsed;

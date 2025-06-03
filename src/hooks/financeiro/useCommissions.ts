@@ -2,13 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  COMMISSION_RATE_PJ_BELOW_GOAL, 
-  COMMISSION_RATE_PJ_ABOVE_GOAL,
-  COMMISSION_RATE_CLT_BELOW_GOAL,
-  COMMISSION_RATE_CLT_ABOVE_GOAL,
-  COMMISSION_GOAL_AMOUNT 
-} from '@/lib/constants';
+import { calculateCommission } from '@/lib/utils';
 
 export function useCommissions(selectedMonth: number, selectedYear: number) {
   const [commissions, setCommissions] = useState<any[]>([]);
@@ -40,18 +34,8 @@ export function useCommissions(selectedMonth: number, selectedYear: number) {
 
       if (profilesError) throw profilesError;
 
-      // Buscar metas mensais dos vendedores
-      const { data: goals, error: goalsError } = await supabase
-        .from('monthly_goals')
-        .select('*')
-        .eq('month', selectedMonth)
-        .eq('year', selectedYear);
-
-      if (goalsError) throw goalsError;
-
-      // Criar mapa de perfis e metas
+      // Criar mapa de perfis
       const profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);
-      const goalsMap = new Map(goals?.map(g => [g.user_id, g]) || []);
 
       // Agrupar vendas por vendedor
       const salesByPerson = sales?.reduce((acc: any, sale) => {
@@ -66,61 +50,39 @@ export function useCommissions(selectedMonth: number, selectedYear: number) {
         return acc;
       }, {}) || {};
 
-      // Calcular comissões para cada vendedor usando a lógica EXATA da plataforma
+      // Calcular comissões para cada vendedor usando a MESMA lógica da aba comissões
       const commissionsArray = Object.values(salesByPerson).map((person: any) => {
         const profile = profilesMap.get(person.salesperson_id);
-        const goal = goalsMap.get(person.salesperson_id);
         const contractType = profile?.contract_type || 'PJ';
-        const goalAmount = goal?.goal_amount || COMMISSION_GOAL_AMOUNT;
         
         let totalSales = 0;
-        let totalCommission = 0;
         
         // Calcular total de vendas
         person.sales.forEach((sale: any) => {
           totalSales += Number(sale.gross_amount);
         });
         
-        // Aplicar a MESMA lógica de comissão que existe na plataforma
-        if (contractType === 'CLT') {
-          // CLT: 5% até a meta, 10% acima da meta
-          if (totalSales <= goalAmount) {
-            totalCommission = totalSales * COMMISSION_RATE_CLT_BELOW_GOAL;
-          } else {
-            totalCommission = (goalAmount * COMMISSION_RATE_CLT_BELOW_GOAL) + 
-                            ((totalSales - goalAmount) * COMMISSION_RATE_CLT_ABOVE_GOAL);
-          }
-        } else {
-          // PJ: 20% até a meta, 25% acima da meta
-          if (totalSales <= goalAmount) {
-            totalCommission = totalSales * COMMISSION_RATE_PJ_BELOW_GOAL;
-          } else {
-            totalCommission = (goalAmount * COMMISSION_RATE_PJ_BELOW_GOAL) + 
-                            ((totalSales - goalAmount) * COMMISSION_RATE_PJ_ABOVE_GOAL);
-          }
-        }
+        // Usar a MESMA função de cálculo que a aba comissões
+        const commission = calculateCommission(totalSales, contractType);
         
         console.log(`Comissão calculada para ${person.name}:`, {
           totalSales,
           contractType,
-          goalAmount,
-          totalCommission,
-          belowGoal: totalSales <= goalAmount ? totalSales * (contractType === 'CLT' ? COMMISSION_RATE_CLT_BELOW_GOAL : COMMISSION_RATE_PJ_BELOW_GOAL) : goalAmount * (contractType === 'CLT' ? COMMISSION_RATE_CLT_BELOW_GOAL : COMMISSION_RATE_PJ_BELOW_GOAL),
-          aboveGoal: totalSales > goalAmount ? (totalSales - goalAmount) * (contractType === 'CLT' ? COMMISSION_RATE_CLT_ABOVE_GOAL : COMMISSION_RATE_PJ_ABOVE_GOAL) : 0
+          commissionAmount: commission.amount,
+          commissionRate: commission.rate
         });
         
         return {
           name: person.name,
           totalSales,
-          totalCommission,
+          totalCommission: commission.amount,
           salesCount: person.sales.length,
-          contractType,
-          goalAmount
+          contractType
         };
       });
 
       setCommissions(commissionsArray);
-      console.log('Commissions calculated with correct platform logic:', commissionsArray);
+      console.log('Commissions calculated with unified logic:', commissionsArray);
       console.log('Total commissions:', commissionsArray.reduce((total, c) => total + c.totalCommission, 0));
     } catch (error: any) {
       console.error('Erro ao buscar comissões:', error);
