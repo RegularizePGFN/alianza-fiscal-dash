@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, DollarSign, Minus, Plus, Users } from "lucide-react";
 import { useSalesData } from "@/hooks/financeiro/useSalesData";
@@ -28,11 +28,16 @@ export function LucroLiquido({
   const { costs, loading: costsLoading, fetchCosts } = useCosts();
   const { commissions, totalCommissions, loading: commissionsLoading } = useCommissions(selectedMonth, selectedYear);
 
-  useEffect(() => {
+  // Use callback to prevent unnecessary re-calls
+  const handleRefresh = useCallback(() => {
     if (refreshTrigger) {
       fetchCosts();
     }
   }, [refreshTrigger, fetchCosts]);
+
+  useEffect(() => {
+    handleRefresh();
+  }, [handleRefresh]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
