@@ -1,5 +1,6 @@
 
 
+
 import { useMemo, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sale, UserRole } from "@/lib/types";
@@ -28,20 +29,23 @@ export function CommissionCard({
   const [contractType, setContractType] = useState<string>(CONTRACT_TYPE_PJ);
   const [isLoadingContract, setIsLoadingContract] = useState(true);
 
+  // Extract stable user ID
+  const userId = user?.id;
+
   // Fetch user's contract type from profiles table
   useEffect(() => {
     const fetchContractType = async () => {
-      if (!user?.id) {
+      if (!userId) {
         setIsLoadingContract(false);
         return;
       }
       
       try {
-        console.log('Fetching contract type for user:', user.id);
+        console.log('Fetching contract type for user:', userId);
         const { data: profile, error } = await supabase
           .from("profiles")
           .select("contract_type")
-          .eq("id", user.id)
+          .eq("id", userId)
           .single();
           
         if (error) {
@@ -62,7 +66,7 @@ export function CommissionCard({
     };
     
     fetchContractType();
-  }, [user?.id]);
+  }, [userId]);
 
   // If admin, we don't calculate commission
   if (isAdmin) {
@@ -111,11 +115,11 @@ export function CommissionCard({
 
   // Generate daily data for the chart - Fixed dependencies to avoid re-creation on each render
   const dailyData = useMemo(() => {
-    if (!user?.id || !salesData || salesData.length === 0) {
+    if (!userId || !salesData || salesData.length === 0) {
       return [];
     }
-    return generateDailyData(salesData, user.id);
-  }, [salesData, user?.id]);
+    return generateDailyData(salesData, userId);
+  }, [salesData, userId]);
 
   // Calculate the totals - Fixed dependencies and return type
   const totals = useMemo(() => {
@@ -156,4 +160,5 @@ export function CommissionCard({
     </Card>
   );
 }
+
 
