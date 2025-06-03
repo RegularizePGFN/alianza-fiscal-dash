@@ -111,13 +111,16 @@ export const useFetchProposalsWithFilter = () => {
           feesValue = economyValue * 0.2; // 20% of the savings
         }
         
-        // Get user name from the map or fallback to user's own name
-        const userName = userMap[item.user_id] || user.name || 'Unknown User';
+        // Get user name from the map for userName field (vendedor)
+        const userName = userMap[item.user_id] || 'Unknown User';
+        
+        // IMPORTANT: Always use client_name from database for clientName, never the user name
+        const clientName = item.client_name || 'Cliente não informado';
         
         return {
           id: item.id,
           userId: item.user_id,
-          userName: userName,
+          userName: userName, // This is the salesperson name
           createdAt: item.created_at,
           creationDate: item.creation_date,
           validityDate: item.validity_date,
@@ -132,7 +135,7 @@ export const useFetchProposalsWithFilter = () => {
             installmentValue: item.installment_value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00',
             debtNumber: item.debt_number || '',
             feesValue: feesValue?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00',
-            clientName: item.client_name,
+            clientName: clientName, // This should ALWAYS be the client name, never the salesperson
             clientEmail: item.client_email,
             clientPhone: item.client_phone,
             businessActivity: item.business_activity,
