@@ -28,10 +28,10 @@ export default function DashboardPage() {
             {/* DailyResultsCard - only visible to admin users */}
             {isAdmin && <DailyResultsCard salesData={salesData} />}
             
-            <GoalsCommissionsSection summary={summary} salesData={salesData} />
-            
-            {/* Daily Results Cards - visible to all users - now positioned below main cards */}
+            {/* Daily Results Cards - positioned between the main cards */}
             <DailyResultsToday />
+            
+            <GoalsCommissionsSection summary={summary} salesData={salesData} />
             
             {/* Admin-only commission projections card */}
             {isAdmin && <SalespeopleCommissionsCard />}
