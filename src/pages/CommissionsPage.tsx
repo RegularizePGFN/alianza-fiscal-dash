@@ -94,11 +94,6 @@ export default function CommissionsPage() {
               </div>
             </div>
 
-            {/* Supervisor Bonus Card */}
-            {supervisorBonus && (
-              <SupervisorBonusCard supervisorBonus={supervisorBonus} loading={loading} />
-            )}
-
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <SalesSummaryCard
@@ -164,6 +159,16 @@ export default function CommissionsPage() {
               <SalespeopleCommissionsCard key={selectedMonth} selectedMonth={selectedMonth} />
             </div>
 
+            {/* Supervisor Bonus Card - positioned below the consolidated table */}
+            {supervisorBonus && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 transition-colors duration-300">
+                <SupervisorBonusCard 
+                  supervisorBonus={supervisorBonus} 
+                  loading={loading}
+                />
+              </div>
+            )}
+
             {/* Additional Info Card */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 transition-colors duration-300">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
@@ -182,7 +187,7 @@ export default function CommissionsPage() {
                 </div>
                 <div>
                   <h4 className="font-medium text-gray-900 dark:text-white mb-2">
-                    Bonificação Supervisora
+                    Bonificação Gestora
                   </h4>
                   <ul className="space-y-1 text-gray-600 dark:text-gray-300">
                     <li>• R$ 50k - R$ 70k: R$ 500</li>

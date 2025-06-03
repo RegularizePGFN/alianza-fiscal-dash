@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Award, TrendingUp, Users } from "lucide-react";
+import { Award, Users } from "lucide-react";
 import { SupervisorBonus } from "@/lib/supervisorUtils";
 
 interface SupervisorBonusCardProps {
@@ -11,11 +11,11 @@ interface SupervisorBonusCardProps {
 export function SupervisorBonusCard({ supervisorBonus, loading }: SupervisorBonusCardProps) {
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <Card className="w-full">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-medium flex items-center gap-2">
             <Award className="h-5 w-5 text-purple-600" />
-            Bonificação Supervisora
+            Bonificação Gestora
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -41,57 +41,53 @@ export function SupervisorBonusCard({ supervisorBonus, loading }: SupervisorBonu
     return 'text-gray-500';
   };
 
-  const getProgressColor = (amount: number) => {
-    if (amount >= 2000) return 'bg-green-100 border-green-200';
-    if (amount >= 1000) return 'bg-blue-100 border-blue-200';
-    if (amount >= 500) return 'bg-orange-100 border-orange-200';
-    return 'bg-gray-100 border-gray-200';
-  };
-
   return (
-    <Card className={`${getProgressColor(supervisorBonus.amount)} transition-colors duration-300`}>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2">
+    <Card className="w-full">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg font-medium flex items-center gap-2">
           <Award className="h-5 w-5 text-purple-600" />
-          Bonificação Supervisora
+          Bonificação Gestora
         </CardTitle>
         <CardDescription>
           {supervisorBonus.name}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Bonificação Atual */}
-        <div className="text-center">
-          <p className={`text-3xl font-bold ${getBonusColor(supervisorBonus.amount)}`}>
-            {formatCurrency(supervisorBonus.amount)}
-          </p>
-          <p className="text-sm text-gray-600 mt-1">
-            Bonificação do Período
-          </p>
+      <CardContent>
+        <div className="overflow-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left p-2 font-medium">Vendas da Equipe</th>
+                <th className="text-left p-2 font-medium">Faixa</th>
+                <th className="text-left p-2 font-medium">Bonificação</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b">
+                <td className="p-2">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-blue-600" />
+                    <span className="font-medium">
+                      {formatCurrency(supervisorBonus.teamTotalSales)}
+                    </span>
+                  </div>
+                </td>
+                <td className="p-2 text-gray-600">
+                  {supervisorBonus.tier}
+                </td>
+                <td className="p-2">
+                  <span className={`font-bold ${getBonusColor(supervisorBonus.amount)}`}>
+                    {formatCurrency(supervisorBonus.amount)}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-
-        {/* Informações da Equipe */}
-        <div className="flex items-center justify-between p-3 bg-white/70 rounded-lg border">
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-blue-600" />
-            <span className="text-sm font-medium">Total da Equipe</span>
-          </div>
-          <span className="text-sm font-bold">
-            {formatCurrency(supervisorBonus.teamTotalSales)}
-          </span>
-        </div>
-
-        {/* Faixa Atual */}
-        <div className="p-3 bg-white/70 rounded-lg border">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Faixa Atual:</span>
-            <span className="text-sm text-gray-600">{supervisorBonus.tier}</span>
-          </div>
-        </div>
-
+        
         {/* Estrutura de Bonificação */}
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium text-gray-700">Estrutura de Bonificação:</h4>
+        <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+          <h4 className="text-sm font-medium text-gray-700 mb-2">Estrutura de Bonificação:</h4>
           <div className="space-y-1 text-xs text-gray-600">
             <div className="flex justify-between">
               <span>R$ 50.000 - R$ 70.000:</span>
