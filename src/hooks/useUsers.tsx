@@ -36,31 +36,29 @@ export function useUsers() {
         throw new Error('Erro na sessão: ' + sessionError.message);
       }
       
-      if (!session) {
-        console.error('No session found');
+      if (!session?.access_token) {
+        console.error('No valid session or access token found');
         throw new Error('Usuário não autenticado - faça login novamente');
-      }
-      
-      if (!session.access_token) {
-        console.error('No access token in session');
-        throw new Error('Token de acesso inválido - faça login novamente');
       }
       
       console.log("Valid session found, user:", session.user?.email);
       console.log("Access token length:", session.access_token.length);
       
-      // Call admin API with proper error handling
+      // Call admin API with improved error handling
       console.log("Calling admin API...");
       const response = await adminAPI.listUsers();
       
       if (response.error) {
         console.error("Admin API error:", response.error);
         
-        // Handle specific authentication errors
+        // Handle specific authentication errors with retry logic
         if (response.error.message?.includes('authentication') || 
-            response.error.message?.includes('Invalid authentication token')) {
+            response.error.message?.includes('Invalid authentication token') ||
+            response.error.message?.includes('Auth session missing')) {
+          
+          console.log("Authentication error detected, attempting session refresh...");
+          
           // Try to refresh the session
-          console.log("Attempting to refresh session...");
           const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
           
           if (refreshError) {
@@ -68,13 +66,18 @@ export function useUsers() {
             throw new Error('Sessão expirada. Faça login novamente.');
           }
           
-          if (refreshData.session) {
-            console.log("Session refreshed, retrying admin API call...");
+          if (refreshData.session?.access_token) {
+            console.log("Session refreshed successfully, retrying admin API call...");
+            
+            // Wait a bit for the session to be properly set
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
             // Retry the admin API call with new session
             const retryResponse = await adminAPI.listUsers();
             
             if (retryResponse.error) {
-              throw new Error(retryResponse.error.message || 'Erro ao buscar usuários após refresh');
+              console.error("Retry also failed:", retryResponse.error);
+              throw new Error(retryResponse.error.message || 'Erro ao buscar usuários após refresh da sessão');
             }
             
             // Continue with the retry response
@@ -86,6 +89,8 @@ export function useUsers() {
             // Process the retry response data
             await processUsersData(retryResponse.data.users);
             return;
+          } else {
+            throw new Error('Não foi possível renovar a sessão. Faça login novamente.');
           }
         }
         
