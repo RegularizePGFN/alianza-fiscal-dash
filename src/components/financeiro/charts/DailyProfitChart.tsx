@@ -4,6 +4,7 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tool
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp } from "lucide-react";
 import { ChartContainer } from "@/components/ui/chart";
+import { isWeekend } from "date-fns";
 
 interface DailyProfitChartProps {
   salesData: any[];
@@ -23,12 +24,30 @@ export function DailyProfitChart({ salesData, totalCosts, selectedMonth, selecte
   const chartData = useMemo(() => {
     // Obter quantos dias tem o mês
     const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
-    const dailyCosts = totalCosts / daysInMonth; // Custos diluídos por dia
     
-    // Criar array com todos os dias do mês
-    const days = Array.from({ length: daysInMonth }, (_, i) => {
-      const day = i + 1;
-      const dateStr = `${selectedYear}-${selectedMonth.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+    // Calcular quantos dias úteis tem no mês
+    let businessDays = 0;
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(selectedYear, selectedMonth - 1, day);
+      if (!isWeekend(date)) {
+        businessDays++;
+      }
+    }
+    
+    const dailyCosts = totalCosts / businessDays; // Custos diluídos apenas por dias úteis
+    
+    // Criar array apenas com dias úteis
+    const days = [];
+    
+    for (let i = 1; i <= daysInMonth; i++) {
+      const date = new Date(selectedYear, selectedMonth - 1, i);
+      
+      // Pular fins de semana
+      if (isWeekend(date)) {
+        continue;
+      }
+      
+      const dateStr = `${selectedYear}-${selectedMonth.toString().padStart(2, '0')}-${i.toString().padStart(2, '0')}`;
       
       // Calcular receita do dia
       const dailyRevenue = salesData
@@ -37,13 +56,13 @@ export function DailyProfitChart({ salesData, totalCosts, selectedMonth, selecte
       
       const dailyProfit = dailyRevenue - dailyCosts;
       
-      return {
-        day: day.toString(),
+      days.push({
+        day: i.toString(),
         receita: dailyRevenue,
         custos: dailyCosts,
         lucro: dailyProfit
-      };
-    });
+      });
+    }
     
     return days;
   }, [salesData, totalCosts, selectedMonth, selectedYear]);
@@ -53,10 +72,10 @@ export function DailyProfitChart({ salesData, totalCosts, selectedMonth, selecte
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-green-600" />
-          Lucro Diário do Mês
+          Lucro Diário do Mês (Apenas Dias Úteis)
         </CardTitle>
         <CardDescription>
-          Evolução do lucro líquido ao longo dos dias do mês
+          Evolução do lucro líquido ao longo dos dias úteis do mês
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -73,7 +92,7 @@ export function DailyProfitChart({ salesData, totalCosts, selectedMonth, selecte
               <XAxis 
                 dataKey="day" 
                 tick={{ fontSize: 12 }}
-                label={{ value: 'Dia do Mês', position: 'insideBottom', offset: -10 }}
+                label={{ value: 'Dia do Mês (Úteis)', position: 'insideBottom', offset: -10 }}
               />
               <YAxis 
                 tickFormatter={formatCurrency}
@@ -97,7 +116,7 @@ export function DailyProfitChart({ salesData, totalCosts, selectedMonth, selecte
                   }
                   return [formatCurrency(value), label];
                 }}
-                labelFormatter={(label) => `Dia ${label}`}
+                labelFormatter={(label) => `Dia ${label} (Útil)`}
                 contentStyle={{ 
                   backgroundColor: "white", 
                   borderRadius: "8px", 
