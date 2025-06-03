@@ -64,8 +64,6 @@ export function VariableCostList({ costs, loading, onEdit, onDelete, selectedMon
     });
   };
 
-  const totalAmount = costs.reduce((sum, cost) => sum + cost.amount, 0);
-
   if (loading) {
     return <div className="text-center py-4">Carregando custos variáveis...</div>;
   }
@@ -157,23 +155,6 @@ export function VariableCostList({ costs, loading, onEdit, onDelete, selectedMon
             </CardContent>
           </Card>
         ))}
-        
-        {/* Total Summary Card */}
-        <Card className="border-2 border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-blue-600" />
-                <h4 className="font-semibold text-blue-800 dark:text-blue-200">
-                  Total dos Custos Variáveis - {getSelectedMonthName()}
-                </h4>
-              </div>
-              <span className="text-2xl font-bold text-blue-700 dark:text-blue-300">
-                {formatCurrency(totalAmount)}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

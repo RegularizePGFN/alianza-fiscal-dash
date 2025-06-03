@@ -49,8 +49,6 @@ export function FixedCostList({ costs, loading, onEdit, onDelete }: FixedCostLis
     }).format(value);
   };
 
-  const totalAmount = costs.reduce((sum, cost) => sum + cost.amount, 0);
-
   if (loading) {
     return <div className="text-center py-4">Carregando custos fixos...</div>;
   }
@@ -126,23 +124,6 @@ export function FixedCostList({ costs, loading, onEdit, onDelete }: FixedCostLis
             </CardContent>
           </Card>
         ))}
-        
-        {/* Total Summary Card */}
-        <Card className="border-2 border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Building className="h-5 w-5 text-green-600" />
-                <h4 className="font-semibold text-green-800 dark:text-green-200">
-                  Total dos Custos Fixos
-                </h4>
-              </div>
-              <span className="text-2xl font-bold text-green-700 dark:text-green-300">
-                {formatCurrency(totalAmount)}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
