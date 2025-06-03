@@ -23,7 +23,9 @@ export function CostForm({ cost, onSave, onCancel }: CostFormProps) {
     description: '',
     amount: '',
     type: 'fixed' as 'fixed' | 'variable',
-    category: ''
+    category: '',
+    start_date: '',
+    end_date: ''
   });
 
   useEffect(() => {
@@ -33,7 +35,9 @@ export function CostForm({ cost, onSave, onCancel }: CostFormProps) {
         description: cost.description || '',
         amount: cost.amount?.toString() || '',
         type: cost.type || 'fixed',
-        category: cost.category || ''
+        category: cost.category || '',
+        start_date: cost.start_date || '',
+        end_date: cost.end_date || ''
       });
     }
   }, [cost]);
@@ -48,7 +52,9 @@ export function CostForm({ cost, onSave, onCancel }: CostFormProps) {
         description: formData.description,
         amount: parseFloat(formData.amount),
         type: formData.type,
-        category: formData.category || null
+        category: formData.category || null,
+        start_date: formData.start_date || null,
+        end_date: formData.end_date || null
       };
 
       if (cost) {
@@ -144,6 +150,30 @@ export function CostForm({ cost, onSave, onCancel }: CostFormProps) {
               />
             </div>
           </div>
+
+          {formData.type === 'variable' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="start_date">Data de Início</Label>
+                <Input
+                  id="start_date"
+                  type="date"
+                  value={formData.start_date}
+                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="end_date">Data de Término (opcional)</Label>
+                <Input
+                  id="end_date"
+                  type="date"
+                  value={formData.end_date}
+                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="description">Descrição (opcional)</Label>

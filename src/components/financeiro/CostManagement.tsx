@@ -1,77 +1,37 @@
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus } from "lucide-react";
-import { CostForm } from "./CostForm";
-import { CostList } from "./CostList";
-import { useCosts } from "@/hooks/financeiro/useCosts";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Building, TrendingUp } from "lucide-react";
+import { FixedCostManagement } from "./FixedCostManagement";
+import { VariableCostManagement } from "./VariableCostManagement";
 
 interface CostManagementProps {
   onCostChange: () => void;
 }
 
 export function CostManagement({ onCostChange }: CostManagementProps) {
-  const [showForm, setShowForm] = useState(false);
-  const [editingCost, setEditingCost] = useState<any>(null);
-  const { costs, loading, fetchCosts } = useCosts();
-
-  const handleCostSaved = () => {
-    setShowForm(false);
-    setEditingCost(null);
-    fetchCosts();
-    onCostChange();
-  };
-
-  const handleEdit = (cost: any) => {
-    setEditingCost(cost);
-    setShowForm(true);
-  };
-
-  const handleCostDeleted = () => {
-    fetchCosts();
-    onCostChange();
-  };
-
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Gerenciar Custos</CardTitle>
-              <CardDescription>
-                Adicione e gerencie os custos fixos e variáveis da empresa
-              </CardDescription>
-            </div>
-            <Button onClick={() => setShowForm(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar Custo
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {showForm && (
-            <div className="mb-6">
-              <CostForm
-                cost={editingCost}
-                onSave={handleCostSaved}
-                onCancel={() => {
-                  setShowForm(false);
-                  setEditingCost(null);
-                }}
-              />
-            </div>
-          )}
-          
-          <CostList
-            costs={costs}
-            loading={loading}
-            onEdit={handleEdit}
-            onDelete={handleCostDeleted}
-          />
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="fixed" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="fixed" className="flex items-center gap-2">
+            <Building className="h-4 w-4" />
+            Custos Fixos
+          </TabsTrigger>
+          <TabsTrigger value="variable" className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4" />
+            Custos Variáveis
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="fixed">
+          <FixedCostManagement onCostChange={onCostChange} />
+        </TabsContent>
+        
+        <TabsContent value="variable">
+          <VariableCostManagement onCostChange={onCostChange} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
