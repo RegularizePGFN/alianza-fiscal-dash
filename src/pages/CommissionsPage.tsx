@@ -4,46 +4,34 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SalespeopleCommissionsCard } from "@/components/dashboard/salespeople-commissions";
 import { SalesSummaryCard } from "@/components/dashboard/SalesSummaryCard";
 import { SalesHistoryCard } from "@/components/commissions/SalesHistoryCard";
 import { SupervisorBonusCard } from "@/components/dashboard/SupervisorBonusCard";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { MonthSelector } from "@/components/financeiro/MonthSelector";
 import { useCommissionsData } from "@/hooks/useCommissionsData";
 import { useSalespersonCommissionData } from "@/hooks/useSalespersonCommissionData";
 import { DollarSign, TrendingUp, Users, Target, Calendar, BarChart3 } from "lucide-react";
 
 export default function CommissionsPage() {
   const { user } = useAuth();
-  const [selectedMonth, setSelectedMonth] = useState(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
-  });
+  const currentDate = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
+
+  // Convert to string format for hooks that expect it
+  const selectedMonthString = `${selectedYear}-${selectedMonth.toString().padStart(2, '0')}`;
 
   // Get commission data based on user role
-  const adminData = useCommissionsData({ selectedMonth });
-  const salespersonHookData = useSalespersonCommissionData({ selectedMonth });
+  const adminData = useCommissionsData({ selectedMonth: selectedMonthString });
+  const salespersonHookData = useSalespersonCommissionData({ selectedMonth: selectedMonthString });
   
   const isAdmin = user?.role === UserRole.ADMIN;
 
-  // Generate month options (last 12 months + current month)
-  const generateMonthOptions = () => {
-    const options = [];
-    const now = new Date();
-    
-    for (let i = 12; i >= 0; i--) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const value = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
-      const label = format(date, 'MMMM yyyy', { locale: ptBR });
-      options.push({ value, label });
-    }
-    
-    return options;
+  const handleMonthChange = (month: number, year: number) => {
+    setSelectedMonth(month);
+    setSelectedYear(year);
   };
-
-  const monthOptions = generateMonthOptions();
 
   if (isAdmin) {
     const { salespeople, supervisorBonus, summaryTotals, loading } = adminData;
@@ -75,24 +63,16 @@ export default function CommissionsPage() {
                       Histórico e informações detalhadas de comissões dos vendedores
                     </p>
                   </div>
-                  
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                      <SelectTrigger className="w-48">
-                        <SelectValue placeholder="Selecione o mês" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {monthOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
               </div>
             </div>
+
+            {/* Month Selector */}
+            <MonthSelector
+              selectedMonth={selectedMonth}
+              selectedYear={selectedYear}
+              onMonthChange={handleMonthChange}
+            />
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -156,7 +136,7 @@ export default function CommissionsPage() {
             
             {/* Commission Content */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 print:break-inside-avoid print:mb-10 transition-colors duration-300">
-              <SalespeopleCommissionsCard key={selectedMonth} selectedMonth={selectedMonth} />
+              <SalespeopleCommissionsCard key={selectedMonthString} selectedMonth={selectedMonthString} />
             </div>
 
             {/* Supervisor Bonus Card - positioned below the consolidated table */}
@@ -222,24 +202,16 @@ export default function CommissionsPage() {
                     Histórico e informações detalhadas das suas comissões
                   </p>
                 </div>
-                
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                    <SelectTrigger className="w-48">
-                      <SelectValue placeholder="Selecione o mês" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {monthOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
             </div>
           </div>
+
+          {/* Month Selector */}
+          <MonthSelector
+            selectedMonth={selectedMonth}
+            selectedYear={selectedYear}
+            onMonthChange={handleMonthChange}
+          />
 
           {loading ? (
             <div className="text-center py-8">
@@ -344,7 +316,10 @@ export default function CommissionsPage() {
                       Período Analisado
                     </h4>
                     <p className="text-gray-600 dark:text-gray-300">
-                      {format(new Date(selectedMonth + '-01'), 'MMMM yyyy', { locale: ptBR })}
+                      {new Intl.DateTimeFormat('pt-BR', { 
+                        month: 'long', 
+                        year: 'numeric' 
+                      }).format(new Date(selectedYear, selectedMonth - 1))}
                     </p>
                     <p className="text-gray-600 dark:text-gray-300 mt-1">
                       Comissão calculada com base nas vendas realizadas
