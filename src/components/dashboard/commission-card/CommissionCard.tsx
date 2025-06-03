@@ -1,4 +1,5 @@
 
+
 import { useMemo, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sale, UserRole } from "@/lib/types";
@@ -116,13 +117,16 @@ export function CommissionCard({
     return generateDailyData(salesData, user.id);
   }, [salesData, user?.id]);
 
-  // Calculate the totals - Fixed dependencies
+  // Calculate the totals - Fixed dependencies and return type
   const totals = useMemo(() => {
     if (!dailyData || dailyData.length === 0) {
       return {
-        totalSales: 0,
-        totalCommission: 0,
-        salesCount: 0
+        totalDailySales: 0,
+        totalCount: 0,
+        averageSalesAmount: 0,
+        averageContractsPerDay: 0,
+        daysWithSales: 0,
+        totalBusinessDays: 0
       };
     }
     return calculateTotals(dailyData);
@@ -152,3 +156,4 @@ export function CommissionCard({
     </Card>
   );
 }
+
