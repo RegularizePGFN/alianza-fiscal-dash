@@ -25,13 +25,13 @@ export default function DashboardPage() {
           <LoadingSpinner />
         ) : (
           <div className="space-y-6 animate-fade-in">
-            {/* Daily Results Cards - visible to all users */}
-            <DailyResultsToday />
-            
             {/* DailyResultsCard - only visible to admin users */}
             {isAdmin && <DailyResultsCard salesData={salesData} />}
             
             <GoalsCommissionsSection summary={summary} salesData={salesData} />
+            
+            {/* Daily Results Cards - visible to all users - now positioned below main cards */}
+            <DailyResultsToday />
             
             {/* Admin-only commission projections card */}
             {isAdmin && <SalespeopleCommissionsCard />}
