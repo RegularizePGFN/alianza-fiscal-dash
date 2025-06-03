@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign } from "lucide-react";
+import { FileText } from "lucide-react";
 
 interface FeesCardProps {
   totalFees: number;
@@ -13,7 +13,7 @@ export function FeesCard({ totalFees, isAdmin }: FeesCardProps) {
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div>
           <CardTitle className="text-sm font-medium text-green-700 dark:text-green-300">
-            {isAdmin ? "Honorários da Equipe Hoje" : "Meus Honorários Hoje"}
+            {isAdmin ? "Simulações Realizadas Hoje" : "Minhas Simulações Hoje"}
           </CardTitle>
           <div className="text-2xl font-bold text-green-900 dark:text-green-100">
             {new Intl.NumberFormat('pt-BR', {
@@ -23,12 +23,12 @@ export function FeesCard({ totalFees, isAdmin }: FeesCardProps) {
           </div>
         </div>
         <div className="rounded-md bg-green-100 dark:bg-green-800/50 p-2 text-green-700 dark:text-green-300">
-          <DollarSign className="h-4 w-4" />
+          <FileText className="h-4 w-4" />
         </div>
       </CardHeader>
       <CardContent>
         <p className="text-xs text-green-600 dark:text-green-400">
-          {isAdmin ? "Honorários das propostas da equipe" : "Honorários das minhas propostas"}
+          {isAdmin ? "Honorários das simulações da equipe" : "Honorários das minhas simulações"}
         </p>
       </CardContent>
     </Card>
