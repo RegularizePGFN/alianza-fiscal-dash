@@ -27,11 +27,19 @@ export function useUsers() {
     
     try {
       console.log("Fetching users from admin API...");
+      
+      // Check if user is authenticated first
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Usuário não autenticado');
+      }
+      
+      console.log("User session valid, calling admin API...");
       const response = await adminAPI.listUsers();
       
       if (response.error) {
         console.error("Error fetching users:", response.error);
-        throw new Error(response.error.message);
+        throw new Error(response.error.message || 'Erro ao buscar usuários');
       }
       
       console.log("Auth users data:", response.data);
@@ -95,10 +103,11 @@ export function useUsers() {
       setUsers(mappedUsers);
     } catch (err: any) {
       console.error("Error fetching users:", err);
-      setError(err.message || "Falha ao carregar os usuários.");
+      const errorMessage = err.message || "Falha ao carregar os usuários.";
+      setError(errorMessage);
       toast({
         title: "Erro",
-        description: "Não foi possível carregar os usuários.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
