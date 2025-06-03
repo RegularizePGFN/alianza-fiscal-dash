@@ -12,6 +12,7 @@ export type SalespersonCommission = {
   expectedProgress: number;
   remainingDailyTarget: number;
   zeroDaysCount: number; // New field for days with zero sales
+  isSupervisor?: boolean; // New field to identify supervisor
 };
 
 export type SortColumn = 

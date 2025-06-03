@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SalespeopleCommissionsCard } from "@/components/dashboard/salespeople-commissions";
 import { SalesSummaryCard } from "@/components/dashboard/SalesSummaryCard";
 import { SalesHistoryCard } from "@/components/commissions/SalesHistoryCard";
+import { SupervisorBonusCard } from "@/components/dashboard/SupervisorBonusCard";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useCommissionsData } from "@/hooks/useCommissionsData";
@@ -45,7 +46,7 @@ export default function CommissionsPage() {
   const monthOptions = generateMonthOptions();
 
   if (isAdmin) {
-    const { salespeople, summaryTotals, loading } = adminData;
+    const { salespeople, supervisorBonus, summaryTotals, loading } = adminData;
     
     // Calculate metrics for admin view
     const totalSalespeopleWithSales = salespeople.filter(p => p.totalSales > 0).length;
@@ -92,6 +93,11 @@ export default function CommissionsPage() {
                 </div>
               </div>
             </div>
+
+            {/* Supervisor Bonus Card */}
+            {supervisorBonus && (
+              <SupervisorBonusCard supervisorBonus={supervisorBonus} loading={loading} />
+            )}
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -176,14 +182,13 @@ export default function CommissionsPage() {
                 </div>
                 <div>
                   <h4 className="font-medium text-gray-900 dark:text-white mb-2">
-                    Período Analisado
+                    Bonificação Supervisora
                   </h4>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    {format(new Date(selectedMonth + '-01'), 'MMMM yyyy', { locale: ptBR })}
-                  </p>
-                  <p className="text-gray-600 dark:text-gray-300 mt-1">
-                    {salespeople.length} vendedores cadastrados
-                  </p>
+                  <ul className="space-y-1 text-gray-600 dark:text-gray-300">
+                    <li>• R$ 50k - R$ 70k: R$ 500</li>
+                    <li>• R$ 70k - R$ 100k: R$ 1.000</li>
+                    <li>• Acima R$ 100k: R$ 2.000</li>
+                  </ul>
                 </div>
               </div>
             </div>

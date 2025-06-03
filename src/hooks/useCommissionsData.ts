@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { calculateCommission } from "@/lib/utils";
+import { calculateSupervisorBonus, isSupervisor } from "@/lib/supervisorUtils";
 import { SalespersonCommission, SummaryTotals } from "@/components/dashboard/salespeople-commissions/types";
 
 interface UseCommissionsDataProps {
@@ -11,6 +12,7 @@ interface UseCommissionsDataProps {
 
 export function useCommissionsData({ selectedMonth }: UseCommissionsDataProps) {
   const [salespeople, setSalespeople] = useState<SalespersonCommission[]>([]);
+  const [supervisorBonus, setSupervisorBonus] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -39,6 +41,8 @@ export function useCommissionsData({ selectedMonth }: UseCommissionsDataProps) {
           });
           return;
         }
+
+        let teamTotalSales = 0;
         
         const commissionData = await Promise.all(
           profilesData.map(async (profile) => {
@@ -71,6 +75,11 @@ export function useCommissionsData({ selectedMonth }: UseCommissionsDataProps) {
             const salesCount = salesData?.length || 0;
             const goalAmount = goalData?.goal_amount ? Number(goalData.goal_amount) : 0;
             
+            // Se não for supervisor, adicionar ao total da equipe
+            if (!isSupervisor(profile.email || '')) {
+              teamTotalSales += totalSales;
+            }
+            
             // Get contract type from profile, default to PJ
             const contractType = profile.contract_type || 'PJ';
             
@@ -99,15 +108,24 @@ export function useCommissionsData({ selectedMonth }: UseCommissionsDataProps) {
               expectedProgress: goalAmount, // For historical data, we use the full goal
               remainingDailyTarget: 0, // Not applicable for historical data
               zeroDaysCount: 0, // Not calculated for historical data
+              isSupervisor: isSupervisor(profile.email || '')
             };
           })
         );
         
         const validCommissions = commissionData.filter(Boolean) as SalespersonCommission[];
         setSalespeople(validCommissions);
+
+        // Calcular bonificação da supervisora
+        const supervisorBonusData = calculateSupervisorBonus(teamTotalSales);
+        setSupervisorBonus({
+          ...supervisorBonusData,
+          name: 'Vanessa Martins (Supervisora)'
+        });
         
         console.log('Historical commission data loaded:', validCommissions);
-        console.log('Total commissions for period:', validCommissions.reduce((total, c) => total + c.projectedCommission, 0));
+        console.log('Team total sales:', teamTotalSales);
+        console.log('Supervisor bonus:', supervisorBonusData);
         
       } catch (error) {
         console.error("Error fetching commission data:", error);
@@ -124,7 +142,7 @@ export function useCommissionsData({ selectedMonth }: UseCommissionsDataProps) {
     fetchCommissionsData();
   }, [selectedMonth]);
   
-  // Calculate summary totals
+  // Calculate summary totals including supervisor bonus
   const summaryTotals: SummaryTotals = {
     salesCount: salespeople.reduce((sum, person) => sum + person.salesCount, 0),
     totalSales: salespeople.reduce((sum, person) => sum + person.totalSales, 0),
@@ -135,12 +153,13 @@ export function useCommissionsData({ selectedMonth }: UseCommissionsDataProps) {
       : 0,
     metaGap: salespeople.reduce((sum, person) => sum + person.metaGap, 0),
     remainingDailyTarget: salespeople.reduce((sum, person) => sum + person.remainingDailyTarget, 0),
-    projectedCommission: salespeople.reduce((sum, person) => sum + person.projectedCommission, 0),
+    projectedCommission: salespeople.reduce((sum, person) => sum + person.projectedCommission, 0) + (supervisorBonus?.amount || 0),
     zeroDaysCount: 0, // Not applicable for summary row
   };
   
   return {
     salespeople,
+    supervisorBonus,
     summaryTotals,
     loading
   };

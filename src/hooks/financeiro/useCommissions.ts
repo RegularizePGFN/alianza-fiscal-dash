@@ -3,9 +3,11 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { calculateCommission } from '@/lib/utils';
+import { calculateSupervisorBonus, isSupervisor, SUPERVISOR_EMAIL } from '@/lib/supervisorUtils';
 
 export function useCommissions(selectedMonth: number, selectedYear: number) {
   const [commissions, setCommissions] = useState<any[]>([]);
+  const [supervisorBonus, setSupervisorBonus] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -29,7 +31,7 @@ export function useCommissions(selectedMonth: number, selectedYear: number) {
       // Buscar perfis dos vendedores para pegar o tipo de contrato
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, name, contract_type')
+        .select('id, name, contract_type, email')
         .eq('role', 'vendedor');
 
       if (profilesError) throw profilesError;
@@ -50,6 +52,9 @@ export function useCommissions(selectedMonth: number, selectedYear: number) {
         return acc;
       }, {}) || {};
 
+      // Calcular total de vendas da equipe (excluindo supervisor)
+      let teamTotalSales = 0;
+      
       // Calcular comissões para cada vendedor usando a MESMA lógica da aba comissões
       const commissionsArray = Object.values(salesByPerson).map((person: any) => {
         const profile = profilesMap.get(person.salesperson_id);
@@ -61,6 +66,11 @@ export function useCommissions(selectedMonth: number, selectedYear: number) {
         person.sales.forEach((sale: any) => {
           totalSales += Number(sale.gross_amount);
         });
+        
+        // Se não for supervisor, adicionar ao total da equipe
+        if (!isSupervisor(profile?.email || '')) {
+          teamTotalSales += totalSales;
+        }
         
         // Usar a MESMA função de cálculo que a aba comissões
         const commission = calculateCommission(totalSales, contractType);
@@ -77,13 +87,22 @@ export function useCommissions(selectedMonth: number, selectedYear: number) {
           totalSales,
           totalCommission: commission.amount,
           salesCount: person.sales.length,
-          contractType
+          contractType,
+          isSupervisor: isSupervisor(profile?.email || '')
         };
+      });
+
+      // Calcular bonificação da supervisora
+      const supervisorBonusData = calculateSupervisorBonus(teamTotalSales);
+      setSupervisorBonus({
+        ...supervisorBonusData,
+        name: 'Vanessa Martins (Supervisora)'
       });
 
       setCommissions(commissionsArray);
       console.log('Commissions calculated with unified logic:', commissionsArray);
-      console.log('Total commissions:', commissionsArray.reduce((total, c) => total + c.totalCommission, 0));
+      console.log('Team total sales:', teamTotalSales);
+      console.log('Supervisor bonus:', supervisorBonusData);
     } catch (error: any) {
       console.error('Erro ao buscar comissões:', error);
       toast({
@@ -101,11 +120,14 @@ export function useCommissions(selectedMonth: number, selectedYear: number) {
   }, [selectedMonth, selectedYear]);
 
   const totalCommissions = useMemo(() => {
-    return commissions.reduce((total, commission) => total + commission.totalCommission, 0);
-  }, [commissions]);
+    const vendedorCommissions = commissions.reduce((total, commission) => total + commission.totalCommission, 0);
+    const supervisorAmount = supervisorBonus?.amount || 0;
+    return vendedorCommissions + supervisorAmount;
+  }, [commissions, supervisorBonus]);
 
   return {
     commissions,
+    supervisorBonus,
     totalCommissions,
     loading,
     fetchCommissions
