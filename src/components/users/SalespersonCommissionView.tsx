@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateCommission } from "@/lib/utils";
+import { CONTRACT_TYPE_CLT, CONTRACT_TYPE_PJ } from "@/lib/constants";
 
 interface SalespersonCommissionViewProps {
   userId: string;
@@ -24,6 +25,7 @@ interface SalespersonData {
   goalAmount: number;
   metaGap: number;
   zeroDaysCount: number;
+  contractType: string;
 }
 
 export function SalespersonCommissionView({ 
@@ -74,9 +76,9 @@ export function SalespersonCommissionView({
         const totalSales = salesData?.reduce((sum, sale) => sum + Number(sale.gross_amount), 0) || 0;
         const salesCount = salesData?.length || 0;
         const goalAmount = goalData?.goal_amount ? Number(goalData.goal_amount) : 0;
-        const contractType = profile?.contract_type || 'PJ';
+        const contractType = profile?.contract_type || CONTRACT_TYPE_PJ;
         
-        // Calculate commission
+        // Calculate commission using the correct contract type
         const commission = calculateCommission(totalSales, contractType);
         
         const goalPercentage = goalAmount > 0 ? (totalSales / goalAmount) * 100 : 0;
@@ -88,7 +90,8 @@ export function SalespersonCommissionView({
           goalPercentage,
           goalAmount,
           metaGap: totalSales - goalAmount,
-          zeroDaysCount: 0 // Not calculated for historical data
+          zeroDaysCount: 0, // Not calculated for historical data
+          contractType
         });
         
       } catch (error) {
@@ -116,6 +119,30 @@ export function SalespersonCommissionView({
       </div>
     );
   }
+
+  // Get the current commission rate based on sales and contract type
+  const getCurrentCommissionInfo = () => {
+    const isCLT = salespersonData.contractType === CONTRACT_TYPE_CLT;
+    const isAboveGoal = salespersonData.totalSales >= 10000;
+    
+    if (isCLT) {
+      return {
+        currentRate: isAboveGoal ? 10 : 5,
+        belowGoalRate: 5,
+        aboveGoalRate: 10,
+        contractLabel: 'CLT'
+      };
+    } else {
+      return {
+        currentRate: isAboveGoal ? 25 : 20,
+        belowGoalRate: 20,
+        aboveGoalRate: 25,
+        contractLabel: 'PJ'
+      };
+    }
+  };
+
+  const commissionInfo = getCurrentCommissionInfo();
 
   return (
     <div className="space-y-6">
@@ -156,7 +183,7 @@ export function SalespersonCommissionView({
           title="Minha Comissão"
           amount={salespersonData.projectedCommission}
           icon={<DollarSign className="h-4 w-4" />}
-          description="Sua comissão projetada do período"
+          description={`Sua comissão (${commissionInfo.currentRate}% - ${commissionInfo.contractLabel})`}
         />
         
         <SalesSummaryCard
@@ -216,11 +243,11 @@ export function SalespersonCommissionView({
             </div>
             
             <div>
-              <h4 className="font-medium text-gray-900 dark:text-white mb-2">Dias Sem Vendas</h4>
-              <p className="text-2xl font-bold text-orange-600">
-                {salespersonData.zeroDaysCount}
+              <h4 className="font-medium text-gray-900 dark:text-white mb-2">Tipo de Contrato</h4>
+              <p className="text-2xl font-bold text-purple-600">
+                {commissionInfo.contractLabel}
               </p>
-              <p className="text-sm text-gray-500">Dias úteis sem vendas no período</p>
+              <p className="text-sm text-gray-500">Tipo de contratação</p>
             </div>
           </div>
         </CardContent>
@@ -235,13 +262,13 @@ export function SalespersonCommissionView({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
               <h4 className="font-medium text-gray-900 dark:text-white mb-2">
-                Estrutura de Comissões
+                Estrutura de Comissões ({commissionInfo.contractLabel})
               </h4>
               <ul className="space-y-1 text-gray-600 dark:text-gray-300">
-                <li>• Até R$ 10.000: 20% de comissão</li>
-                <li>• Acima de R$ 10.000: 25% de comissão</li>
+                <li>• Até R$ 10.000: {commissionInfo.belowGoalRate}% de comissão</li>
+                <li>• Acima de R$ 10.000: {commissionInfo.aboveGoalRate}% de comissão</li>
                 <li className={`font-medium ${salespersonData.totalSales >= 10000 ? 'text-green-600' : 'text-orange-600'}`}>
-                  • Sua faixa atual: {salespersonData.totalSales >= 10000 ? '25%' : '20%'}
+                  • Sua faixa atual: {commissionInfo.currentRate}%
                 </li>
               </ul>
             </div>
