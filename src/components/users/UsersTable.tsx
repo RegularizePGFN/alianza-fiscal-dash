@@ -33,7 +33,7 @@ export function UsersTable({ users, isLoading, error, onRetry, onEditUser, onDel
   const getRoleBadge = (role: UserRole) => {
     const roleConfig = {
       [UserRole.ADMIN]: { label: 'Admin', variant: 'destructive' as const },
-      [UserRole.VENDEDOR]: { label: 'Vendedor', variant: 'default' as const },
+      [UserRole.SALESPERSON]: { label: 'Vendedor', variant: 'default' as const },
     };
 
     const config = roleConfig[role] || { label: 'Unknown', variant: 'secondary' as const };
