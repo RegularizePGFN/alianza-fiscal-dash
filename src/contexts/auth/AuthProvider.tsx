@@ -19,11 +19,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Handle session update - memoized to prevent recreating on each render
   const handleSession = useCallback(async (session: Session | null) => {
-    if (isProcessingAuthChange.current) return;
+    console.log("🔄 [AUTH] Starting handleSession with session:", session?.user?.id || 'null');
+    
+    if (isProcessingAuthChange.current) {
+      console.log("⚠️ [AUTH] Already processing auth change, skipping");
+      return;
+    }
     isProcessingAuthChange.current = true;
     
     if (!session) {
-      console.log("No session found");
+      console.log("❌ [AUTH] No session found, setting unauthenticated state");
       setAuthState({
         isAuthenticated: false,
         user: null,
@@ -34,6 +39,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
     
     try {
+      console.log("🔍 [AUTH] Session found, fetching user profile for:", session.user.id);
+      
       // Get user profile data from profiles table if available
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
@@ -42,14 +49,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .single();
       
       if (profileError && profileError.code !== 'PGRST116') {
-        console.error("Error fetching user profile:", profileError);
+        console.error("❌ [AUTH] Error fetching user profile:", profileError);
+      } else {
+        console.log("✅ [AUTH] Profile data retrieved:", profileData);
       }
       
       const email = profileData?.email || session.user.email || '';
       
       // Log the retrieved role for debugging
-      console.log("Profile data retrieved:", profileData);
-      console.log("User role from database:", profileData?.role);
+      console.log("📋 [AUTH] User role from database:", profileData?.role);
       
       // Create user object from session and profile data
       const authUser: User = {
@@ -59,19 +67,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
         role: mapUserRole(profileData?.role, email),
       };
       
-      console.log("Setting authenticated user:", authUser);
-      console.log("With role:", authUser.role);
+      console.log("👤 [AUTH] Setting authenticated user:", authUser);
+      console.log("🎭 [AUTH] User role mapped to:", authUser.role);
       
       setAuthState({
         isAuthenticated: true,
         user: authUser,
         isLoading: false,
       });
+      
+      console.log("✅ [AUTH] Authentication state updated successfully");
+      
     } catch (error) {
-      console.error("Error handling session:", error);
+      console.error("💥 [AUTH] Error in handleSession:", error);
+      console.error("💥 [AUTH] Error stack:", error instanceof Error ? error.stack : 'No stack trace');
       
       // Fallback with admin email check
       const email = session.user.email || '';
+      
+      console.log("🔄 [AUTH] Using fallback authentication for:", email);
       
       setAuthState({
         isAuthenticated: true,
@@ -83,20 +97,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
         },
         isLoading: false,
       });
+      
+      console.log("⚠️ [AUTH] Fallback authentication completed");
     } finally {
       isProcessingAuthChange.current = false;
+      console.log("🏁 [AUTH] handleSession completed");
     }
   }, []);
 
   // Add refreshUser function to update user data
   const refreshUser = useCallback(async () => {
-    if (!authState.user) return false;
+    console.log("🔄 [AUTH] Starting refreshUser");
+    
+    if (!authState.user) {
+      console.log("❌ [AUTH] No user to refresh");
+      return false;
+    }
     
     try {
       // Get current session
       const { data: { session } } = await supabase.auth.getSession();
       
-      if (!session) return false;
+      if (!session) {
+        console.log("❌ [AUTH] No session found during refresh");
+        return false;
+      }
+      
+      console.log("🔍 [AUTH] Refreshing profile for user:", authState.user.id);
       
       // Get updated profile data from profiles table
       const { data: profileData, error: profileError } = await supabase
@@ -106,7 +133,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .single();
       
       if (profileError) {
-        console.error("Error fetching updated user profile:", profileError);
+        console.error("❌ [AUTH] Error fetching updated user profile:", profileError);
         return false;
       }
       
@@ -120,7 +147,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         role: mapUserRole(profileData?.role, email),
       };
       
-      console.log("Refreshing user data:", updatedUser);
+      console.log("✅ [AUTH] Refreshed user data:", updatedUser);
       
       // Update auth state with refreshed user data
       setAuthState(prevState => ({
@@ -130,17 +157,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       return true;
     } catch (error) {
-      console.error("Error refreshing user data:", error);
+      console.error("💥 [AUTH] Error refreshing user data:", error);
       return false;
     }
   }, [authState.user]);
 
   // Check for existing session on mount and listen for auth changes
   useEffect(() => {
+    console.log("🚀 [AUTH] Setting up authentication listeners");
+    
     // Set up auth state listener first with debouncing to prevent excessive calls
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log("Auth state changed:", event, session?.user?.id);
+        console.log("🔔 [AUTH] Auth state changed:", event, session?.user?.id || 'no user');
         
         // Use timeout to debounce auth state changes
         setTimeout(() => {
@@ -152,11 +181,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Check for existing session
     const checkSession = async () => {
       try {
-        console.log("Checking for existing session...");
+        console.log("🔍 [AUTH] Checking for existing session...");
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error("Session check error:", error);
+          console.error("❌ [AUTH] Session check error:", error);
           setAuthState({
             ...initialAuthState,
             isLoading: false,
@@ -164,10 +193,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
           return;
         }
         
-        console.log("Existing session:", session?.user?.id);
+        console.log("📋 [AUTH] Existing session:", session?.user?.id || 'no session');
         handleSession(session);
       } catch (error) {
-        console.error("Session restoration error:", error);
+        console.error("💥 [AUTH] Session restoration error:", error);
+        console.error("💥 [AUTH] Error details:", error instanceof Error ? error.message : 'Unknown error');
         setAuthState({
           ...initialAuthState,
           isLoading: false,
@@ -179,6 +209,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Cleanup subscription
     return () => {
+      console.log("🧹 [AUTH] Cleaning up auth listeners");
       subscription.unsubscribe();
     };
   }, [handleSession]);
@@ -186,10 +217,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Login function
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      console.log("Attempting login for:", email);
+      console.log("🔐 [AUTH] Attempting login for:", email);
       
       // Simple validation
       if (!email || !password) {
+        console.log("❌ [AUTH] Missing email or password");
         return false;
       }
 
@@ -199,14 +231,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
 
       if (error) {
-        console.error("Login error:", error);
+        console.error("❌ [AUTH] Login error:", error);
+        console.error("❌ [AUTH] Login error details:", error.message);
         return false;
       }
 
-      console.log("Login successful:", data.user?.id);
+      console.log("✅ [AUTH] Login successful for user:", data.user?.id);
       return true;
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("💥 [AUTH] Login exception:", error);
+      console.error("💥 [AUTH] Exception details:", error instanceof Error ? error.message : 'Unknown error');
       return false;
     }
   };
@@ -214,9 +248,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Impersonate user function (only for admins)
   const impersonateUser = async (userId: string): Promise<boolean> => {
     try {
+      console.log("🎭 [AUTH] Starting impersonation for user:", userId);
+      
       // Check if current user is admin
       if (authState.user?.role !== UserRole.ADMIN) {
-        console.error("Impersonation error: Only admins can impersonate users");
+        console.error("❌ [AUTH] Impersonation error: Only admins can impersonate users");
         return false;
       }
 
@@ -227,6 +263,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         session: currentSession
       };
 
+      console.log("🔍 [AUTH] Fetching profile for impersonation target:", userId);
+
       // Get user profile data
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
@@ -235,7 +273,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .single();
 
       if (profileError) {
-        console.error("Error fetching user profile for impersonation:", profileError);
+        console.error("❌ [AUTH] Error fetching user profile for impersonation:", profileError);
         return false;
       }
 
@@ -257,10 +295,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         isLoading: false,
       });
 
-      console.log("Impersonation successful:", impersonatedUser);
+      console.log("✅ [AUTH] Impersonation successful:", impersonatedUser);
       return true;
     } catch (error) {
-      console.error("Impersonation error:", error);
+      console.error("💥 [AUTH] Impersonation error:", error);
       return false;
     }
   };
@@ -268,9 +306,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Stop impersonating and return to original user
   const stopImpersonating = async (): Promise<boolean> => {
     try {
+      console.log("🔄 [AUTH] Stopping impersonation");
+      
       // Check if we have an original user session stored
       if (!originalUserSessionRef.current) {
-        console.error("No original user session found");
+        console.error("❌ [AUTH] No original user session found");
         return false;
       }
 
@@ -284,10 +324,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Clear the stored original session
       originalUserSessionRef.current = null;
 
-      console.log("Stopped impersonating, returned to original user");
+      console.log("✅ [AUTH] Stopped impersonating, returned to original user");
       return true;
     } catch (error) {
-      console.error("Error stopping impersonation:", error);
+      console.error("💥 [AUTH] Error stopping impersonation:", error);
       return false;
     }
   };
@@ -295,8 +335,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Logout function
   const logout = async () => {
     try {
+      console.log("🚪 [AUTH] Starting logout process");
+      
       // If impersonating, just return to original user instead of full logout
       if (authState.user?.isImpersonated) {
+        console.log("🎭 [AUTH] Stopping impersonation instead of full logout");
         await stopImpersonating();
         return;
       }
@@ -305,7 +348,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        console.error("Logout error:", error);
+        console.error("❌ [AUTH] Logout error:", error);
+      } else {
+        console.log("✅ [AUTH] Logout successful");
       }
       
       setAuthState({
@@ -316,8 +361,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Clear any stored original user session
       originalUserSessionRef.current = null;
+      console.log("🧹 [AUTH] Auth state cleared");
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error("💥 [AUTH] Logout exception:", error);
     }
   };
 

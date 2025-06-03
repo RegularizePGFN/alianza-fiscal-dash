@@ -20,20 +20,28 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("🔐 [LOGIN] Login form submitted for:", email);
+    
     setIsLoading(true);
     setLoginError('');
 
     try {
+      console.log("🔄 [LOGIN] Attempting login...");
       const success = await login(email, password);
       
       if (!success) {
+        console.log("❌ [LOGIN] Login failed - invalid credentials");
         setLoginError('Credenciais inválidas. Verifique seu e-mail e senha.');
+      } else {
+        console.log("✅ [LOGIN] Login successful, waiting for redirect...");
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('💥 [LOGIN] Login error:', error);
+      console.error('💥 [LOGIN] Error details:', error instanceof Error ? error.message : 'Unknown error');
       setLoginError('Ocorreu um erro durante o login. Tente novamente.');
     } finally {
       setIsLoading(false);
+      console.log("🏁 [LOGIN] Login process completed");
     }
   };
 

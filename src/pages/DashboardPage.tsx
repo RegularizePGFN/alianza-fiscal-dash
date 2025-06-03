@@ -12,9 +12,30 @@ import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
 
 export default function DashboardPage() {
-  const { salesData, summary, trends, loading } = useDashboardData();
   const { user } = useAuth();
+  const { salesData, summary, trends, loading } = useDashboardData();
   const isAdmin = user?.role === UserRole.ADMIN;
+
+  console.log("📊 [DASHBOARD] Dashboard render:", {
+    userId: user?.id,
+    userEmail: user?.email,
+    userRole: user?.role,
+    isAdmin,
+    loading,
+    salesDataLength: salesData?.length,
+    summary
+  });
+
+  console.log("📈 [DASHBOARD] Dashboard data state:", {
+    loading,
+    salesDataExists: !!salesData,
+    summaryExists: !!summary,
+    trendsExists: !!trends
+  });
+
+  if (loading) {
+    console.log("⏳ [DASHBOARD] Showing loading spinner");
+  }
 
   return (
     <AppLayout>
@@ -26,10 +47,15 @@ export default function DashboardPage() {
         ) : (
           <div className="space-y-6 animate-fade-in">
             {/* DailyResultsCard - only visible to admin users */}
-            {isAdmin && <DailyResultsCard salesData={salesData} />}
+            {isAdmin && (
+              <>
+                <DailyResultsCard salesData={salesData} />
+                <DailyResultsToday />
+              </>
+            )}
             
             {/* Daily Results Cards - positioned between the main cards */}
-            <DailyResultsToday />
+            {!isAdmin && <DailyResultsToday />}
             
             <GoalsCommissionsSection summary={summary} salesData={salesData} />
             
