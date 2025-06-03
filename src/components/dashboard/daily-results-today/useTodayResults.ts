@@ -25,14 +25,20 @@ export function useTodayResults() {
 
   useEffect(() => {
     const fetchTodayResults = async () => {
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
       try {
         setLoading(true);
         const today = new Date().toISOString().split('T')[0];
         const isAdmin = user.role === UserRole.ADMIN;
 
-        // Fetch sales data
+        // Optimize queries by fetching in parallel when possible
+        const queries = [];
+        
+        // Sales query
         let salesQuery = supabase
           .from("sales")
           .select("*")
@@ -41,33 +47,37 @@ export function useTodayResults() {
         if (!isAdmin) {
           salesQuery = salesQuery.eq("salesperson_id", user.id);
         }
+        queries.push(salesQuery);
 
-        const { data: salesData, error: salesError } = await salesQuery;
-        if (salesError) throw salesError;
-
-        // Fetch proposals data
+        // Proposals query
         let proposalsQuery = supabase
           .from("proposals")
-          .select("*")
+          .select("fees_value")
           .gte("created_at", `${today}T00:00:00`)
           .lt("created_at", `${today}T23:59:59`);
 
         if (!isAdmin) {
           proposalsQuery = proposalsQuery.eq("user_id", user.id);
         }
+        queries.push(proposalsQuery);
 
-        const { data: proposalsData, error: proposalsError } = await proposalsQuery;
-        if (proposalsError) throw proposalsError;
+        // Execute queries in parallel
+        const [salesResult, proposalsResult] = await Promise.all(queries);
+        
+        if (salesResult.error) throw salesResult.error;
+        if (proposalsResult.error) throw proposalsResult.error;
 
-        // Calculate totals
-        const totalSales = salesData?.reduce((sum, sale) => sum + Number(sale.gross_amount), 0) || 0;
-        const proposalsCount = proposalsData?.length || 0;
-        const totalFees = proposalsData?.reduce((sum, proposal) => sum + Number(proposal.fees_value || 0), 0) || 0;
+        const salesData = salesResult.data || [];
+        const proposalsData = proposalsResult.data || [];
+
+        const totalSales = salesData.reduce((sum, sale) => sum + Number(sale.gross_amount), 0);
+        const proposalsCount = proposalsData.length;
+        const totalFees = proposalsData.reduce((sum, proposal) => sum + Number(proposal.fees_value || 0), 0);
 
         let totalCommissions = 0;
 
         if (isAdmin) {
-          // For admins, calculate team commissions
+          // For admins, get profiles once and calculate team commissions
           const { data: profiles } = await supabase
             .from("profiles")
             .select("id, contract_type, email")
@@ -76,21 +86,18 @@ export function useTodayResults() {
           const profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);
           let teamTotalSales = 0;
 
-          // Group sales by salesperson and calculate commissions
-          const salesByPerson = salesData?.reduce((acc: any, sale) => {
+          const salesByPerson = salesData.reduce((acc: any, sale) => {
             if (!acc[sale.salesperson_id]) {
               acc[sale.salesperson_id] = 0;
             }
             acc[sale.salesperson_id] += Number(sale.gross_amount);
             return acc;
-          }, {}) || {};
+          }, {});
 
-          // Calculate commissions for each salesperson
           Object.entries(salesByPerson).forEach(([salespersonId, salesAmount]: [string, any]) => {
             const profile = profilesMap.get(salespersonId);
             const contractType = profile?.contract_type || 'PJ';
             
-            // Add to team total if not supervisor
             if (!isSupervisor(profile?.email || '')) {
               teamTotalSales += salesAmount;
             }
@@ -99,11 +106,10 @@ export function useTodayResults() {
             totalCommissions += commission.amount;
           });
 
-          // Add supervisor bonus for admins only
           const supervisorBonus = calculateSupervisorBonus(teamTotalSales);
           totalCommissions += supervisorBonus.amount;
         } else {
-          // For vendors, calculate only their commissions (no supervisor bonus)
+          // For vendors, get their contract type and calculate commission
           const { data: profile } = await supabase
             .from("profiles")
             .select("contract_type")
@@ -123,6 +129,12 @@ export function useTodayResults() {
         });
       } catch (error) {
         console.error("Error fetching today results:", error);
+        setResults({
+          totalSales: 0,
+          totalCommissions: 0,
+          proposalsCount: 0,
+          totalFees: 0,
+        });
       } finally {
         setLoading(false);
       }

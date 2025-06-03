@@ -12,7 +12,6 @@ interface UseSalespersonCommissionDataProps {
   selectedMonth: string; // Format: "YYYY-MM"
 }
 
-// Extend the interface to include contract type
 interface ExtendedSalespersonCommission extends SalespersonCommission {
   contractType: string;
 }
@@ -25,7 +24,10 @@ export function useSalespersonCommissionData({ selectedMonth }: UseSalespersonCo
   
   useEffect(() => {
     const fetchSalespersonCommissionData = async () => {
-      if (!user?.id) return;
+      if (!user?.id) {
+        setLoading(false);
+        return;
+      }
       
       try {
         setLoading(true);
@@ -38,15 +40,30 @@ export function useSalespersonCommissionData({ selectedMonth }: UseSalespersonCo
         const startDate = `${year}-${month.toString().padStart(2, '0')}-01`;
         const endDate = new Date(year, month, 0).toISOString().split('T')[0];
         
-        const { data: salesData, error: salesError } = await supabase
-          .from("sales")
-          .select("*")
-          .eq("salesperson_id", user.id)
-          .gte("sale_date", startDate)
-          .lte("sale_date", endDate);
-          
-        if (salesError) {
-          console.error(`Error fetching sales for ${user.name}:`, salesError);
+        // Fetch all data in parallel for better performance
+        const [salesResult, goalResult, profileResult] = await Promise.all([
+          supabase
+            .from("sales")
+            .select("*")
+            .eq("salesperson_id", user.id)
+            .gte("sale_date", startDate)
+            .lte("sale_date", endDate),
+          supabase
+            .from("monthly_goals")
+            .select("goal_amount")
+            .eq("user_id", user.id)
+            .eq("month", month)
+            .eq("year", year)
+            .maybeSingle(),
+          supabase
+            .from("profiles")
+            .select("contract_type")
+            .eq("id", user.id)
+            .single()
+        ]);
+        
+        if (salesResult.error) {
+          console.error(`Error fetching sales for ${user.name}:`, salesResult.error);
           toast({
             title: "Erro ao carregar vendas",
             description: "Não foi possível carregar os dados de vendas.",
@@ -55,27 +72,15 @@ export function useSalespersonCommissionData({ selectedMonth }: UseSalespersonCo
           return;
         }
         
-        const { data: goalData } = await supabase
-          .from("monthly_goals")
-          .select("goal_amount")
-          .eq("user_id", user.id)
-          .eq("month", month)
-          .eq("year", year)
-          .maybeSingle();
-
-        // Get the user's contract type
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("contract_type")
-          .eq("id", user.id)
-          .single();
+        const salesData = salesResult.data || [];
+        const goalData = goalResult.data;
+        const profileData = profileResult.data;
           
-        const totalSales = salesData?.reduce((sum, sale) => sum + Number(sale.gross_amount), 0) || 0;
-        const salesCount = salesData?.length || 0;
+        const totalSales = salesData.reduce((sum, sale) => sum + Number(sale.gross_amount), 0);
+        const salesCount = salesData.length;
         const goalAmount = goalData?.goal_amount ? Number(goalData.goal_amount) : 0;
         const contractType = profileData?.contract_type || 'PJ';
         
-        // Use the unified commission calculation function
         const commission = calculateCommission(totalSales, contractType);
         const projectedCommission = commission.amount;
         
@@ -88,11 +93,8 @@ export function useSalespersonCommissionData({ selectedMonth }: UseSalespersonCo
         const remainingAmount = goalAmount - totalSales;
         const remainingDailyTarget = businessDaysRemaining > 0 ? remainingAmount / businessDaysRemaining : 0;
         
-        // Calculate zero days count - days when the salesperson had no sales
-        const salesDates = new Set(
-          salesData?.map(sale => sale.sale_date) || []
-        );
-        
+        // Calculate zero days count more efficiently
+        const salesDates = new Set(salesData.map(sale => sale.sale_date));
         const allBusinessDays = getAllBusinessDaysInMonth(month, year);
         const zeroDaysCount = allBusinessDays.filter(day => !salesDates.has(day)).length;
         
@@ -109,7 +111,7 @@ export function useSalespersonCommissionData({ selectedMonth }: UseSalespersonCo
           expectedProgress,
           remainingDailyTarget,
           zeroDaysCount,
-          contractType, // Include contract type in the response
+          contractType,
         });
       } catch (error) {
         console.error("Error fetching salesperson commission data:", error);
@@ -124,9 +126,8 @@ export function useSalespersonCommissionData({ selectedMonth }: UseSalespersonCo
     };
     
     fetchSalespersonCommissionData();
-  }, [selectedMonth, user?.id, toast]);
+  }, [selectedMonth, user?.id, toast, user?.name]);
   
-  // Get all business days of a specific month
   function getAllBusinessDaysInMonth(month: number, year: number): string[] {
     const result: string[] = [];
     const lastDay = new Date(year, month, 0).getDate();
@@ -134,7 +135,6 @@ export function useSalespersonCommissionData({ selectedMonth }: UseSalespersonCo
     for (let day = 1; day <= lastDay; day++) {
       const date = new Date(year, month - 1, day);
       
-      // Skip weekends
       if (date.getDay() !== 0 && date.getDay() !== 6) {
         const formattedDate = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
         result.push(formattedDate);
