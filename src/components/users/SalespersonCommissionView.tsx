@@ -76,9 +76,9 @@ export function SalespersonCommissionView({
         const totalSales = salesData?.reduce((sum, sale) => sum + Number(sale.gross_amount), 0) || 0;
         const salesCount = salesData?.length || 0;
         const goalAmount = goalData?.goal_amount ? Number(goalData.goal_amount) : 0;
-        const contractType = profile?.contract_type || 'PJ';
+        const contractType = profile?.contract_type || CONTRACT_TYPE_PJ;
         
-        // Calculate commission
+        // Calculate commission using the correct contract type
         const commission = calculateCommission(totalSales, contractType);
         
         const goalPercentage = goalAmount > 0 ? (totalSales / goalAmount) * 100 : 0;
@@ -183,7 +183,7 @@ export function SalespersonCommissionView({
           title="Minha Comissão"
           amount={salespersonData.projectedCommission}
           icon={<DollarSign className="h-4 w-4" />}
-          description="Sua comissão projetada do período"
+          description={`Sua comissão (${commissionInfo.currentRate}% - ${commissionInfo.contractLabel})`}
         />
         
         <SalesSummaryCard
