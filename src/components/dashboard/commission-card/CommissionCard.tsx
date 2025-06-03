@@ -1,7 +1,5 @@
 
-
-
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sale, UserRole } from "@/lib/types";
 import { useAuth } from "@/contexts/auth";
@@ -28,15 +26,23 @@ export function CommissionCard({
   const isAdmin = user?.role === UserRole.ADMIN;
   const [contractType, setContractType] = useState<string>(CONTRACT_TYPE_PJ);
   const [isLoadingContract, setIsLoadingContract] = useState(true);
+  const [isDataReady, setIsDataReady] = useState(false);
 
-  // Extract stable user ID
-  const userId = user?.id;
+  // Extract stable user ID and ensure it's consistent
+  const userId = useMemo(() => user?.id, [user?.id]);
+  
+  // Stabilize salesData to prevent unnecessary re-renders
+  const stableSalesData = useMemo(() => {
+    if (!Array.isArray(salesData)) return [];
+    return salesData;
+  }, [salesData]);
 
   // Fetch user's contract type from profiles table
   useEffect(() => {
     const fetchContractType = async () => {
       if (!userId) {
         setIsLoadingContract(false);
+        setIsDataReady(true);
         return;
       }
       
@@ -62,11 +68,52 @@ export function CommissionCard({
         // Keep default CONTRACT_TYPE_PJ if error
       } finally {
         setIsLoadingContract(false);
+        setIsDataReady(true);
       }
     };
     
     fetchContractType();
   }, [userId]);
+
+  // Stabilized data generation function
+  const generateStableData = useCallback(() => {
+    if (!userId || !stableSalesData || stableSalesData.length === 0) {
+      return [];
+    }
+    try {
+      return generateDailyData(stableSalesData, userId);
+    } catch (error) {
+      console.error('Error generating daily data:', error);
+      return [];
+    }
+  }, [stableSalesData, userId]);
+
+  // Stabilized totals calculation function
+  const calculateStableTotals = useCallback((dailyDataInput: any[]) => {
+    if (!Array.isArray(dailyDataInput) || dailyDataInput.length === 0) {
+      return {
+        totalDailySales: 0,
+        totalCount: 0,
+        averageSalesAmount: 0,
+        averageContractsPerDay: 0,
+        daysWithSales: 0,
+        totalBusinessDays: 0
+      };
+    }
+    try {
+      return calculateTotals(dailyDataInput);
+    } catch (error) {
+      console.error('Error calculating totals:', error);
+      return {
+        totalDailySales: 0,
+        totalCount: 0,
+        averageSalesAmount: 0,
+        averageContractsPerDay: 0,
+        daysWithSales: 0,
+        totalBusinessDays: 0
+      };
+    }
+  }, []);
 
   // If admin, we don't calculate commission
   if (isAdmin) {
@@ -88,8 +135,8 @@ export function CommissionCard({
     );
   }
 
-  // Show loading state while fetching contract type
-  if (isLoadingContract) {
+  // Show loading state while fetching contract type or data is not ready
+  if (isLoadingContract || !isDataReady) {
     return (
       <Card className="h-full">
         <CardHeader>
@@ -113,17 +160,17 @@ export function CommissionCard({
 
   console.log('Commission result:', commission);
 
-  // Generate daily data for the chart - Fixed dependencies to avoid re-creation on each render
+  // Generate daily data for the chart - Using stabilized function and dependencies
   const dailyData = useMemo(() => {
-    if (!userId || !salesData || salesData.length === 0) {
+    if (!isDataReady || !userId) {
       return [];
     }
-    return generateDailyData(salesData, userId);
-  }, [salesData, userId]);
+    return generateStableData();
+  }, [generateStableData, isDataReady, userId]);
 
-  // Calculate the totals - Fixed dependencies and return type
+  // Calculate the totals - Using stabilized function and dependencies
   const totals = useMemo(() => {
-    if (!dailyData || dailyData.length === 0) {
+    if (!isDataReady) {
       return {
         totalDailySales: 0,
         totalCount: 0,
@@ -133,8 +180,8 @@ export function CommissionCard({
         totalBusinessDays: 0
       };
     }
-    return calculateTotals(dailyData);
-  }, [dailyData]);
+    return calculateStableTotals(dailyData);
+  }, [calculateStableTotals, dailyData, isDataReady]);
   
   return (
     <Card className="h-full">
@@ -160,5 +207,3 @@ export function CommissionCard({
     </Card>
   );
 }
-
-
