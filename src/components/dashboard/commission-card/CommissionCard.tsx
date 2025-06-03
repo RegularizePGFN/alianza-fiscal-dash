@@ -1,3 +1,4 @@
+
 import { useMemo, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sale, UserRole } from "@/lib/types";
@@ -100,22 +101,32 @@ export function CommissionCard({
     );
   }
 
-  // Calculate commission based on user's actual contract type
+  // Calculate commission based on user's actual contract type - moved outside useMemo to avoid dependency issues
   console.log('Calculating commission with:', { totalSales, contractType });
   const commission = calculateCommission(totalSales, contractType);
   const isCommissionGoalMet = totalSales >= COMMISSION_GOAL_AMOUNT;
 
   console.log('Commission result:', commission);
 
-  // Generate daily data for the chart
-  const dailyData = useMemo(() => 
-    generateDailyData(salesData, user?.id), 
-  [salesData, user]);
+  // Generate daily data for the chart - Fixed dependencies to avoid re-creation on each render
+  const dailyData = useMemo(() => {
+    if (!user?.id || !salesData || salesData.length === 0) {
+      return [];
+    }
+    return generateDailyData(salesData, user.id);
+  }, [salesData, user?.id]);
 
-  // Calculate the totals
-  const totals = useMemo(() => 
-    calculateTotals(dailyData),
-  [dailyData]);
+  // Calculate the totals - Fixed dependencies
+  const totals = useMemo(() => {
+    if (!dailyData || dailyData.length === 0) {
+      return {
+        totalSales: 0,
+        totalCommission: 0,
+        salesCount: 0
+      };
+    }
+    return calculateTotals(dailyData);
+  }, [dailyData]);
   
   return (
     <Card className="h-full">

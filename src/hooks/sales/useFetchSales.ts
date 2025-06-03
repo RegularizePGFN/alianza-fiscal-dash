@@ -39,7 +39,7 @@ export const useFetchSales = (user: User | null) => {
       setLoading(true);
       
       if (!user) {
-        console.log("No authenticated user found");
+        console.log("No authenticated user, skipping sales fetch");
         setLoading(false);
         isFetchingRef.current = false;
         return;
@@ -137,12 +137,12 @@ export const useFetchSales = (user: User | null) => {
     }
   };
 
-  // Fetch sales when user changes
+  // Fetch sales when user changes - Fixed to prevent unnecessary re-renders
   useEffect(() => {
     // Reset mounted state when component mounts
     isMountedRef.current = true;
     
-    if (user) {
+    if (user?.id) {
       console.log("Authenticated user, fetching sales");
       fetchSales();
     } else {
@@ -154,7 +154,7 @@ export const useFetchSales = (user: User | null) => {
     return () => {
       isMountedRef.current = false;
     };
-  }, [user]);
+  }, [user?.id]); // Only depend on user.id to avoid unnecessary re-renders
   
   return {
     sales,
