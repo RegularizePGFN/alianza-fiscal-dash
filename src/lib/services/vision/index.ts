@@ -20,57 +20,33 @@ export const analyzeImageWithAI = async (
   updateStatus: (status: string) => void
 ): Promise<Partial<ExtractedData>> => {
   try {
-    console.log('🚀 [ANALYZE-IMAGE-AI] Iniciando análise...');
     progressCallback(10);
     
-    updateStatus('Enviando imagem para análise com IA...');
+    updateStatus('Enviando imagem para GPT-4o via Supabase...');
+    
     progressCallback(30);
     
     // Send the image to the API
-    console.log('📤 [ANALYZE-IMAGE-AI] Enviando para API...');
     const data = await sendImageToAnalysis(imageBase64);
     
     if (!data.jsonContent) {
-      console.error('❌ [ANALYZE-IMAGE-AI] Resposta sem JSON:', data);
-      const error = new Error('A resposta não contém dados estruturados') as any;
-      error.code = 'NO_STRUCTURED_DATA';
-      throw error;
+      console.error('Resposta sem JSON:', data);
+      throw new Error('A resposta não contém dados estruturados');
     }
     
     progressCallback(70);
-    updateStatus('Processando dados extraídos...');
     
-    let aiResponse: AIAnalysisResponse;
-    try {
-      aiResponse = JSON.parse(data.jsonContent);
-      console.log('✅ [ANALYZE-IMAGE-AI] Resposta da AI parseada:', aiResponse);
-    } catch (parseError) {
-      console.error('❌ [ANALYZE-IMAGE-AI] Erro ao fazer parse da resposta:', parseError);
-      const error = new Error('Dados extraídos em formato inválido') as any;
-      error.code = 'INVALID_EXTRACTED_DATA';
-      throw error;
-    }
+    const aiResponse: AIAnalysisResponse = JSON.parse(data.jsonContent);
+    console.log('Resposta da AI processada com sucesso:', aiResponse);
     
     // Map the AI response to our application format
-    console.log('🔄 [ANALYZE-IMAGE-AI] Mapeando dados...');
     const extractedData = mapAIResponseToExtractedData(aiResponse);
-    
+
     progressCallback(100);
-    updateStatus('Análise concluída com sucesso!');
-    
-    console.log('🎉 [ANALYZE-IMAGE-AI] Dados extraídos com sucesso:', extractedData);
     return extractedData;
     
-  } catch (error: any) {
-    console.error('💥 [ANALYZE-IMAGE-AI] Erro na análise:', error);
-    
-    // Se já tem código, propagar
-    if (error.code) {
-      throw error;
-    }
-    
-    // Adicionar código genérico se não tiver
-    error.code = 'ANALYSIS_ERROR';
+  } catch (error) {
+    console.error('Erro na análise da imagem com IA:', error);
     throw error;
   }
 };

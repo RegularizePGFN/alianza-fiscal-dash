@@ -32,10 +32,12 @@ export const useProposalsStateWithFilter = () => {
   const [processing, setProcessing] = useState(false);
   const [progressPercent, setProgressPercent] = useState(0);
   const [formData, setFormData] = useState<Partial<ExtractedData>>({
+    // Default values for fee installments
     feesInstallments: '2',
     feesPaymentMethod: 'cartao',
     entryInstallments: '1',
     showFeesInstallments: 'false',
+    // Default values for executive data
     includeExecutiveData: 'true',
     executiveName: user?.name || '',
     executiveEmail: user?.email || '',
@@ -48,15 +50,10 @@ export const useProposalsStateWithFilter = () => {
   const [processingStatus, setProcessingStatus] = useState<string>("");
   const [lastSearchedCnpj, setLastSearchedCnpj] = useState<string>("");
   
-  // Memoizar fetchProposals para evitar loops
-  const memoizedFetchProposals = useCallback(() => {
-    fetchProposals(filterType, filterType === 'custom' ? customDateRange : undefined);
-  }, [fetchProposals, filterType, customDateRange]);
-  
   // Fetch proposals when component mounts or filter changes
   useEffect(() => {
-    memoizedFetchProposals();
-  }, [memoizedFetchProposals]);
+    fetchProposals(filterType, filterType === 'custom' ? customDateRange : undefined);
+  }, [fetchProposals, filterType, customDateRange]);
   
   // Update executive data when user changes
   useEffect(() => {
@@ -79,10 +76,10 @@ export const useProposalsStateWithFilter = () => {
     }
   };
 
-  // Refresh proposals with current filter
-  const refreshProposals = useCallback(async (): Promise<void> => {
+  // Refresh proposals with current filter - return Promise<void>
+  const refreshProposals = async (): Promise<void> => {
     await fetchProposals(filterType, filterType === 'custom' ? customDateRange : undefined);
-  }, [fetchProposals, filterType, customDateRange]);
+  };
   
   // Use our custom hooks
   const { fetchCompanyDataByCnpj, isSearching } = useFetchCompanyData({ 
@@ -97,7 +94,7 @@ export const useProposalsStateWithFilter = () => {
   useTemplateDefaults({ setFormData });
   useUserData({ user, setFormData });
   
-  // Debounced CNPJ search
+  // Debounced CNPJ search - only search when CNPJ changes and is different from last searched
   const debouncedCnpjSearch = useCallback((cnpj: string) => {
     if (cnpj && cnpj.length >= 14 && cnpj !== lastSearchedCnpj && !isSearching) {
       setLastSearchedCnpj(cnpj);
@@ -105,16 +102,18 @@ export const useProposalsStateWithFilter = () => {
     }
   }, [fetchCompanyDataByCnpj, lastSearchedCnpj, isSearching]);
   
-  // Generate payment dates when needed - memoizar para evitar loops
-  const memoizedGeneratePaymentDates = useCallback(() => {
+  // Only fetch CNPJ data when explicitly triggered, not automatically
+  useEffect(() => {
+    // Remove automatic CNPJ fetching to prevent loops
+    // CNPJ data will only be fetched when user clicks "Buscar CNPJ" button
+  }, []);
+  
+  // Generate payment dates when needed
+  useEffect(() => {
     if (activeTab === 'proposal' && formData.entryValue && formData.installmentValue && formData.installments) {
       generatePaymentDates();
     }
   }, [activeTab, formData.entryValue, formData.entryInstallments, formData.installmentValue, formData.installments, generatePaymentDates]);
-
-  useEffect(() => {
-    memoizedGeneratePaymentDates();
-  }, [memoizedGeneratePaymentDates]);
 
   return {
     // State

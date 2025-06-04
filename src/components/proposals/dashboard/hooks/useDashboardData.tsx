@@ -1,10 +1,11 @@
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { format, eachDayOfInterval, startOfMonth, endOfMonth } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { 
   ProposalData, 
+  UserData, 
   DailyProposalCount, 
   UserProposalStats, 
   SummaryStats 
@@ -29,64 +30,67 @@ export function useDashboardData() {
   });
   const { user } = useAuth();
   
-  const fetchData = useCallback(async () => {
-    if (!user?.id || !dateRange.from || !dateRange.to) {
-      setIsLoading(false);
-      return;
-    }
-    
-    setIsLoading(true);
-    try {
-      const startDate = dateRange.from.toISOString();
-      const endDate = dateRange.to.toISOString();
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user || !dateRange.from || !dateRange.to) return;
       
-      const [proposalsResult, usersResult] = await Promise.all([
-        supabase
+      setIsLoading(true);
+      try {
+        // Format for database query
+        const startDate = dateRange.from.toISOString();
+        const endDate = dateRange.to.toISOString();
+        
+        // Fetch proposals for the selected date range
+        const { data: proposals, error: proposalsError } = await supabase
           .from('proposals')
           .select('id, user_id, created_at, total_debt, discounted_value, fees_value')
           .gte('created_at', startDate)
-          .lte('created_at', endDate),
-        supabase
+          .lte('created_at', endDate);
+        
+        if (proposalsError) {
+          console.error('Error fetching proposals:', proposalsError);
+          return;
+        }
+        
+        // Fetch users data for mapping
+        const { data: users, error: usersError } = await supabase
           .from('profiles')
-          .select('id, name')
-      ]);
-      
-      if (proposalsResult.error) {
-        console.error('Error fetching proposals:', proposalsResult.error);
-        return;
+          .select('id, name');
+        
+        if (usersError) {
+          console.error('Error fetching users:', usersError);
+          return;
+        }
+        
+        // Create a mapping of user IDs to names
+        const userMap = (users || []).reduce((acc, user) => {
+          acc[user.id] = user.name;
+          return acc;
+        }, {} as Record<string, string>);
+        
+        setProposalsData(proposals || []);
+        setUsersData(userMap);
+      } catch (error) {
+        console.error('Error processing dashboard data:', error);
+      } finally {
+        setIsLoading(false);
       }
-      
-      if (usersResult.error) {
-        console.error('Error fetching users:', usersResult.error);
-        return;
-      }
-      
-      const userMap = (usersResult.data || []).reduce((acc, user) => {
-        acc[user.id] = user.name;
-        return acc;
-      }, {} as Record<string, string>);
-      
-      setProposalsData(proposalsResult.data || []);
-      setUsersData(userMap);
-    } catch (error) {
-      console.error('Error processing dashboard data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user?.id, dateRange.from, dateRange.to]);
-  
-  useEffect(() => {
+    };
+    
     fetchData();
-  }, [fetchData]);
+  }, [user, dateRange]);
   
+  // Daily proposals count for the selected date range
   const dailyProposalsData = useMemo(() => {
     if (!proposalsData.length || !dateRange.from || !dateRange.to) return [];
     
+    // Create array of dates for the selected range
     const daysInRange = eachDayOfInterval({
       start: dateRange.from,
       end: dateRange.to
     });
     
+    // Initialize counts for each day
     const dailyCounts: Record<string, DailyProposalCount> = {};
     
     daysInRange.forEach(day => {
@@ -101,6 +105,7 @@ export function useDashboardData() {
       };
     });
     
+    // Count proposals for each day
     proposalsData.forEach(proposal => {
       const dateStr = proposal.created_at.split('T')[0];
       if (dailyCounts[dateStr]) {
@@ -109,14 +114,17 @@ export function useDashboardData() {
       }
     });
     
+    // Convert to array and sort by date
     return Object.values(dailyCounts).sort((a, b) => 
       a.date.localeCompare(b.date)
     );
-  }, [proposalsData, dateRange.from, dateRange.to]);
+  }, [proposalsData, dateRange]);
   
+  // User proposals statistics
   const userProposalsData = useMemo(() => {
     if (!proposalsData.length || !Object.keys(usersData).length) return [];
     
+    // Count proposals per user
     const userCounts: Record<string, { count: number, fees: number }> = {};
     
     proposalsData.forEach(proposal => {
@@ -127,6 +135,7 @@ export function useDashboardData() {
       userCounts[proposal.user_id].fees += proposal.fees_value || 0;
     });
     
+    // Convert to array with user names
     return Object.entries(userCounts).map(([userId, stats], index) => ({
       name: usersData[userId] || 'Unknown',
       count: stats.count,
@@ -135,6 +144,7 @@ export function useDashboardData() {
     })).sort((a, b) => b.count - a.count);
   }, [proposalsData, usersData]);
   
+  // Summary statistics
   const summaryStats = useMemo(() => {
     if (!proposalsData.length) return { total: 0, totalFees: 0, averageFees: 0 };
     

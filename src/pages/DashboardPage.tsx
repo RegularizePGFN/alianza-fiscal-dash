@@ -12,54 +12,34 @@ import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
 
 export default function DashboardPage() {
-  const { user } = useAuth();
   const { salesData, summary, trends, loading } = useDashboardData();
-  
+  const { user } = useAuth();
   const isAdmin = user?.role === UserRole.ADMIN;
-
-  console.log("📊 [DASHBOARD] Dashboard render:", {
-    userId: user?.id,
-    userEmail: user?.email,
-    userRole: user?.role,
-    isAdmin,
-    loading,
-    salesDataLength: salesData?.length,
-    summary
-  });
-
-  if (loading) {
-    console.log("⏳ [DASHBOARD] Showing loading spinner");
-    return (
-      <AppLayout>
-        <div className="space-y-6">
-          <DashboardHeader isLoading={loading} />
-          <LoadingSpinner />
-        </div>
-      </AppLayout>
-    );
-  }
 
   return (
     <AppLayout>
       <div className="space-y-6">
         <DashboardHeader isLoading={loading} />
-        
-        <div className="space-y-6 animate-fade-in">
-          {isAdmin && (
-            <>
-              <DailyResultsCard salesData={salesData} />
-              <DailyResultsToday />
-            </>
-          )}
-          
-          {!isAdmin && <DailyResultsToday />}
-          
-          <GoalsCommissionsSection summary={summary} salesData={salesData} />
-          
-          {isAdmin && <SalespeopleCommissionsCard />}
-          
-          <SalespersonWeeklyCard salesData={salesData} />
-        </div>
+
+        {loading ? (
+          <LoadingSpinner />
+        ) : (
+          <div className="space-y-6 animate-fade-in">
+            {/* DailyResultsCard - only visible to admin users */}
+            {isAdmin && <DailyResultsCard salesData={salesData} />}
+            
+            {/* Daily Results Cards - positioned between the main cards */}
+            <DailyResultsToday />
+            
+            <GoalsCommissionsSection summary={summary} salesData={salesData} />
+            
+            {/* Admin-only commission projections card */}
+            {isAdmin && <SalespeopleCommissionsCard />}
+            
+            {/* Weekly Reports - Single full width card */}
+            <SalespersonWeeklyCard salesData={salesData} />
+          </div>
+        )}
       </div>
     </AppLayout>
   );

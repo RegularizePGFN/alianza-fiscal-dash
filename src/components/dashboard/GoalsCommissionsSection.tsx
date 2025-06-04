@@ -14,8 +14,6 @@ interface GoalsCommissionsSectionProps {
 
 export function GoalsCommissionsSection({ summary, salesData }: GoalsCommissionsSectionProps) {
   const { user } = useAuth();
-  
-  // Always call hooks at the top level
   const isAdmin = user?.role === UserRole.ADMIN;
   
   return (

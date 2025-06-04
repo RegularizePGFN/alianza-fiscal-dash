@@ -2,7 +2,6 @@
 import { SalesSummaryCard } from "@/components/dashboard/SalesSummaryCard";
 import { CommissionsInfoCard } from "./CommissionsInfoCard";
 import { DollarSign, BarChart3, Target, TrendingUp } from "lucide-react";
-import { CONTRACT_TYPE_CLT } from "@/lib/constants";
 
 interface SalespersonCommissionsViewProps {
   salespersonData: any;
@@ -32,30 +31,6 @@ export function SalespersonCommissionsView({
       </div>
     );
   }
-
-  // Get the current commission info based on contract type
-  const getCommissionInfo = () => {
-    const isCLT = salespersonData.contractType === CONTRACT_TYPE_CLT;
-    const isAboveGoal = salespersonData.totalSales >= 10000;
-    
-    if (isCLT) {
-      return {
-        currentRate: isAboveGoal ? 10 : 5,
-        belowGoalRate: 5,
-        aboveGoalRate: 10,
-        contractLabel: 'CLT'
-      };
-    } else {
-      return {
-        currentRate: isAboveGoal ? 25 : 20,
-        belowGoalRate: 20,
-        aboveGoalRate: 25,
-        contractLabel: 'PJ'
-      };
-    }
-  };
-
-  const commissionInfo = getCommissionInfo();
 
   return (
     <>
@@ -124,11 +99,11 @@ export function SalespersonCommissionsView({
           </div>
           
           <div>
-            <h4 className="font-medium text-gray-900 dark:text-white mb-2">Tipo de Contrato</h4>
-            <p className="text-2xl font-bold text-purple-600">
-              {commissionInfo.contractLabel}
+            <h4 className="font-medium text-gray-900 dark:text-white mb-2">Dias Sem Vendas</h4>
+            <p className="text-2xl font-bold text-orange-600">
+              {salespersonData.zeroDaysCount}
             </p>
-            <p className="text-sm text-gray-500">Tipo de contratação</p>
+            <p className="text-sm text-gray-500">Dias úteis sem vendas no período</p>
           </div>
         </div>
       </div>
@@ -141,13 +116,13 @@ export function SalespersonCommissionsView({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div>
             <h4 className="font-medium text-gray-900 dark:text-white mb-2">
-              Estrutura de Comissões ({commissionInfo.contractLabel})
+              Estrutura de Comissões
             </h4>
             <ul className="space-y-1 text-gray-600 dark:text-gray-300">
-              <li>• Até R$ 10.000: {commissionInfo.belowGoalRate}% de comissão</li>
-              <li>• Acima de R$ 10.000: {commissionInfo.aboveGoalRate}% de comissão</li>
+              <li>• Até R$ 10.000: 20% de comissão</li>
+              <li>• Acima de R$ 10.000: 25% de comissão</li>
               <li className={`font-medium ${salespersonData.totalSales >= 10000 ? 'text-green-600' : 'text-orange-600'}`}>
-                • Sua faixa atual: {commissionInfo.currentRate}%
+                • Sua faixa atual: {salespersonData.totalSales >= 10000 ? '25%' : '20%'}
               </li>
             </ul>
           </div>

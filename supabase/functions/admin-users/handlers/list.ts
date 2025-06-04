@@ -10,35 +10,23 @@ export async function handleListUsers(): Promise<Response> {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
   );
 
-  try {
-    const { data, error } = await supabaseAdmin.auth.admin.listUsers();
-    
-    if (error) {
-      console.error('Error listing users:', error);
-      throw error;
-    }
-
-    console.log('Successfully retrieved users:', data.users?.length || 0);
-
-    return new Response(JSON.stringify({ 
-      data: { 
-        users: data.users || [],
-        aud: 'authenticated',
-        total_count: data.users?.length || 0
-      }, 
-      error: null 
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  } catch (error) {
-    console.error('Error in handleListUsers:', error);
-    
-    return new Response(JSON.stringify({ 
-      data: null, 
-      error: { message: error.message || 'Failed to list users' }
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+  const { data, error } = await supabaseAdmin.auth.admin.listUsers();
+  
+  if (error) {
+    console.error('Error listing users:', error);
+    throw error;
   }
+
+  console.log('Successfully retrieved users:', data.users?.length || 0);
+
+  return new Response(JSON.stringify({ 
+    data: { 
+      users: data.users || [],
+      aud: 'authenticated',
+      total_count: data.users?.length || 0
+    }, 
+    error: null 
+  }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
 }

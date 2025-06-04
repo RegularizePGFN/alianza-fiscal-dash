@@ -15,15 +15,10 @@ import { OpenAIPayload, EdgeFunctionResponse } from './types';
 export const sendImageToAnalysis = async (
   imageBase64: string
 ): Promise<EdgeFunctionResponse> => {
-  console.log('🚀 [VISION-API] Iniciando envio para análise...');
-  
   const base64Image = imageBase64.split(',')[1];
     
   if (!base64Image) {
-    console.error('❌ [VISION-API] Formato de imagem inválido');
-    const error = new Error('Formato de imagem inválido') as any;
-    error.code = 'INVALID_IMAGE_FORMAT';
-    throw error;
+    throw new Error('Formato de imagem inválido');
   }
   
   // Prepara o payload para a API da OpenAI
@@ -48,16 +43,13 @@ export const sendImageToAnalysis = async (
 
   // Tratamento de erros na requisição
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => {
-    console.error('⏰ [VISION-API] Timeout na requisição');
-    controller.abort();
-  }, REQUEST_TIMEOUT);
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
   
-  console.log('📤 [VISION-API] Enviando para edge function...');
+  console.log('Enviando imagem para análise...');
   
   // Obter a URL correta para a função edge
   const functionUrl = getEdgeFunctionUrl();
-  console.log(`🔗 [VISION-API] URL: ${functionUrl}`);
+  console.log(`Usando endpoint: ${functionUrl}`);
   
   try {
     const response = await fetch(functionUrl, {
@@ -71,50 +63,34 @@ export const sendImageToAnalysis = async (
     
     clearTimeout(timeoutId);
     
-    console.log(`📨 [VISION-API] Resposta recebida - Status: ${response.status}`);
+    // Verificar e logar detalhes da resposta
+    console.log('Status da resposta:', response.status);
     
     if (!response.ok) {
-      let errorData;
+      let errorText = '';
       try {
-        errorData = await response.json();
-        console.error('❌ [VISION-API] Erro da edge function:', errorData);
+        const errorData = await response.json();
+        errorText = errorData.error || 'Erro desconhecido no servidor';
+        console.error('Detalhes do erro:', errorData);
       } catch (e) {
-        console.error('❌ [VISION-API] Erro ao ler resposta de erro:', e);
-        const errorText = await response.text() || `Erro HTTP ${response.status}`;
-        const error = new Error(errorText) as any;
-        error.code = 'HTTP_ERROR';
-        throw error;
+        errorText = await response.text() || `Erro do servidor: ${response.status}`;
+        console.error('Resposta bruta de erro:', errorText);
       }
       
-      // Propagar o erro com código se disponível
-      const error = new Error(errorData.error || 'Erro na análise da imagem') as any;
-      error.code = errorData.code || 'EDGE_FUNCTION_ERROR';
-      throw error;
+      throw new Error(`Erro na análise: ${errorText}`);
     }
     
-    // Usar o método json() diretamente
-    const result = await response.json();
-    console.log('✅ [VISION-API] Resposta processada com sucesso');
-    return result;
+    // Usar o método json() diretamente, sem clone para evitar erros de stream
+    return await response.json();
     
-  } catch (fetchError: any) {
+  } catch (fetchError) {
     clearTimeout(timeoutId);
-    console.error('💥 [VISION-API] Erro na requisição:', fetchError);
+    console.error('Erro na requisição para a API:', fetchError);
     
     if (fetchError.name === 'AbortError') {
-      const error = new Error('A análise da imagem demorou muito tempo e foi cancelada') as any;
-      error.code = 'TIMEOUT';
-      throw error;
+      throw new Error('A análise da imagem demorou muito tempo e foi cancelada');
     }
     
-    // Se já é um erro com código, propagar
-    if (fetchError.code) {
-      throw fetchError;
-    }
-    
-    // Outros erros de rede
-    const error = new Error('Erro de conexão com o servidor') as any;
-    error.code = 'CONNECTION_ERROR';
-    throw error;
+    throw fetchError;
   }
 };

@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { User, UserRole } from "@/lib/types";
 import { adminAPI } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { mapUserRole } from "@/contexts/auth/utils";
 
@@ -17,72 +18,67 @@ export function useUsers() {
   
   // Fetch users using secure admin API
   const fetchUsers = async () => {
-    console.log("👥 [USERS] Starting fetchUsers...");
-    
     // Evitar chamadas duplicadas
-    if (isFetchingRef.current) {
-      console.log("⚠️ [USERS] Fetch already in progress, skipping");
-      return;
-    }
+    if (isFetchingRef.current) return;
     
     isFetchingRef.current = true;
     setIsLoading(true);
     setError(null);
     
     try {
-      console.log("📞 [USERS] Calling admin API...");
+      console.log("Fetching users from admin API...");
       const response = await adminAPI.listUsers();
       
       if (response.error) {
-        console.error("❌ [USERS] Admin API error:", response.error);
-        throw new Error(response.error.message || 'Erro ao buscar usuários');
+        console.error("Error fetching users:", response.error);
+        throw new Error(response.error.message);
       }
       
-      console.log("✅ [USERS] Admin API response received:", response.data);
+      console.log("Auth users data:", response.data);
       
       if (!response.data?.users || response.data.users.length === 0) {
-        console.log("📭 [USERS] No users found in response");
         setUsers([]);
+        setIsLoading(false);
+        isFetchingRef.current = false;
         return;
       }
 
-      await processUsersData(response.data.users);
-      
-    } catch (err: any) {
-      console.error("💥 [USERS] Error in fetchUsers:", err);
-      const errorMessage = err.message || "Falha ao carregar os usuários.";
-      setError(errorMessage);
-      toast({
-        title: "Erro",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-      isFetchingRef.current = false;
-      console.log("🏁 [USERS] fetchUsers completed");
-    }
-  };
+      // Fetch profile data for all users
+      console.log("Fetching profile data...");
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, name, email, role');
 
-  // Helper function to process users data
-  const processUsersData = async (authUsers: any[]) => {
-    try {
-      console.log("🔄 [USERS] Processing users data for", authUsers.length, "users...");
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+        // Continue without profile data if there's an error
+      }
+
+      console.log("Profiles data:", profilesData);
       
-      // Convert auth users to our user format
-      const mappedUsers = authUsers.map((authUser: any) => {
+      // Convert auth users to our user format, merging with profile data
+      const mappedUsers = response.data.users.map((authUser: any) => {
         const email = authUser.email || '';
         
-        // Use metadata or email for name
-        const name = authUser.user_metadata?.name || email.split('@')[0] || 'Usuário';
+        // Find corresponding profile data
+        const profile = profilesData?.find(p => p.id === authUser.id);
+        
+        // Use profile data if available, otherwise fallback to auth metadata
+        const name = profile?.name || authUser.user_metadata?.name || email.split('@')[0] || 'Usuário';
+        const roleFromProfile = profile?.role;
         const roleFromMetadata = authUser.user_metadata?.role;
         
-        // Use the mapUserRole function to convert string role to UserRole enum
-        const userRole = mapUserRole(roleFromMetadata, email);
+        // Prioritize profile role, then metadata role
+        const role = roleFromProfile || roleFromMetadata || 'vendedor';
         
-        console.log(`👤 [USERS] Mapping user ${name}:`, {
+        // Use the mapUserRole function to convert string role to UserRole enum
+        const userRole = mapUserRole(role, email);
+        
+        console.log(`Mapping user ${name}:`, {
           email,
+          profileRole: roleFromProfile,
           metadataRole: roleFromMetadata,
+          finalRole: role,
           mappedRole: userRole
         });
         
@@ -95,17 +91,24 @@ export function useUsers() {
         };
       });
       
-      console.log("✅ [USERS] Final users list:", mappedUsers.length, "users processed");
+      console.log("Final users list:", mappedUsers);
       setUsers(mappedUsers);
-      
-    } catch (error) {
-      console.error("💥 [USERS] Error processing users data:", error);
-      throw error;
+    } catch (err: any) {
+      console.error("Error fetching users:", err);
+      setError(err.message || "Falha ao carregar os usuários.");
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os usuários.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+      // Importante: resetar a flag após a conclusão
+      isFetchingRef.current = false;
     }
   };
 
   useEffect(() => {
-    console.log("🚀 [USERS] useUsers hook mounted, starting fetch");
     fetchUsers();
   }, []);
 
