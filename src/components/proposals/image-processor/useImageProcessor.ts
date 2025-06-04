@@ -48,7 +48,6 @@ export const useImageProcessor = ({
     updateProcessingStatus('Preparando imagem para análise...');
     
     try {
-      // Analyze with AI Vision
       console.log('🔍 [IMAGE-PROCESSOR] Chamando analyzeImageWithAI...');
       const extractedData = await analyzeImageWithAI(
         imageBase64, 
@@ -62,7 +61,7 @@ export const useImageProcessor = ({
       console.log('✅ [IMAGE-PROCESSOR] Dados extraídos com sucesso:', extractedData);
       onProcessComplete(extractedData, imageBase64);
       updateProcessingStatus('Processamento concluído com sucesso!');
-      setRetryCount(0); // Reset retry count on success
+      setRetryCount(0);
       
       sonnerToast.success('Imagem processada com sucesso!', {
         description: 'Os dados foram extraídos e preenchidos automaticamente.'
@@ -77,21 +76,17 @@ export const useImageProcessor = ({
       console.log('🔍 [IMAGE-PROCESSOR] Código do erro:', errorCode);
       console.log('📝 [IMAGE-PROCESSOR] Mensagem do erro:', errorMessage);
       
-      // Tratamento específico por tipo de erro
       let userFriendlyMessage = errorMessage;
-      let canRetry = retryCount < MAX_RETRIES;
       
       switch (errorCode) {
         case 'API_KEY_MISSING':
           userFriendlyMessage = 'Configuração da API da OpenAI não encontrada. Entre em contato com o suporte.';
-          canRetry = false;
           break;
         case 'TIMEOUT':
           userFriendlyMessage = 'A análise demorou muito tempo. Tente com uma imagem menor.';
           break;
         case 'NO_IMAGE':
           userFriendlyMessage = 'Nenhuma imagem foi detectada. Por favor, selecione uma imagem válida.';
-          canRetry = false;
           break;
         case 'INVALID_CONTENT':
           userFriendlyMessage = 'A imagem não parece ser uma simulação PGFN válida. Verifique se a imagem está clara e contém os dados corretos.';
@@ -112,7 +107,6 @@ export const useImageProcessor = ({
       setError(userFriendlyMessage);
       updateProcessingStatus('Erro no processamento');
       
-      // Mostrar toast simples sem botão de retry (o retry estará no ErrorAlert)
       toast({
         title: "Erro no processamento",
         description: userFriendlyMessage,
@@ -129,7 +123,6 @@ export const useImageProcessor = ({
     }
   };
 
-  // This function now handles file input events directly
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     console.log('📁 [IMAGE-PROCESSOR] Arquivo selecionado');
     
@@ -141,7 +134,6 @@ export const useImageProcessor = ({
     const file = e.target.files[0];
     console.log('📄 [IMAGE-PROCESSOR] Arquivo:', file.name, 'Tamanho:', file.size, 'bytes');
     
-    // Verificar tamanho do arquivo (10MB max)
     if (file.size > 10 * 1024 * 1024) {
       const errorMsg = 'Arquivo muito grande. O tamanho máximo é 10MB.';
       setError(errorMsg);
@@ -153,7 +145,6 @@ export const useImageProcessor = ({
       return;
     }
     
-    // Verificar tipo do arquivo
     if (!file.type.startsWith('image/')) {
       const errorMsg = 'Por favor, selecione apenas arquivos de imagem.';
       setError(errorMsg);
@@ -176,7 +167,7 @@ export const useImageProcessor = ({
       const imageBase64 = event.target.result;
       console.log('🖼️ [IMAGE-PROCESSOR] Imagem convertida para base64');
       setImagePreview(imageBase64);
-      setRetryCount(0); // Reset retry count for new image
+      setRetryCount(0);
       
       await processImage(imageBase64);
     };

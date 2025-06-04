@@ -1,5 +1,5 @@
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect } from "react";
 import { AppSidebar } from "./AppSidebar";
 import { AppHeader } from "./AppHeader";
 import { useAuth } from "@/contexts/auth";
@@ -12,7 +12,6 @@ interface AppLayoutProps {
 
 export function AppLayout({ children, requireAuth = true }: AppLayoutProps) {
   const { isAuthenticated, isLoading, user } = useAuth();
-  const [errorDetected, setErrorDetected] = useState<string | null>(null);
 
   console.log("🏗️ [LAYOUT] AppLayout render - Auth state:", { 
     isAuthenticated, 
@@ -22,56 +21,12 @@ export function AppLayout({ children, requireAuth = true }: AppLayoutProps) {
     requireAuth 
   });
 
-  /* ╭──────────────────────────────────────────────────────────╮
-     │ Desfaz "pointer‑events:none" que o listener de atalhos    │
-     │ coloca no #root e congela toda a interface                │
-     ╰──────────────────────────────────────────────────────────╯ */
+  // Simplificar o fix de pointer events
   useEffect(() => {
-    console.log("🖱️ [LAYOUT] Setting up pointer events fix");
     const root = document.getElementById("root");
-    if (!root) {
-      console.warn("⚠️ [LAYOUT] Root element not found");
-      return;
-    }
-    const fix = () => {
+    if (root) {
       root.style.pointerEvents = "auto";
-      console.log("🔧 [LAYOUT] Pointer events fixed");
-    };
-    // garante já na primeira carga
-    fix();
-    const obs = new MutationObserver(fix);
-    obs.observe(root, { attributes: true, attributeFilter: ["style"] });
-    return () => {
-      console.log("🧹 [LAYOUT] Cleaning up pointer events observer");
-      obs.disconnect();
-    };
-  }, []);
-
-  // Add error‑boundary detection
-  useEffect(() => {
-    console.log("🛡️ [LAYOUT] Setting up error boundary");
-    const handleError = (event: ErrorEvent) => {
-      console.error("💥 [LAYOUT] Unhandled error detected:", event.error);
-      console.error("💥 [LAYOUT] Error message:", event.message);
-      console.error("💥 [LAYOUT] Error filename:", event.filename);
-      console.error("💥 [LAYOUT] Error line:", event.lineno);
-      console.error("💥 [LAYOUT] Error column:", event.colno);
-      setErrorDetected(event.message || "An unknown error occurred");
-    };
-    
-    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      console.error("💥 [LAYOUT] Unhandled promise rejection:", event.reason);
-      setErrorDetected(`Promise rejection: ${event.reason}`);
-    };
-    
-    window.addEventListener("error", handleError);
-    window.addEventListener("unhandledrejection", handleUnhandledRejection);
-    
-    return () => {
-      console.log("🧹 [LAYOUT] Cleaning up error handlers");
-      window.removeEventListener("error", handleError);
-      window.removeEventListener("unhandledrejection", handleUnhandledRejection);
-    };
+    }
   }, []);
 
   // Loading state
@@ -93,33 +48,6 @@ export function AppLayout({ children, requireAuth = true }: AppLayoutProps) {
   if (requireAuth && !isAuthenticated) {
     console.log("🔐 [LAYOUT] Redirecting to login - user not authenticated");
     return <Navigate to="/login" replace />;
-  }
-
-  // Error screen
-  if (errorDetected) {
-    console.log("💥 [LAYOUT] Showing error screen:", errorDetected);
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-gradient-to-br from-red-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-        <div className="flex flex-col items-center gap-4 max-w-md p-8 bg-white dark:bg-gray-800 rounded-xl shadow-lg text-center">
-          <div className="h-12 w-12 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center">
-            <span className="text-red-500 dark:text-red-300 text-xl font-bold">!</span>
-          </div>
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
-            Oops! Algo deu errado
-          </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400">{errorDetected}</p>
-          <button
-            onClick={() => {
-              console.log("🔄 [LAYOUT] User clicked reload");
-              window.location.reload();
-            }}
-            className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
-          >
-            Recarregar a página
-          </button>
-        </div>
-      </div>
-    );
   }
 
   console.log("✅ [LAYOUT] Rendering main layout for user:", user?.email);
