@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Edit, Trash2, Building, ArrowUpDown } from "lucide-react";
+import { Edit, Trash2, Building, ArrowUpDown, ChevronUp, ChevronDown } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +32,7 @@ export function FixedCostList({
 }: FixedCostListProps) {
   const { toast } = useToast();
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [categorySortOrders, setCategorySortOrders] = useState<Record<string, 'asc' | 'desc'>>({});
 
   const handleDelete = async (costId: string) => {
     try {
@@ -78,6 +79,20 @@ export function FixedCostList({
     acc[category].push(cost);
     return acc;
   }, {});
+
+  const handleCategorySortToggle = (category: string) => {
+    setCategorySortOrders(prev => ({
+      ...prev,
+      [category]: prev[category] === 'desc' ? 'asc' : 'desc'
+    }));
+  };
+
+  const getSortedCostsForCategory = (categoryCosts: FixedCost[], category: string) => {
+    const categorySort = categorySortOrders[category] || 'desc';
+    return [...categoryCosts].sort((a, b) => {
+      return categorySort === 'desc' ? b.amount - a.amount : a.amount - b.amount;
+    });
+  };
 
   const totalAmount = costs.reduce((sum, cost) => sum + cost.amount, 0);
 
@@ -180,6 +195,8 @@ export function FixedCostList({
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {Object.entries(costsByCategory).map(([category, categoryCosts]) => {
           const categoryTotal = categoryCosts.reduce((sum: number, cost: FixedCost) => sum + cost.amount, 0);
+          const sortedCategoryCosts = getSortedCostsForCategory(categoryCosts, category);
+          const categorySort = categorySortOrders[category] || 'desc';
           
           return (
             <Card key={category} className="hover:shadow-md transition-shadow duration-200">
@@ -192,15 +209,28 @@ export function FixedCostList({
                     {categoryCosts.length} {categoryCosts.length === 1 ? 'item' : 'itens'}
                   </Badge>
                 </div>
-                <div className="text-right">
-                  <span className="text-lg font-bold text-green-600 dark:text-green-400">
-                    {formatCurrency(categoryTotal)}
+                
+                {/* Cabeçalho clicável para ordenação */}
+                <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/30 rounded-lg p-3 mt-2">
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Total da categoria:
                   </span>
+                  <button
+                    onClick={() => handleCategorySortToggle(category)}
+                    className="flex items-center gap-1 text-lg font-bold text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors"
+                  >
+                    {formatCurrency(categoryTotal)}
+                    {categorySort === 'desc' ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronUp className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {categoryCosts.map((cost: FixedCost) => (
+                  {sortedCategoryCosts.map((cost: FixedCost) => (
                     <CostItem key={cost.id} cost={cost} />
                   ))}
                 </div>
