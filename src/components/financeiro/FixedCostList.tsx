@@ -1,35 +1,44 @@
+
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, Building } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Edit, Trash2, Building, ArrowUpDown } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+
 interface FixedCostListProps {
   costs: any[];
   loading: boolean;
   onEdit: (cost: any) => void;
   onDelete: () => void;
 }
+
 export function FixedCostList({
   costs,
   loading,
   onEdit,
   onDelete
 }: FixedCostListProps) {
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
   const handleDelete = async (costId: string) => {
     try {
-      const {
-        error
-      } = await supabase.from('company_costs').delete().eq('id', costId);
+      const { error } = await supabase
+        .from('company_costs')
+        .delete()
+        .eq('id', costId);
+
       if (error) throw error;
+
       toast({
         title: "Custo removido",
         description: "O custo foi removido com sucesso."
       });
+
       onDelete();
     } catch (error: any) {
       console.error('Erro ao remover custo:', error);
@@ -40,87 +49,185 @@ export function FixedCostList({
       });
     }
   };
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
     }).format(value);
   };
+
+  const sortedCosts = [...costs].sort((a, b) => {
+    return sortOrder === 'desc' ? b.amount - a.amount : a.amount - b.amount;
+  });
+
+  // Agrupar custos por categoria
+  const costsByCategory = sortedCosts.reduce((acc, cost) => {
+    const category = cost.category || 'Sem Categoria';
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(cost);
+    return acc;
+  }, {} as Record<string, any[]>);
+
   const totalAmount = costs.reduce((sum, cost) => sum + cost.amount, 0);
+
   if (loading) {
-    return <div className="text-center py-4">Carregando custos fixos...</div>;
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-2 text-muted-foreground">Carregando custos fixos...</span>
+      </div>
+    );
   }
+
   if (costs.length === 0) {
-    return <div className="text-center py-8 text-gray-500">
-        <Building className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-        <p>Nenhum custo fixo cadastrado ainda.</p>
-        <p className="text-sm">Adicione custos fixos recorrentes como aluguel, salários, etc.</p>
-      </div>;
+    return (
+      <div className="text-center py-12 text-gray-500">
+        <Building className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+        <h3 className="text-lg font-medium mb-2">Nenhum custo fixo cadastrado</h3>
+        <p className="text-sm text-muted-foreground">
+          Adicione custos fixos recorrentes como aluguel, salários, etc.
+        </p>
+      </div>
+    );
   }
-  return <div className="space-y-4">
-      
-      
-      <div className="space-y-3">
-        {costs.map(cost => <Card key={cost.id}>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-medium">{cost.name}</h4>
-                    <Badge variant="secondary">Fixo</Badge>
-                    {cost.category && <Badge variant="outline">{cost.category}</Badge>}
-                  </div>
-                  {cost.description && <p className="text-sm text-gray-600">{cost.description}</p>}
-                </div>
+
+  const CostItem = ({ cost }: { cost: any }) => (
+    <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700 hover:shadow-sm transition-all duration-200">
+      <div className="flex-1">
+        <div className="flex items-center gap-2 mb-1">
+          <h4 className="font-medium text-sm">{cost.name}</h4>
+          <Badge variant="secondary" className="text-xs">Fixo</Badge>
+        </div>
+        {cost.description && (
+          <p className="text-xs text-muted-foreground line-clamp-1">{cost.description}</p>
+        )}
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="font-semibold text-green-600 dark:text-green-400">
+          {formatCurrency(cost.amount)}
+        </span>
+        <Button variant="ghost" size="sm" onClick={() => onEdit(cost)} className="h-8 w-8 p-0">
+          <Edit className="h-3 w-3" />
+        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-500 hover:text-red-700">
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja remover o custo "{cost.name}"? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={() => handleDelete(cost.id)}>
+                Remover
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      {/* Controles de Ordenação */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          Custos por Categoria
+        </h3>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Ordenar por valor:</span>
+          <Select value={sortOrder} onValueChange={(value: 'asc' | 'desc') => setSortOrder(value)}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="desc">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-lg">
-                    {formatCurrency(cost.amount)}
-                  </span>
-                  <Button variant="outline" size="sm" onClick={() => onEdit(cost)}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Tem certeza que deseja remover o custo "{cost.name}"? Esta ação não pode ser desfeita.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDelete(cost.id)}>
-                          Remover
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <ArrowUpDown className="h-4 w-4" />
+                  Maior para Menor
                 </div>
+              </SelectItem>
+              <SelectItem value="asc">
+                <div className="flex items-center gap-2">
+                  <ArrowUpDown className="h-4 w-4" />
+                  Menor para Maior
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Cards por Categoria */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {Object.entries(costsByCategory).map(([category, categoryCosts]) => {
+          const categoryTotal = categoryCosts.reduce((sum, cost) => sum + cost.amount, 0);
+          
+          return (
+            <Card key={category} className="hover:shadow-md transition-shadow duration-200">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base font-medium text-gray-900 dark:text-gray-100">
+                    {category}
+                  </CardTitle>
+                  <Badge variant="outline" className="text-xs">
+                    {categoryCosts.length} {categoryCosts.length === 1 ? 'item' : 'itens'}
+                  </Badge>
+                </div>
+                <div className="text-right">
+                  <span className="text-lg font-bold text-green-600 dark:text-green-400">
+                    {formatCurrency(categoryTotal)}
+                  </span>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {categoryCosts.map((cost) => (
+                    <CostItem key={cost.id} cost={cost} />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Card de Total Consolidado */}
+      <Card className="border-2 border-green-200 bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 dark:border-green-800">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-100 dark:bg-green-800/50 rounded-lg">
+                <Building className="h-6 w-6 text-green-600 dark:text-green-400" />
               </div>
-            </CardContent>
-          </Card>)}
-        
-        {/* Total Summary Card */}
-        <Card className="border-2 border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Building className="h-5 w-5 text-green-600" />
-                <h4 className="font-semibold text-green-800 dark:text-green-200">
+              <div>
+                <h4 className="text-lg font-semibold text-green-800 dark:text-green-200">
                   Total dos Custos Fixos
                 </h4>
+                <p className="text-sm text-green-600 dark:text-green-300">
+                  {costs.length} {costs.length === 1 ? 'custo cadastrado' : 'custos cadastrados'}
+                </p>
               </div>
-              <span className="text-2xl font-bold text-green-700 dark:text-green-300">
+            </div>
+            <div className="text-right">
+              <span className="text-3xl font-bold text-green-700 dark:text-green-300">
                 {formatCurrency(totalAmount)}
               </span>
+              <p className="text-sm text-green-600 dark:text-green-400">por mês</p>
             </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>;
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
