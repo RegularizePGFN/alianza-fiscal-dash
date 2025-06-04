@@ -15,7 +15,6 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const { salesData, summary, trends, loading } = useDashboardData();
   
-  // Always call hooks at the top level
   const isAdmin = user?.role === UserRole.ADMIN;
 
   console.log("📊 [DASHBOARD] Dashboard render:", {
@@ -26,13 +25,6 @@ export default function DashboardPage() {
     loading,
     salesDataLength: salesData?.length,
     summary
-  });
-
-  console.log("📈 [DASHBOARD] Dashboard data state:", {
-    loading,
-    salesDataExists: !!salesData,
-    summaryExists: !!summary,
-    trendsExists: !!trends
   });
 
   if (loading) {
@@ -53,7 +45,6 @@ export default function DashboardPage() {
         <DashboardHeader isLoading={loading} />
         
         <div className="space-y-6 animate-fade-in">
-          {/* DailyResultsCard - only visible to admin users */}
           {isAdmin && (
             <>
               <DailyResultsCard salesData={salesData} />
@@ -61,15 +52,12 @@ export default function DashboardPage() {
             </>
           )}
           
-          {/* Daily Results Cards - positioned between the main cards */}
           {!isAdmin && <DailyResultsToday />}
           
           <GoalsCommissionsSection summary={summary} salesData={salesData} />
           
-          {/* Admin-only commission projections card */}
           {isAdmin && <SalespeopleCommissionsCard />}
           
-          {/* Weekly Reports - Single full width card */}
           <SalespersonWeeklyCard salesData={salesData} />
         </div>
       </div>

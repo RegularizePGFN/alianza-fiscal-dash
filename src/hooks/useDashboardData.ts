@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Sale, SalesSummary } from "@/lib/types";
@@ -25,55 +25,48 @@ export const useDashboardData = () => {
     averageSaleTrend: { value: 0, isPositive: true },
   });
 
-  const fetchDashboardData = async () => {
-    if (!user) return;
+  const fetchDashboardData = useCallback(async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     
     setLoading(true);
     
     try {
       console.log("🔄 Iniciando busca de dados do dashboard para:", user.name, `(${user.role})`);
       
-      // Get current month dates - using the actual current date
       const now = new Date();
-      const currentMonth = now.getMonth() + 1; // JavaScript months are 0-indexed
+      const currentMonth = now.getMonth() + 1;
       const currentYear = now.getFullYear();
       
       console.log(`📅 Mês atual: ${currentMonth}/${currentYear}`);
       
       const { start: currentMonthStart, end: currentMonthEnd } = getCurrentMonthDates();
       
-      // Calculate previous month dates
       const prevMonthStart = new Date(currentMonthStart);
       prevMonthStart.setMonth(prevMonthStart.getMonth() - 1);
       const prevMonthEnd = new Date(currentMonthStart);
       prevMonthEnd.setDate(prevMonthEnd.getDate() - 1);
       
-      // Format dates for Supabase queries
       const currentStartStr = currentMonthStart.toISOString().split('T')[0];
       const currentEndStr = currentMonthEnd.toISOString().split('T')[0];
       const prevStartStr = prevMonthStart.toISOString().split('T')[0];
       const prevEndStr = prevMonthEnd.toISOString().split('T')[0];
       
       console.log("📊 Período atual:", currentStartStr, "até", currentEndStr);
-      console.log("📊 Período anterior:", prevStartStr, "até", prevEndStr);
       
-      // Fetch sales data
-      const formattedSales = await fetchSalesData(user, currentStartStr, currentEndStr);
+      const [formattedSales, prevMonthSales, monthlyGoal] = await Promise.all([
+        fetchSalesData(user, currentStartStr, currentEndStr),
+        fetchPreviousMonthSales(user, prevStartStr, prevEndStr),
+        fetchMonthlyGoal(user, currentMonth, currentYear)
+      ]);
       
-      // Fetch previous month sales for comparison
-      const prevMonthSales = await fetchPreviousMonthSales(user, prevStartStr, prevEndStr);
-      
-      // Get monthly goal with correct current month/year
-      console.log(`🎯 Buscando meta mensal para ${currentMonth}/${currentYear}`);
-      const monthlyGoal = await fetchMonthlyGoal(user, currentMonth, currentYear);
       console.log(`🎯 Meta obtida: R$ ${monthlyGoal}`);
       
-      // Calculate summary and trends
       if (formattedSales.length > 0) {
-        // Use the current sales data, previous month data and goal to calculate summary
         const result = calculateSalesSummary(formattedSales, monthlyGoal);
         
-        // Update states with calculated data
         setSalesData(formattedSales);
         setSummary(result.summary);
         setTrends(result.trends);
@@ -81,7 +74,6 @@ export const useDashboardData = () => {
         console.log("✅ Resumo calculado:", result.summary);
       } else {
         console.log("⚠️ Nenhuma venda encontrada para o período");
-        // Set empty data
         setSalesData([]);
         setSummary({
           total_sales: 0,
@@ -106,16 +98,17 @@ export const useDashboardData = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id, user?.role, toast]);
   
   useEffect(() => {
-    if (user) {
+    if (user?.id) {
       console.log("👤 Usuário autenticado, buscando dados de vendas");
       fetchDashboardData();
     } else {
       console.log("❌ Nenhum usuário autenticado, pulando busca de vendas");
+      setLoading(false);
     }
-  }, [user]);
+  }, [user?.id, fetchDashboardData]);
   
   return {
     salesData,

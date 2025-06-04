@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
@@ -23,125 +23,121 @@ export function useTodayResults() {
   });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchTodayResults = async () => {
-      if (!user) {
-        setLoading(false);
-        return;
+  const fetchTodayResults = useCallback(async () => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const today = new Date().toISOString().split('T')[0];
+      const isAdmin = user.role === UserRole.ADMIN;
+
+      const queries = [];
+      
+      let salesQuery = supabase
+        .from("sales")
+        .select("*")
+        .eq("sale_date", today);
+
+      if (!isAdmin) {
+        salesQuery = salesQuery.eq("salesperson_id", user.id);
       }
+      queries.push(salesQuery);
 
-      try {
-        setLoading(true);
-        const today = new Date().toISOString().split('T')[0];
-        const isAdmin = user.role === UserRole.ADMIN;
+      let proposalsQuery = supabase
+        .from("proposals")
+        .select("fees_value")
+        .gte("created_at", `${today}T00:00:00`)
+        .lt("created_at", `${today}T23:59:59`);
 
-        // Optimize queries by fetching in parallel when possible
-        const queries = [];
-        
-        // Sales query
-        let salesQuery = supabase
-          .from("sales")
-          .select("*")
-          .eq("sale_date", today);
+      if (!isAdmin) {
+        proposalsQuery = proposalsQuery.eq("user_id", user.id);
+      }
+      queries.push(proposalsQuery);
 
-        if (!isAdmin) {
-          salesQuery = salesQuery.eq("salesperson_id", user.id);
-        }
-        queries.push(salesQuery);
+      const [salesResult, proposalsResult] = await Promise.all(queries);
+      
+      if (salesResult.error) throw salesResult.error;
+      if (proposalsResult.error) throw proposalsResult.error;
 
-        // Proposals query
-        let proposalsQuery = supabase
-          .from("proposals")
-          .select("fees_value")
-          .gte("created_at", `${today}T00:00:00`)
-          .lt("created_at", `${today}T23:59:59`);
+      const salesData = salesResult.data || [];
+      const proposalsData = proposalsResult.data || [];
 
-        if (!isAdmin) {
-          proposalsQuery = proposalsQuery.eq("user_id", user.id);
-        }
-        queries.push(proposalsQuery);
+      const totalSales = salesData.reduce((sum, sale) => sum + Number(sale.gross_amount), 0);
+      const proposalsCount = proposalsData.length;
+      const totalFees = proposalsData.reduce((sum, proposal) => sum + Number(proposal.fees_value || 0), 0);
 
-        // Execute queries in parallel
-        const [salesResult, proposalsResult] = await Promise.all(queries);
-        
-        if (salesResult.error) throw salesResult.error;
-        if (proposalsResult.error) throw proposalsResult.error;
+      let totalCommissions = 0;
 
-        const salesData = salesResult.data || [];
-        const proposalsData = proposalsResult.data || [];
+      if (isAdmin) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, contract_type, email")
+          .eq("role", "vendedor");
 
-        const totalSales = salesData.reduce((sum, sale) => sum + Number(sale.gross_amount), 0);
-        const proposalsCount = proposalsData.length;
-        const totalFees = proposalsData.reduce((sum, proposal) => sum + Number(proposal.fees_value || 0), 0);
+        const profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);
+        let teamTotalSales = 0;
 
-        let totalCommissions = 0;
+        const salesByPerson = salesData.reduce((acc: any, sale) => {
+          if (!acc[sale.salesperson_id]) {
+            acc[sale.salesperson_id] = 0;
+          }
+          acc[sale.salesperson_id] += Number(sale.gross_amount);
+          return acc;
+        }, {});
 
-        if (isAdmin) {
-          // For admins, get profiles once and calculate team commissions
-          const { data: profiles } = await supabase
-            .from("profiles")
-            .select("id, contract_type, email")
-            .eq("role", "vendedor");
-
-          const profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);
-          let teamTotalSales = 0;
-
-          const salesByPerson = salesData.reduce((acc: any, sale) => {
-            if (!acc[sale.salesperson_id]) {
-              acc[sale.salesperson_id] = 0;
-            }
-            acc[sale.salesperson_id] += Number(sale.gross_amount);
-            return acc;
-          }, {});
-
-          Object.entries(salesByPerson).forEach(([salespersonId, salesAmount]: [string, any]) => {
-            const profile = profilesMap.get(salespersonId);
-            const contractType = profile?.contract_type || 'PJ';
-            
-            if (!isSupervisor(profile?.email || '')) {
-              teamTotalSales += salesAmount;
-            }
-            
-            const commission = calculateCommission(salesAmount, contractType);
-            totalCommissions += commission.amount;
-          });
-
-          const supervisorBonus = calculateSupervisorBonus(teamTotalSales);
-          totalCommissions += supervisorBonus.amount;
-        } else {
-          // For vendors, get their contract type and calculate commission
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("contract_type")
-            .eq("id", user.id)
-            .single();
-
+        Object.entries(salesByPerson).forEach(([salespersonId, salesAmount]: [string, any]) => {
+          const profile = profilesMap.get(salespersonId);
           const contractType = profile?.contract_type || 'PJ';
-          const commission = calculateCommission(totalSales, contractType);
-          totalCommissions = commission.amount;
-        }
+          
+          if (!isSupervisor(profile?.email || '')) {
+            teamTotalSales += salesAmount;
+          }
+          
+          const commission = calculateCommission(salesAmount, contractType);
+          totalCommissions += commission.amount;
+        });
 
-        setResults({
-          totalSales,
-          totalCommissions,
-          proposalsCount,
-          totalFees,
-        });
-      } catch (error) {
-        console.error("Error fetching today results:", error);
-        setResults({
-          totalSales: 0,
-          totalCommissions: 0,
-          proposalsCount: 0,
-          totalFees: 0,
-        });
-      } finally {
-        setLoading(false);
+        const supervisorBonus = calculateSupervisorBonus(teamTotalSales);
+        totalCommissions += supervisorBonus.amount;
+      } else {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("contract_type")
+          .eq("id", user.id)
+          .single();
+
+        const contractType = profile?.contract_type || 'PJ';
+        const commission = calculateCommission(totalSales, contractType);
+        totalCommissions = commission.amount;
       }
-    };
 
-    fetchTodayResults();
-  }, [user]);
+      setResults({
+        totalSales,
+        totalCommissions,
+        proposalsCount,
+        totalFees,
+      });
+    } catch (error) {
+      console.error("Error fetching today results:", error);
+      setResults({
+        totalSales: 0,
+        totalCommissions: 0,
+        proposalsCount: 0,
+        totalFees: 0,
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id, user?.role]);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchTodayResults();
+    }
+  }, [user?.id, fetchTodayResults]);
 
   return { results, loading };
 }
