@@ -30,13 +30,18 @@ const AIImageProcessor = ({
     imagePreview,
     processingStatus,
     error,
-    handleImageChange
+    handleImageChange,
+    handleRetry,
+    retryCount,
+    maxRetries
   } = useImageProcessor({
     onProcessComplete,
     setProcessing,
     setProgressPercent,
     updateStatus
   });
+
+  const canRetry = retryCount < maxRetries;
 
   return (
     <Card className="border-purple-200 overflow-hidden shadow-md bg-white dark:bg-gray-800 dark:border-purple-900">
@@ -53,7 +58,11 @@ const AIImageProcessor = ({
             disabled={processing} 
           />
           
-          <ErrorAlert error={error} />
+          <ErrorAlert 
+            error={error}
+            onRetry={() => handleRetry(imagePreview)}
+            canRetry={canRetry && !!imagePreview}
+          />
           
           <ProgressIndicator 
             processing={processing}

@@ -112,28 +112,12 @@ export const useImageProcessor = ({
       setError(userFriendlyMessage);
       updateProcessingStatus('Erro no processamento');
       
-      // Mostrar toast com opção de retry se aplicável
-      if (canRetry) {
-        toast({
-          title: "Erro no processamento",
-          description: userFriendlyMessage,
-          variant: "destructive",
-          action: (
-            <button
-              onClick={() => handleRetry(imageBase64)}
-              className="bg-white text-red-600 px-3 py-1 rounded text-sm hover:bg-gray-100"
-            >
-              Tentar novamente
-            </button>
-          )
-        });
-      } else {
-        toast({
-          title: "Erro no processamento",
-          description: userFriendlyMessage,
-          variant: "destructive",
-        });
-      }
+      // Mostrar toast simples sem botão de retry (o retry estará no ErrorAlert)
+      toast({
+        title: "Erro no processamento",
+        description: userFriendlyMessage,
+        variant: "destructive",
+      });
       
       sonnerToast.error('Erro no processamento da imagem', {
         description: userFriendlyMessage
@@ -215,6 +199,9 @@ export const useImageProcessor = ({
     imagePreview,
     processingStatus,
     error,
-    handleImageChange
+    handleImageChange,
+    handleRetry,
+    retryCount,
+    maxRetries: MAX_RETRIES
   };
 };
