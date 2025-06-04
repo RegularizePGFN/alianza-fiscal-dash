@@ -147,15 +147,8 @@ export function FixedCostList({
     </div>
   );
 
-  // Cores mais vibrantes para os cabeçalhos das categorias
-  const categoryColors = [
-    'bg-blue-100 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700',
-    'bg-purple-100 dark:bg-purple-900/30 border-purple-300 dark:border-purple-700',
-    'bg-amber-100 dark:bg-amber-900/30 border-amber-300 dark:border-amber-700',
-    'bg-rose-100 dark:bg-rose-900/30 border-rose-300 dark:border-rose-700',
-    'bg-teal-100 dark:bg-teal-900/30 border-teal-300 dark:border-teal-700',
-    'bg-indigo-100 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700',
-  ];
+  // Cor única azul para todos os cabeçalhos das categorias
+  const categoryHeaderColor = 'bg-blue-100 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700';
 
   return (
     <div className="space-y-6">
@@ -194,11 +187,10 @@ export function FixedCostList({
           const categoryTotal = (categoryCosts as FixedCost[]).reduce((sum: number, cost: FixedCost) => sum + cost.amount, 0);
           const sortedCategoryCosts = getSortedCostsForCategory(categoryCosts as FixedCost[], category);
           const categorySort = categorySortOrders[category] || 'desc';
-          const colorClass = categoryColors[index % categoryColors.length];
           
           return (
             <Card key={category} className="hover:shadow-md transition-shadow duration-200">
-              <CardHeader className={`pb-3 ${colorClass}`}>
+              <CardHeader className={`pb-3 ${categoryHeaderColor}`}>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base font-medium text-gray-900 dark:text-gray-100">
                     {category}
