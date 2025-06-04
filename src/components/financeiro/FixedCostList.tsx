@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +7,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
-
 interface FixedCost {
   id: string;
   name: string;
@@ -16,38 +14,33 @@ interface FixedCost {
   amount: number;
   category?: string;
 }
-
 interface FixedCostListProps {
   costs: FixedCost[];
   loading: boolean;
   onEdit: (cost: FixedCost) => void;
   onDelete: () => void;
 }
-
 export function FixedCostList({
   costs,
   loading,
   onEdit,
   onDelete
 }: FixedCostListProps) {
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [categorySortOrders, setCategorySortOrders] = useState<Record<string, 'asc' | 'desc'>>({});
-
   const handleDelete = async (costId: string) => {
     try {
-      const { error } = await supabase
-        .from('company_costs')
-        .delete()
-        .eq('id', costId);
-
+      const {
+        error
+      } = await supabase.from('company_costs').delete().eq('id', costId);
       if (error) throw error;
-
       toast({
         title: "Custo removido",
         description: "O custo foi removido com sucesso."
       });
-
       onDelete();
     } catch (error: any) {
       console.error('Erro ao remover custo:', error);
@@ -58,14 +51,12 @@ export function FixedCostList({
       });
     }
   };
-
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
     }).format(value);
   };
-
   const sortedCosts = [...costs].sort((a, b) => {
     return sortOrder === 'desc' ? b.amount - a.amount : a.amount - b.amount;
   });
@@ -79,54 +70,45 @@ export function FixedCostList({
     acc[category].push(cost);
     return acc;
   }, {});
-
   const handleCategorySortToggle = (category: string) => {
     setCategorySortOrders(prev => ({
       ...prev,
       [category]: prev[category] === 'desc' ? 'asc' : 'desc'
     }));
   };
-
   const getSortedCostsForCategory = (categoryCosts: FixedCost[], category: string) => {
     const categorySort = categorySortOrders[category] || 'desc';
     return [...categoryCosts].sort((a, b) => {
       return categorySort === 'desc' ? b.amount - a.amount : a.amount - b.amount;
     });
   };
-
   const totalAmount = costs.reduce((sum, cost) => sum + cost.amount, 0);
-
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-8">
+    return <div className="flex items-center justify-center py-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         <span className="ml-2 text-muted-foreground">Carregando custos fixos...</span>
-      </div>
-    );
+      </div>;
   }
-
   if (costs.length === 0) {
-    return (
-      <div className="text-center py-12 text-gray-500">
+    return <div className="text-center py-12 text-gray-500">
         <Building className="h-16 w-16 mx-auto mb-4 text-gray-300" />
         <h3 className="text-lg font-medium mb-2">Nenhum custo fixo cadastrado</h3>
         <p className="text-sm text-muted-foreground">
           Adicione custos fixos recorrentes como aluguel, salários, etc.
         </p>
-      </div>
-    );
+      </div>;
   }
-
-  const CostItem = ({ cost }: { cost: FixedCost }) => (
-    <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700 hover:shadow-sm transition-all duration-200">
+  const CostItem = ({
+    cost
+  }: {
+    cost: FixedCost;
+  }) => <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700 hover:shadow-sm transition-all duration-200">
       <div className="flex-1">
         <div className="flex items-center gap-2 mb-1">
           <h4 className="font-medium text-sm">{cost.name}</h4>
           <Badge variant="secondary" className="text-xs">Fixo</Badge>
         </div>
-        {cost.description && (
-          <p className="text-xs text-muted-foreground line-clamp-1">{cost.description}</p>
-        )}
+        {cost.description && <p className="text-xs text-muted-foreground line-clamp-1">{cost.description}</p>}
       </div>
       <div className="flex items-center gap-2">
         <span className="font-semibold text-green-600 dark:text-green-400">
@@ -157,11 +139,8 @@ export function FixedCostList({
           </AlertDialogContent>
         </AlertDialog>
       </div>
-    </div>
-  );
-
-  return (
-    <div className="space-y-6">
+    </div>;
+  return <div className="space-y-6">
       {/* Controles de Ordenação */}
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -170,7 +149,7 @@ export function FixedCostList({
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Ordenar por valor:</span>
           <Select value={sortOrder} onValueChange={(value: 'asc' | 'desc') => setSortOrder(value)}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-60">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -194,12 +173,10 @@ export function FixedCostList({
       {/* Cards por Categoria */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {Object.entries(costsByCategory).map(([category, categoryCosts]) => {
-          const categoryTotal = categoryCosts.reduce((sum: number, cost: FixedCost) => sum + cost.amount, 0);
-          const sortedCategoryCosts = getSortedCostsForCategory(categoryCosts, category);
-          const categorySort = categorySortOrders[category] || 'desc';
-          
-          return (
-            <Card key={category} className="hover:shadow-md transition-shadow duration-200">
+        const categoryTotal = categoryCosts.reduce((sum: number, cost: FixedCost) => sum + cost.amount, 0);
+        const sortedCategoryCosts = getSortedCostsForCategory(categoryCosts, category);
+        const categorySort = categorySortOrders[category] || 'desc';
+        return <Card key={category} className="hover:shadow-md transition-shadow duration-200">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base font-medium text-gray-900 dark:text-gray-100">
@@ -215,29 +192,19 @@ export function FixedCostList({
                   <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
                     Total da categoria:
                   </span>
-                  <button
-                    onClick={() => handleCategorySortToggle(category)}
-                    className="flex items-center gap-1 text-lg font-bold text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors"
-                  >
+                  <button onClick={() => handleCategorySortToggle(category)} className="flex items-center gap-1 text-lg font-bold text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors">
                     {formatCurrency(categoryTotal)}
-                    {categorySort === 'desc' ? (
-                      <ChevronDown className="h-4 w-4" />
-                    ) : (
-                      <ChevronUp className="h-4 w-4" />
-                    )}
+                    {categorySort === 'desc' ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
                   </button>
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {sortedCategoryCosts.map((cost: FixedCost) => (
-                    <CostItem key={cost.id} cost={cost} />
-                  ))}
+                  {sortedCategoryCosts.map((cost: FixedCost) => <CostItem key={cost.id} cost={cost} />)}
                 </div>
               </CardContent>
-            </Card>
-          );
-        })}
+            </Card>;
+      })}
       </div>
 
       {/* Card de Total Consolidado */}
@@ -266,6 +233,5 @@ export function FixedCostList({
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 }
