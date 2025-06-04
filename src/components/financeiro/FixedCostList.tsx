@@ -9,10 +9,18 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 
+interface FixedCost {
+  id: string;
+  name: string;
+  description?: string;
+  amount: number;
+  category?: string;
+}
+
 interface FixedCostListProps {
-  costs: any[];
+  costs: FixedCost[];
   loading: boolean;
-  onEdit: (cost: any) => void;
+  onEdit: (cost: FixedCost) => void;
   onDelete: () => void;
 }
 
@@ -61,15 +69,15 @@ export function FixedCostList({
     return sortOrder === 'desc' ? b.amount - a.amount : a.amount - b.amount;
   });
 
-  // Agrupar custos por categoria
-  const costsByCategory = sortedCosts.reduce((acc, cost) => {
+  // Agrupar custos por categoria com tipagem correta
+  const costsByCategory = sortedCosts.reduce((acc: Record<string, FixedCost[]>, cost) => {
     const category = cost.category || 'Sem Categoria';
     if (!acc[category]) {
       acc[category] = [];
     }
     acc[category].push(cost);
     return acc;
-  }, {} as Record<string, any[]>);
+  }, {});
 
   const totalAmount = costs.reduce((sum, cost) => sum + cost.amount, 0);
 
@@ -94,7 +102,7 @@ export function FixedCostList({
     );
   }
 
-  const CostItem = ({ cost }: { cost: any }) => (
+  const CostItem = ({ cost }: { cost: FixedCost }) => (
     <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700 hover:shadow-sm transition-all duration-200">
       <div className="flex-1">
         <div className="flex items-center gap-2 mb-1">
@@ -171,7 +179,7 @@ export function FixedCostList({
       {/* Cards por Categoria */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {Object.entries(costsByCategory).map(([category, categoryCosts]) => {
-          const categoryTotal = categoryCosts.reduce((sum, cost) => sum + cost.amount, 0);
+          const categoryTotal = categoryCosts.reduce((sum: number, cost: FixedCost) => sum + cost.amount, 0);
           
           return (
             <Card key={category} className="hover:shadow-md transition-shadow duration-200">
@@ -192,7 +200,7 @@ export function FixedCostList({
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {categoryCosts.map((cost) => (
+                  {categoryCosts.map((cost: FixedCost) => (
                     <CostItem key={cost.id} cost={cost} />
                   ))}
                 </div>
