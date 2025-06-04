@@ -41,9 +41,9 @@ export function CategoryCard({
 
   return (
     <Card className="hover:shadow-md transition-shadow duration-200">
-      <CardHeader className={`pb-3 ${categoryHeaderColor}`}>
+      <CardHeader className={`pb-2 ${categoryHeaderColor}`}>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-medium text-gray-900 dark:text-gray-100">
+          <CardTitle className="text-sm font-medium text-gray-900 dark:text-gray-100">
             {category}
           </CardTitle>
           <Badge variant="outline" className="text-xs">
@@ -51,21 +51,21 @@ export function CategoryCard({
           </Badge>
         </div>
         
-        <div className="flex items-center justify-between bg-white/50 dark:bg-gray-800/30 rounded-lg p-3 mt-2">
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+        <div className="flex items-center justify-between bg-white/50 dark:bg-gray-800/30 rounded-lg p-2 mt-1">
+          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
             Total da categoria:
           </span>
           <button 
             onClick={() => onSortToggle(category)} 
-            className="flex items-center gap-1 text-lg font-bold text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors"
+            className="flex items-center gap-1 text-base font-bold text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors"
           >
             {formatCurrency(categoryTotal)}
-            {categorySort === 'desc' ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+            {categorySort === 'desc' ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
           </button>
         </div>
       </CardHeader>
-      <CardContent className="pt-0">
-        <div className="space-y-2 max-h-64 overflow-y-auto">
+      <CardContent className="pt-0 pb-3">
+        <div className="space-y-2 max-h-48 overflow-y-auto">
           {costs.map((cost) => (
             <CostItem 
               key={cost.id} 

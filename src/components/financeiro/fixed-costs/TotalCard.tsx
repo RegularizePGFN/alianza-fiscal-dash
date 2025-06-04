@@ -17,14 +17,14 @@ export function TotalCard({ totalAmount, costsCount }: TotalCardProps) {
 
   return (
     <Card className="border-2 border-green-200 bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 dark:border-green-800">
-      <CardContent className="p-6">
+      <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-100 dark:bg-green-800/50 rounded-lg">
-              <Building className="h-6 w-6 text-green-600 dark:text-green-400" />
+              <Building className="h-5 w-5 text-green-600 dark:text-green-400" />
             </div>
             <div>
-              <h4 className="text-lg font-semibold text-green-800 dark:text-green-200">
+              <h4 className="text-base font-semibold text-green-800 dark:text-green-200">
                 Total dos Custos Fixos
               </h4>
               <p className="text-sm text-green-600 dark:text-green-300">
@@ -33,7 +33,7 @@ export function TotalCard({ totalAmount, costsCount }: TotalCardProps) {
             </div>
           </div>
           <div className="text-right">
-            <span className="text-3xl font-bold text-green-700 dark:text-green-300">
+            <span className="text-2xl font-bold text-green-700 dark:text-green-300">
               {formatCurrency(totalAmount)}
             </span>
             <p className="text-sm text-green-600 dark:text-green-400">por mês</p>

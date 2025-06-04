@@ -10,13 +10,13 @@ interface SortControlsProps {
 export function SortControls({ sortOrder, onSortChange }: SortControlsProps) {
   return (
     <div className="flex items-center justify-between">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+      <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
         Custos por Categoria
       </h3>
       <div className="flex items-center gap-2">
         <span className="text-sm text-muted-foreground">Ordenar por valor:</span>
         <Select value={sortOrder} onValueChange={onSortChange}>
-          <SelectTrigger className="w-60">
+          <SelectTrigger className="w-52">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

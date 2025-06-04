@@ -20,16 +20,16 @@ export function FinanceiroContainer() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <FinanceiroHeader />
       
-      <Tabs defaultValue="overview" className="space-y-6">
+      <Tabs defaultValue="overview" className="space-y-4">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="costs">Gerenciar Custos</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="overview" className="space-y-6">
+        <TabsContent value="overview" className="space-y-4">
           <LucroLiquido 
             refreshTrigger={refreshTrigger} 
             detailed 
