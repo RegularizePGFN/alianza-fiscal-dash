@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -148,14 +147,14 @@ export function FixedCostList({
     </div>
   );
 
-  // Cores sutis para os cabeçalhos das categorias
+  // Cores mais vibrantes para os cabeçalhos das categorias
   const categoryColors = [
-    'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800',
-    'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800',
-    'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800',
-    'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800',
-    'bg-teal-50 dark:bg-teal-900/20 border-teal-200 dark:border-teal-800',
-    'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800',
+    'bg-blue-100 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700',
+    'bg-purple-100 dark:bg-purple-900/30 border-purple-300 dark:border-purple-700',
+    'bg-amber-100 dark:bg-amber-900/30 border-amber-300 dark:border-amber-700',
+    'bg-rose-100 dark:bg-rose-900/30 border-rose-300 dark:border-rose-700',
+    'bg-teal-100 dark:bg-teal-900/30 border-teal-300 dark:border-teal-700',
+    'bg-indigo-100 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700',
   ];
 
   return (
