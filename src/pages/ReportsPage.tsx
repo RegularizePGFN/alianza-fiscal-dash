@@ -1,16 +1,18 @@
 
 import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { ReportsFilter } from "@/components/reports/ReportsFilter";
+import { CompactReportsFilter } from "@/components/reports/CompactReportsFilter";
 import { ReportsCharts } from "@/components/reports/ReportsCharts";
 import { PaymentMethodSummaryCards } from "@/components/reports/PaymentMethodSummaryCards";
 import { SalespeopleCommissionsCard } from "@/components/dashboard/salespeople-commissions";
+import { ReportsMetricsCards } from "@/components/reports/ReportsMetricsCards";
+import { SalesVolumeChart } from "@/components/reports/SalesVolumeChart";
+import { TopSalesmenCard } from "@/components/reports/TopSalesmenCard";
 import { DateFilter, PaymentMethod, UserRole } from "@/lib/types";
 import { useReportsData } from "@/hooks/useReportsData";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { format, startOfMonth, endOfMonth } from "date-fns";
+import { format, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function ReportsPage() {
@@ -19,10 +21,7 @@ export default function ReportsPage() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
   
   // State for month filter (default to current month)
-  const [selectedMonth, setSelectedMonth] = useState(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
-  });
+  const [selectedMonthDate, setSelectedMonthDate] = useState(() => new Date());
   
   // State for custom date filter (when user wants specific periods)
   const [customDateFilter, setCustomDateFilter] = useState<DateFilter | null>(null);
@@ -44,18 +43,13 @@ export default function ReportsPage() {
       return customDateFilter;
     }
     
-    if (selectedMonth) {
-      const [year, month] = selectedMonth.split('-').map(Number);
-      const startDate = startOfMonth(new Date(year, month - 1));
-      const endDate = endOfMonth(new Date(year, month - 1));
-      
-      return {
-        startDate,
-        endDate
-      };
-    }
+    const startDate = startOfMonth(selectedMonthDate);
+    const endDate = endOfMonth(selectedMonthDate);
     
-    return null;
+    return {
+      startDate,
+      endDate
+    };
   };
 
   const { salesData, loading, error } = useReportsData({
@@ -64,7 +58,23 @@ export default function ReportsPage() {
     dateFilter: getActiveDateFilter()
   });
 
-  // Generate month options for filters
+  const handlePreviousMonth = () => {
+    setSelectedMonthDate(prev => subMonths(prev, 1));
+    setCustomDateFilter(null);
+  };
+
+  const handleNextMonth = () => {
+    setSelectedMonthDate(prev => addMonths(prev, 1));
+    setCustomDateFilter(null);
+  };
+
+  const handleCustomDateFilterChange = (dateFilter: DateFilter | null) => {
+    setCustomDateFilter(dateFilter);
+  };
+
+  const currentMonthLabel = format(selectedMonthDate, 'MMMM yyyy', { locale: ptBR });
+
+  // Generate month options for commission filter
   const generateMonthOptions = () => {
     const options = [];
     const now = new Date();
@@ -81,67 +91,26 @@ export default function ReportsPage() {
 
   const monthOptions = generateMonthOptions();
 
-  const handleCustomDateFilterChange = (dateFilter: DateFilter | null) => {
-    setCustomDateFilter(dateFilter);
-    // Reset month selection when custom filter is applied
-    if (dateFilter) {
-      setSelectedMonth('');
-    }
-  };
-
-  const handleMonthChange = (month: string) => {
-    setSelectedMonth(month);
-    // Clear custom date filter when month is selected
-    setCustomDateFilter(null);
-  };
-
   return (
     <AppLayout>
-      <div className="h-full flex flex-col space-y-4 p-4">
-        {/* Header with Month Selector */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 transition-colors duration-300">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Relatórios
-            </h1>
-            <p className="text-gray-600 dark:text-gray-300 mt-1">
-              Análise detalhada de vendas e performance
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Mês:</span>
-              <Select value={selectedMonth} onValueChange={handleMonthChange}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Selecione o mês" />
-                </SelectTrigger>
-                <SelectContent>
-                  {monthOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
+      <div className="h-full flex flex-col space-y-6 p-6">
+        {/* Compact Filters */}
+        <CompactReportsFilter 
+          onSalespersonChange={setSelectedSalesperson}
+          onPaymentMethodChange={setSelectedPaymentMethod}
+          onDateFilterChange={handleCustomDateFilterChange}
+          currentMonth={currentMonthLabel}
+          onPreviousMonth={handlePreviousMonth}
+          onNextMonth={handleNextMonth}
+          hasCustomFilter={customDateFilter !== null}
+        />
 
-        {/* Filters */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm transition-colors duration-300">
-          <div className="p-4">
-            <ReportsFilter 
-              onSalespersonChange={setSelectedSalesperson}
-              onPaymentMethodChange={setSelectedPaymentMethod}
-              onDateFilterChange={handleCustomDateFilterChange}
-            />
-          </div>
-        </div>
+        {/* Metrics Overview Cards */}
+        <ReportsMetricsCards salesData={salesData} />
         
         {/* Payment Method Summary Cards */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 transition-colors duration-300">
-          <div className="mb-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 transition-colors duration-300">
+          <div className="mb-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
               Resumo por Método de Pagamento
             </h2>
@@ -151,9 +120,27 @@ export default function ReportsPage() {
           </div>
           <PaymentMethodSummaryCards salesData={salesData} />
         </div>
+
+        {/* Top Salesmen and Volume Chart */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-1">
+            <TopSalesmenCard salesData={salesData} />
+          </div>
+          <div className="lg:col-span-2">
+            <SalesVolumeChart salesData={salesData} />
+          </div>
+        </div>
         
         {/* Charts */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 transition-colors duration-300 flex-1">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 transition-colors duration-300">
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              Análise Gráfica
+            </h2>
+            <p className="text-gray-600 dark:text-gray-300">
+              Visualizações detalhadas dos dados de vendas
+            </p>
+          </div>
           <ReportsCharts 
             salesData={salesData} 
             loading={loading}
@@ -163,7 +150,7 @@ export default function ReportsPage() {
 
         {/* Salespeople Commissions Section */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm transition-colors duration-300">
-          <div className="p-4">
+          <div className="p-6">
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
               <div>
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -172,22 +159,6 @@ export default function ReportsPage() {
                 <p className="text-gray-600 dark:text-gray-300 mt-1">
                   Resumo detalhado do desempenho dos vendedores por mês
                 </p>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Mês das Comissões:</span>
-                <Select value={selectedCommissionMonth} onValueChange={setSelectedCommissionMonth}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Selecione o mês" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {monthOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
             </div>
             

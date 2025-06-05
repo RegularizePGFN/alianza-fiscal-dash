@@ -6,7 +6,6 @@ import { Sale } from "@/lib/types";
 import { BarChart, BarChartHorizontal, Pie, LineChart } from "@/components/reports/charts";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ReportsChartsProps {
@@ -56,60 +55,66 @@ export function ReportsCharts({ salesData, loading, error }: ReportsChartsProps)
       </Card>
     );
   }
-
-  const chartHeight = isMobile ? "300px" : "400px";
   
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Daily Sales Chart */}
       <Card className="shadow-md border-primary/10 hover:border-primary/20 transition-all">
-        <CardHeader className="bg-gradient-to-r from-sky-50 to-indigo-50 dark:from-slate-900 dark:to-indigo-950 rounded-t-lg">
-          <CardTitle>Vendas por Dia</CardTitle>
-          <CardDescription>
-            Volume de vendas distribuído por dias no período selecionado
+        <CardHeader className="bg-gradient-to-r from-sky-50 to-indigo-50 dark:from-slate-900 dark:to-indigo-950 rounded-t-lg pb-3">
+          <CardTitle className="text-lg">Vendas por Dia</CardTitle>
+          <CardDescription className="text-sm">
+            Volume de vendas distribuído por dias
           </CardDescription>
         </CardHeader>
-        <CardContent className="h-80">
-          <LineChart data={salesData} />
+        <CardContent className="p-4">
+          <div className="h-72">
+            <LineChart data={salesData} />
+          </div>
         </CardContent>
       </Card>
 
       {/* Payment Method Chart (Pie) */}
       <Card className="shadow-md border-primary/10 hover:border-primary/20 transition-all">
-        <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-slate-900 dark:to-purple-950 rounded-t-lg">
-          <CardTitle>Vendas por Método de Pagamento</CardTitle>
-          <CardDescription>
-            Distribuição do volume de vendas por método de pagamento
+        <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-slate-900 dark:to-purple-950 rounded-t-lg pb-3">
+          <CardTitle className="text-lg">Distribuição por Pagamento</CardTitle>
+          <CardDescription className="text-sm">
+            Proporção de vendas por método
           </CardDescription>
         </CardHeader>
-        <CardContent className="h-80">
-          <Pie data={salesData} />
+        <CardContent className="p-4">
+          <div className="h-72">
+            <Pie data={salesData} />
+          </div>
         </CardContent>
       </Card>
 
       {/* Payment Method Chart (Bar) */}
       <Card className="shadow-md border-primary/10 hover:border-primary/20 transition-all">
-        <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-slate-900 dark:to-emerald-950 rounded-t-lg">
-          <CardTitle>Valor por Método de Pagamento</CardTitle>
-          <CardDescription>
-            Total de vendas por método de pagamento
+        <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-slate-900 dark:to-emerald-950 rounded-t-lg pb-3">
+          <CardTitle className="text-lg">Valor por Método</CardTitle>
+          <CardDescription className="text-sm">
+            Total de vendas por forma de pagamento
           </CardDescription>
         </CardHeader>
-        <CardContent className="h-80">
-          <BarChartHorizontal data={salesData} />
+        <CardContent className="p-4">
+          <div className="h-72">
+            <BarChartHorizontal data={salesData} />
+          </div>
         </CardContent>
       </Card>
 
       {/* Salesperson Chart */}
       <Card className="shadow-md border-primary/10 hover:border-primary/20 transition-all">
-        <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-slate-900 dark:to-amber-950 rounded-t-lg">
-          <CardTitle>Vendas por Vendedor</CardTitle>
-          <CardDescription>
-            Comparação de performance entre vendedores
+        <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-slate-900 dark:to-amber-950 rounded-t-lg pb-3">
+          <CardTitle className="text-lg">Performance dos Vendedores</CardTitle>
+          <CardDescription className="text-sm">
+            Comparação entre vendedores
           </CardDescription>
         </CardHeader>
-        <CardContent className="h-80">
-          <BarChart data={salesData} />
+        <CardContent className="p-4">
+          <div className="h-72">
+            <BarChart data={salesData} />
+          </div>
         </CardContent>
       </Card>
     </div>
