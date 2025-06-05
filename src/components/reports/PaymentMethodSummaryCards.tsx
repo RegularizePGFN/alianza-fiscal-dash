@@ -84,8 +84,8 @@ export function PaymentMethodSummaryCards({ salesData }: PaymentMethodSummaryCar
             <CardTitle className="text-sm font-medium text-muted-foreground">
               {method.name}
             </CardTitle>
-            <div className={`p-2 rounded-lg ${method.bgColor}`}>
-              <method.icon className={`h-4 w-4 ${method.color}`} />
+            <div className={`p-3 rounded-lg ${method.bgColor}`}>
+              <method.icon className={`h-6 w-6 ${method.color}`} />
             </div>
           </CardHeader>
           <CardContent>
@@ -105,8 +105,8 @@ export function PaymentMethodSummaryCards({ salesData }: PaymentMethodSummaryCar
           <CardTitle className="text-sm font-medium text-muted-foreground">
             Total Geral
           </CardTitle>
-          <div className="p-2 bg-primary/20 rounded-lg">
-            <DollarSign className="h-4 w-4 text-primary" />
+          <div className="p-3 bg-primary/20 rounded-lg">
+            <DollarSign className="h-6 w-6 text-primary" />
           </div>
         </CardHeader>
         <CardContent>

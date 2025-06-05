@@ -2,10 +2,8 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ReportsContainer } from "@/components/reports/ReportsContainer";
-import { ReportsChartsSection } from "@/components/reports/ReportsChartsSection";
 import { ReportsCommissionsSection } from "@/components/reports/ReportsCommissionsSection";
 import { DateFilter, PaymentMethod, UserRole } from "@/lib/types";
-import { useReportsData } from "@/hooks/useReportsData";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 
@@ -26,9 +24,6 @@ export default function ReportsPage() {
     return <Navigate to="/dashboard" />;
   }
 
-  // Get reports data for charts section using current filters
-  const { salesData, loading, error } = useReportsData(currentFilters);
-
   const handleFiltersChange = (filters: {
     salespersonId: string | null;
     paymentMethod: PaymentMethod | null;
@@ -42,16 +37,9 @@ export default function ReportsPage() {
       <div className="h-full flex flex-col space-y-6 p-6">
         {/* Main Reports Container with filters and visualizations */}
         <ReportsContainer onFiltersChange={handleFiltersChange} />
-        
-        {/* Charts Section */}
-        <ReportsChartsSection 
-          salesData={salesData}
-          loading={loading}
-          error={error}
-        />
 
-        {/* Salespeople Commissions Section */}
-        <ReportsCommissionsSection />
+        {/* Salespeople Commissions Section - now receives filters */}
+        <ReportsCommissionsSection filters={currentFilters} />
       </div>
     </AppLayout>
   );
