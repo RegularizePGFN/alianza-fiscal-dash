@@ -38,3 +38,19 @@ export type SummaryTotals = {
   projectedCommission: number;
   zeroDaysCount: number; // New field for days with zero sales
 };
+
+// Add the missing type for the commission data
+export type SalespeopleCommissionsData = {
+  salespeople: Array<{
+    id: string;
+    name: string;
+    totalSales: number;
+    totalValue: number;
+    totalCommission: number;
+  }>;
+  totals: {
+    totalSales: number;
+    totalValue: number;
+    totalCommission: number;
+  };
+};

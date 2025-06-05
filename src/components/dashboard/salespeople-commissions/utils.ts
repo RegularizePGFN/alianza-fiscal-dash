@@ -61,3 +61,9 @@ export function getBusinessDaysElapsedInMonth(month: number, year: number): numb
   
   return businessDaysElapsed;
 }
+
+// Add the missing calculateCommissionValue function
+export function calculateCommissionValue(sale: any): number {
+  // Simple commission calculation - this might need to be adjusted based on business logic
+  return sale.gross_amount * 0.05; // 5% commission as default
+}

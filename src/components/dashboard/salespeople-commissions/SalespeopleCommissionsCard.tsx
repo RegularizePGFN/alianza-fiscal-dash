@@ -113,10 +113,33 @@ export function SalespeopleCommissionsCard({ selectedMonth, externalFilters }: S
               {sortedData.map((salesperson) => (
                 <SalespersonRow 
                   key={salesperson.id} 
-                  salesperson={salesperson} 
+                  person={{
+                    id: salesperson.id,
+                    name: salesperson.name,
+                    totalSales: salesperson.totalSales,
+                    goalAmount: 0,
+                    commissionGoalAmount: 0,
+                    projectedCommission: salesperson.totalCommission,
+                    goalPercentage: 0,
+                    salesCount: salesperson.totalSales,
+                    metaGap: 0,
+                    expectedProgress: 0,
+                    remainingDailyTarget: 0,
+                    zeroDaysCount: 0
+                  }} 
                 />
               ))}
-              <SummaryRow totals={data.totals} />
+              <SummaryRow summaryTotals={{
+                salesCount: data.totals.totalSales,
+                totalSales: data.totals.totalValue,
+                goalAmount: 0,
+                commissionGoalAmount: 0,
+                goalPercentage: 0,
+                metaGap: 0,
+                remainingDailyTarget: 0,
+                projectedCommission: data.totals.totalCommission,
+                zeroDaysCount: 0
+              }} />
             </TableBody>
           </Table>
         </div>

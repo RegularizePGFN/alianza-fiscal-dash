@@ -16,6 +16,12 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === UserRole.ADMIN;
 
+  // Get current month for commission card
+  const getCurrentMonth = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+  };
+
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -34,7 +40,7 @@ export default function DashboardPage() {
             <GoalsCommissionsSection summary={summary} salesData={salesData} />
             
             {/* Admin-only commission projections card */}
-            {isAdmin && <SalespeopleCommissionsCard />}
+            {isAdmin && <SalespeopleCommissionsCard selectedMonth={getCurrentMonth()} />}
             
             {/* Weekly Reports - Single full width card */}
             <SalespersonWeeklyCard salesData={salesData} />
