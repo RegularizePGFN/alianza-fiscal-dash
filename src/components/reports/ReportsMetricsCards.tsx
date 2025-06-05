@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, Users, Target, Clock } from "lucide-react";
+import { TrendingUp, Users, Target, Calendar } from "lucide-react";
 import { Sale } from "@/lib/types";
 import { useMemo } from "react";
 
@@ -22,11 +22,42 @@ export function ReportsMetricsCards({ salesData }: ReportsMetricsCardsProps) {
     const averageTicket = totalSales > 0 ? totalValue / totalSales : 0;
     const uniqueSalespeople = new Set(salesData.map(sale => sale.salesperson_id)).size;
     
+    // Calculate business days in the period
+    const calculateBusinessDays = () => {
+      if (salesData.length === 0) return 0;
+      
+      // Get unique dates from sales data
+      const uniqueDates = new Set(salesData.map(sale => sale.sale_date));
+      const sortedDates = Array.from(uniqueDates).sort();
+      
+      if (sortedDates.length === 0) return 0;
+      
+      const startDate = new Date(sortedDates[0]);
+      const endDate = new Date(sortedDates[sortedDates.length - 1]);
+      
+      let businessDays = 0;
+      const currentDate = new Date(startDate);
+      
+      while (currentDate <= endDate) {
+        const dayOfWeek = currentDate.getDay();
+        // Monday = 1, Tuesday = 2, ..., Friday = 5 (exclude Saturday = 6, Sunday = 0)
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+          businessDays++;
+        }
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+      
+      return businessDays;
+    };
+    
+    const businessDays = calculateBusinessDays();
+    
     return {
       totalValue,
       totalSales,
       averageTicket,
-      uniqueSalespeople
+      uniqueSalespeople,
+      businessDays
     };
   }, [salesData]);
 
@@ -57,9 +88,9 @@ export function ReportsMetricsCards({ salesData }: ReportsMetricsCardsProps) {
     },
     {
       title: "Período",
-      value: salesData.length > 0 ? "Ativo" : "Sem dados",
-      subtitle: `${metrics.totalSales} vendas registradas`,
-      icon: Clock,
+      value: `${metrics.businessDays} dias`,
+      subtitle: "dias úteis no período filtrado",
+      icon: Calendar,
       color: "text-orange-600 dark:text-orange-400",
       bgColor: "bg-orange-100 dark:bg-orange-900/30"
     }
