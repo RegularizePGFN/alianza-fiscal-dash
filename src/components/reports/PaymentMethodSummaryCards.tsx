@@ -15,9 +15,15 @@ export function PaymentMethodSummaryCards({ salesData }: PaymentMethodSummaryCar
     }).format(value);
   };
 
+  // Debug: Log dos dados recebidos
+  console.log("PaymentMethodSummaryCards - Total sales received:", salesData.length);
+  console.log("PaymentMethodSummaryCards - Sales data sample:", salesData.slice(0, 3));
+
   // Calcular totais por método de pagamento
   const paymentTotals = salesData.reduce((acc, sale) => {
     const amount = sale.gross_amount || 0;
+    
+    console.log(`Processing sale: ${sale.id}, amount: ${amount}, method: ${sale.payment_method}, date: ${sale.sale_date}`);
     
     switch (sale.payment_method) {
       case PaymentMethod.PIX:
@@ -30,12 +36,21 @@ export function PaymentMethodSummaryCards({ salesData }: PaymentMethodSummaryCar
       case PaymentMethod.BOLETO:
         acc.boleto += amount;
         break;
+      default:
+        console.warn(`Unknown payment method: ${sale.payment_method} for sale ${sale.id}`);
     }
     
     return acc;
   }, { pix: 0, cartao: 0, boleto: 0 });
 
   const totalGeral = paymentTotals.pix + paymentTotals.cartao + paymentTotals.boleto;
+
+  console.log("PaymentMethodSummaryCards - Calculated totals:", {
+    pix: paymentTotals.pix,
+    cartao: paymentTotals.cartao,
+    boleto: paymentTotals.boleto,
+    total: totalGeral
+  });
 
   const paymentMethods = [
     {
@@ -99,7 +114,7 @@ export function PaymentMethodSummaryCards({ salesData }: PaymentMethodSummaryCar
             {formatCurrency(totalGeral)}
           </div>
           <p className="text-xs text-muted-foreground">
-            Soma de todos os métodos
+            Soma de todos os métodos ({salesData.length} vendas)
           </p>
         </CardContent>
       </Card>
