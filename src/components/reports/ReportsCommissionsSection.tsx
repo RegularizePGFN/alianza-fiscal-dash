@@ -3,17 +3,8 @@ import { useState } from "react";
 import { SalespeopleCommissionsCard } from "@/components/dashboard/salespeople-commissions";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { DateFilter, PaymentMethod } from "@/lib/types";
 
-interface ReportsCommissionsSectionProps {
-  filters?: {
-    salespersonId: string | null;
-    paymentMethod: PaymentMethod | null;
-    dateFilter: DateFilter | null;
-  };
-}
-
-export function ReportsCommissionsSection({ filters }: ReportsCommissionsSectionProps) {
+export function ReportsCommissionsSection() {
   // State for commission month filter
   const [selectedCommissionMonth, setSelectedCommissionMonth] = useState(() => {
     const now = new Date();
@@ -51,10 +42,7 @@ export function ReportsCommissionsSection({ filters }: ReportsCommissionsSection
           </div>
         </div>
         
-        <SalespeopleCommissionsCard 
-          selectedMonth={selectedCommissionMonth} 
-          externalFilters={filters}
-        />
+        <SalespeopleCommissionsCard selectedMonth={selectedCommissionMonth} />
       </div>
     </div>
   );
