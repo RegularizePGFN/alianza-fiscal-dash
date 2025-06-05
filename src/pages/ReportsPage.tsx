@@ -2,8 +2,7 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ReportsContainer } from "@/components/reports/ReportsContainer";
-import { ReportsChartsSection } from "@/components/reports/ReportsChartsSection";
-import { ReportsCommissionsSection } from "@/components/reports/ReportsCommissionsSection";
+import { ReportsTeamConsolidatedCard } from "@/components/reports/ReportsTeamConsolidatedCard";
 import { DateFilter, PaymentMethod, UserRole } from "@/lib/types";
 import { useReportsData } from "@/hooks/useReportsData";
 import { Navigate } from "react-router-dom";
@@ -26,7 +25,7 @@ export default function ReportsPage() {
     return <Navigate to="/dashboard" />;
   }
 
-  // Get reports data for charts section using current filters
+  // Get reports data for the new team consolidated card using current filters
   const { salesData, loading, error } = useReportsData(currentFilters);
 
   const handleFiltersChange = (filters: {
@@ -43,15 +42,12 @@ export default function ReportsPage() {
         {/* Main Reports Container with filters and visualizations */}
         <ReportsContainer onFiltersChange={handleFiltersChange} />
         
-        {/* Charts Section */}
-        <ReportsChartsSection 
+        {/* Team Consolidated Section */}
+        <ReportsTeamConsolidatedCard 
           salesData={salesData}
           loading={loading}
           error={error}
         />
-
-        {/* Salespeople Commissions Section */}
-        <ReportsCommissionsSection />
       </div>
     </AppLayout>
   );
