@@ -3,6 +3,7 @@ import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ReportsFilter } from "@/components/reports/ReportsFilter";
 import { ReportsCharts } from "@/components/reports/ReportsCharts";
+import { PaymentMethodSummaryCards } from "@/components/reports/PaymentMethodSummaryCards";
 import { SalespeopleCommissionsCard } from "@/components/dashboard/salespeople-commissions";
 import { DateFilter, PaymentMethod, UserRole } from "@/lib/types";
 import { useReportsData } from "@/hooks/useReportsData";
@@ -64,6 +65,19 @@ export default function ReportsPage() {
                 onDateFilterChange={setDateFilter}
               />
             </div>
+          </div>
+          
+          {/* Cards de Resumo de Métodos de Pagamento */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 transition-colors duration-300">
+            <div className="mb-4">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                Resumo por Método de Pagamento
+              </h2>
+              <p className="text-gray-600 dark:text-gray-300">
+                Total recebido por cada método de pagamento no período selecionado
+              </p>
+            </div>
+            <PaymentMethodSummaryCards salesData={salesData} />
           </div>
           
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 print:break-inside-avoid print:mb-10 transition-colors duration-300">
