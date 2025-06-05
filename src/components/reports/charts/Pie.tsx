@@ -71,6 +71,7 @@ export function Pie({ data }: PieProps) {
         fill="white"
         textAnchor="middle"
         dominantBaseline="central"
+        fontSize={12}
       >
         {`${(percent * 100).toFixed(0)}%`}
       </text>
@@ -78,36 +79,36 @@ export function Pie({ data }: PieProps) {
   };
 
   return (
-    <ChartContainer
-      config={{
-        value: {
-          color: '#8B5CF6'
-        }
-      }}
-    >
-      <PieChart margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
-        <RechartsPie
-          data={chartData}
-          cx="50%"
-          cy="50%"
-          labelLine={false}
-          label={renderCustomizedLabel}
-          outerRadius={80}
-          fill="#8884d8"
-          dataKey="value"
-        >
-          {chartData.map((entry, index) => (
-            <Cell 
-              key={`cell-${index}`} 
-              fill={COLORS[entry.name as PaymentMethod] || "#8884d8"} 
-            />
-          ))}
-        </RechartsPie>
-        <Tooltip 
-          formatter={(value) => [`${value} vendas`, 'Quantidade']}
-        />
-        <Legend />
-      </PieChart>
-    </ChartContainer>
+    <div className="w-full h-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart margin={{ top: 10, right: 10, bottom: 30, left: 10 }}>
+          <RechartsPie
+            data={chartData}
+            cx="50%"
+            cy="45%"
+            labelLine={false}
+            label={renderCustomizedLabel}
+            outerRadius={70}
+            fill="#8884d8"
+            dataKey="value"
+          >
+            {chartData.map((entry, index) => (
+              <Cell 
+                key={`cell-${index}`} 
+                fill={COLORS[entry.name as PaymentMethod] || "#8884d8"} 
+              />
+            ))}
+          </RechartsPie>
+          <Tooltip 
+            formatter={(value) => [`${value} vendas`, 'Quantidade']}
+          />
+          <Legend 
+            verticalAlign="bottom" 
+            height={36}
+            wrapperStyle={{ fontSize: '12px' }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
   );
 }

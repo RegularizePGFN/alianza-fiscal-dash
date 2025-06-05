@@ -45,49 +45,46 @@ export function SalesVolumeChart({ salesData }: SalesVolumeChartProps) {
 
   return (
     <Card className="h-full">
-      <CardHeader>
+      <CardHeader className="pb-2">
         <CardTitle className="text-lg">Volume de Vendas Diário</CardTitle>
       </CardHeader>
-      <CardContent className="h-80">
-        <ChartContainer
-          config={{
-            volume: {
-              color: 'hsl(var(--primary))'
-            }
-          }}
-        >
-          <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
-            <defs>
-              <linearGradient id="colorVolume" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <XAxis 
-              dataKey="formattedDate" 
-              tick={{ fontSize: 12 }}
-              className="text-muted-foreground"
-            />
-            <YAxis 
-              tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
-              tick={{ fontSize: 12 }}
-              className="text-muted-foreground"
-            />
-            <Tooltip 
-              formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR')}`, 'Volume']}
-              labelFormatter={(label) => `Data: ${label}`}
-            />
-            <Area
-              type="monotone"
-              dataKey="volume"
-              stroke="hsl(var(--primary))"
-              fillOpacity={1}
-              fill="url(#colorVolume)"
-              strokeWidth={2}
-            />
-          </AreaChart>
-        </ChartContainer>
+      <CardContent className="p-4">
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+              <defs>
+                <linearGradient id="colorVolume" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis 
+                dataKey="formattedDate" 
+                tick={{ fontSize: 10 }}
+                className="text-muted-foreground"
+              />
+              <YAxis 
+                tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
+                tick={{ fontSize: 10 }}
+                className="text-muted-foreground"
+                width={50}
+              />
+              <Tooltip 
+                formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR')}`, 'Volume']}
+                labelFormatter={(label) => `Data: ${label}`}
+              />
+              <Area
+                type="monotone"
+                dataKey="volume"
+                stroke="hsl(var(--primary))"
+                fillOpacity={1}
+                fill="url(#colorVolume)"
+                strokeWidth={2}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   );

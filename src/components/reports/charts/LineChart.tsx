@@ -45,53 +45,44 @@ export const LineChart: React.FC<LineChartProps> = ({ data }) => {
     `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
   
   return (
-    <ChartContainer 
-      config={{
-        amount: {
-          color: '#8B5CF6'
-        }
-      }}
-    >
-      <RechartsLineChart
-        data={chartData}
-        margin={{ top: 10, right: 30, left: 30, bottom: 30 }}
-      >
-        <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-        <XAxis 
-          dataKey="date" 
-          tick={{ fontSize: 12 }}
-          tickMargin={10}
-          height={50}
-        />
-        <YAxis 
-          tickFormatter={formatCurrency}
-          tick={{ fontSize: 12 }}
-          width={80}
-        />
-        <Tooltip 
-          formatter={(value: number) => [formatCurrency(value), "Valor Total"]}
-          labelFormatter={(label) => `Dia: ${label}`}
-          contentStyle={{ 
-            backgroundColor: "white", 
-            borderRadius: "8px", 
-            boxShadow: "0 4px 12px rgba(0,0,0,0.1)", 
-            border: "1px solid #e0e0e0" 
-          }}
-        />
-        <Legend 
-          wrapperStyle={{ paddingTop: "10px" }} 
-          verticalAlign="bottom"
-        />
-        <Line 
-          type="monotone" 
-          dataKey="amount" 
-          name="Valor Total" 
-          stroke="#8884d8" 
-          strokeWidth={3}
-          activeDot={{ r: 8, fill: "#8B5CF6", stroke: "white", strokeWidth: 2 }} 
-          dot={{ stroke: "#8B5CF6", strokeWidth: 2, fill: "white", r: 4 }}
-        />
-      </RechartsLineChart>
-    </ChartContainer>
+    <div className="w-full h-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <RechartsLineChart
+          data={chartData}
+          margin={{ top: 10, right: 10, left: 10, bottom: 10 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+          <XAxis 
+            dataKey="date" 
+            tick={{ fontSize: 10 }}
+            height={40}
+          />
+          <YAxis 
+            tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
+            tick={{ fontSize: 10 }}
+            width={60}
+          />
+          <Tooltip 
+            formatter={(value: number) => [formatCurrency(value), "Valor Total"]}
+            labelFormatter={(label) => `Dia: ${label}`}
+            contentStyle={{ 
+              backgroundColor: "white", 
+              borderRadius: "8px", 
+              boxShadow: "0 4px 12px rgba(0,0,0,0.1)", 
+              border: "1px solid #e0e0e0" 
+            }}
+          />
+          <Line 
+            type="monotone" 
+            dataKey="amount" 
+            name="Valor Total" 
+            stroke="#8884d8" 
+            strokeWidth={2}
+            activeDot={{ r: 6, fill: "#8B5CF6", stroke: "white", strokeWidth: 2 }} 
+            dot={{ stroke: "#8B5CF6", strokeWidth: 1, fill: "white", r: 3 }}
+          />
+        </RechartsLineChart>
+      </ResponsiveContainer>
+    </div>
   );
 };

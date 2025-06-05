@@ -52,41 +52,38 @@ export function BarChartHorizontal({ data }: BarChartHorizontalProps) {
   };
 
   return (
-    <ChartContainer 
-      config={{
-        value: {
-          color: '#8B5CF6'
-        }
-      }}
-    >
-      <BarChart
-        layout="vertical"
-        data={chartData}
-        margin={{ top: 20, right: 30, left: 70, bottom: 5 }}
-      >
-        <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-        <XAxis 
-          type="number"
-          tickFormatter={(value) => `R$ ${value.toLocaleString('pt-BR')}`}
-        />
-        <YAxis 
-          dataKey="name" 
-          type="category" 
-          tick={{ fontSize: 12 }}
-        />
-        <Tooltip 
-          formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR')}`, 'Valor']}
-        />
-        <Legend />
-        <Bar dataKey="valor" name="Valor (R$)" radius={[0, 4, 4, 0]}>
-          {chartData.map((entry, index) => (
-            <Cell 
-              key={`cell-${index}`} 
-              fill={colors[entry.name as PaymentMethod] || "#8B5CF6"} 
-            />
-          ))}
-        </Bar>
-      </BarChart>
-    </ChartContainer>
+    <div className="w-full h-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          layout="vertical"
+          data={chartData}
+          margin={{ top: 10, right: 10, left: 60, bottom: 10 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+          <XAxis 
+            type="number"
+            tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
+            tick={{ fontSize: 10 }}
+          />
+          <YAxis 
+            dataKey="name" 
+            type="category" 
+            tick={{ fontSize: 10 }}
+            width={50}
+          />
+          <Tooltip 
+            formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR')}`, 'Valor']}
+          />
+          <Bar dataKey="valor" name="Valor (R$)" radius={[0, 4, 4, 0]}>
+            {chartData.map((entry, index) => (
+              <Cell 
+                key={`cell-${index}`} 
+                fill={colors[entry.name as PaymentMethod] || "#8B5CF6"} 
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   );
 }

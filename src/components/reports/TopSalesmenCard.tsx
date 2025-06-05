@@ -68,43 +68,45 @@ export function TopSalesmenCard({ salesData }: TopSalesmenCardProps) {
 
   return (
     <Card className="h-full">
-      <CardHeader>
+      <CardHeader className="pb-2">
         <CardTitle className="text-lg flex items-center gap-2">
           <Trophy className="h-5 w-5 text-yellow-600" />
           Top Vendedores
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {topSalesmen.length === 0 ? (
-          <p className="text-muted-foreground text-center py-8">
-            Nenhum vendedor encontrado no período
-          </p>
-        ) : (
-          topSalesmen.map((salesman) => {
-            const Icon = getIcon(salesman.position);
-            const color = getColor(salesman.position);
-            
-            return (
-              <div key={salesman.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                <div className="flex items-center gap-3">
-                  <Icon className={`h-5 w-5 ${color}`} />
-                  <div>
-                    <p className="font-medium">{salesman.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {salesman.salesCount} vendas
-                    </p>
+      <CardContent className="p-4">
+        <div className="space-y-3">
+          {topSalesmen.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8">
+              Nenhum vendedor encontrado no período
+            </p>
+          ) : (
+            topSalesmen.map((salesman) => {
+              const Icon = getIcon(salesman.position);
+              const color = getColor(salesman.position);
+              
+              return (
+                <div key={salesman.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
+                  <div className="flex items-center gap-2">
+                    <Icon className={`h-4 w-4 ${color}`} />
+                    <div>
+                      <p className="font-medium text-sm">{salesman.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {salesman.salesCount} vendas
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-sm">{formatCurrency(salesman.totalValue)}</p>
+                    <Badge variant="outline" className="text-xs">
+                      #{salesman.position}
+                    </Badge>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-bold">{formatCurrency(salesman.totalValue)}</p>
-                  <Badge variant="outline" className="text-xs">
-                    #{salesman.position}
-                  </Badge>
-                </div>
-              </div>
-            );
-          })
-        )}
+              );
+            })
+          )}
+        </div>
       </CardContent>
     </Card>
   );
