@@ -8,7 +8,9 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sale, PaymentMethod } from "@/lib/types";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { ArrowUpDown, ArrowUp, ArrowDown, Users } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Users, Check } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface ReportsTeamConsolidatedCardProps {
   salesData: Sale[];
@@ -35,7 +37,9 @@ type SortDirection = 'asc' | 'desc';
 export function ReportsTeamConsolidatedCard({ salesData, loading, error }: ReportsTeamConsolidatedCardProps) {
   const [sortColumn, setSortColumn] = useState<SortColumn>('total');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const [selectedSalespeople, setSelectedSalespeople] = useState<string[]>([]);
+  const [tempSelectedSalespeople, setTempSelectedSalespeople] = useState<string[]>([]);
+  const [appliedSelectedSalespeople, setAppliedSelectedSalespeople] = useState<string[]>([]);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -62,8 +66,8 @@ export function ReportsTeamConsolidatedCard({ salesData, loading, error }: Repor
       <ArrowDown className="h-4 w-4 text-blue-600" />;
   };
 
-  const handleSalespersonSelection = (salespersonId: string) => {
-    setSelectedSalespeople(prev => {
+  const handleTempSalespersonSelection = (salespersonId: string) => {
+    setTempSelectedSalespeople(prev => {
       if (prev.includes(salespersonId)) {
         return prev.filter(id => id !== salespersonId);
       } else {
@@ -72,8 +76,15 @@ export function ReportsTeamConsolidatedCard({ salesData, loading, error }: Repor
     });
   };
 
+  const applySelection = () => {
+    setAppliedSelectedSalespeople(tempSelectedSalespeople);
+    setIsPopoverOpen(false);
+  };
+
   const clearSelection = () => {
-    setSelectedSalespeople([]);
+    setTempSelectedSalespeople([]);
+    setAppliedSelectedSalespeople([]);
+    setIsPopoverOpen(false);
   };
 
   if (loading) {
@@ -150,9 +161,9 @@ export function ReportsTeamConsolidatedCard({ salesData, loading, error }: Repor
 
   let allSalespeople = Object.values(salespeopleStats);
 
-  // Filtrar vendedores selecionados se houver seleção
-  if (selectedSalespeople.length > 0) {
-    allSalespeople = allSalespeople.filter(person => selectedSalespeople.includes(person.id));
+  // Filtrar vendedores selecionados se houver seleção aplicada
+  if (appliedSelectedSalespeople.length > 0) {
+    allSalespeople = allSalespeople.filter(person => appliedSelectedSalespeople.includes(person.id));
   }
 
   // Ordenar dados
@@ -223,34 +234,58 @@ export function ReportsTeamConsolidatedCard({ salesData, loading, error }: Repor
             {/* Seletor de vendedores */}
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4" />
-              <Select onValueChange={handleSalespersonSelection}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Selecionar vendedores" />
-                </SelectTrigger>
-                <SelectContent>
-                  {allAvailableSalespeople.map((person) => (
-                    <SelectItem key={person.id} value={person.id}>
-                      {person.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-48">
+                    Selecionar vendedores
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-4">
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Selecionar vendedores para comparativo</h4>
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                      {allAvailableSalespeople.map((person) => (
+                        <div key={person.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={person.id}
+                            checked={tempSelectedSalespeople.includes(person.id)}
+                            onCheckedChange={() => handleTempSalespersonSelection(person.id)}
+                          />
+                          <label htmlFor={person.id} className="text-sm cursor-pointer">
+                            {person.name}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between">
+                      <Button variant="outline" size="sm" onClick={clearSelection}>
+                        Limpar
+                      </Button>
+                      <Button size="sm" onClick={applySelection}>
+                        <Check className="h-4 w-4 mr-1" />
+                        Aplicar ({tempSelectedSalespeople.length})
+                      </Button>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
             
-            {selectedSalespeople.length > 0 && (
+            {appliedSelectedSalespeople.length > 0 && (
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={clearSelection}
                 className="text-red-600 border-red-200 hover:bg-red-50"
               >
-                Limpar ({selectedSalespeople.length})
+                Limpar Filtros ({appliedSelectedSalespeople.length})
               </Button>
             )}
             
             <Badge variant="outline" className="ml-2">
               {sortedSalespeople.length} vendedor(es)
-              {selectedSalespeople.length > 0 && ` de ${allAvailableSalespeople.length}`}
+              {appliedSelectedSalespeople.length > 0 && ` de ${allAvailableSalespeople.length}`}
             </Badge>
           </div>
         </CardTitle>
@@ -271,55 +306,83 @@ export function ReportsTeamConsolidatedCard({ salesData, loading, error }: Repor
                   </Button>
                 </TableHead>
                 <TableHead className="text-center border-r">
-                  <div className="space-y-1">
+                  <div className="grid grid-cols-2 gap-1">
                     <Button
                       variant="ghost"
-                      className="h-auto p-0 font-medium hover:bg-transparent"
+                      className="h-auto p-0 font-medium hover:bg-transparent text-xs"
                       onClick={() => handleSort('pixTotal')}
                     >
-                      PIX
+                      PIX Valor
                       {getSortIcon('pixTotal')}
                     </Button>
-                    <div className="text-xs text-muted-foreground">Valor | Qtd</div>
+                    <Button
+                      variant="ghost"
+                      className="h-auto p-0 font-medium hover:bg-transparent text-xs"
+                      onClick={() => handleSort('pixCount')}
+                    >
+                      PIX Qtd
+                      {getSortIcon('pixCount')}
+                    </Button>
                   </div>
                 </TableHead>
                 <TableHead className="text-center border-r">
-                  <div className="space-y-1">
+                  <div className="grid grid-cols-2 gap-1">
                     <Button
                       variant="ghost"
-                      className="h-auto p-0 font-medium hover:bg-transparent"
+                      className="h-auto p-0 font-medium hover:bg-transparent text-xs"
                       onClick={() => handleSort('boletoTotal')}
                     >
-                      Boleto
+                      Boleto Valor
                       {getSortIcon('boletoTotal')}
                     </Button>
-                    <div className="text-xs text-muted-foreground">Valor | Qtd</div>
+                    <Button
+                      variant="ghost"
+                      className="h-auto p-0 font-medium hover:bg-transparent text-xs"
+                      onClick={() => handleSort('boletoCount')}
+                    >
+                      Boleto Qtd
+                      {getSortIcon('boletoCount')}
+                    </Button>
                   </div>
                 </TableHead>
                 <TableHead className="text-center border-r">
-                  <div className="space-y-1">
+                  <div className="grid grid-cols-2 gap-1">
                     <Button
                       variant="ghost"
-                      className="h-auto p-0 font-medium hover:bg-transparent"
+                      className="h-auto p-0 font-medium hover:bg-transparent text-xs"
                       onClick={() => handleSort('creditTotal')}
                     >
-                      Crédito
+                      Crédito Valor
                       {getSortIcon('creditTotal')}
                     </Button>
-                    <div className="text-xs text-muted-foreground">Valor | Qtd</div>
+                    <Button
+                      variant="ghost"
+                      className="h-auto p-0 font-medium hover:bg-transparent text-xs"
+                      onClick={() => handleSort('creditCount')}
+                    >
+                      Crédito Qtd
+                      {getSortIcon('creditCount')}
+                    </Button>
                   </div>
                 </TableHead>
                 <TableHead className="text-center font-semibold">
-                  <div className="space-y-1">
+                  <div className="grid grid-cols-2 gap-1">
                     <Button
                       variant="ghost"
-                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                      className="h-auto p-0 font-semibold hover:bg-transparent text-xs"
                       onClick={() => handleSort('total')}
                     >
-                      Total
+                      Total Valor
                       {getSortIcon('total')}
                     </Button>
-                    <div className="text-xs text-muted-foreground">Valor | Qtd</div>
+                    <Button
+                      variant="ghost"
+                      className="h-auto p-0 font-semibold hover:bg-transparent text-xs"
+                      onClick={() => handleSort('totalCount')}
+                    >
+                      Total Qtd
+                      {getSortIcon('totalCount')}
+                    </Button>
                   </div>
                 </TableHead>
               </TableRow>
@@ -328,35 +391,33 @@ export function ReportsTeamConsolidatedCard({ salesData, loading, error }: Repor
               {sortedSalespeople.map((person) => (
                 <TableRow 
                   key={person.id} 
-                  className={`hover:bg-muted/50 ${selectedSalespeople.includes(person.id) ? 'bg-blue-50 dark:bg-blue-950/20' : ''}`}
-                  onClick={() => handleSalespersonSelection(person.id)}
-                  style={{ cursor: 'pointer' }}
+                  className={`hover:bg-muted/50 ${appliedSelectedSalespeople.includes(person.id) ? 'bg-blue-50 dark:bg-blue-950/20' : ''}`}
                 >
                   <TableCell className="font-medium border-r">
                     {person.name}
                   </TableCell>
                   <TableCell className="text-center border-r">
-                    <div className="space-y-1">
-                      <div className="font-medium">{formatCurrency(person.pixTotal)}</div>
-                      <div className="text-xs text-muted-foreground">{person.pixCount} vendas</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="font-medium text-sm">{formatCurrency(person.pixTotal)}</div>
+                      <div className="text-sm text-muted-foreground">{person.pixCount}</div>
                     </div>
                   </TableCell>
                   <TableCell className="text-center border-r">
-                    <div className="space-y-1">
-                      <div className="font-medium">{formatCurrency(person.boletoTotal)}</div>
-                      <div className="text-xs text-muted-foreground">{person.boletoCount} vendas</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="font-medium text-sm">{formatCurrency(person.boletoTotal)}</div>
+                      <div className="text-sm text-muted-foreground">{person.boletoCount}</div>
                     </div>
                   </TableCell>
                   <TableCell className="text-center border-r">
-                    <div className="space-y-1">
-                      <div className="font-medium">{formatCurrency(person.creditTotal)}</div>
-                      <div className="text-xs text-muted-foreground">{person.creditCount} vendas</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="font-medium text-sm">{formatCurrency(person.creditTotal)}</div>
+                      <div className="text-sm text-muted-foreground">{person.creditCount}</div>
                     </div>
                   </TableCell>
                   <TableCell className="text-center font-semibold">
-                    <div className="space-y-1">
-                      <div className="font-bold text-primary">{formatCurrency(person.total)}</div>
-                      <div className="text-xs text-muted-foreground">{person.totalCount} vendas</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="font-bold text-primary text-sm">{formatCurrency(person.total)}</div>
+                      <div className="text-sm text-muted-foreground">{person.totalCount}</div>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -368,27 +429,27 @@ export function ReportsTeamConsolidatedCard({ salesData, loading, error }: Repor
                   TOTAL GERAL
                 </TableCell>
                 <TableCell className="text-center font-bold border-r">
-                  <div className="space-y-1">
-                    <div>{formatCurrency(totals.pixTotal)}</div>
-                    <div className="text-xs">{totals.pixCount} vendas</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="text-sm">{formatCurrency(totals.pixTotal)}</div>
+                    <div className="text-sm">{totals.pixCount}</div>
                   </div>
                 </TableCell>
                 <TableCell className="text-center font-bold border-r">
-                  <div className="space-y-1">
-                    <div>{formatCurrency(totals.boletoTotal)}</div>
-                    <div className="text-xs">{totals.boletoCount} vendas</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="text-sm">{formatCurrency(totals.boletoTotal)}</div>
+                    <div className="text-sm">{totals.boletoCount}</div>
                   </div>
                 </TableCell>
                 <TableCell className="text-center font-bold border-r">
-                  <div className="space-y-1">
-                    <div>{formatCurrency(totals.creditTotal)}</div>
-                    <div className="text-xs">{totals.creditCount} vendas</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="text-sm">{formatCurrency(totals.creditTotal)}</div>
+                    <div className="text-sm">{totals.creditCount}</div>
                   </div>
                 </TableCell>
                 <TableCell className="text-center font-bold text-primary">
-                  <div className="space-y-1">
-                    <div>{formatCurrency(totals.total)}</div>
-                    <div className="text-xs">{totals.totalCount} vendas</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="text-sm">{formatCurrency(totals.total)}</div>
+                    <div className="text-sm">{totals.totalCount}</div>
                   </div>
                 </TableCell>
               </TableRow>
@@ -396,13 +457,13 @@ export function ReportsTeamConsolidatedCard({ salesData, loading, error }: Repor
           </Table>
         </div>
         
-        {selectedSalespeople.length > 0 && (
+        {appliedSelectedSalespeople.length > 0 && (
           <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
             <div className="text-sm text-blue-700 dark:text-blue-300">
-              <strong>Comparativo selecionado:</strong> {selectedSalespeople.length} vendedor(es)
+              <strong>Comparativo selecionado:</strong> {appliedSelectedSalespeople.length} vendedor(es)
             </div>
             <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-              Clique em um vendedor para remover da seleção ou use "Limpar" para remover todos
+              Use o seletor acima para modificar a seleção ou clique em "Limpar Filtros" para ver todos
             </div>
           </div>
         )}
