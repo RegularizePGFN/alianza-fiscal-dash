@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableHead, TableHeader, TableRow, TableWithBorders, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -197,18 +197,31 @@ export function ReportsTeamConsolidatedCard({ salesData, loading, error }: Repor
   let filteredSalesData = [...salesData];
   
   if (localDateFilter?.startDate && localDateFilter?.endDate) {
+    const startDateStr = localDateFilter.startDate;
+    const endDateStr = localDateFilter.endDate;
+    
     filteredSalesData = filteredSalesData.filter(sale => {
       if (typeof sale.sale_date !== 'string' || !sale.sale_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
         return false;
       }
-      return sale.sale_date >= localDateFilter.startDate! && sale.sale_date <= localDateFilter.endDate!;
+      return sale.sale_date >= startDateStr && sale.sale_date <= endDateStr;
     });
   }
+
+  console.log("🔍 DEBUG - Investigando divergência de valores:");
+  console.log("📊 Total de vendas recebidas:", salesData.length);
+  console.log("📊 Vendas após filtro:", filteredSalesData.length);
+  
+  // Log detalhado das vendas para investigar a divergência
+  const totalGeral = filteredSalesData.reduce((sum, sale) => sum + (sale.gross_amount || 0), 0);
+  console.log("💰 Total geral das vendas (para debug):", totalGeral);
 
   // Agrupar vendas por vendedor e método de pagamento
   const salespeopleStats = filteredSalesData.reduce((acc, sale) => {
     const salespersonId = sale.salesperson_id;
     const salespersonName = sale.salesperson_name;
+    
+    console.log(`🧮 Processando venda: ${sale.id} - Vendedor: ${salespersonName} - Valor: ${sale.gross_amount}`);
     
     if (!acc[salespersonId]) {
       acc[salespersonId] = {
@@ -250,6 +263,12 @@ export function ReportsTeamConsolidatedCard({ salesData, loading, error }: Repor
   }, {} as Record<string, SalespersonStats>);
 
   let allSalespeople = Object.values(salespeopleStats);
+  
+  console.log("👥 Vendedores processados:", allSalespeople.map(p => ({
+    name: p.name,
+    total: p.total,
+    salesCount: p.totalCount
+  })));
 
   // Filtrar vendedores selecionados se houver seleção aplicada
   if (appliedSelectedSalespeople.length > 0) {
@@ -296,6 +315,12 @@ export function ReportsTeamConsolidatedCard({ salesData, loading, error }: Repor
       totalCount: 0 
     }
   );
+
+  console.log("📈 Totais finais calculados:", {
+    totalVendedores: totals.total,
+    totalVendasProcessadas: totals.totalCount,
+    diferenca: totalGeral - totals.total
+  });
 
   // Lista de todos os vendedores para seleção (baseada nos dados originais)
   const allAvailableSalespeople = Object.values(salesData.reduce((acc, sale) => {
@@ -509,7 +534,7 @@ export function ReportsTeamConsolidatedCard({ salesData, loading, error }: Repor
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-left border-r">
+                <TableWithBorders.Head className="text-left">
                   <Button
                     variant="ghost"
                     className="h-auto p-0 font-medium hover:bg-transparent"
@@ -518,8 +543,8 @@ export function ReportsTeamConsolidatedCard({ salesData, loading, error }: Repor
                     Vendedor
                     {getSortIcon('name')}
                   </Button>
-                </TableHead>
-                <TableHead className="text-center border-r">
+                </TableWithBorders.Head>
+                <TableWithBorders.Head className="text-center">
                   <div className="grid grid-cols-2 gap-1">
                     <Button
                       variant="ghost"
@@ -538,8 +563,8 @@ export function ReportsTeamConsolidatedCard({ salesData, loading, error }: Repor
                       {getSortIcon('pixCount')}
                     </Button>
                   </div>
-                </TableHead>
-                <TableHead className="text-center border-r">
+                </TableWithBorders.Head>
+                <TableWithBorders.Head className="text-center">
                   <div className="grid grid-cols-2 gap-1">
                     <Button
                       variant="ghost"
@@ -558,8 +583,8 @@ export function ReportsTeamConsolidatedCard({ salesData, loading, error }: Repor
                       {getSortIcon('boletoCount')}
                     </Button>
                   </div>
-                </TableHead>
-                <TableHead className="text-center border-r">
+                </TableWithBorders.Head>
+                <TableWithBorders.Head className="text-center">
                   <div className="grid grid-cols-2 gap-1">
                     <Button
                       variant="ghost"
@@ -578,7 +603,7 @@ export function ReportsTeamConsolidatedCard({ salesData, loading, error }: Repor
                       {getSortIcon('creditCount')}
                     </Button>
                   </div>
-                </TableHead>
+                </TableWithBorders.Head>
                 <TableHead className="text-center font-semibold">
                   <div className="grid grid-cols-2 gap-1">
                     <Button
@@ -607,27 +632,27 @@ export function ReportsTeamConsolidatedCard({ salesData, loading, error }: Repor
                   key={person.id} 
                   className={`hover:bg-muted/50 ${appliedSelectedSalespeople.includes(person.id) ? 'bg-blue-50 dark:bg-blue-950/20' : ''}`}
                 >
-                  <TableCell className="font-medium border-r">
+                  <TableWithBorders.Cell className="font-medium">
                     {person.name}
-                  </TableCell>
-                  <TableCell className="text-center border-r">
+                  </TableWithBorders.Cell>
+                  <TableWithBorders.Cell className="text-center">
                     <div className="grid grid-cols-2 gap-2">
                       <div className="font-medium text-sm">{formatCurrency(person.pixTotal)}</div>
                       <div className="text-sm text-muted-foreground">{person.pixCount}</div>
                     </div>
-                  </TableCell>
-                  <TableCell className="text-center border-r">
+                  </TableWithBorders.Cell>
+                  <TableWithBorders.Cell className="text-center">
                     <div className="grid grid-cols-2 gap-2">
                       <div className="font-medium text-sm">{formatCurrency(person.boletoTotal)}</div>
                       <div className="text-sm text-muted-foreground">{person.boletoCount}</div>
                     </div>
-                  </TableCell>
-                  <TableCell className="text-center border-r">
+                  </TableWithBorders.Cell>
+                  <TableWithBorders.Cell className="text-center">
                     <div className="grid grid-cols-2 gap-2">
                       <div className="font-medium text-sm">{formatCurrency(person.creditTotal)}</div>
                       <div className="text-sm text-muted-foreground">{person.creditCount}</div>
                     </div>
-                  </TableCell>
+                  </TableWithBorders.Cell>
                   <TableCell className="text-center font-semibold">
                     <div className="grid grid-cols-2 gap-2">
                       <div className="font-bold text-primary text-sm">{formatCurrency(person.total)}</div>
@@ -639,27 +664,27 @@ export function ReportsTeamConsolidatedCard({ salesData, loading, error }: Repor
               
               {/* Linha de totais */}
               <TableRow className="border-t-2 bg-muted/30 font-semibold">
-                <TableCell className="font-bold border-r">
+                <TableWithBorders.Cell className="font-bold">
                   TOTAL GERAL
-                </TableCell>
-                <TableCell className="text-center font-bold border-r">
+                </TableWithBorders.Cell>
+                <TableWithBorders.Cell className="text-center font-bold">
                   <div className="grid grid-cols-2 gap-2">
                     <div className="text-sm">{formatCurrency(totals.pixTotal)}</div>
                     <div className="text-sm">{totals.pixCount}</div>
                   </div>
-                </TableCell>
-                <TableCell className="text-center font-bold border-r">
+                </TableWithBorders.Cell>
+                <TableWithBorders.Cell className="text-center font-bold">
                   <div className="grid grid-cols-2 gap-2">
                     <div className="text-sm">{formatCurrency(totals.boletoTotal)}</div>
                     <div className="text-sm">{totals.boletoCount}</div>
                   </div>
-                </TableCell>
-                <TableCell className="text-center font-bold border-r">
+                </TableWithBorders.Cell>
+                <TableWithBorders.Cell className="text-center font-bold">
                   <div className="grid grid-cols-2 gap-2">
                     <div className="text-sm">{formatCurrency(totals.creditTotal)}</div>
                     <div className="text-sm">{totals.creditCount}</div>
                   </div>
-                </TableCell>
+                </TableWithBorders.Cell>
                 <TableCell className="text-center font-bold text-primary">
                   <div className="grid grid-cols-2 gap-2">
                     <div className="text-sm">{formatCurrency(totals.total)}</div>

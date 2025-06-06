@@ -78,6 +78,8 @@ export function useSalespeopleCommissions() {
         // Get all business days of the current month up to today
         const allBusinessDays = getAllBusinessDaysUntilToday(currentMonth, currentYear);
         
+        console.log("🔍 DEBUG COMISSÕES - Iniciando busca de comissões para vendedores");
+        
         const commissionData = await Promise.all(
           profilesData.map(async (profile) => {
             const startDate = `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`;
@@ -106,6 +108,8 @@ export function useSalespeopleCommissions() {
             const totalSales = salesData?.reduce((sum, sale) => sum + Number(sale.gross_amount), 0) || 0;
             const salesCount = salesData?.length || 0;
             const goalAmount = goalData?.goal_amount ? Number(goalData.goal_amount) : 0;
+            
+            console.log(`🔍 DEBUG COMISSÕES - ${profile.name}: ${salesCount} vendas, Total: R$ ${totalSales}`);
             
             // Get contract type from profile, default to PJ
             const contractType = profile.contract_type || 'PJ';
@@ -156,6 +160,10 @@ export function useSalespeopleCommissions() {
         );
         
         const validCommissions = commissionData.filter(Boolean) as SalespersonCommission[];
+        
+        const totalComissoes = validCommissions.reduce((sum, person) => sum + person.totalSales, 0);
+        console.log("🔍 DEBUG COMISSÕES - Total geral das comissões:", totalComissoes);
+        console.log("🔍 DEBUG COMISSÕES - Vendedores processados:", validCommissions.length);
         
         // Apply initial sort
         sortSalespeople(validCommissions, sortColumn, sortDirection);

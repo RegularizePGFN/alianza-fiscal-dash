@@ -60,6 +60,20 @@ export const useDashboardData = () => {
       // Fetch sales data
       const formattedSales = await fetchSalesData(user, currentStartStr, currentEndStr);
       
+      console.log("🔍 DEBUG DASHBOARD - Total de vendas carregadas:", formattedSales.length);
+      console.log("🔍 DEBUG DASHBOARD - Vendas por vendedor:", 
+        formattedSales.reduce((acc, sale) => {
+          const name = sale.salesperson_name;
+          if (!acc[name]) acc[name] = { count: 0, total: 0 };
+          acc[name].count++;
+          acc[name].total += sale.gross_amount || 0;
+          return acc;
+        }, {} as Record<string, { count: number; total: number }>)
+      );
+      
+      const totalDashboard = formattedSales.reduce((sum, sale) => sum + (sale.gross_amount || 0), 0);
+      console.log("💰 DEBUG DASHBOARD - Total geral das vendas:", totalDashboard);
+      
       // Fetch previous month sales for comparison
       const prevMonthSales = await fetchPreviousMonthSales(user, prevStartStr, prevEndStr);
       
@@ -72,6 +86,8 @@ export const useDashboardData = () => {
       if (formattedSales.length > 0) {
         // Use the current sales data, previous month data and goal to calculate summary
         const result = calculateSalesSummary(formattedSales, monthlyGoal);
+        
+        console.log("💰 DEBUG DASHBOARD - Resumo total_gross:", result.summary.total_gross);
         
         // Update states with calculated data
         setSalesData(formattedSales);
