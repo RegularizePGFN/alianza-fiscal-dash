@@ -8,6 +8,8 @@ interface FeesCardProps {
 }
 
 export function FeesCard({ totalFees, isAdmin }: FeesCardProps) {
+  console.log("🔍 DEBUG HONORÁRIOS CARD - Valor recebido:", totalFees);
+  
   return (
     <Card className="transition-all duration-300 hover:shadow-md dark:border-gray-700 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
       <CardHeader className="flex flex-row items-center justify-between pb-1">
@@ -19,7 +21,7 @@ export function FeesCard({ totalFees, isAdmin }: FeesCardProps) {
             {new Intl.NumberFormat('pt-BR', {
               style: 'currency',
               currency: 'BRL'
-            }).format(totalFees)}
+            }).format(Math.max(0, totalFees))} {/* Garantir que não seja negativo */}
           </div>
         </div>
         <div className="rounded-md bg-green-100 dark:bg-green-800/50 p-1.5 text-green-700 dark:text-green-300">

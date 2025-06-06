@@ -32,6 +32,9 @@ export function useTodayResults() {
         const today = new Date().toISOString().split('T')[0];
         const isAdmin = user.role === UserRole.ADMIN;
 
+        console.log("🔍 DEBUG HONORÁRIOS - Iniciando busca de resultados para hoje:", today);
+        console.log("🔍 DEBUG HONORÁRIOS - Usuário:", user.name, "Admin:", isAdmin);
+
         // Fetch sales data
         let salesQuery = supabase
           .from("sales")
@@ -44,6 +47,8 @@ export function useTodayResults() {
 
         const { data: salesData, error: salesError } = await salesQuery;
         if (salesError) throw salesError;
+
+        console.log("🔍 DEBUG HONORÁRIOS - Vendas encontradas:", salesData?.length || 0);
 
         // Fetch proposals data
         let proposalsQuery = supabase
@@ -59,10 +64,28 @@ export function useTodayResults() {
         const { data: proposalsData, error: proposalsError } = await proposalsQuery;
         if (proposalsError) throw proposalsError;
 
+        console.log("🔍 DEBUG HONORÁRIOS - Propostas encontradas:", proposalsData?.length || 0);
+        
+        // Log individual proposals with fees_value
+        proposalsData?.forEach((proposal, index) => {
+          console.log(`🔍 DEBUG HONORÁRIOS - Proposta ${index + 1}:`, {
+            id: proposal.id,
+            user_id: proposal.user_id,
+            fees_value: proposal.fees_value,
+            created_at: proposal.created_at
+          });
+        });
+
         // Calculate totals
         const totalSales = salesData?.reduce((sum, sale) => sum + Number(sale.gross_amount), 0) || 0;
         const proposalsCount = proposalsData?.length || 0;
-        const totalFees = proposalsData?.reduce((sum, proposal) => sum + Number(proposal.fees_value || 0), 0) || 0;
+        const totalFees = proposalsData?.reduce((sum, proposal) => {
+          const feesValue = Number(proposal.fees_value || 0);
+          console.log(`🔍 DEBUG HONORÁRIOS - Somando fees_value: ${feesValue} de proposta ${proposal.id}`);
+          return sum + feesValue;
+        }, 0) || 0;
+
+        console.log("🔍 DEBUG HONORÁRIOS - Total de honorários calculado:", totalFees);
 
         let totalCommissions = 0;
 
@@ -115,6 +138,13 @@ export function useTodayResults() {
           totalCommissions = commission.amount;
         }
 
+        console.log("🔍 DEBUG HONORÁRIOS - Resultado final:", {
+          totalSales,
+          totalCommissions, 
+          proposalsCount,
+          totalFees
+        });
+
         setResults({
           totalSales,
           totalCommissions,
@@ -122,7 +152,7 @@ export function useTodayResults() {
           totalFees,
         });
       } catch (error) {
-        console.error("Error fetching today results:", error);
+        console.error("❌ Erro ao buscar resultados de hoje:", error);
       } finally {
         setLoading(false);
       }
