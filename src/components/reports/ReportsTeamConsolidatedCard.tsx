@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Sale, PaymentMethod, DateFilter } from "@/lib/types";
+import { Sale, PaymentMethod } from "@/lib/types";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ArrowUpDown, ArrowUp, ArrowDown, Users, Check, CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
@@ -34,6 +34,12 @@ interface SalespersonStats {
   totalCount: number;
 }
 
+// Local date filter type using strings
+interface LocalDateFilter {
+  startDate: string;
+  endDate: string;
+}
+
 type SortColumn = 'name' | 'pixTotal' | 'boletoTotal' | 'creditTotal' | 'total' | 'pixCount' | 'boletoCount' | 'creditCount' | 'totalCount';
 type SortDirection = 'asc' | 'desc';
 
@@ -45,7 +51,7 @@ export function ReportsTeamConsolidatedCard({ salesData, loading, error }: Repor
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   
   // Local date filter states
-  const [localDateFilter, setLocalDateFilter] = useState<DateFilter | null>(null);
+  const [localDateFilter, setLocalDateFilter] = useState<LocalDateFilter | null>(null);
   const [dateFilterType, setDateFilterType] = useState<'month' | 'custom'>('month');
   const [selectedMonth, setSelectedMonth] = useState<string>('current');
   const [customStartDate, setCustomStartDate] = useState<Date | undefined>();
@@ -99,7 +105,7 @@ export function ReportsTeamConsolidatedCard({ salesData, loading, error }: Repor
   };
 
   // Handle date filter changes
-  const getDateFilterFromSelection = (): DateFilter | null => {
+  const getDateFilterFromSelection = (): LocalDateFilter | null => {
     if (dateFilterType === 'month') {
       const today = new Date();
       let startDate: Date;
