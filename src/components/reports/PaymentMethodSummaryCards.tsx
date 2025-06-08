@@ -57,29 +57,32 @@ export function PaymentMethodSummaryCards({ salesData }: PaymentMethodSummaryCar
       name: "PIX",
       value: paymentTotals.pix,
       icon: Smartphone,
-      color: "text-green-600 dark:text-green-400",
-      bgColor: "bg-green-100 dark:bg-green-900/30"
+      color: "text-green-700 dark:text-green-300",
+      bgColor: "bg-green-100 dark:bg-green-900/30",
+      cardBg: "border-2 border-green-200/50 bg-green-50/30 dark:border-green-800/50 dark:bg-green-900/10"
     },
     {
       name: "Cartão",
       value: paymentTotals.cartao,
       icon: CreditCard,
-      color: "text-blue-600 dark:text-blue-400",
-      bgColor: "bg-blue-100 dark:bg-blue-900/30"
+      color: "text-blue-700 dark:text-blue-300",
+      bgColor: "bg-blue-100 dark:bg-blue-900/30",
+      cardBg: "border-2 border-blue-200/50 bg-blue-50/30 dark:border-blue-800/50 dark:bg-blue-900/10"
     },
     {
       name: "Boleto",
       value: paymentTotals.boleto,
       icon: FileText,
-      color: "text-orange-600 dark:text-orange-400",
-      bgColor: "bg-orange-100 dark:bg-orange-900/30"
+      color: "text-orange-700 dark:text-orange-300",
+      bgColor: "bg-orange-100 dark:bg-orange-900/30",
+      cardBg: "border-2 border-orange-200/50 bg-orange-50/30 dark:border-orange-800/50 dark:bg-orange-900/10"
     }
   ];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       {paymentMethods.map((method) => (
-        <Card key={method.name} className="hover:shadow-md transition-shadow">
+        <Card key={method.name} className={`hover:shadow-lg transition-all ${method.cardBg}`}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               {method.name}
@@ -89,7 +92,7 @@ export function PaymentMethodSummaryCards({ salesData }: PaymentMethodSummaryCar
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className={`text-2xl font-bold ${method.color}`}>
               {formatCurrency(method.value)}
             </div>
             <p className="text-xs text-muted-foreground">
