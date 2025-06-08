@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,11 +9,21 @@ import { DateFilterSelector } from "./DateFilterSelector";
 import { TeamConsolidatedTable } from "./TeamConsolidatedTable";
 import { ReportsTeamConsolidatedCardProps, SalespersonStats, LocalDateFilter, SortColumn, SortDirection } from "./types";
 
+const getDefaultDateFilter = (): LocalDateFilter => {
+  const today = new Date();
+  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  
+  return {
+    startDate: startOfMonth.toISOString().split('T')[0],
+    endDate: today.toISOString().split('T')[0]
+  };
+};
+
 export function ReportsTeamConsolidatedCard({ salesData, loading, error }: ReportsTeamConsolidatedCardProps) {
   const [sortColumn, setSortColumn] = useState<SortColumn>('total');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [appliedSelectedSalespeople, setAppliedSelectedSalespeople] = useState<string[]>([]);
-  const [localDateFilter, setLocalDateFilter] = useState<LocalDateFilter | null>(null);
+  const [localDateFilter, setLocalDateFilter] = useState<LocalDateFilter | null>(getDefaultDateFilter());
 
   const handleSort = (column: SortColumn) => {
     if (column === sortColumn) {

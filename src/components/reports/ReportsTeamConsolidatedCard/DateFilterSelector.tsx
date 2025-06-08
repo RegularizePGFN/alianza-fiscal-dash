@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
@@ -73,20 +72,20 @@ export function DateFilterSelector({ localDateFilter, onApplyDateFilter }: DateF
   const getDateFilterLabel = () => {
     if (!localDateFilter) return "Selecionar período";
     
-    if (dateFilterType === 'month') {
-      switch (selectedMonth) {
-        case 'current':
-          return "Mês atual";
-        case 'previous':
-          return "Mês passado";
-        default:
-          return "Selecionar período";
-      }
-    } else if (customStartDate && customEndDate) {
-      return `${format(customStartDate, "dd/MM/yy")} - ${format(customEndDate, "dd/MM/yy")}`;
+    // Se temos um filtro de data aplicado, mostramos as datas formatadas
+    const startDate = new Date(localDateFilter.startDate);
+    const endDate = new Date(localDateFilter.endDate);
+    
+    // Verificar se é o mês atual (do primeiro dia até hoje)
+    const today = new Date();
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    
+    if (localDateFilter.startDate === startOfMonth.toISOString().split('T')[0] && 
+        localDateFilter.endDate === today.toISOString().split('T')[0]) {
+      return "Mês atual";
     }
     
-    return "Selecionar período";
+    return `${format(startDate, "dd/MM/yy")} - ${format(endDate, "dd/MM/yy")}`;
   };
 
   return (
