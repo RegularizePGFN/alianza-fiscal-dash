@@ -34,25 +34,29 @@ export function AdminCommissionsView({
   return (
     <>
       {/* Summary Cards */}
-      <CommissionsSummaryCards
-        totalSalespeopleWithSales={totalSalespeopleWithSales}
-        averageCommission={averageCommission}
-        salespeopleAboveGoal={salespeopleAboveGoal}
-        totalSalespeople={salespeople.length}
-        projectedCommission={summaryTotals.projectedCommission}
-      />
+      <div className="animate-fade-in">
+        <CommissionsSummaryCards
+          totalSalespeopleWithSales={totalSalespeopleWithSales}
+          averageCommission={averageCommission}
+          salespeopleAboveGoal={salespeopleAboveGoal}
+          totalSalespeople={salespeople.length}
+          projectedCommission={summaryTotals.projectedCommission}
+        />
+      </div>
 
       {/* Top Performer Card */}
-      <TopPerformerCard topPerformer={topPerformer} />
+      <div className="mt-6 animate-fade-in">
+        <TopPerformerCard topPerformer={topPerformer} />
+      </div>
       
       {/* Commission Content */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 print:break-inside-avoid print:mb-10 transition-colors duration-300">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 p-4 sm:p-6 print:break-inside-avoid print:mb-10 mt-6 transition-colors duration-300 animate-fade-in">
         <SalespeopleCommissionsCard key={selectedMonthString} selectedMonth={selectedMonthString} />
       </div>
 
       {/* Supervisor Bonus Card */}
       {supervisorBonus && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 transition-colors duration-300">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 p-4 sm:p-6 transition-colors duration-300 mt-6 animate-fade-in">
           <SupervisorBonusCard 
             supervisorBonus={supervisorBonus} 
             loading={loading}
@@ -61,7 +65,10 @@ export function AdminCommissionsView({
       )}
 
       {/* Additional Info Card */}
-      <CommissionsInfoCard isAdmin={true} />
+      <div className="mt-6 animate-fade-in">
+        <CommissionsInfoCard isAdmin={true} />
+      </div>
     </>
   );
 }
+
