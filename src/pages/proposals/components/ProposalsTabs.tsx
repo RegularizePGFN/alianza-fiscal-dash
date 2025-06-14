@@ -65,18 +65,47 @@ const ProposalsTabs = ({
   };
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-3 mb-6">
-        <TabsTrigger value="upload">Upload de Imagem</TabsTrigger>
-        <TabsTrigger value="data" disabled={!formData.cnpj && !generatedProposal}>
+    <Tabs 
+      value={activeTab} 
+      onValueChange={setActiveTab} 
+      className="w-full"
+    >
+      <TabsList className="grid w-full grid-cols-3 mb-6 bg-af-blue-50 rounded-lg shadow-sm overflow-hidden">
+        <TabsTrigger 
+          value="upload" 
+          className={
+            activeTab === "upload"
+              ? "bg-af-blue-600 text-white font-semibold shadow"
+              : ""
+          }
+        >
+          Upload de Imagem
+        </TabsTrigger>
+        <TabsTrigger 
+          value="data" 
+          disabled={!formData.cnpj && !generatedProposal}
+          className={
+            activeTab === "data"
+              ? "bg-af-blue-600 text-white font-semibold shadow"
+              : ""
+          }
+        >
           Dados Extraídos
         </TabsTrigger>
-        <TabsTrigger value="proposal" disabled={!formData.cnpj && !generatedProposal}>
+        <TabsTrigger 
+          value="proposal" 
+          disabled={!formData.cnpj && !generatedProposal}
+          className={
+            activeTab === "proposal"
+              ? "bg-af-blue-600 text-white font-semibold shadow"
+              : ""
+          }
+        >
           Proposta
         </TabsTrigger>
       </TabsList>
       
-      <TabsContent value="upload" className="space-y-6">
+      <TabsContent value="upload" className="space-y-6 animate-fade-in">
         <UploadTabContent
           processing={processing}
           setProcessing={setProcessing}
@@ -94,7 +123,7 @@ const ProposalsTabs = ({
         />
       </TabsContent>
       
-      <TabsContent value="data" className="space-y-6">
+      <TabsContent value="data" className="space-y-6 animate-fade-in">
         <DataTabContent
           formData={formData}
           processing={processing}
@@ -104,7 +133,7 @@ const ProposalsTabs = ({
         />
       </TabsContent>
 
-      <TabsContent value="proposal" className="space-y-6">
+      <TabsContent value="proposal" className="space-y-6 animate-fade-in">
         <ProposalTabContent
           formData={formData}
           imagePreview={imagePreview}
