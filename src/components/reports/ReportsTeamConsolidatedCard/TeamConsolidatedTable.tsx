@@ -46,6 +46,13 @@ export function TeamConsolidatedTable({
       <ArrowDown className="h-4 w-4 text-blue-600" />;
   };
 
+  // Tailwind classes para colorir as colunas pelo método de pagamento
+  const pixCol = "bg-green-50 dark:bg-green-900/30 text-green-800 dark:text-green-200";
+  const boletoCol = "bg-orange-50 dark:bg-orange-900/20 text-orange-800 dark:text-orange-200";
+  const creditCol = "bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200";
+  const totalCol = "bg-primary/10 dark:bg-primary/20 text-primary font-bold";
+  const totalRow = "bg-primary/20 dark:bg-primary/40";
+
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -61,7 +68,7 @@ export function TeamConsolidatedTable({
                 {getSortIcon('name')}
               </Button>
             </TableWithBorders.Head>
-            <TableWithBorders.Head className="text-center">
+            <TableWithBorders.Head className={`text-center ${pixCol}`}>
               <div className="grid grid-cols-2 gap-1">
                 <Button
                   variant="ghost"
@@ -81,7 +88,7 @@ export function TeamConsolidatedTable({
                 </Button>
               </div>
             </TableWithBorders.Head>
-            <TableWithBorders.Head className="text-center">
+            <TableWithBorders.Head className={`text-center ${boletoCol}`}>
               <div className="grid grid-cols-2 gap-1">
                 <Button
                   variant="ghost"
@@ -101,7 +108,7 @@ export function TeamConsolidatedTable({
                 </Button>
               </div>
             </TableWithBorders.Head>
-            <TableWithBorders.Head className="text-center">
+            <TableWithBorders.Head className={`text-center ${creditCol}`}>
               <div className="grid grid-cols-2 gap-1">
                 <Button
                   variant="ghost"
@@ -121,7 +128,7 @@ export function TeamConsolidatedTable({
                 </Button>
               </div>
             </TableWithBorders.Head>
-            <TableHead className="text-center font-semibold">
+            <TableHead className={`text-center font-semibold ${totalCol}`}>
               <div className="grid grid-cols-2 gap-1">
                 <Button
                   variant="ghost"
@@ -152,25 +159,25 @@ export function TeamConsolidatedTable({
               <TableWithBorders.Cell className="font-medium">
                 {person.name}
               </TableWithBorders.Cell>
-              <TableWithBorders.Cell className="text-center">
+              <TableWithBorders.Cell className={`text-center ${pixCol}`}>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="font-medium text-sm">{formatCurrency(person.pixTotal)}</div>
                   <div className="text-sm text-muted-foreground">{person.pixCount}</div>
                 </div>
               </TableWithBorders.Cell>
-              <TableWithBorders.Cell className="text-center">
+              <TableWithBorders.Cell className={`text-center ${boletoCol}`}>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="font-medium text-sm">{formatCurrency(person.boletoTotal)}</div>
                   <div className="text-sm text-muted-foreground">{person.boletoCount}</div>
                 </div>
               </TableWithBorders.Cell>
-              <TableWithBorders.Cell className="text-center">
+              <TableWithBorders.Cell className={`text-center ${creditCol}`}>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="font-medium text-sm">{formatCurrency(person.creditTotal)}</div>
                   <div className="text-sm text-muted-foreground">{person.creditCount}</div>
                 </div>
               </TableWithBorders.Cell>
-              <TableCell className="text-center font-semibold">
+              <TableCell className={`text-center font-semibold ${totalCol}`}>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="font-bold text-primary text-sm">{formatCurrency(person.total)}</div>
                   <div className="text-sm text-muted-foreground">{person.totalCount}</div>
@@ -180,29 +187,29 @@ export function TeamConsolidatedTable({
           ))}
           
           {/* Linha de totais */}
-          <TableRow className="border-t-2 bg-muted/30 font-semibold">
+          <TableRow className={`border-t-2 font-semibold ${totalRow}`}>
             <TableWithBorders.Cell className="font-bold">
               TOTAL GERAL
             </TableWithBorders.Cell>
-            <TableWithBorders.Cell className="text-center font-bold">
+            <TableWithBorders.Cell className={`text-center font-bold ${pixCol}`}>
               <div className="grid grid-cols-2 gap-2">
                 <div className="text-sm">{formatCurrency(totals.pixTotal)}</div>
                 <div className="text-sm">{totals.pixCount}</div>
               </div>
             </TableWithBorders.Cell>
-            <TableWithBorders.Cell className="text-center font-bold">
+            <TableWithBorders.Cell className={`text-center font-bold ${boletoCol}`}>
               <div className="grid grid-cols-2 gap-2">
                 <div className="text-sm">{formatCurrency(totals.boletoTotal)}</div>
                 <div className="text-sm">{totals.boletoCount}</div>
               </div>
             </TableWithBorders.Cell>
-            <TableWithBorders.Cell className="text-center font-bold">
+            <TableWithBorders.Cell className={`text-center font-bold ${creditCol}`}>
               <div className="grid grid-cols-2 gap-2">
                 <div className="text-sm">{formatCurrency(totals.creditTotal)}</div>
                 <div className="text-sm">{totals.creditCount}</div>
               </div>
             </TableWithBorders.Cell>
-            <TableCell className="text-center font-bold text-primary">
+            <TableCell className={`text-center font-bold text-primary ${totalCol}`}>
               <div className="grid grid-cols-2 gap-2">
                 <div className="text-sm">{formatCurrency(totals.total)}</div>
                 <div className="text-sm">{totals.totalCount}</div>
@@ -214,3 +221,4 @@ export function TeamConsolidatedTable({
     </div>
   );
 }
+
