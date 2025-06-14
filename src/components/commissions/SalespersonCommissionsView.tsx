@@ -1,4 +1,3 @@
-
 import { SalesSummaryCard } from "@/components/dashboard/SalesSummaryCard";
 import { CommissionsInfoCard } from "./CommissionsInfoCard";
 import { DollarSign, BarChart3, Target, TrendingUp } from "lucide-react";
@@ -66,11 +65,7 @@ export function SalespersonCommissionsView({
           numericValue={Math.round(salespersonData.goalPercentage)}
           hideAmount={true}
           icon={<TrendingUp className="h-4 w-4 text-orange-500" />}
-          description={<span>
-            <span className={`font-semibold ${Math.round(salespersonData.goalPercentage)>=100 ? "text-af-green-600" : "text-orange-500"}`}>
-              {Math.round(salespersonData.goalPercentage)}%
-            </span> da meta atingida
-          </span>}
+          description={`${Math.round(salespersonData.goalPercentage)}% da meta atingida`}
           className="shadow-lg border border-orange-100 rounded-xl"
         />
       </div>
@@ -155,4 +150,3 @@ export function SalespersonCommissionsView({
     </>
   );
 }
-

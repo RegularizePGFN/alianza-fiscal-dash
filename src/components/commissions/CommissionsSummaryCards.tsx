@@ -1,4 +1,3 @@
-
 import { SalesSummaryCard } from "@/components/dashboard/SalesSummaryCard";
 import { DollarSign, TrendingUp, Users, Target } from "lucide-react";
 
@@ -40,7 +39,9 @@ export function CommissionsSummaryCards({
         numericValue={totalSalespeopleWithSales}
         hideAmount={true}
         icon={<Users className="h-4 w-4 text-af-blue-700" />}
-        description={<span className="font-semibold text-af-blue-800">{totalSalespeopleWithSales}</span> + <span className="text-gray-500">de {totalSalespeople} vendedores com vendas</span>}
+        description={
+          `${totalSalespeopleWithSales} de ${totalSalespeople} vendedores com vendas`
+        }
         className="shadow-lg border border-af-blue-100 rounded-xl"
       />
       
@@ -49,10 +50,9 @@ export function CommissionsSummaryCards({
         numericValue={salespeopleAboveGoal}
         hideAmount={true}
         icon={<Target className="h-4 w-4 text-af-green-600" />}
-        description={<span className="font-semibold text-af-green-700">{salespeopleAboveGoal} vendedores atingiram a meta</span>}
+        description={`${salespeopleAboveGoal} vendedores atingiram a meta`}
         className="shadow-lg border border-af-green-100 rounded-xl"
       />
     </div>
   );
 }
-
