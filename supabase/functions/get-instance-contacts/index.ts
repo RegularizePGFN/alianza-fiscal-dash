@@ -112,9 +112,15 @@ function extractContactsFromMessages(data: any, phoneSearch?: string): Contact[]
       if (uniqueJids.has(jid)) return;
       
       uniqueJids.add(jid);
+      
+      // Se o pushName for o nome da instância (Brenda - Aliança Fiscal), usar o número
+      const contactName = msg?.pushName && !msg.pushName.includes('Brenda - Aliança Fiscal') 
+        ? msg.pushName 
+        : phoneNumber;
+      
       contacts.push({
         id: jid,
-        name: msg?.pushName || phoneNumber,
+        name: contactName,
         phone: phoneNumber,
         remoteJid: jid,
         profilePicUrl: msg?.profilePicUrl || null
