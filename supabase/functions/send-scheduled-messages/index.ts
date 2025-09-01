@@ -218,14 +218,19 @@ Deno.serve(async (req) => {
           Deno.env.get('SUPABASE_ANON_KEY') ?? ''
         );
         
+        const supabaseAdmin = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        );
+        
         const token = authHeader.replace('Bearer ', '');
         const { data: { user }, error: userError } = await supabaseAuth.auth.getUser(token);
         
         if (!userError && user) {
           userId = user.id;
           
-          // Fetch user role from profiles
-          const { data: profile } = await supabaseAuth
+          // Fetch user role from profiles using admin client
+          const { data: profile } = await supabaseAdmin
             .from('profiles')
             .select('role')
             .eq('id', user.id)
