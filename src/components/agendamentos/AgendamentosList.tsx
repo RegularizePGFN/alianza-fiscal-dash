@@ -90,6 +90,35 @@ export const AgendamentosList = ({ refreshTrigger }: AgendamentosListProps) => {
     }
   };
 
+  const retryMessage = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('scheduled_messages')
+        .update({
+          status: 'pending',
+          error_message: null,
+          sent_at: null,
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Mensagem reagendada",
+        description: "A mensagem foi colocada novamente na fila para envio.",
+      });
+      
+      fetchMessages();
+    } catch (error: any) {
+      console.error('Error retrying message:', error);
+      toast({
+        title: "Erro ao reagendar mensagem",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const statusMap = {
       pending: { label: "Pendente", variant: "outline" },
@@ -156,21 +185,35 @@ export const AgendamentosList = ({ refreshTrigger }: AgendamentosListProps) => {
     <div className="grid gap-4">
       {messages.map((message) => (
         <Card key={message.id}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <MessageCircle className="h-4 w-4" />
-              {message.client_name}
-              {getStatusBadge(message.status)}
-            </CardTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => deleteMessage(message.id)}
-              className="text-destructive hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </CardHeader>
+           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+             <CardTitle className="text-sm font-medium flex items-center gap-2">
+               <MessageCircle className="h-4 w-4" />
+               {message.client_name}
+               {getStatusBadge(message.status)}
+             </CardTitle>
+             <div className="flex items-center gap-2">
+               {(message.status === 'failed' || message.status === 'cancelled') && (
+                 <Button
+                   variant="ghost"
+                   size="sm"
+                   onClick={() => retryMessage(message.id)}
+                   className="text-blue-600 hover:text-blue-700"
+                   title="Tentar novamente"
+                 >
+                   🔄
+                 </Button>
+               )}
+               <Button
+                 variant="ghost"
+                 size="sm"
+                 onClick={() => deleteMessage(message.id)}
+                 className="text-destructive hover:text-destructive"
+                 title="Excluir agendamento"
+               >
+                 <Trash2 className="h-4 w-4" />
+               </Button>
+             </div>
+           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
