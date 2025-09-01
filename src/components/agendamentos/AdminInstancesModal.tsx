@@ -52,6 +52,7 @@ interface AvailableInstance {
   profileName?: string;
   profileStatus?: string;
   owner?: string;
+  number?: string;
   isAlreadyAdded: boolean;
 }
 
@@ -377,7 +378,7 @@ export const AdminInstancesModal = ({
                              <div className="flex-1">
                                <div className="font-medium">{instance.instanceName}</div>
                                <div className="text-sm text-muted-foreground">
-                                 Status: {instance.status} | {instance.profileName || 'N/A'} | {instance.owner || 'N/A'}
+                                 {instance.status === 'open' ? 'Conectado' : 'Desconectado'} | {instance.profileName || 'N/A'} | {instance.number || 'N/A'}
                                </div>
                              </div>
                             <div className="flex items-center gap-2">

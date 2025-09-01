@@ -13,6 +13,8 @@ interface EvolutionInstance {
   owner?: string;
   profileName?: string;
   profileStatus?: string;
+  profilePictureUrl?: string;
+  number?: string;
   qrcode?: {
     code?: string;
     base64?: string;
@@ -52,6 +54,7 @@ async function fetchAvailableInstances(): Promise<EvolutionInstance[]> {
 
   const data = await response.json();
   console.log(`📋 Found ${data.length || 0} instances`);
+  console.log(`🔍 Sample instance data:`, JSON.stringify(data[0] || {}, null, 2));
   
   return data || [];
 }
@@ -115,6 +118,7 @@ Deno.serve(async (req) => {
       profileName: instance.profileName,
       profileStatus: instance.profileStatus,
       owner: instance.owner,
+      number: instance.number || instance.owner || 'N/A',
       isAlreadyAdded: existingInstanceIds.includes(instance.instanceName),
     }));
 
