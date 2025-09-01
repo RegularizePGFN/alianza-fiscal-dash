@@ -5,6 +5,7 @@ import { AgendamentosList } from "./AgendamentosList";
 import { CreateAgendamentoModal } from "./CreateAgendamentoModal";
 import { AdminInstancesModal } from "./AdminInstancesModal";
 import { UserRole } from "@/lib/types";
+import { useScheduledMessagesProcessor } from "@/hooks/agendamentos/useScheduledMessagesProcessor";
 
 export const AgendamentosContainer = () => {
   const { user } = useAuth();
@@ -13,6 +14,9 @@ export const AgendamentosContainer = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const isAdmin = user?.role === UserRole.ADMIN;
+  
+  // Hook que processa mensagens agendadas automaticamente
+  useScheduledMessagesProcessor();
 
   const handleRefresh = () => {
     setRefreshTrigger(prev => prev + 1);
@@ -24,6 +28,7 @@ export const AgendamentosContainer = () => {
         onCreateAgendamento={() => setShowCreateModal(true)}
         onManageInstances={() => setShowInstancesModal(true)}
         showManageInstances={isAdmin}
+        onRefresh={handleRefresh}
       />
       
       <AgendamentosList refreshTrigger={refreshTrigger} />
