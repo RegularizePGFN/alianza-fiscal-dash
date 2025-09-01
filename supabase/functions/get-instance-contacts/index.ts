@@ -13,6 +13,74 @@ interface Contact {
   remoteJid: string;
 }
 
+function processContacts(data: any[], endpoint: string): Contact[] {
+  if (!Array.isArray(data) || data.length === 0) {
+    return [];
+  }
+
+  const contacts: Contact[] = [];
+  
+  if (endpoint.includes('findChats') || endpoint.includes('chat')) {
+    // Processar chats
+    for (const item of data) {
+      if (item.id && !item.id.includes('@g.us')) {
+        contacts.push({
+          id: item.id,
+          name: item.name || item.pushName || item.id.split('@')[0],
+          pushName: item.pushName,
+          profilePicUrl: item.profilePicUrl,
+          remoteJid: item.id,
+        });
+      }
+    }
+  } else if (endpoint.includes('findContacts') || endpoint.includes('contacts')) {
+    // Processar contatos
+    for (const contact of data) {
+      if (contact.remoteJid && !contact.remoteJid.includes('@g.us')) {
+        contacts.push({
+          id: contact.id || contact.remoteJid,
+          name: contact.name || contact.pushName || contact.remoteJid.split('@')[0],
+          pushName: contact.pushName,
+          profilePicUrl: contact.profilePicUrl,
+          remoteJid: contact.remoteJid,
+        });
+      }
+    }
+  } else if (endpoint.includes('message') || endpoint.includes('findMany')) {
+    // Processar mensagens para extrair contatos únicos
+    const uniqueContacts = new Map();
+    for (const msg of data) {
+      const jid = msg.key?.remoteJid || msg.remoteJid || msg.from || msg.to;
+      if (jid && !jid.includes('@g.us') && !uniqueContacts.has(jid)) {
+        uniqueContacts.set(jid, {
+          id: jid,
+          name: msg.pushName || msg.senderName || jid.split('@')[0],
+          pushName: msg.pushName,
+          profilePicUrl: msg.profilePicUrl || null,
+          remoteJid: jid,
+        });
+      }
+    }
+    contacts.push(...Array.from(uniqueContacts.values()));
+  } else {
+    // Tentar processar estrutura genérica
+    for (const item of data) {
+      const jid = item.id || item.remoteJid || item.jid;
+      if (jid && !jid.includes('@g.us')) {
+        contacts.push({
+          id: jid,
+          name: item.name || item.pushName || jid.split('@')[0],
+          pushName: item.pushName,
+          profilePicUrl: item.profilePicUrl,
+          remoteJid: jid,
+        });
+      }
+    }
+  }
+
+  return contacts.slice(0, 50);
+}
+
 async function fetchInstanceContacts(
   apiUrl: string,
   apiKey: string,
@@ -23,9 +91,14 @@ async function fetchInstanceContacts(
   
   // Tentar diferentes endpoints para obter contatos
   const endpoints = [
-    `/chat/findChats/${instanceId}?limit=50`,
+    `/instance/fetchInstances`,
     `/chat/findContacts/${instanceId}`,
-    `/message/findMany/${instanceId}?limit=50&where[key]=remoteJid`
+    `/chat/findChats/${instanceId}`,
+    `/message/findMessages/${instanceId}?limit=50`,
+    `/message/findMany/${instanceId}?limit=50`,
+    `/${instanceId}/chat/findChats?limit=50`,
+    `/${instanceId}/chat/findContacts`,
+    `/${instanceId}/message/findMany?limit=50`
   ];
   
   const normalizedApiUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
@@ -47,45 +120,37 @@ async function fetchInstanceContacts(
       
       if (response.ok) {
         const data = await response.json();
-        console.log(`📋 Found ${data?.length || 0} items from ${endpoint}`);
+        console.log(`📋 Raw response data from ${endpoint}:`, JSON.stringify(data, null, 2));
         
-        if (data && Array.isArray(data) && data.length > 0) {
-          // Processar dados baseado no endpoint
-          if (endpoint.includes('findChats')) {
-            return data
-              .filter(chat => chat.id && !chat.id.includes('@g.us')) // Filtrar grupos
-              .map(chat => ({
-                id: chat.id,
-                name: chat.name || chat.pushName || chat.id.split('@')[0],
-                pushName: chat.pushName,
-                profilePicUrl: chat.profilePicUrl,
-                remoteJid: chat.id,
-              }))
-              .slice(0, 50);
-          } else if (endpoint.includes('findContacts')) {
-            return data
-              .filter(contact => contact.remoteJid && !contact.remoteJid.includes('@g.us'))
-              .slice(0, 50);
-          } else if (endpoint.includes('findMany')) {
-            // Extrair contatos únicos das mensagens
-            const uniqueContacts = new Map();
-            data.forEach(msg => {
-              if (msg.key?.remoteJid && !msg.key.remoteJid.includes('@g.us')) {
-                const jid = msg.key.remoteJid;
-                if (!uniqueContacts.has(jid)) {
-                  uniqueContacts.set(jid, {
-                    id: jid,
-                    name: msg.pushName || jid.split('@')[0],
-                    pushName: msg.pushName,
-                    profilePicUrl: null,
-                    remoteJid: jid,
-                  });
-                }
-              }
-            });
-            return Array.from(uniqueContacts.values()).slice(0, 50);
+        if (data) {
+          // Processar diferentes estruturas de resposta
+          let processedContacts: Contact[] = [];
+          
+          if (Array.isArray(data)) {
+            // Resposta é um array direto
+            processedContacts = processContacts(data, endpoint);
+          } else if (data.data && Array.isArray(data.data)) {
+            // Resposta está em data.data
+            processedContacts = processContacts(data.data, endpoint);
+          } else if (data.contacts && Array.isArray(data.contacts)) {
+            // Resposta está em data.contacts
+            processedContacts = processContacts(data.contacts, endpoint);
+          } else if (data.chats && Array.isArray(data.chats)) {
+            // Resposta está em data.chats
+            processedContacts = processContacts(data.chats, endpoint);
+          } else if (data.messages && Array.isArray(data.messages)) {
+            // Resposta está em data.messages
+            processedContacts = processContacts(data.messages, endpoint);
+          }
+          
+          if (processedContacts.length > 0) {
+            console.log(`✅ Successfully processed ${processedContacts.length} contacts from ${endpoint}`);
+            return processedContacts;
           }
         }
+      } else {
+        const errorText = await response.text();
+        console.log(`❌ Error response from ${endpoint}: ${errorText}`);
       }
     } catch (error) {
       console.error(`❌ Error with endpoint ${endpoint}:`, error);
