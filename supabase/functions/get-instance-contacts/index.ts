@@ -25,10 +25,72 @@ async function fetchInstanceContacts(
   
   const normalizedApiUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
   
-  // Tentar buscar mensagens usando chat/findMessages
+  // 1. Tentar buscar contatos usando chat/findContacts (método preferido)
+  try {
+    const findContactsUrl = `${normalizedApiUrl}/chat/findContacts/${instanceId}`;
+    console.log(`📡 Trying findContacts endpoint: ${findContactsUrl}`);
+    
+    const contactsPayload: any = {};
+    if (phoneSearch) {
+      contactsPayload.where = {
+        id: { contains: phoneSearch }
+      };
+    }
+    
+    const response = await fetch(findContactsUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': apiKey,
+      },
+      body: JSON.stringify(contactsPayload)
+    });
+
+    console.log(`📡 FindContacts response status: ${response.status}`);
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log(`📋 FindContacts response:`, JSON.stringify(data, null, 2));
+      
+      if (data && Array.isArray(data) && data.length > 0) {
+        const contacts = data
+          .filter(contact => {
+            const jid = contact.id || contact.jid || contact.remoteJid;
+            return jid && jid.includes('@s.whatsapp.net') && !jid.includes('@g.us');
+          })
+          .map(contact => {
+            const jid = contact.id || contact.jid || contact.remoteJid;
+            const phoneNumber = jid.split('@')[0];
+            return {
+              id: jid,
+              name: contact.name || contact.pushName || phoneNumber,
+              pushName: contact.pushName,
+              profilePicUrl: contact.profilePicUrl,
+              remoteJid: jid,
+              lastMessageTime: contact.lastMessageTime || contact.t || contact.timestamp || Date.now()
+            };
+          })
+          .sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0))
+          .slice(0, 10);
+          
+        console.log(`✅ Found ${contacts.length} contacts from findContacts`);
+        if (contacts.length > 0) return contacts;
+      }
+    }
+  } catch (error) {
+    console.error(`❌ Error with findContacts endpoint:`, error);
+  }
+
+  // 2. Fallback: buscar mensagens recentes usando chat/findMessages
   try {
     const findMessagesUrl = `${normalizedApiUrl}/chat/findMessages/${instanceId}`;
     console.log(`📡 Trying findMessages endpoint: ${findMessagesUrl}`);
+    
+    // Buscar mensagens sem filtro específico para obter conversas recentes
+    const messagesPayload = {
+      limit: 100,
+      sort: { messageTimestamp: -1 }
+    };
     
     const response = await fetch(findMessagesUrl, {
       method: 'POST',
@@ -36,25 +98,25 @@ async function fetchInstanceContacts(
         'Content-Type': 'application/json',
         'apikey': apiKey,
       },
-      body: JSON.stringify({
-        limit: 100,
-        sort: {
-          messageTimestamp: -1
-        }
-      })
+      body: JSON.stringify(messagesPayload)
     });
 
     console.log(`📡 FindMessages response status: ${response.status}`);
     
     if (response.ok) {
       const data = await response.json();
-      console.log(`📋 Raw findMessages response (first 3 items):`, JSON.stringify(data.slice(0, 3), null, 2));
+      console.log(`📋 FindMessages response structure:`, {
+        isArray: Array.isArray(data),
+        length: Array.isArray(data) ? data.length : 'not array',
+        firstItemKeys: Array.isArray(data) && data.length > 0 ? Object.keys(data[0]) : 'no data',
+        sample: Array.isArray(data) && data.length > 0 ? data[0] : 'no sample'
+      });
       
       if (data && Array.isArray(data) && data.length > 0) {
         const uniqueContacts = new Map();
         
         for (const msg of data) {
-          const jid = msg.key?.remoteJid || msg.remoteJid;
+          const jid = msg.key?.remoteJid || msg.remoteJid || msg.chatId;
           if (jid && jid.includes('@s.whatsapp.net') && !jid.includes('@g.us')) {
             const phoneNumber = jid.split('@')[0];
             
@@ -65,11 +127,11 @@ async function fetchInstanceContacts(
             if (!uniqueContacts.has(jid)) {
               uniqueContacts.set(jid, {
                 id: jid,
-                name: msg.pushName || phoneNumber,
+                name: msg.pushName || msg.participant || phoneNumber,
                 pushName: msg.pushName,
                 profilePicUrl: null,
                 remoteJid: jid,
-                lastMessageTime: msg.messageTimestamp || 0
+                lastMessageTime: msg.messageTimestamp || msg.timestamp || 0
               });
             }
           }
@@ -80,17 +142,17 @@ async function fetchInstanceContacts(
           .slice(0, 10);
           
         console.log(`✅ Found ${contacts.length} contacts from findMessages`);
-        return contacts;
+        if (contacts.length > 0) return contacts;
       }
     }
   } catch (error) {
     console.error(`❌ Error with findMessages endpoint:`, error);
   }
 
-  // Fallback: tentar com chats
+  // 3. Fallback final: tentar com chat/findChats
   try {
     const chatUrl = `${normalizedApiUrl}/chat/findChats/${instanceId}`;
-    console.log(`📡 Trying chat endpoint: ${chatUrl}`);
+    console.log(`📡 Trying findChats endpoint: ${chatUrl}`);
     
     const response = await fetch(chatUrl, {
       method: 'GET',
@@ -100,45 +162,51 @@ async function fetchInstanceContacts(
       },
     });
 
-    console.log(`📡 Chat response status: ${response.status}`);
+    console.log(`📡 FindChats response status: ${response.status}`);
     
     if (response.ok) {
       const data = await response.json();
-      console.log(`📋 Raw chat response:`, JSON.stringify(data, null, 2));
+      console.log(`📋 FindChats response structure:`, {
+        isArray: Array.isArray(data),
+        length: Array.isArray(data) ? data.length : 'not array',
+        firstItemKeys: Array.isArray(data) && data.length > 0 ? Object.keys(data[0]) : 'no data'
+      });
       
       if (data && Array.isArray(data) && data.length > 0) {
         const contacts = data
           .filter(chat => {
-            const isGroup = chat.id?.includes('@g.us') || chat.isGroup;
-            const hasValidId = chat.id && chat.id.includes('@s.whatsapp.net');
+            const jid = chat.id || chat.jid;
+            const isGroup = jid?.includes('@g.us') || chat.isGroup;
+            const hasValidId = jid && jid.includes('@s.whatsapp.net');
             
-            if (phoneSearch) {
-              const phoneNumber = chat.id?.split('@')[0] || '';
+            if (phoneSearch && jid) {
+              const phoneNumber = jid.split('@')[0] || '';
               return !isGroup && hasValidId && phoneNumber.includes(phoneSearch);
             }
             
             return !isGroup && hasValidId;
           })
           .map(chat => {
-            const phoneNumber = chat.id.split('@')[0];
+            const jid = chat.id || chat.jid;
+            const phoneNumber = jid.split('@')[0];
             return {
-              id: chat.id,
+              id: jid,
               name: chat.name || chat.pushName || phoneNumber,
               pushName: chat.pushName,
               profilePicUrl: chat.profilePicUrl,
-              remoteJid: chat.id,
-              lastMessageTime: chat.t || chat.timestamp || 0
+              remoteJid: jid,
+              lastMessageTime: chat.t || chat.timestamp || chat.lastMessageTime || 0
             };
           })
           .sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0))
           .slice(0, 10);
           
-        console.log(`✅ Found ${contacts.length} valid chats`);
+        console.log(`✅ Found ${contacts.length} contacts from findChats`);
         return contacts;
       }
     }
   } catch (error) {
-    console.error(`❌ Error with chat endpoint:`, error);
+    console.error(`❌ Error with findChats endpoint:`, error);
   }
 
   console.log(`❌ All endpoints failed for instance ${instanceId}`);
