@@ -8,10 +8,9 @@ const corsHeaders = {
 interface Contact {
   id: string;
   name: string;
-  pushName?: string;
-  profilePicUrl?: string;
+  phone: string;
   remoteJid: string;
-  lastMessageTime?: number;
+  profilePicUrl?: string;
 }
 
 async function fetchInstanceContacts(
@@ -20,168 +19,36 @@ async function fetchInstanceContacts(
   instanceId: string,
   phoneSearch?: string
 ): Promise<Contact[]> {
-  console.log(`🔍 Fetching contacts for instance: ${instanceId}`);
-  console.log(`🔧 API URL: ${apiUrl}, API Key: ${apiKey ? 'Present' : 'Missing'}, Phone Search: ${phoneSearch || 'None'}`);
+  console.log(`🔍 STARTING fetchInstanceContacts for: ${instanceId}`);
+  console.log(`🔧 API URL: ${apiUrl}, API Key: ${apiKey ? 'Present' : 'Missing'}`);
   
-  const normalizedApiUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
+  // TESTE SIMPLES: Retornar dados mock primeiro para verificar se a função está funcionando
+  const mockContacts: Contact[] = [
+    {
+      id: '5534997088117@s.whatsapp.net',
+      name: 'Leandro Poubel (MOCK)',
+      phone: '5534997088117',
+      remoteJid: '5534997088117@s.whatsapp.net',
+      profilePicUrl: null
+    },
+    {
+      id: '5534999999999@s.whatsapp.net', 
+      name: 'João Silva (MOCK)',
+      phone: '5534999999999',
+      remoteJid: '5534999999999@s.whatsapp.net',
+      profilePicUrl: null
+    },
+    {
+      id: '5534888888888@s.whatsapp.net', 
+      name: 'Maria Santos (MOCK)',
+      phone: '5534888888888',
+      remoteJid: '5534888888888@s.whatsapp.net',
+      profilePicUrl: null
+    }
+  ];
   
-  // Método 1: Tentar buscar mensagens sem filtros
-  try {
-    const findMessagesUrl = `${normalizedApiUrl}/chat/findMessages/${instanceId}`;
-    console.log(`📡 Trying findMessages WITHOUT filters: ${findMessagesUrl}`);
-    
-    const response = await fetch(findMessagesUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': apiKey,
-      },
-      body: JSON.stringify({})  // Corpo vazio para buscar tudo
-    });
-
-    console.log(`📡 FindMessages response status: ${response.status}`);
-    
-    if (response.ok) {
-      const data = await response.json();
-      console.log(`📋 Raw response type:`, typeof data);
-      console.log(`📋 Raw response sample:`, JSON.stringify(data, null, 2).substring(0, 1000));
-      
-      // Extrair contatos de qualquer estrutura possível
-      const contacts = extractContactsFromAnyData(data, phoneSearch);
-      
-      if (contacts.length > 0) {
-        console.log(`✅ Found ${contacts.length} contacts from findMessages (no filters)`);
-        return contacts;
-      }
-    }
-  } catch (error) {
-    console.error(`❌ Error with findMessages (no filters):`, error);
-  }
-
-  // Método 2: Tentar com limit
-  try {
-    const findMessagesUrl = `${normalizedApiUrl}/chat/findMessages/${instanceId}`;
-    console.log(`📡 Trying findMessages WITH limit: ${findMessagesUrl}`);
-    
-    const response = await fetch(findMessagesUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': apiKey,
-      },
-      body: JSON.stringify({ limit: 50 })
-    });
-
-    console.log(`📡 FindMessages (limit) response status: ${response.status}`);
-    
-    if (response.ok) {
-      const data = await response.json();
-      console.log(`📋 Limited response:`, JSON.stringify(data, null, 2).substring(0, 1000));
-      
-      const contacts = extractContactsFromAnyData(data, phoneSearch);
-      
-      if (contacts.length > 0) {
-        console.log(`✅ Found ${contacts.length} contacts from findMessages (with limit)`);
-        return contacts;
-      }
-    }
-  } catch (error) {
-    console.error(`❌ Error with findMessages (limit):`, error);
-  }
-
-  // Método 3: Tentar findChats
-  try {
-    const findChatsUrl = `${normalizedApiUrl}/chat/findChats/${instanceId}`;
-    console.log(`📡 Trying findChats: ${findChatsUrl}`);
-    
-    const response = await fetch(findChatsUrl, {
-      method: 'GET',
-      headers: {
-        'apikey': apiKey,
-      },
-    });
-
-    console.log(`📡 FindChats response status: ${response.status}`);
-    
-    if (response.ok) {
-      const data = await response.json();
-      console.log(`📋 Chats response:`, JSON.stringify(data, null, 2).substring(0, 1000));
-      
-      const contacts = extractContactsFromAnyData(data, phoneSearch);
-      
-      if (contacts.length > 0) {
-        console.log(`✅ Found ${contacts.length} contacts from findChats`);
-        return contacts;
-      }
-    }
-  } catch (error) {
-    console.error(`❌ Error with findChats:`, error);
-  }
-
-  console.log(`❌ All methods failed for instance ${instanceId}`);
-  return [];
-}
-
-// Função para extrair contatos de qualquer estrutura de dados
-function extractContactsFromAnyData(data: any, phoneSearch?: string): Contact[] {
-  const contacts: Contact[] = [];
-  const uniqueJids = new Set<string>();
-  
-  function processItem(item: any, source: string) {
-    if (!item) return;
-    
-    // Tentar extrair JID de diferentes campos
-    let jid = item.key?.remoteJid || item.remoteJid || item.id || item.jid || item.chatId;
-    
-    if (jid && typeof jid === 'string' && jid.includes('@') && !uniqueJids.has(jid)) {
-      // Filtrar apenas conversas individuais
-      if (jid.includes('@s.whatsapp.net')) {
-        const phoneNumber = jid.split('@')[0];
-        
-        // Aplicar filtro de busca se especificado
-        if (phoneSearch && !phoneNumber.includes(phoneSearch)) {
-          return;
-        }
-        
-        uniqueJids.add(jid);
-        
-        contacts.push({
-          id: jid,
-          name: item.pushName || item.name || item.participant || phoneNumber,
-          pushName: item.pushName,
-          profilePicUrl: item.profilePicUrl || null,
-          remoteJid: jid,
-          lastMessageTime: item.messageTimestamp || item.timestamp || item.t || Date.now()
-        });
-        
-        console.log(`📞 Found contact: ${phoneNumber} (${item.pushName || 'sem nome'}) from ${source}`);
-      }
-    }
-  }
-  
-  // Processar diferentes estruturas
-  if (Array.isArray(data)) {
-    data.forEach((item, index) => processItem(item, `array[${index}]`));
-  } else if (data && typeof data === 'object') {
-    // Tentar propriedades comuns que podem conter arrays
-    const possibleArrays = ['data', 'messages', 'chats', 'contacts', 'results', 'items'];
-    
-    for (const prop of possibleArrays) {
-      if (data[prop] && Array.isArray(data[prop])) {
-        data[prop].forEach((item: any, index: number) => processItem(item, `${prop}[${index}]`));
-      }
-    }
-    
-    // Se não encontrou arrays, processar o próprio objeto
-    if (contacts.length === 0) {
-      processItem(data, 'root_object');
-    }
-  }
-  
-  // Ordenar por timestamp e retornar os 10 mais recentes
-  return contacts
-    .sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0))
-    .slice(0, 10);
+  console.log(`🎯 RETURNING MOCK DATA: ${mockContacts.length} contacts`);
+  return mockContacts;
 }
 
 Deno.serve(async (req) => {
@@ -221,7 +88,7 @@ Deno.serve(async (req) => {
       throw new Error('Instance configuration incomplete');
     }
 
-    // Buscar contatos da Evolution API
+    // Buscar contatos (usando mock por enquanto)
     const contacts = await fetchInstanceContacts(
       instance.evolution_api_url,
       instance.evolution_api_key,
@@ -229,22 +96,11 @@ Deno.serve(async (req) => {
       phoneSearch
     );
 
-    // Formatar resultados
-    const formattedContacts = contacts.map(contact => {
-      const phone = contact.remoteJid?.split('@')[0] || '';
-      return {
-        id: contact.id,
-        name: contact.name || phone,
-        phone: phone,
-        remoteJid: contact.remoteJid,
-        profilePicUrl: contact.profilePicUrl,
-      };
-    });
-
-    console.log(`✅ Returning ${formattedContacts.length} formatted contacts`);
+    console.log(`✅ FINAL RESULT: Returning ${contacts.length} formatted contacts`);
+    console.log(`📞 Contacts:`, contacts.map(c => `${c.name} (${c.phone})`).join(', '));
 
     return new Response(
-      JSON.stringify({ contacts: formattedContacts }),
+      JSON.stringify({ contacts }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
