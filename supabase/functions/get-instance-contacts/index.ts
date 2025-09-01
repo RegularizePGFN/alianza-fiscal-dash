@@ -40,23 +40,37 @@ async function fetchInstanceContacts(
     });
 
     console.log(`📡 FindMessages status: ${response.status}`);
-    const responseText = await response.text();
-    console.log(`📋 FindMessages raw response: ${responseText.substring(0, 500)}...`);
     
-    if (response.ok && responseText) {
-      try {
-        const data = JSON.parse(responseText);
-        const contacts = extractContactsFromMessages(data, phoneSearch);
-        if (contacts.length > 0) {
-          console.log(`✅ SUCCESS: Found ${contacts.length} contacts from findMessages`);
-          return contacts;
+    if (!response.ok) {
+      console.error(`❌ FindMessages HTTP Error: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      console.error(`❌ Error response body: ${errorText.substring(0, 500)}`);
+    } else {
+      const responseText = await response.text();
+      console.log(`📋 FindMessages raw response: ${responseText.substring(0, 500)}...`);
+      
+      if (responseText) {
+        try {
+          const data = JSON.parse(responseText);
+          console.log(`📊 FindMessages data structure: ${JSON.stringify(Object.keys(data), null, 2)}`);
+          
+          const contacts = extractContactsFromMessages(data, phoneSearch);
+          if (contacts.length > 0) {
+            console.log(`✅ SUCCESS: Found ${contacts.length} contacts from findMessages`);
+            return contacts;
+          } else {
+            console.log(`⚠️ No contacts extracted from findMessages for ${instanceId}`);
+          }
+        } catch (parseError) {
+          console.error(`❌ JSON parse error:`, parseError);
+          console.error(`❌ Raw response that failed parsing: ${responseText.substring(0, 1000)}`);
         }
-      } catch (parseError) {
-        console.error(`❌ JSON parse error:`, parseError);
+      } else {
+        console.log(`⚠️ Empty response from findMessages for ${instanceId}`);
       }
     }
   } catch (error) {
-    console.error(`❌ Error with findMessages:`, error);
+    console.error(`❌ Network error with findMessages for ${instanceId}:`, error);
   }
   
   // Método 2: Tentar findChats
