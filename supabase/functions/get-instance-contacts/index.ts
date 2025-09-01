@@ -86,23 +86,58 @@ async function fetchInstanceContacts(
     });
 
     console.log(`📡 FindChats status: ${response.status}`);
-    const responseText = await response.text();
-    console.log(`📋 FindChats raw response: ${responseText.substring(0, 500)}...`);
     
-    if (response.ok && responseText) {
-      try {
-        const data = JSON.parse(responseText);
-        const contacts = extractContactsFromChats(data, phoneSearch);
-        if (contacts.length > 0) {
-          console.log(`✅ SUCCESS: Found ${contacts.length} contacts from findChats`);
-          return contacts;
+    if (!response.ok) {
+      console.error(`❌ FindChats HTTP Error: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      console.error(`❌ Error response body: ${errorText.substring(0, 500)}`);
+    } else {
+      const responseText = await response.text();
+      console.log(`📋 FindChats raw response: ${responseText.substring(0, 500)}...`);
+      
+      if (responseText) {
+        try {
+          const data = JSON.parse(responseText);
+          console.log(`📊 FindChats data structure: ${JSON.stringify(Object.keys(data), null, 2)}`);
+          
+          const contacts = extractContactsFromChats(data, phoneSearch);
+          if (contacts.length > 0) {
+            console.log(`✅ SUCCESS: Found ${contacts.length} contacts from findChats`);
+            return contacts;
+          } else {
+            console.log(`⚠️ No contacts extracted from findChats for ${instanceId}`);
+          }
+        } catch (parseError) {
+          console.error(`❌ JSON parse error:`, parseError);
+          console.error(`❌ Raw response that failed parsing: ${responseText.substring(0, 1000)}`);
         }
-      } catch (parseError) {
-        console.log(`❌ JSON parse error:`, parseError);
+      } else {
+        console.log(`⚠️ Empty response from findChats for ${instanceId}`);
       }
     }
   } catch (error) {
-    console.error(`❌ Error with findChats:`, error);
+    console.error(`❌ Network error with findChats for ${instanceId}:`, error);
+  }
+  
+  // Método 3: Tentar endpoint de status da instância
+  try {
+    const statusUrl = `${normalizedApiUrl}/instance/fetchInstances`;
+    console.log(`📡 Trying instance status: ${statusUrl}`);
+    
+    const response = await fetch(statusUrl, {
+      method: 'GET',
+      headers: {
+        'apikey': apiKey,
+      },
+    });
+
+    console.log(`📡 Instance status response: ${response.status}`);
+    if (response.ok) {
+      const statusText = await response.text();
+      console.log(`📋 Instance status data: ${statusText.substring(0, 500)}`);
+    }
+  } catch (error) {
+    console.error(`❌ Error checking instance status for ${instanceId}:`, error);
   }
   
   console.log(`❌ No contacts found from any method`);
