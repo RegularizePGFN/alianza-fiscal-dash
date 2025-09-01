@@ -6,7 +6,7 @@ const corsHeaders = {
 };
 
 interface EvolutionInstance {
-  instanceName: string;
+  name: string; // Nome técnico da instância (PGFN-*)
   connectionStatus: string;
   serverUrl?: string;
   apikey?: string;
@@ -117,13 +117,13 @@ Deno.serve(async (req) => {
       const phoneNumber = instance.ownerJid ? instance.ownerJid.split('@')[0] : 'N/A';
       
       return {
-        instanceName: instance.instanceName,
+        instanceName: instance.name, // Nome técnico correto (PGFN-*)
         status: instance.connectionStatus,
         profileName: instance.profileName,
         profileStatus: instance.profileStatus,
         owner: instance.ownerJid,
         number: phoneNumber,
-        isAlreadyAdded: existingInstanceIds.includes(instance.instanceName),
+        isAlreadyAdded: existingInstanceIds.includes(instance.name), // Usar name também aqui
       };
     });
 

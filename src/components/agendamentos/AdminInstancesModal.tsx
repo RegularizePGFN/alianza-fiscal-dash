@@ -115,9 +115,13 @@ export const AdminInstancesModal = ({
   const fetchAvailableInstances = async () => {
     setLoading(true);
     try {
+      console.log("🔄 Fetching available instances...");
       const { data, error } = await supabase.functions.invoke('list-available-instances');
       
       if (error) throw error;
+      
+      console.log("📋 Received data from function:", data);
+      console.log("📋 Instances array:", data.instances);
       
       setAvailableInstances(data.instances || []);
     } catch (error: any) {
@@ -372,34 +376,37 @@ export const AdminInstancesModal = ({
                     </div>
                   ) : (
                     <div className="grid gap-2">
-                      {availableInstances.map((instance) => (
-                         <Card key={instance.instanceName} className="p-3">
-                           <div className="flex items-center justify-between">
-                             <div className="flex-1">
-                               <div className="font-medium">{instance.instanceName}</div>
-                                <div className="text-sm text-muted-foreground">
-                                  {instance.status === 'open' ? 'Conectado' : 'Desconectado'} | {instance.profileName || 'N/A'} | {instance.number || 'N/A'}
-                                </div>
+                       {availableInstances.map((instance) => (
+                          <Card key={instance.instanceName} className="p-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <div className="font-medium">{instance.instanceName}</div>
+                                 <div className="text-sm text-muted-foreground">
+                                   {instance.status === 'open' ? 'Conectado' : 'Desconectado'} | {instance.profileName || 'N/A'} | {instance.number || 'N/A'}
+                                 </div>
+                              </div>
+                             <div className="flex items-center gap-2">
+                               {instance.isAlreadyAdded ? (
+                                 <Badge variant="secondary">
+                                   <Check className="h-3 w-3 mr-1" />
+                                   Já adicionada
+                                 </Badge>
+                               ) : (
+                                 <Button
+                                   onClick={() => {
+                                     console.log("🔄 Button clicked for instance:", instance.instanceName);
+                                     addSelectedInstance(instance.instanceName);
+                                   }}
+                                   disabled={!selectedUser || loading}
+                                   size="sm"
+                                 >
+                                   Adicionar
+                                 </Button>
+                               )}
                              </div>
-                            <div className="flex items-center gap-2">
-                              {instance.isAlreadyAdded ? (
-                                <Badge variant="secondary">
-                                  <Check className="h-3 w-3 mr-1" />
-                                  Já adicionada
-                                </Badge>
-                              ) : (
-                                <Button
-                                  onClick={() => addSelectedInstance(instance.instanceName)}
-                                  disabled={!selectedUser || loading}
-                                  size="sm"
-                                >
-                                  Adicionar
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </Card>
-                      ))}
+                           </div>
+                         </Card>
+                       ))}
                     </div>
                   )}
                 </div>
