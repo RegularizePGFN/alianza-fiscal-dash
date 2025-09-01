@@ -4,6 +4,7 @@ import { AgendamentosHeader } from "./AgendamentosHeader";
 import { AgendamentosList } from "./AgendamentosList";
 import { CreateAgendamentoModal } from "./CreateAgendamentoModal";
 import { AdminInstancesModal } from "./AdminInstancesModal";
+import { InstanceFilter } from "./InstanceFilter";
 import { UserRole } from "@/lib/types";
 import { useScheduledMessagesProcessor } from "@/hooks/agendamentos/useScheduledMessagesProcessor";
 
@@ -12,6 +13,7 @@ export const AgendamentosContainer = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showInstancesModal, setShowInstancesModal] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [selectedInstance, setSelectedInstance] = useState<string | null>(null);
 
   const isAdmin = user?.role === UserRole.ADMIN;
   
@@ -31,7 +33,18 @@ export const AgendamentosContainer = () => {
         onRefresh={handleRefresh}
       />
       
-      <AgendamentosList refreshTrigger={refreshTrigger} />
+      {isAdmin && (
+        <InstanceFilter
+          selectedInstance={selectedInstance}
+          onInstanceSelect={setSelectedInstance}
+          refreshTrigger={refreshTrigger}
+        />
+      )}
+      
+      <AgendamentosList 
+        refreshTrigger={refreshTrigger} 
+        selectedInstance={selectedInstance}
+      />
 
       <CreateAgendamentoModal
         open={showCreateModal}

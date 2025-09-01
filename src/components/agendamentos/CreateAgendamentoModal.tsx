@@ -27,6 +27,10 @@ interface UserInstance {
   evolution_instance_id?: string;
   evolution_api_url?: string;
   evolution_api_key?: string;
+  user_id: string;
+  profiles?: {
+    name: string;
+  };
 }
 
 interface Contact {
@@ -77,14 +81,50 @@ export const CreateAgendamentoModal = ({
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      // Se for admin, buscar todas as instâncias ativas, caso contrário apenas as do usuário
+      let query = supabase
         .from('user_whatsapp_instances')
-        .select('id, instance_name, evolution_instance_id, evolution_api_url, evolution_api_key')
-        .eq('user_id', user.id)
+        .select(`
+          id, 
+          instance_name, 
+          evolution_instance_id, 
+          evolution_api_url, 
+          evolution_api_key,
+          user_id
+        `)
         .eq('is_active', true);
 
+      // Se não for admin, filtrar apenas instâncias do usuário
+      if (user.role !== 'admin') {
+        query = query.eq('user_id', user.id);
+      }
+
+      const { data: instancesData, error } = await query;
+
       if (error) throw error;
-      setInstances(data || []);
+
+      // Se for admin, buscar informações dos usuários das instâncias
+      if (user.role === 'admin' && instancesData && instancesData.length > 0) {
+        const userIds = [...new Set(instancesData.map(inst => inst.user_id))];
+        
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, name')
+          .in('id', userIds);
+
+        // Combinar dados
+        const instancesWithProfiles = instancesData.map(instance => {
+          const profile = profilesData?.find(p => p.id === instance.user_id);
+          return {
+            ...instance,
+            profiles: profile ? { name: profile.name } : undefined
+          };
+        });
+
+        setInstances(instancesWithProfiles);
+      } else {
+        setInstances(instancesData || []);
+      }
     } catch (error: any) {
       console.error('Error fetching instances:', error);
       toast({
@@ -103,6 +143,16 @@ export const CreateAgendamentoModal = ({
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No session');
 
+      // Buscar o user_id da instância (para admins que podem usar instâncias de outros usuários)
+      const { data: instanceData } = await supabase
+        .from('user_whatsapp_instances')
+        .select('user_id')
+        .eq('instance_name', instanceName)
+        .eq('is_active', true)
+        .single();
+
+      const targetUserId = instanceData?.user_id || user.id;
+
       const response = await fetch('https://sbxltdbnqixucjoognfj.supabase.co/functions/v1/get-instance-contacts', {
         method: 'POST',
         headers: {
@@ -111,7 +161,7 @@ export const CreateAgendamentoModal = ({
         },
         body: JSON.stringify({
           instanceName,
-          userId: user.id,
+          userId: targetUserId,
         }),
       });
 
@@ -265,6 +315,11 @@ export const CreateAgendamentoModal = ({
                         <p className="text-sm text-muted-foreground">
                           {instance.evolution_instance_id || 'ID não configurado'}
                         </p>
+                        {instance.profiles && user?.role === 'admin' && (
+                          <p className="text-xs text-muted-foreground">
+                            Usuário: {instance.profiles.name}
+                          </p>
+                        )}
                       </div>
                       <div className="text-primary">→</div>
                     </div>

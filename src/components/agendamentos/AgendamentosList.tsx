@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, MessageCircle, Phone, Trash2 } from "lucide-react";
+import { Calendar, MessageCircle, Phone, Trash2, User, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -21,13 +21,20 @@ interface ScheduledMessage {
   user_id: string;
   sent_at?: string;
   error_message?: string;
+  created_at: string;
+  updated_at: string;
+  profiles?: {
+    name: string;
+    email: string;
+  };
 }
 
 interface AgendamentosListProps {
   refreshTrigger: number;
+  selectedInstance?: string | null;
 }
 
-export const AgendamentosList = ({ refreshTrigger }: AgendamentosListProps) => {
+export const AgendamentosList = ({ refreshTrigger, selectedInstance }: AgendamentosListProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [messages, setMessages] = useState<ScheduledMessage[]>([]);
@@ -49,10 +56,37 @@ export const AgendamentosList = ({ refreshTrigger }: AgendamentosListProps) => {
         query = query.eq('user_id', user.id);
       }
 
-      const { data, error } = await query;
+      // Filtrar por instância se selecionada
+      if (selectedInstance) {
+        query = query.eq('instance_name', selectedInstance);
+      }
+
+      const { data: messagesData, error } = await query;
 
       if (error) throw error;
-      setMessages(data || []);
+
+      // Se for admin, buscar informações dos usuários que criaram os agendamentos
+      if (isAdmin && messagesData && messagesData.length > 0) {
+        const userIds = [...new Set(messagesData.map(msg => msg.user_id))];
+        
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, name, email')
+          .in('id', userIds);
+
+        // Combinar dados
+        const messagesWithProfiles = messagesData.map(message => {
+          const profile = profilesData?.find(p => p.id === message.user_id);
+          return {
+            ...message,
+            profiles: profile ? { name: profile.name, email: profile.email } : undefined
+          };
+        });
+
+        setMessages(messagesWithProfiles);
+      } else {
+        setMessages(messagesData || []);
+      }
     } catch (error: any) {
       console.error('Error fetching messages:', error);
       toast({
@@ -141,7 +175,7 @@ export const AgendamentosList = ({ refreshTrigger }: AgendamentosListProps) => {
 
   useEffect(() => {
     fetchMessages();
-  }, [user, refreshTrigger]);
+  }, [user, refreshTrigger, selectedInstance]);
 
   if (loading) {
     return (
@@ -230,6 +264,24 @@ export const AgendamentosList = ({ refreshTrigger }: AgendamentosListProps) => {
               
               <div className="text-sm">
                 <strong>Instância:</strong> {message.instance_name}
+              </div>
+
+              {isAdmin && message.profiles && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <User className="h-3 w-3" />
+                  <span>
+                    Criado por: <strong>{message.profiles.name}</strong> ({message.profiles.email})
+                  </span>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Clock className="h-3 w-3" />
+                <span>
+                  Criado em: {format(new Date(message.created_at), "dd/MM/yyyy 'às' HH:mm", {
+                    locale: ptBR,
+                  })}
+                </span>
               </div>
               
               <div className="mt-3 p-3 bg-muted rounded-md">
