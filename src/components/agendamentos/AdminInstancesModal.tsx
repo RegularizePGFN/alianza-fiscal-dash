@@ -317,6 +317,23 @@ export const AdminInstancesModal = ({
               <Plus className="h-4 w-4" />
               Buscar Instâncias
             </Button>
+            <Button
+              onClick={async () => {
+                try {
+                  const { data } = await supabase.functions.invoke('test-evolution-api');
+                  console.log('🔍 Test Evolution API response:', data);
+                  alert(`Dados encontrados: ${data.instanceCount} instâncias. Veja o console para detalhes.`);
+                } catch (error) {
+                  console.error('Erro ao testar API:', error);
+                  alert('Erro ao testar API. Veja o console.');
+                }
+              }}
+              size="sm"
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              🔍 Testar API
+            </Button>
           </DialogTitle>
         </DialogHeader>
 
