@@ -46,9 +46,6 @@ verify_jwt = true
 [functions.list-available-instances]
 verify_jwt = true
 
-[functions.test-evolution-api]
-verify_jwt = true
-
 [functions.get-instance-contacts]
 verify_jwt = true
 

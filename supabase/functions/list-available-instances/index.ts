@@ -7,10 +7,10 @@ const corsHeaders = {
 
 interface EvolutionInstance {
   instanceName: string;
-  status: string;
+  connectionStatus: string;
   serverUrl?: string;
   apikey?: string;
-  owner?: string;
+  ownerJid?: string;
   profileName?: string;
   profileStatus?: string;
   profilePictureUrl?: string;
@@ -112,15 +112,20 @@ Deno.serve(async (req) => {
     const existingInstanceIds = existingInstances?.map(i => i.evolution_instance_id) || [];
 
     // Formatar resultados
-    const formattedInstances = availableInstances.map(instance => ({
-      instanceName: instance.instanceName,
-      status: instance.status,
-      profileName: instance.profileName,
-      profileStatus: instance.profileStatus,
-      owner: instance.owner,
-      number: instance.number || instance.owner || 'N/A',
-      isAlreadyAdded: existingInstanceIds.includes(instance.instanceName),
-    }));
+    const formattedInstances = availableInstances.map(instance => {
+      // Extrair número do ownerJid (ex: "553484237790@s.whatsapp.net" -> "553484237790")
+      const phoneNumber = instance.ownerJid ? instance.ownerJid.split('@')[0] : 'N/A';
+      
+      return {
+        instanceName: instance.instanceName,
+        status: instance.connectionStatus,
+        profileName: instance.profileName,
+        profileStatus: instance.profileStatus,
+        owner: instance.ownerJid,
+        number: phoneNumber,
+        isAlreadyAdded: existingInstanceIds.includes(instance.instanceName),
+      };
+    });
 
     console.log(`✅ Returning ${formattedInstances.length} formatted instances`);
 
