@@ -114,6 +114,7 @@ Deno.serve(async (req) => {
       status: instance.status,
       profileName: instance.profileName,
       profileStatus: instance.profileStatus,
+      owner: instance.owner,
       isAlreadyAdded: existingInstanceIds.includes(instance.instanceName),
     }));
 

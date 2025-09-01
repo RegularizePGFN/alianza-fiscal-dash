@@ -51,6 +51,7 @@ interface AvailableInstance {
   status: string;
   profileName?: string;
   profileStatus?: string;
+  owner?: string;
   isAlreadyAdded: boolean;
 }
 
@@ -371,14 +372,14 @@ export const AdminInstancesModal = ({
                   ) : (
                     <div className="grid gap-2">
                       {availableInstances.map((instance) => (
-                        <Card key={instance.instanceName} className="p-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <div className="font-medium">{instance.instanceName}</div>
-                              <div className="text-sm text-muted-foreground">
-                                Status: {instance.status} | Perfil: {instance.profileName || 'N/A'}
-                              </div>
-                            </div>
+                         <Card key={instance.instanceName} className="p-3">
+                           <div className="flex items-center justify-between">
+                             <div className="flex-1">
+                               <div className="font-medium">{instance.instanceName}</div>
+                               <div className="text-sm text-muted-foreground">
+                                 Status: {instance.status} | {instance.profileName || 'N/A'} | {instance.owner || 'N/A'}
+                               </div>
+                             </div>
                             <div className="flex items-center gap-2">
                               {instance.isAlreadyAdded ? (
                                 <Badge variant="secondary">
