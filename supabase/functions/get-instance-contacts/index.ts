@@ -14,61 +14,6 @@ interface Contact {
   lastMessageTime?: number;
 }
 
-function processContacts(data: any[], endpoint: string): Contact[] {
-  if (!Array.isArray(data) || data.length === 0) {
-    return [];
-  }
-
-  console.log(`🔍 Processing ${data.length} items from endpoint: ${endpoint}`);
-  
-  const contacts: Contact[] = [];
-  
-  // Processar diferentes estruturas de resposta
-  for (const item of data) {
-    console.log(`📋 Processing item:`, JSON.stringify(item, null, 2));
-    
-    // Extrair informações do contato
-    let jid = item.id || item.remoteJid || item.jid || item.from || item.to;
-    let name = item.name || item.pushName || item.notifyName || item.verifiedName;
-    let lastMessageTime = item.t || item.timestamp || item.messageTimestamp || item.lastMessageTime;
-    
-    // Pular grupos do WhatsApp
-    if (!jid || jid.includes('@g.us')) {
-      console.log(`⏭️ Skipping group or invalid JID: ${jid}`);
-      continue;
-    }
-    
-    // Extrair número limpo (antes do @)
-    const phoneNumber = jid.split('@')[0];
-    
-    // Se não tem nome, usar o número
-    if (!name || name.trim() === '') {
-      name = phoneNumber;
-    }
-    
-    console.log(`✅ Adding contact: ${name} (${phoneNumber}) - JID: ${jid}`);
-    
-    contacts.push({
-      id: jid,
-      name: name,
-      pushName: item.pushName || name,
-      profilePicUrl: item.profilePicUrl || item.picture || null,
-      remoteJid: jid,
-      lastMessageTime: lastMessageTime
-    });
-  }
-  
-  // Ordenar por última mensagem (mais recente primeiro)
-  contacts.sort((a, b) => {
-    const timeA = a.lastMessageTime || 0;
-    const timeB = b.lastMessageTime || 0;
-    return timeB - timeA;
-  });
-
-  console.log(`🎯 Processed ${contacts.length} valid contacts`);
-  return contacts.slice(0, 10); // Limitar a 10 conversas recentes
-}
-
 async function fetchInstanceContacts(
   apiUrl: string,
   apiKey: string,
@@ -78,111 +23,126 @@ async function fetchInstanceContacts(
   console.log(`🔍 Fetching contacts for instance: ${instanceId}`);
   console.log(`🔧 API URL: ${apiUrl}, API Key: ${apiKey ? 'Present' : 'Missing'}, Phone Search: ${phoneSearch || 'None'}`);
   
-  // Usar endpoints da Evolution API para buscar conversas recentes
-  const endpoints = [
-    `/chat/findChats/${instanceId}`,
-    `/message/findMany/${instanceId}`
-  ];
-  
   const normalizedApiUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
   
-  for (const endpoint of endpoints) {
-    try {
-      const url = `${normalizedApiUrl}${endpoint}`;
-      console.log(`📡 Trying endpoint: ${url}`);
-      
-      // Configurar método e body baseado no endpoint  
-      let method = 'GET';
-      let body = null;
-      
-      if (endpoint.includes('findMany')) {
-        method = 'POST';
-        if (phoneSearch) {
-          body = JSON.stringify({
-            where: {
-              "key.remoteJid": {
-                "contains": phoneSearch
-              }
-            },
-            limit: 10,
-            sort: {
-              "messageTimestamp": "desc"
-            }
-          });
-        } else {
-          body = JSON.stringify({
-            limit: 50, // Buscar mais mensagens para extrair conversas únicas
-            sort: {
-              "messageTimestamp": "desc"
-            }
-          });
-        }
-      } else if (endpoint.includes('findChats')) {
-        method = 'GET';
-        // GET não precisa de body
-      }
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': apiKey,
-        },
-        ...(body && { body })
-      });
+  // Primeiro tentar buscar chats diretamente
+  try {
+    const chatUrl = `${normalizedApiUrl}/chat/findChats/${instanceId}`;
+    console.log(`📡 Trying chat endpoint: ${chatUrl}`);
+    
+    const response = await fetch(chatUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': apiKey,
+      },
+    });
 
-      console.log(`📡 Response status for ${endpoint}: ${response.status}`);
+    console.log(`📡 Response status: ${response.status}`);
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log(`📋 Raw chat response:`, JSON.stringify(data, null, 2));
       
-      if (response.ok) {
-        const data = await response.json();
-        console.log(`📋 Raw response data from ${endpoint}:`, JSON.stringify(data, null, 2));
-        
-        if (data) {
-          // Processar diferentes estruturas de resposta
-          let processedContacts: Contact[] = [];
+      if (data && Array.isArray(data) && data.length > 0) {
+        const contacts = data
+          .filter(chat => {
+            // Filtrar apenas conversas individuais (não grupos)
+            const isGroup = chat.id?.includes('@g.us') || chat.isGroup;
+            const hasValidId = chat.id && chat.id.includes('@s.whatsapp.net');
+            
+            if (phoneSearch) {
+              const phoneNumber = chat.id?.split('@')[0] || '';
+              return !isGroup && hasValidId && phoneNumber.includes(phoneSearch);
+            }
+            
+            return !isGroup && hasValidId;
+          })
+          .map(chat => {
+            const phoneNumber = chat.id.split('@')[0];
+            return {
+              id: chat.id,
+              name: chat.name || chat.pushName || phoneNumber,
+              pushName: chat.pushName,
+              profilePicUrl: chat.profilePicUrl,
+              remoteJid: chat.id,
+              lastMessageTime: chat.t || chat.timestamp || 0
+            };
+          })
+          .sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0))
+          .slice(0, 10);
           
-          if (Array.isArray(data)) {
-            // Resposta é um array direto
-            processedContacts = processContacts(data, endpoint);
-          } else if (data.data && Array.isArray(data.data)) {
-            // Resposta está em data.data
-            processedContacts = processContacts(data.data, endpoint);
-          } else if (data.contacts && Array.isArray(data.contacts)) {
-            // Resposta está em data.contacts
-            processedContacts = processContacts(data.contacts, endpoint);
-          } else if (data.chats && Array.isArray(data.chats)) {
-            // Resposta está em data.chats
-            processedContacts = processContacts(data.chats, endpoint);
-          } else if (data.messages && Array.isArray(data.messages)) {
-            // Resposta está em data.messages
-            processedContacts = processContacts(data.messages, endpoint);
-          }
-          
-          if (processedContacts.length > 0) {
-            console.log(`✅ Successfully processed ${processedContacts.length} contacts from ${endpoint}`);
-            return processedContacts;
-          }
-        }
-      } else {
-        const errorText = await response.text();
-        console.log(`❌ Error response from ${endpoint}: ${errorText}`);
+        console.log(`✅ Found ${contacts.length} valid chats`);
+        return contacts;
       }
-    } catch (error) {
-      console.error(`❌ Error with endpoint ${endpoint}:`, error);
-      continue;
     }
+  } catch (error) {
+    console.error(`❌ Error with chat endpoint:`, error);
   }
-  
-  console.log(`❌ All endpoints failed for instance ${instanceId}`);
-  return [];
-}
 
-async function fetchRecentChats(
-  apiUrl: string,
-  apiKey: string,
-  instanceId: string
-): Promise<Contact[]> {
-  console.log(`🔍 This function is now integrated into fetchInstanceContacts`);
+  // Se não funcionou, tentar com mensagens
+  try {
+    const messageUrl = `${normalizedApiUrl}/message/findMany/${instanceId}`;
+    console.log(`📡 Trying message endpoint: ${messageUrl}`);
+    
+    const response = await fetch(messageUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': apiKey,
+      },
+      body: JSON.stringify({
+        limit: 100,
+        sort: {
+          messageTimestamp: "desc"
+        }
+      })
+    });
+
+    console.log(`📡 Message response status: ${response.status}`);
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log(`📋 Raw message response (first 3 items):`, JSON.stringify(data.slice(0, 3), null, 2));
+      
+      if (data && Array.isArray(data) && data.length > 0) {
+        const uniqueContacts = new Map();
+        
+        for (const msg of data) {
+          const jid = msg.key?.remoteJid || msg.remoteJid;
+          if (jid && jid.includes('@s.whatsapp.net') && !jid.includes('@g.us')) {
+            const phoneNumber = jid.split('@')[0];
+            
+            if (phoneSearch && !phoneNumber.includes(phoneSearch)) {
+              continue;
+            }
+            
+            if (!uniqueContacts.has(jid)) {
+              uniqueContacts.set(jid, {
+                id: jid,
+                name: msg.pushName || phoneNumber,
+                pushName: msg.pushName,
+                profilePicUrl: null,
+                remoteJid: jid,
+                lastMessageTime: msg.messageTimestamp || 0
+              });
+            }
+          }
+        }
+        
+        const contacts = Array.from(uniqueContacts.values())
+          .sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0))
+          .slice(0, 10);
+          
+        console.log(`✅ Found ${contacts.length} contacts from messages`);
+        return contacts;
+      }
+    }
+  } catch (error) {
+    console.error(`❌ Error with message endpoint:`, error);
+  }
+
+  console.log(`❌ All endpoints failed for instance ${instanceId}`);
   return [];
 }
 
@@ -231,20 +191,17 @@ Deno.serve(async (req) => {
       phoneSearch
     );
 
-    // Formatar resultados para as últimas 10 conversas
-    const formattedContacts = contacts
-      .map(contact => {
-        // Extrair número limpo (antes do @)
-        const phone = contact.remoteJid?.split('@')[0] || '';
-        return {
-          id: contact.id,
-          name: contact.name || phone, // Se não tem nome, usar o número
-          phone: phone,
-          remoteJid: contact.remoteJid,
-          profilePicUrl: contact.profilePicUrl,
-        };
-      })
-      .filter(contact => contact.phone && !contact.remoteJid?.includes('@g.us')); // Filtrar grupos
+    // Formatar resultados
+    const formattedContacts = contacts.map(contact => {
+      const phone = contact.remoteJid?.split('@')[0] || '';
+      return {
+        id: contact.id,
+        name: contact.name || phone,
+        phone: phone,
+        remoteJid: contact.remoteJid,
+        profilePicUrl: contact.profilePicUrl,
+      };
+    });
 
     console.log(`✅ Returning ${formattedContacts.length} formatted contacts`);
 
