@@ -96,11 +96,14 @@ async function fetchInstanceContacts(
 
 function extractContactsFromMessages(data: any, phoneSearch?: string): Contact[] {
   console.log(`🔍 Extracting from messages, data type: ${typeof data}, isArray: ${Array.isArray(data)}`);
+  console.log(`🔍 Data structure:`, JSON.stringify(data, null, 2).substring(0, 1000));
   
   const contacts: Contact[] = [];
   const uniqueJids = new Set<string>();
   
   const processMessage = (msg: any) => {
+    console.log(`🔎 Processing message:`, JSON.stringify(msg, null, 2).substring(0, 200));
+    
     const jid = msg?.key?.remoteJid || msg?.remoteJid || msg?.chatId;
     if (jid && jid.includes('@s.whatsapp.net') && !jid.includes('@g.us')) {
       const phoneNumber = jid.split('@')[0];
@@ -117,23 +120,33 @@ function extractContactsFromMessages(data: any, phoneSearch?: string): Contact[]
         profilePicUrl: msg?.profilePicUrl || null
       });
       
-      console.log(`📞 Found: ${phoneNumber} (${msg?.pushName || 'sem nome'})`);
+      console.log(`📞 Found contact: ${phoneNumber} (${msg?.pushName || 'sem nome'})`);
     }
   };
   
-  if (Array.isArray(data)) {
-    data.forEach(processMessage);
+  // Verificar se tem a estrutura messages.records
+  if (data?.messages?.records && Array.isArray(data.messages.records)) {
+    console.log(`📋 Found messages.records with ${data.messages.records.length} items`);
+    data.messages.records.slice(0, 50).forEach(processMessage); // Processar apenas os primeiros 50
+  } 
+  // Verificar outras estruturas possíveis
+  else if (Array.isArray(data)) {
+    console.log(`📋 Processing array with ${data.length} items`);
+    data.slice(0, 50).forEach(processMessage);
   } else if (data && typeof data === 'object') {
+    console.log(`📋 Processing object, looking for arrays...`);
     // Tentar propriedades comuns
-    const arrays = ['data', 'messages', 'results'];
+    const arrays = ['data', 'messages', 'results', 'records'];
     for (const prop of arrays) {
       if (data[prop] && Array.isArray(data[prop])) {
-        data[prop].forEach(processMessage);
+        console.log(`📋 Found array in ${prop} with ${data[prop].length} items`);
+        data[prop].slice(0, 50).forEach(processMessage);
         break;
       }
     }
   }
   
+  console.log(`📊 Total unique contacts found: ${contacts.length}`);
   return contacts.slice(0, 10);
 }
 
