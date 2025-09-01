@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trash2, Plus, Edit, RefreshCw, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -375,39 +376,84 @@ export const AdminInstancesModal = ({
                       Nenhuma instância encontrada na Evolution API
                     </div>
                   ) : (
-                    <div className="grid gap-2">
-                       {availableInstances.map((instance) => (
-                          <Card key={instance.instanceName} className="p-3">
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1">
-                                <div className="font-medium">{instance.instanceName}</div>
-                                 <div className="text-sm text-muted-foreground">
-                                   {instance.status === 'open' ? 'Conectado' : 'Desconectado'} | {instance.profileName || 'N/A'} | {instance.number || 'N/A'}
-                                 </div>
-                              </div>
-                             <div className="flex items-center gap-2">
-                               {instance.isAlreadyAdded ? (
-                                 <Badge variant="secondary">
-                                   <Check className="h-3 w-3 mr-1" />
-                                   Já adicionada
-                                 </Badge>
-                               ) : (
-                                 <Button
-                                   onClick={() => {
-                                     console.log("🔄 Button clicked for instance:", instance.instanceName);
-                                     addSelectedInstance(instance.instanceName);
-                                   }}
-                                   disabled={!selectedUser || loading}
-                                   size="sm"
-                                 >
-                                   Adicionar
-                                 </Button>
-                               )}
-                             </div>
-                           </div>
-                         </Card>
-                       ))}
-                    </div>
+                    <Tabs defaultValue="not-added" className="w-full">
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="not-added">
+                          Não Adicionadas ({availableInstances.filter(i => !i.isAlreadyAdded).length})
+                        </TabsTrigger>
+                        <TabsTrigger value="already-added">
+                          Já Adicionadas ({availableInstances.filter(i => i.isAlreadyAdded).length})
+                        </TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="not-added" className="mt-4">
+                        <div className="grid gap-2">
+                          {availableInstances.filter(instance => !instance.isAlreadyAdded).length === 0 ? (
+                            <div className="text-center py-4 text-muted-foreground">
+                              Todas as instâncias já foram adicionadas
+                            </div>
+                          ) : (
+                            availableInstances
+                              .filter(instance => !instance.isAlreadyAdded)
+                              .map((instance) => (
+                                <Card key={instance.instanceName} className="p-3">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex-1">
+                                      <div className="font-medium">{instance.instanceName}</div>
+                                      <div className="text-sm text-muted-foreground">
+                                        {instance.status === 'open' ? 'Conectado' : 'Desconectado'} | {instance.profileName || 'N/A'} | {instance.number || 'N/A'}
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        onClick={() => {
+                                          console.log("🔄 Button clicked for instance:", instance.instanceName);
+                                          addSelectedInstance(instance.instanceName);
+                                        }}
+                                        disabled={!selectedUser || loading}
+                                        size="sm"
+                                      >
+                                        Adicionar
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </Card>
+                              ))
+                          )}
+                        </div>
+                      </TabsContent>
+                      
+                      <TabsContent value="already-added" className="mt-4">
+                        <div className="grid gap-2">
+                          {availableInstances.filter(instance => instance.isAlreadyAdded).length === 0 ? (
+                            <div className="text-center py-4 text-muted-foreground">
+                              Nenhuma instância foi adicionada ainda
+                            </div>
+                          ) : (
+                            availableInstances
+                              .filter(instance => instance.isAlreadyAdded)
+                              .map((instance) => (
+                                <Card key={instance.instanceName} className="p-3">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex-1">
+                                      <div className="font-medium">{instance.instanceName}</div>
+                                      <div className="text-sm text-muted-foreground">
+                                        {instance.status === 'open' ? 'Conectado' : 'Desconectado'} | {instance.profileName || 'N/A'} | {instance.number || 'N/A'}
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">
+                                        <Check className="h-3 w-3 mr-1" />
+                                        Já adicionada
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                </Card>
+                              ))
+                          )}
+                        </div>
+                      </TabsContent>
+                    </Tabs>
                   )}
                 </div>
               )}
