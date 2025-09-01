@@ -25,85 +25,10 @@ async function fetchInstanceContacts(
   
   const normalizedApiUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
   
-  // 1. Tentar buscar contatos usando chat/findContacts (método preferido)
-  try {
-    const findContactsUrl = `${normalizedApiUrl}/chat/findContacts/${instanceId}`;
-    console.log(`📡 Trying findContacts endpoint: ${findContactsUrl}`);
-    
-    const contactsPayload: any = {};
-    if (phoneSearch) {
-      contactsPayload.where = {
-        id: { contains: phoneSearch }
-      };
-    }
-    
-    const response = await fetch(findContactsUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': apiKey,
-      },
-      body: JSON.stringify(contactsPayload)
-    });
-
-    console.log(`📡 FindContacts response status: ${response.status}`);
-    
-    if (response.ok) {
-      const data = await response.json();
-      console.log(`📋 FindContacts full response:`, JSON.stringify(data, null, 2));
-      
-      // Tentar diferentes estruturas de resposta
-      let contactsArray = data;
-      if (data && typeof data === 'object') {
-        // Verificar se é um objeto com propriedades que contém o array
-        if (data.data && Array.isArray(data.data)) {
-          contactsArray = data.data;
-        } else if (data.contacts && Array.isArray(data.contacts)) {
-          contactsArray = data.contacts;
-        } else if (data.results && Array.isArray(data.results)) {
-          contactsArray = data.results;
-        }
-      }
-      
-      if (contactsArray && Array.isArray(contactsArray) && contactsArray.length > 0) {
-        const contacts = contactsArray
-          .filter(contact => {
-            const jid = contact.id || contact.jid || contact.remoteJid;
-            return jid && jid.includes('@s.whatsapp.net') && !jid.includes('@g.us');
-          })
-          .map(contact => {
-            const jid = contact.id || contact.jid || contact.remoteJid;
-            const phoneNumber = jid.split('@')[0];
-            return {
-              id: jid,
-              name: contact.name || contact.pushName || phoneNumber,
-              pushName: contact.pushName,
-              profilePicUrl: contact.profilePicUrl,
-              remoteJid: jid,
-              lastMessageTime: contact.lastMessageTime || contact.t || contact.timestamp || Date.now()
-            };
-          })
-          .sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0))
-          .slice(0, 10);
-          
-        console.log(`✅ Found ${contacts.length} contacts from findContacts`);
-        if (contacts.length > 0) return contacts;
-      }
-    }
-  } catch (error) {
-    console.error(`❌ Error with findContacts endpoint:`, error);
-  }
-
-  // 2. Fallback: buscar mensagens recentes usando chat/findMessages
+  // Método 1: Tentar buscar mensagens sem filtros
   try {
     const findMessagesUrl = `${normalizedApiUrl}/chat/findMessages/${instanceId}`;
-    console.log(`📡 Trying findMessages endpoint: ${findMessagesUrl}`);
-    
-    // Buscar mensagens sem filtro específico para obter conversas recentes
-    const messagesPayload = {
-      limit: 100,
-      sort: { messageTimestamp: -1 }
-    };
+    console.log(`📡 Trying findMessages WITHOUT filters: ${findMessagesUrl}`);
     
     const response = await fetch(findMessagesUrl, {
       method: 'POST',
@@ -111,80 +36,67 @@ async function fetchInstanceContacts(
         'Content-Type': 'application/json',
         'apikey': apiKey,
       },
-      body: JSON.stringify(messagesPayload)
+      body: JSON.stringify({})  // Corpo vazio para buscar tudo
     });
 
     console.log(`📡 FindMessages response status: ${response.status}`);
     
     if (response.ok) {
       const data = await response.json();
-      console.log(`📋 FindMessages full response:`, JSON.stringify(data, null, 2));
+      console.log(`📋 Raw response type:`, typeof data);
+      console.log(`📋 Raw response sample:`, JSON.stringify(data, null, 2).substring(0, 1000));
       
-      // Tentar diferentes estruturas de resposta
-      let messagesArray = data;
-      if (data && typeof data === 'object') {
-        // Verificar se é um objeto com propriedades que contém o array
-        if (data.data && Array.isArray(data.data)) {
-          messagesArray = data.data;
-        } else if (data.messages && Array.isArray(data.messages)) {
-          messagesArray = data.messages;
-        } else if (data.results && Array.isArray(data.results)) {
-          messagesArray = data.results;
-        }
-      }
+      // Extrair contatos de qualquer estrutura possível
+      const contacts = extractContactsFromAnyData(data, phoneSearch);
       
-      console.log(`📋 Messages array info:`, {
-        isArray: Array.isArray(messagesArray),
-        length: Array.isArray(messagesArray) ? messagesArray.length : 'not array',
-        firstItemKeys: Array.isArray(messagesArray) && messagesArray.length > 0 ? Object.keys(messagesArray[0]) : 'no data'
-      });
-      
-      if (messagesArray && Array.isArray(messagesArray) && messagesArray.length > 0) {
-        const uniqueContacts = new Map();
-        
-        for (const msg of messagesArray) {
-          const jid = msg.key?.remoteJid || msg.remoteJid || msg.chatId;
-          if (jid && jid.includes('@s.whatsapp.net') && !jid.includes('@g.us')) {
-            const phoneNumber = jid.split('@')[0];
-            
-            if (phoneSearch && !phoneNumber.includes(phoneSearch)) {
-              continue;
-            }
-            
-            if (!uniqueContacts.has(jid)) {
-              uniqueContacts.set(jid, {
-                id: jid,
-                name: msg.pushName || msg.participant || phoneNumber,
-                pushName: msg.pushName,
-                profilePicUrl: null,
-                remoteJid: jid,
-                lastMessageTime: msg.messageTimestamp || msg.timestamp || 0
-              });
-            }
-          }
-        }
-        
-        const contacts = Array.from(uniqueContacts.values())
-          .sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0))
-          .slice(0, 10);
-          
-        console.log(`✅ Found ${contacts.length} contacts from findMessages`);
-        if (contacts.length > 0) return contacts;
+      if (contacts.length > 0) {
+        console.log(`✅ Found ${contacts.length} contacts from findMessages (no filters)`);
+        return contacts;
       }
     }
   } catch (error) {
-    console.error(`❌ Error with findMessages endpoint:`, error);
+    console.error(`❌ Error with findMessages (no filters):`, error);
   }
 
-  // 3. Fallback final: tentar com chat/findChats
+  // Método 2: Tentar com limit
   try {
-    const chatUrl = `${normalizedApiUrl}/chat/findChats/${instanceId}`;
-    console.log(`📡 Trying findChats endpoint: ${chatUrl}`);
+    const findMessagesUrl = `${normalizedApiUrl}/chat/findMessages/${instanceId}`;
+    console.log(`📡 Trying findMessages WITH limit: ${findMessagesUrl}`);
     
-    const response = await fetch(chatUrl, {
-      method: 'GET',
+    const response = await fetch(findMessagesUrl, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'apikey': apiKey,
+      },
+      body: JSON.stringify({ limit: 50 })
+    });
+
+    console.log(`📡 FindMessages (limit) response status: ${response.status}`);
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log(`📋 Limited response:`, JSON.stringify(data, null, 2).substring(0, 1000));
+      
+      const contacts = extractContactsFromAnyData(data, phoneSearch);
+      
+      if (contacts.length > 0) {
+        console.log(`✅ Found ${contacts.length} contacts from findMessages (with limit)`);
+        return contacts;
+      }
+    }
+  } catch (error) {
+    console.error(`❌ Error with findMessages (limit):`, error);
+  }
+
+  // Método 3: Tentar findChats
+  try {
+    const findChatsUrl = `${normalizedApiUrl}/chat/findChats/${instanceId}`;
+    console.log(`📡 Trying findChats: ${findChatsUrl}`);
+    
+    const response = await fetch(findChatsUrl, {
+      method: 'GET',
+      headers: {
         'apikey': apiKey,
       },
     });
@@ -193,66 +105,83 @@ async function fetchInstanceContacts(
     
     if (response.ok) {
       const data = await response.json();
-      console.log(`📋 FindChats full response:`, JSON.stringify(data, null, 2));
+      console.log(`📋 Chats response:`, JSON.stringify(data, null, 2).substring(0, 1000));
       
-      // Tentar diferentes estruturas de resposta
-      let chatsArray = data;
-      if (data && typeof data === 'object') {
-        // Verificar se é um objeto com propriedades que contém o array
-        if (data.data && Array.isArray(data.data)) {
-          chatsArray = data.data;
-        } else if (data.chats && Array.isArray(data.chats)) {
-          chatsArray = data.chats;
-        } else if (data.results && Array.isArray(data.results)) {
-          chatsArray = data.results;
-        }
-      }
+      const contacts = extractContactsFromAnyData(data, phoneSearch);
       
-      console.log(`📋 Chats array info:`, {
-        isArray: Array.isArray(chatsArray),
-        length: Array.isArray(chatsArray) ? chatsArray.length : 'not array',
-        firstItemKeys: Array.isArray(chatsArray) && chatsArray.length > 0 ? Object.keys(chatsArray[0]) : 'no data'
-      });
-      
-      if (chatsArray && Array.isArray(chatsArray) && chatsArray.length > 0) {
-        const contacts = chatsArray
-          .filter(chat => {
-            const jid = chat.id || chat.jid;
-            const isGroup = jid?.includes('@g.us') || chat.isGroup;
-            const hasValidId = jid && jid.includes('@s.whatsapp.net');
-            
-            if (phoneSearch && jid) {
-              const phoneNumber = jid.split('@')[0] || '';
-              return !isGroup && hasValidId && phoneNumber.includes(phoneSearch);
-            }
-            
-            return !isGroup && hasValidId;
-          })
-          .map(chat => {
-            const jid = chat.id || chat.jid;
-            const phoneNumber = jid.split('@')[0];
-            return {
-              id: jid,
-              name: chat.name || chat.pushName || phoneNumber,
-              pushName: chat.pushName,
-              profilePicUrl: chat.profilePicUrl,
-              remoteJid: jid,
-              lastMessageTime: chat.t || chat.timestamp || chat.lastMessageTime || 0
-            };
-          })
-          .sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0))
-          .slice(0, 10);
-          
+      if (contacts.length > 0) {
         console.log(`✅ Found ${contacts.length} contacts from findChats`);
         return contacts;
       }
     }
   } catch (error) {
-    console.error(`❌ Error with findChats endpoint:`, error);
+    console.error(`❌ Error with findChats:`, error);
   }
 
-  console.log(`❌ All endpoints failed for instance ${instanceId}`);
+  console.log(`❌ All methods failed for instance ${instanceId}`);
   return [];
+}
+
+// Função para extrair contatos de qualquer estrutura de dados
+function extractContactsFromAnyData(data: any, phoneSearch?: string): Contact[] {
+  const contacts: Contact[] = [];
+  const uniqueJids = new Set<string>();
+  
+  function processItem(item: any, source: string) {
+    if (!item) return;
+    
+    // Tentar extrair JID de diferentes campos
+    let jid = item.key?.remoteJid || item.remoteJid || item.id || item.jid || item.chatId;
+    
+    if (jid && typeof jid === 'string' && jid.includes('@') && !uniqueJids.has(jid)) {
+      // Filtrar apenas conversas individuais
+      if (jid.includes('@s.whatsapp.net')) {
+        const phoneNumber = jid.split('@')[0];
+        
+        // Aplicar filtro de busca se especificado
+        if (phoneSearch && !phoneNumber.includes(phoneSearch)) {
+          return;
+        }
+        
+        uniqueJids.add(jid);
+        
+        contacts.push({
+          id: jid,
+          name: item.pushName || item.name || item.participant || phoneNumber,
+          pushName: item.pushName,
+          profilePicUrl: item.profilePicUrl || null,
+          remoteJid: jid,
+          lastMessageTime: item.messageTimestamp || item.timestamp || item.t || Date.now()
+        });
+        
+        console.log(`📞 Found contact: ${phoneNumber} (${item.pushName || 'sem nome'}) from ${source}`);
+      }
+    }
+  }
+  
+  // Processar diferentes estruturas
+  if (Array.isArray(data)) {
+    data.forEach((item, index) => processItem(item, `array[${index}]`));
+  } else if (data && typeof data === 'object') {
+    // Tentar propriedades comuns que podem conter arrays
+    const possibleArrays = ['data', 'messages', 'chats', 'contacts', 'results', 'items'];
+    
+    for (const prop of possibleArrays) {
+      if (data[prop] && Array.isArray(data[prop])) {
+        data[prop].forEach((item: any, index: number) => processItem(item, `${prop}[${index}]`));
+      }
+    }
+    
+    // Se não encontrou arrays, processar o próprio objeto
+    if (contacts.length === 0) {
+      processItem(data, 'root_object');
+    }
+  }
+  
+  // Ordenar por timestamp e retornar os 10 mais recentes
+  return contacts
+    .sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0))
+    .slice(0, 10);
 }
 
 Deno.serve(async (req) => {
