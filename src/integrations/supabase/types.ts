@@ -305,6 +305,9 @@ export type Database = {
       user_whatsapp_instances: {
         Row: {
           created_at: string
+          evolution_api_key: string | null
+          evolution_api_url: string | null
+          evolution_instance_id: string | null
           id: string
           instance_name: string
           instance_token: string | null
@@ -314,6 +317,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          evolution_api_key?: string | null
+          evolution_api_url?: string | null
+          evolution_instance_id?: string | null
           id?: string
           instance_name: string
           instance_token?: string | null
@@ -323,6 +329,9 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          evolution_api_key?: string | null
+          evolution_api_url?: string | null
+          evolution_instance_id?: string | null
           id?: string
           instance_name?: string
           instance_token?: string | null

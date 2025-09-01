@@ -31,6 +31,9 @@ interface UserInstance {
   id: string;
   user_id: string;
   instance_name: string;
+  evolution_instance_id?: string;
+  evolution_api_url?: string;
+  evolution_api_key?: string;
   instance_token?: string;
   is_active: boolean;
   user_name?: string;
@@ -56,6 +59,9 @@ export const AdminInstancesModal = ({
   const [formData, setFormData] = useState({
     user_id: "",
     instance_name: "",
+    evolution_instance_id: "",
+    evolution_api_url: "http://localhost:8080",
+    evolution_api_key: "",
     instance_token: "",
   });
 
@@ -109,6 +115,9 @@ export const AdminInstancesModal = ({
         .insert({
           user_id: formData.user_id,
           instance_name: formData.instance_name,
+          evolution_instance_id: formData.evolution_instance_id,
+          evolution_api_url: formData.evolution_api_url,
+          evolution_api_key: formData.evolution_api_key,
           instance_token: formData.instance_token || null,
           is_active: true,
         });
@@ -124,6 +133,9 @@ export const AdminInstancesModal = ({
       setFormData({
         user_id: "",
         instance_name: "",
+        evolution_instance_id: "",
+        evolution_api_url: "http://localhost:8080",
+        evolution_api_key: "",
         instance_token: "",
       });
       setShowForm(false);
@@ -240,15 +252,52 @@ export const AdminInstancesModal = ({
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="instance_name">Nome da Instância</Label>
-                  <Input
-                    id="instance_name"
-                    value={formData.instance_name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, instance_name: e.target.value }))}
-                    placeholder="Ex: vendedor1_whatsapp"
-                    required
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="instance_name">Nome da Instância *</Label>
+                    <Input
+                      id="instance_name"
+                      value={formData.instance_name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, instance_name: e.target.value }))}
+                      placeholder="Ex: vendedor1_whatsapp"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="evolution_instance_id">ID da Instância Evolution *</Label>
+                    <Input
+                      id="evolution_instance_id"
+                      value={formData.evolution_instance_id}
+                      onChange={(e) => setFormData(prev => ({ ...prev, evolution_instance_id: e.target.value }))}
+                      placeholder="Ex: my-instance"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="evolution_api_url">URL da Evolution API</Label>
+                    <Input
+                      id="evolution_api_url"
+                      value={formData.evolution_api_url}
+                      onChange={(e) => setFormData(prev => ({ ...prev, evolution_api_url: e.target.value }))}
+                      placeholder="http://localhost:8080"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="evolution_api_key">Chave da API *</Label>
+                    <Input
+                      id="evolution_api_key"
+                      value={formData.evolution_api_key}
+                      onChange={(e) => setFormData(prev => ({ ...prev, evolution_api_key: e.target.value }))}
+                      placeholder="Sua chave da Evolution API"
+                      type="password"
+                      required
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -257,7 +306,7 @@ export const AdminInstancesModal = ({
                     id="instance_token"
                     value={formData.instance_token}
                     onChange={(e) => setFormData(prev => ({ ...prev, instance_token: e.target.value }))}
-                    placeholder="Token de autenticação da Evolution API"
+                    placeholder="Token adicional se necessário"
                   />
                 </div>
 
@@ -316,8 +365,11 @@ export const AdminInstancesModal = ({
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-sm text-muted-foreground space-y-1">
                     <p><strong>Usuário:</strong> {instance.user_name} ({instance.user_email})</p>
+                    <p><strong>ID Evolution:</strong> {instance.evolution_instance_id || 'Não configurado'}</p>
+                    <p><strong>API URL:</strong> {instance.evolution_api_url || 'Não configurada'}</p>
+                    <p><strong>API Key:</strong> {instance.evolution_api_key ? '••••••••••••••••' : 'Não configurada'}</p>
                     {instance.instance_token && (
                       <p><strong>Token:</strong> {instance.instance_token.substring(0, 20)}...</p>
                     )}
