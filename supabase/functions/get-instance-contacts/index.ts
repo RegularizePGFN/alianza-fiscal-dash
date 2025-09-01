@@ -19,33 +19,82 @@ async function fetchInstanceContacts(
   instanceId: string
 ): Promise<Contact[]> {
   console.log(`🔍 Fetching contacts for instance: ${instanceId}`);
+  console.log(`🔧 API URL: ${apiUrl}, API Key: ${apiKey ? 'Present' : 'Missing'}`);
   
-  // Normalizar a URL removendo barras extras
+  // Tentar diferentes endpoints para obter contatos
+  const endpoints = [
+    `/chat/findChats/${instanceId}?limit=50`,
+    `/chat/findContacts/${instanceId}`,
+    `/message/findMany/${instanceId}?limit=50&where[key]=remoteJid`
+  ];
+  
   const normalizedApiUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
-  const url = `${normalizedApiUrl}/chat/findContacts/${instanceId}`;
   
-  console.log(`📡 Calling Evolution API: ${url}`);
-  
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': apiKey,
-    },
-  });
+  for (const endpoint of endpoints) {
+    try {
+      const url = `${normalizedApiUrl}${endpoint}`;
+      console.log(`📡 Trying endpoint: ${url}`);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': apiKey,
+        },
+      });
 
-  console.log(`📡 Evolution API response status: ${response.status}`);
-  
-  if (!response.ok) {
-    console.error(`❌ Evolution API error: ${response.status} ${response.statusText}`);
-    // Se der erro, tentar endpoint alternativo para mensagens recentes
-    return await fetchRecentChats(normalizedApiUrl, apiKey, instanceId);
+      console.log(`📡 Response status for ${endpoint}: ${response.status}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`📋 Found ${data?.length || 0} items from ${endpoint}`);
+        
+        if (data && Array.isArray(data) && data.length > 0) {
+          // Processar dados baseado no endpoint
+          if (endpoint.includes('findChats')) {
+            return data
+              .filter(chat => chat.id && !chat.id.includes('@g.us')) // Filtrar grupos
+              .map(chat => ({
+                id: chat.id,
+                name: chat.name || chat.pushName || chat.id.split('@')[0],
+                pushName: chat.pushName,
+                profilePicUrl: chat.profilePicUrl,
+                remoteJid: chat.id,
+              }))
+              .slice(0, 50);
+          } else if (endpoint.includes('findContacts')) {
+            return data
+              .filter(contact => contact.remoteJid && !contact.remoteJid.includes('@g.us'))
+              .slice(0, 50);
+          } else if (endpoint.includes('findMany')) {
+            // Extrair contatos únicos das mensagens
+            const uniqueContacts = new Map();
+            data.forEach(msg => {
+              if (msg.key?.remoteJid && !msg.key.remoteJid.includes('@g.us')) {
+                const jid = msg.key.remoteJid;
+                if (!uniqueContacts.has(jid)) {
+                  uniqueContacts.set(jid, {
+                    id: jid,
+                    name: msg.pushName || jid.split('@')[0],
+                    pushName: msg.pushName,
+                    profilePicUrl: null,
+                    remoteJid: jid,
+                  });
+                }
+              }
+            });
+            return Array.from(uniqueContacts.values()).slice(0, 50);
+          }
+        }
+      }
+    } catch (error) {
+      console.error(`❌ Error with endpoint ${endpoint}:`, error);
+      continue;
+    }
   }
-
-  const data = await response.json();
-  console.log(`📋 Found ${data.length || 0} contacts`);
   
-  return data || [];
+  console.log(`❌ All endpoints failed for instance ${instanceId}`);
+  return [];
 }
 
 async function fetchRecentChats(
@@ -53,34 +102,8 @@ async function fetchRecentChats(
   apiKey: string,
   instanceId: string
 ): Promise<Contact[]> {
-  console.log(`🔍 Trying alternative endpoint for recent chats`);
-  
-  const url = `${apiUrl}/chat/findChats/${instanceId}`;
-  
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': apiKey,
-    },
-  });
-
-  if (!response.ok) {
-    console.error(`❌ Alternative endpoint also failed: ${response.status}`);
-    return [];
-  }
-
-  const chats = await response.json();
-  console.log(`📋 Found ${chats.length || 0} recent chats`);
-  
-  // Converter chats para formato de contatos
-  return (chats || []).map((chat: any) => ({
-    id: chat.id || chat.remoteJid,
-    name: chat.name || chat.pushName || chat.remoteJid?.split('@')[0],
-    pushName: chat.pushName,
-    profilePicUrl: chat.profilePicUrl,
-    remoteJid: chat.remoteJid || chat.id,
-  })).filter((contact: Contact) => contact.remoteJid?.includes('@'));
+  console.log(`🔍 This function is now integrated into fetchInstanceContacts`);
+  return [];
 }
 
 Deno.serve(async (req) => {

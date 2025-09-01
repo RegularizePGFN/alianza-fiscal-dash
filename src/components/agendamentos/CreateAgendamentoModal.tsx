@@ -140,18 +140,33 @@ export const CreateAgendamentoModal = ({
 
     setLoadingContacts(true);
     try {
+      console.log(`🔍 Fetching contacts for instance: ${instanceName}`);
+      
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No session');
 
       // Buscar o user_id da instância (para admins que podem usar instâncias de outros usuários)
-      const { data: instanceData } = await supabase
+      const { data: instanceData, error: instanceError } = await supabase
         .from('user_whatsapp_instances')
-        .select('user_id')
+        .select('user_id, evolution_instance_id, evolution_api_url, evolution_api_key')
         .eq('instance_name', instanceName)
         .eq('is_active', true)
         .single();
 
-      const targetUserId = instanceData?.user_id || user.id;
+      if (instanceError || !instanceData) {
+        console.error('❌ Instance not found:', instanceError);
+        throw new Error(`Instância ${instanceName} não encontrada ou inativa`);
+      }
+
+      console.log(`📋 Instance data:`, instanceData);
+
+      const targetUserId = instanceData.user_id || user.id;
+
+      console.log(`🔧 Calling get-instance-contacts with:`, {
+        instanceName,
+        userId: targetUserId,
+        evolution_instance_id: instanceData.evolution_instance_id
+      });
 
       const response = await fetch('https://sbxltdbnqixucjoognfj.supabase.co/functions/v1/get-instance-contacts', {
         method: 'POST',
@@ -165,12 +180,17 @@ export const CreateAgendamentoModal = ({
         }),
       });
 
+      console.log(`📡 API response status:`, response.status);
+
       const data = await response.json();
+      console.log(`📋 API response data:`, data);
       
       if (data.error) {
+        console.error('❌ API returned error:', data.error);
         throw new Error(data.error);
       }
 
+      console.log(`✅ Received ${data.contacts?.length || 0} contacts`);
       setContacts(data.contacts || []);
       
       if (data.contacts?.length === 0) {
