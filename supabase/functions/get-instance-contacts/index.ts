@@ -11,6 +11,7 @@ interface Contact {
   pushName?: string;
   profilePicUrl?: string;
   remoteJid: string;
+  lastMessageTime?: number;
 }
 
 function processContacts(data: any[], endpoint: string): Contact[] {
@@ -18,67 +19,54 @@ function processContacts(data: any[], endpoint: string): Contact[] {
     return [];
   }
 
+  console.log(`🔍 Processing ${data.length} items from endpoint: ${endpoint}`);
+  
   const contacts: Contact[] = [];
   
-  if (endpoint.includes('findChats') || endpoint.includes('chat')) {
-    // Processar chats
-    for (const item of data) {
-      if (item.id && !item.id.includes('@g.us')) {
-        contacts.push({
-          id: item.id,
-          name: item.name || item.pushName || item.id.split('@')[0],
-          pushName: item.pushName,
-          profilePicUrl: item.profilePicUrl,
-          remoteJid: item.id,
-        });
-      }
+  // Processar diferentes estruturas de resposta
+  for (const item of data) {
+    console.log(`📋 Processing item:`, JSON.stringify(item, null, 2));
+    
+    // Extrair informações do contato
+    let jid = item.id || item.remoteJid || item.jid || item.from || item.to;
+    let name = item.name || item.pushName || item.notifyName || item.verifiedName;
+    let lastMessageTime = item.t || item.timestamp || item.messageTimestamp || item.lastMessageTime;
+    
+    // Pular grupos do WhatsApp
+    if (!jid || jid.includes('@g.us')) {
+      console.log(`⏭️ Skipping group or invalid JID: ${jid}`);
+      continue;
     }
-  } else if (endpoint.includes('findContacts') || endpoint.includes('contacts')) {
-    // Processar contatos
-    for (const contact of data) {
-      if (contact.remoteJid && !contact.remoteJid.includes('@g.us')) {
-        contacts.push({
-          id: contact.id || contact.remoteJid,
-          name: contact.name || contact.pushName || contact.remoteJid.split('@')[0],
-          pushName: contact.pushName,
-          profilePicUrl: contact.profilePicUrl,
-          remoteJid: contact.remoteJid,
-        });
-      }
+    
+    // Extrair número limpo (antes do @)
+    const phoneNumber = jid.split('@')[0];
+    
+    // Se não tem nome, usar o número
+    if (!name || name.trim() === '') {
+      name = phoneNumber;
     }
-  } else if (endpoint.includes('message') || endpoint.includes('findMany')) {
-    // Processar mensagens para extrair contatos únicos
-    const uniqueContacts = new Map();
-    for (const msg of data) {
-      const jid = msg.key?.remoteJid || msg.remoteJid || msg.from || msg.to;
-      if (jid && !jid.includes('@g.us') && !uniqueContacts.has(jid)) {
-        uniqueContacts.set(jid, {
-          id: jid,
-          name: msg.pushName || msg.senderName || jid.split('@')[0],
-          pushName: msg.pushName,
-          profilePicUrl: msg.profilePicUrl || null,
-          remoteJid: jid,
-        });
-      }
-    }
-    contacts.push(...Array.from(uniqueContacts.values()));
-  } else {
-    // Tentar processar estrutura genérica
-    for (const item of data) {
-      const jid = item.id || item.remoteJid || item.jid;
-      if (jid && !jid.includes('@g.us')) {
-        contacts.push({
-          id: jid,
-          name: item.name || item.pushName || jid.split('@')[0],
-          pushName: item.pushName,
-          profilePicUrl: item.profilePicUrl,
-          remoteJid: jid,
-        });
-      }
-    }
+    
+    console.log(`✅ Adding contact: ${name} (${phoneNumber}) - JID: ${jid}`);
+    
+    contacts.push({
+      id: jid,
+      name: name,
+      pushName: item.pushName || name,
+      profilePicUrl: item.profilePicUrl || item.picture || null,
+      remoteJid: jid,
+      lastMessageTime: lastMessageTime
+    });
   }
+  
+  // Ordenar por última mensagem (mais recente primeiro)
+  contacts.sort((a, b) => {
+    const timeA = a.lastMessageTime || 0;
+    const timeB = b.lastMessageTime || 0;
+    return timeB - timeA;
+  });
 
-  return contacts.slice(0, 5); // Limitar a 5 conversas recentes
+  console.log(`🎯 Processed ${contacts.length} valid contacts`);
+  return contacts.slice(0, 10); // Limitar a 10 conversas recentes
 }
 
 async function fetchInstanceContacts(
@@ -90,10 +78,10 @@ async function fetchInstanceContacts(
   console.log(`🔍 Fetching contacts for instance: ${instanceId}`);
   console.log(`🔧 API URL: ${apiUrl}, API Key: ${apiKey ? 'Present' : 'Missing'}, Phone Search: ${phoneSearch || 'None'}`);
   
-  // Usar endpoints corretos da Evolution API para buscar conversas recentes
+  // Usar endpoints da Evolution API para buscar conversas recentes
   const endpoints = [
     `/chat/findChats/${instanceId}`,
-    `/chat/findContacts/${instanceId}`
+    `/message/findMany/${instanceId}`
   ];
   
   const normalizedApiUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
@@ -103,26 +91,35 @@ async function fetchInstanceContacts(
       const url = `${normalizedApiUrl}${endpoint}`;
       console.log(`📡 Trying endpoint: ${url}`);
       
-      // Usar POST para findContacts e GET para findChats
-      const method = endpoint.includes('findContacts') ? 'POST' : 'GET';
+      // Configurar método e body baseado no endpoint  
+      let method = 'GET';
       let body = null;
       
-      if (endpoint.includes('findContacts')) {
+      if (endpoint.includes('findMany')) {
+        method = 'POST';
         if (phoneSearch) {
-          // Se há busca por telefone, usar where com id
           body = JSON.stringify({
             where: {
-              id: phoneSearch
+              "key.remoteJid": {
+                "contains": phoneSearch
+              }
             },
-            limit: 5
+            limit: 10,
+            sort: {
+              "messageTimestamp": "desc"
+            }
           });
         } else {
-          // Buscar conversas recentes sem filtro
           body = JSON.stringify({
-            limit: 5,
-            where: {}
+            limit: 50, // Buscar mais mensagens para extrair conversas únicas
+            sort: {
+              "messageTimestamp": "desc"
+            }
           });
         }
+      } else if (endpoint.includes('findChats')) {
+        method = 'GET';
+        // GET não precisa de body
       }
       
       const response = await fetch(url, {
@@ -234,16 +231,19 @@ Deno.serve(async (req) => {
       phoneSearch
     );
 
-    // Limitar e formatar resultados para apenas 5 conversas recentes
+    // Formatar resultados para as últimas 10 conversas
     const formattedContacts = contacts
-      .slice(0, 5) // Limitar a 5 conversas mais recentes
-      .map(contact => ({
-        id: contact.id,
-        name: contact.name || contact.pushName || 'Sem nome',
-        phone: contact.remoteJid?.replace('@s.whatsapp.net', '').replace('@g.us', ''),
-        remoteJid: contact.remoteJid,
-        profilePicUrl: contact.profilePicUrl,
-      }))
+      .map(contact => {
+        // Extrair número limpo (antes do @)
+        const phone = contact.remoteJid?.split('@')[0] || '';
+        return {
+          id: contact.id,
+          name: contact.name || phone, // Se não tem nome, usar o número
+          phone: phone,
+          remoteJid: contact.remoteJid,
+          profilePicUrl: contact.profilePicUrl,
+        };
+      })
       .filter(contact => contact.phone && !contact.remoteJid?.includes('@g.us')); // Filtrar grupos
 
     console.log(`✅ Returning ${formattedContacts.length} formatted contacts`);
