@@ -30,13 +30,25 @@ async function sendWhatsAppMessage(
   message: string
 ) {
   console.log(`🌐 Calling Evolution API:`, {
-    url: `${apiUrl}/message/sendText/${instanceId}`,
+    originalApiUrl: apiUrl,
+    instanceId,
     phone,
     hasApiKey: !!apiKey,
     messageLength: message.length
   });
 
-  const url = `${apiUrl}/message/sendText/${instanceId}`;
+  // Normalizar a URL removendo barras extras
+  const normalizedApiUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
+  const url = `${normalizedApiUrl}/message/sendText/${instanceId}`;
+  
+  console.log(`📡 Final URL: ${url}`);
+  
+  const requestBody = {
+    number: phone,
+    text: message,
+  };
+  
+  console.log(`📤 Request body:`, requestBody);
   
   const response = await fetch(url, {
     method: 'POST',
@@ -44,10 +56,7 @@ async function sendWhatsAppMessage(
       'Content-Type': 'application/json',
       'apikey': apiKey,
     },
-    body: JSON.stringify({
-      number: phone,
-      text: message,
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   console.log(`📡 Evolution API response status: ${response.status}`);
