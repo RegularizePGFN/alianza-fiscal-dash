@@ -25,67 +25,12 @@ async function fetchInstanceContacts(
   
   const normalizedApiUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
   
-  // Primeiro tentar buscar chats diretamente
+  // Tentar buscar mensagens usando chat/findMessages
   try {
-    const chatUrl = `${normalizedApiUrl}/chat/findChats/${instanceId}`;
-    console.log(`📡 Trying chat endpoint: ${chatUrl}`);
+    const findMessagesUrl = `${normalizedApiUrl}/chat/findMessages/${instanceId}`;
+    console.log(`📡 Trying findMessages endpoint: ${findMessagesUrl}`);
     
-    const response = await fetch(chatUrl, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': apiKey,
-      },
-    });
-
-    console.log(`📡 Response status: ${response.status}`);
-    
-    if (response.ok) {
-      const data = await response.json();
-      console.log(`📋 Raw chat response:`, JSON.stringify(data, null, 2));
-      
-      if (data && Array.isArray(data) && data.length > 0) {
-        const contacts = data
-          .filter(chat => {
-            // Filtrar apenas conversas individuais (não grupos)
-            const isGroup = chat.id?.includes('@g.us') || chat.isGroup;
-            const hasValidId = chat.id && chat.id.includes('@s.whatsapp.net');
-            
-            if (phoneSearch) {
-              const phoneNumber = chat.id?.split('@')[0] || '';
-              return !isGroup && hasValidId && phoneNumber.includes(phoneSearch);
-            }
-            
-            return !isGroup && hasValidId;
-          })
-          .map(chat => {
-            const phoneNumber = chat.id.split('@')[0];
-            return {
-              id: chat.id,
-              name: chat.name || chat.pushName || phoneNumber,
-              pushName: chat.pushName,
-              profilePicUrl: chat.profilePicUrl,
-              remoteJid: chat.id,
-              lastMessageTime: chat.t || chat.timestamp || 0
-            };
-          })
-          .sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0))
-          .slice(0, 10);
-          
-        console.log(`✅ Found ${contacts.length} valid chats`);
-        return contacts;
-      }
-    }
-  } catch (error) {
-    console.error(`❌ Error with chat endpoint:`, error);
-  }
-
-  // Se não funcionou, tentar com mensagens
-  try {
-    const messageUrl = `${normalizedApiUrl}/message/findMany/${instanceId}`;
-    console.log(`📡 Trying message endpoint: ${messageUrl}`);
-    
-    const response = await fetch(messageUrl, {
+    const response = await fetch(findMessagesUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -94,16 +39,16 @@ async function fetchInstanceContacts(
       body: JSON.stringify({
         limit: 100,
         sort: {
-          messageTimestamp: "desc"
+          messageTimestamp: -1
         }
       })
     });
 
-    console.log(`📡 Message response status: ${response.status}`);
+    console.log(`📡 FindMessages response status: ${response.status}`);
     
     if (response.ok) {
       const data = await response.json();
-      console.log(`📋 Raw message response (first 3 items):`, JSON.stringify(data.slice(0, 3), null, 2));
+      console.log(`📋 Raw findMessages response (first 3 items):`, JSON.stringify(data.slice(0, 3), null, 2));
       
       if (data && Array.isArray(data) && data.length > 0) {
         const uniqueContacts = new Map();
@@ -134,12 +79,66 @@ async function fetchInstanceContacts(
           .sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0))
           .slice(0, 10);
           
-        console.log(`✅ Found ${contacts.length} contacts from messages`);
+        console.log(`✅ Found ${contacts.length} contacts from findMessages`);
         return contacts;
       }
     }
   } catch (error) {
-    console.error(`❌ Error with message endpoint:`, error);
+    console.error(`❌ Error with findMessages endpoint:`, error);
+  }
+
+  // Fallback: tentar com chats
+  try {
+    const chatUrl = `${normalizedApiUrl}/chat/findChats/${instanceId}`;
+    console.log(`📡 Trying chat endpoint: ${chatUrl}`);
+    
+    const response = await fetch(chatUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': apiKey,
+      },
+    });
+
+    console.log(`📡 Chat response status: ${response.status}`);
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log(`📋 Raw chat response:`, JSON.stringify(data, null, 2));
+      
+      if (data && Array.isArray(data) && data.length > 0) {
+        const contacts = data
+          .filter(chat => {
+            const isGroup = chat.id?.includes('@g.us') || chat.isGroup;
+            const hasValidId = chat.id && chat.id.includes('@s.whatsapp.net');
+            
+            if (phoneSearch) {
+              const phoneNumber = chat.id?.split('@')[0] || '';
+              return !isGroup && hasValidId && phoneNumber.includes(phoneSearch);
+            }
+            
+            return !isGroup && hasValidId;
+          })
+          .map(chat => {
+            const phoneNumber = chat.id.split('@')[0];
+            return {
+              id: chat.id,
+              name: chat.name || chat.pushName || phoneNumber,
+              pushName: chat.pushName,
+              profilePicUrl: chat.profilePicUrl,
+              remoteJid: chat.id,
+              lastMessageTime: chat.t || chat.timestamp || 0
+            };
+          })
+          .sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0))
+          .slice(0, 10);
+          
+        console.log(`✅ Found ${contacts.length} valid chats`);
+        return contacts;
+      }
+    }
+  } catch (error) {
+    console.error(`❌ Error with chat endpoint:`, error);
   }
 
   console.log(`❌ All endpoints failed for instance ${instanceId}`);
