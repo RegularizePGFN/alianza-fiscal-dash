@@ -50,6 +50,8 @@ export const CreateAgendamentoModal = ({
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [loadingContacts, setLoadingContacts] = useState(false);
+  const [searchPhone, setSearchPhone] = useState("");
+  const [searchingPhone, setSearchingPhone] = useState(false);
   const [step, setStep] = useState<'instance' | 'contact' | 'details'>('instance');
   const [instances, setInstances] = useState<UserInstance[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -75,6 +77,7 @@ export const CreateAgendamentoModal = ({
     setSelectedInstance("");
     setSelectedContact("");
     setContacts([]);
+    setSearchPhone("");
   };
 
   const fetchUserInstances = async () => {
@@ -135,7 +138,7 @@ export const CreateAgendamentoModal = ({
     }
   };
 
-  const fetchInstanceContacts = async (instanceName: string) => {
+  const fetchInstanceContacts = async (instanceName: string, phoneSearch?: string) => {
     if (!user || !instanceName) return;
 
     setLoadingContacts(true);
@@ -177,6 +180,7 @@ export const CreateAgendamentoModal = ({
         body: JSON.stringify({
           instanceName,
           userId: targetUserId,
+          phoneSearch: phoneSearch || null,
         }),
       });
 
@@ -209,6 +213,24 @@ export const CreateAgendamentoModal = ({
       setContacts([]);
     } finally {
       setLoadingContacts(false);
+    }
+  };
+
+  const searchByPhone = async () => {
+    if (!searchPhone.trim() || searchPhone.length < 3) {
+      toast({
+        title: "Número muito curto",
+        description: "Digite pelo menos 3 números para buscar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSearchingPhone(true);
+    try {
+      await fetchInstanceContacts(selectedInstance, searchPhone.trim());
+    } finally {
+      setSearchingPhone(false);
     }
   };
 
@@ -352,27 +374,45 @@ export const CreateAgendamentoModal = ({
 
         {step === 'contact' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-muted-foreground">
-                Selecione um contato recente ou digite manualmente.
-              </div>
+            <div className="flex items-center justify-between mb-4">
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={() => setStep('instance')}
               >
-                ← Voltar
+                ← Voltar para Instâncias
               </Button>
             </div>
             
-            <div className="flex gap-2">
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <Input
+                    placeholder="Digite um número para buscar (ex: 5534999)"
+                    value={searchPhone}
+                    onChange={(e) => setSearchPhone(e.target.value.replace(/\D/g, ''))}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        searchByPhone();
+                      }
+                    }}
+                  />
+                </div>
+                <Button
+                  onClick={searchByPhone}
+                  disabled={searchingPhone || !searchPhone.trim() || searchPhone.length < 3}
+                >
+                  {searchingPhone ? 'Buscando...' : 'Buscar'}
+                </Button>
+              </div>
+              
               <Button
                 variant="outline"
                 onClick={handleManualContact}
-                className="flex-1"
+                className="w-full"
               >
                 <User className="h-4 w-4 mr-2" />
-                Digitar Manualmente
+                Digitar Manualmente (Sem Buscar)
               </Button>
             </div>
 
@@ -380,17 +420,17 @@ export const CreateAgendamentoModal = ({
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Carregando contatos...
+                  Carregando conversas recentes...
                 </p>
               </div>
             ) : contacts.length === 0 ? (
               <div className="text-center py-8">
                 <Phone className="mx-auto h-12 w-12 text-muted-foreground" />
                 <h3 className="mt-2 text-sm font-semibold text-foreground">
-                  Nenhum contato encontrado
+                  Nenhuma conversa encontrada
                 </h3>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Esta instância não possui conversas recentes ou não foi possível conectar.
+                  Esta instância não possui conversas recentes ou não foi possível conectar. Tente buscar por um número específico.
                 </p>
               </div>
             ) : (

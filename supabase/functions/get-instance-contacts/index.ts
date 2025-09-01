@@ -78,27 +78,22 @@ function processContacts(data: any[], endpoint: string): Contact[] {
     }
   }
 
-  return contacts.slice(0, 50);
+  return contacts.slice(0, 5); // Limitar a 5 conversas recentes
 }
 
 async function fetchInstanceContacts(
   apiUrl: string,
   apiKey: string,
-  instanceId: string
+  instanceId: string,
+  phoneSearch?: string
 ): Promise<Contact[]> {
   console.log(`🔍 Fetching contacts for instance: ${instanceId}`);
-  console.log(`🔧 API URL: ${apiUrl}, API Key: ${apiKey ? 'Present' : 'Missing'}`);
+  console.log(`🔧 API URL: ${apiUrl}, API Key: ${apiKey ? 'Present' : 'Missing'}, Phone Search: ${phoneSearch || 'None'}`);
   
-  // Tentar diferentes endpoints para obter contatos
+  // Usar endpoints corretos da Evolution API para buscar conversas recentes
   const endpoints = [
-    `/instance/fetchInstances`,
-    `/chat/findContacts/${instanceId}`,
     `/chat/findChats/${instanceId}`,
-    `/message/findMessages/${instanceId}?limit=50`,
-    `/message/findMany/${instanceId}?limit=50`,
-    `/${instanceId}/chat/findChats?limit=50`,
-    `/${instanceId}/chat/findContacts`,
-    `/${instanceId}/message/findMany?limit=50`
+    `/chat/findContacts/${instanceId}`
   ];
   
   const normalizedApiUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
@@ -108,12 +103,35 @@ async function fetchInstanceContacts(
       const url = `${normalizedApiUrl}${endpoint}`;
       console.log(`📡 Trying endpoint: ${url}`);
       
+      // Usar POST para findContacts e GET para findChats
+      const method = endpoint.includes('findContacts') ? 'POST' : 'GET';
+      let body = null;
+      
+      if (endpoint.includes('findContacts')) {
+        if (phoneSearch) {
+          // Se há busca por telefone, usar where com id
+          body = JSON.stringify({
+            where: {
+              id: phoneSearch
+            },
+            limit: 5
+          });
+        } else {
+          // Buscar conversas recentes sem filtro
+          body = JSON.stringify({
+            limit: 5,
+            where: {}
+          });
+        }
+      }
+      
       const response = await fetch(url, {
-        method: 'GET',
+        method,
         headers: {
           'Content-Type': 'application/json',
           'apikey': apiKey,
         },
+        ...(body && { body })
       });
 
       console.log(`📡 Response status for ${endpoint}: ${response.status}`);
@@ -178,13 +196,13 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { instanceName, userId } = await req.json();
+    const { instanceName, userId, phoneSearch } = await req.json();
     
     if (!instanceName || !userId) {
       throw new Error('Instance name and user ID are required');
     }
 
-    console.log(`🔧 Getting contacts for instance: ${instanceName}, user: ${userId}`);
+    console.log(`🔧 Getting contacts for instance: ${instanceName}, user: ${userId}, phoneSearch: ${phoneSearch || 'none'}`);
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -212,12 +230,13 @@ Deno.serve(async (req) => {
     const contacts = await fetchInstanceContacts(
       instance.evolution_api_url,
       instance.evolution_api_key,
-      instance.evolution_instance_id
+      instance.evolution_instance_id,
+      phoneSearch
     );
 
-    // Limitar e formatar resultados
+    // Limitar e formatar resultados para apenas 5 conversas recentes
     const formattedContacts = contacts
-      .slice(0, 50) // Limitar a 50 contatos mais recentes
+      .slice(0, 5) // Limitar a 5 conversas mais recentes
       .map(contact => ({
         id: contact.id,
         name: contact.name || contact.pushName || 'Sem nome',
