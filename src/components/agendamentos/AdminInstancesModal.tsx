@@ -131,6 +131,8 @@ export const AdminInstancesModal = ({
   };
 
   const addSelectedInstance = async (instanceName: string) => {
+    console.log("🔄 addSelectedInstance called with:", { instanceName, selectedUser });
+    
     if (!selectedUser) {
       toast({
         title: "Erro",
@@ -140,18 +142,31 @@ export const AdminInstancesModal = ({
       return;
     }
 
+    if (!instanceName || instanceName.trim() === '') {
+      toast({
+        title: "Erro",
+        description: "Nome da instância é obrigatório.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
+      const instanceData = {
+        user_id: selectedUser,
+        instance_name: instanceName.trim(),
+        evolution_instance_id: instanceName.trim(),
+        evolution_api_url: "https://evoapi.neumocrm.com.br/",
+        evolution_api_key: "a9e018ea0e146a0a4ecf1dd0233e7ccf",
+        is_active: true,
+      };
+      
+      console.log("📝 Inserting instance data:", instanceData);
+
       const { error } = await supabase
         .from('user_whatsapp_instances')
-        .insert({
-          user_id: selectedUser,
-          instance_name: instanceName,
-          evolution_instance_id: instanceName,
-          evolution_api_url: "https://evoapi.neumocrm.com.br/",
-          evolution_api_key: "a9e018ea0e146a0a4ecf1dd0233e7ccf",
-          is_active: true,
-        });
+        .insert(instanceData);
 
       if (error) throw error;
 
