@@ -50,10 +50,23 @@ async function fetchInstanceContacts(
     
     if (response.ok) {
       const data = await response.json();
-      console.log(`📋 FindContacts response:`, JSON.stringify(data, null, 2));
+      console.log(`📋 FindContacts full response:`, JSON.stringify(data, null, 2));
       
-      if (data && Array.isArray(data) && data.length > 0) {
-        const contacts = data
+      // Tentar diferentes estruturas de resposta
+      let contactsArray = data;
+      if (data && typeof data === 'object') {
+        // Verificar se é um objeto com propriedades que contém o array
+        if (data.data && Array.isArray(data.data)) {
+          contactsArray = data.data;
+        } else if (data.contacts && Array.isArray(data.contacts)) {
+          contactsArray = data.contacts;
+        } else if (data.results && Array.isArray(data.results)) {
+          contactsArray = data.results;
+        }
+      }
+      
+      if (contactsArray && Array.isArray(contactsArray) && contactsArray.length > 0) {
+        const contacts = contactsArray
           .filter(contact => {
             const jid = contact.id || contact.jid || contact.remoteJid;
             return jid && jid.includes('@s.whatsapp.net') && !jid.includes('@g.us');
@@ -105,17 +118,31 @@ async function fetchInstanceContacts(
     
     if (response.ok) {
       const data = await response.json();
-      console.log(`📋 FindMessages response structure:`, {
-        isArray: Array.isArray(data),
-        length: Array.isArray(data) ? data.length : 'not array',
-        firstItemKeys: Array.isArray(data) && data.length > 0 ? Object.keys(data[0]) : 'no data',
-        sample: Array.isArray(data) && data.length > 0 ? data[0] : 'no sample'
+      console.log(`📋 FindMessages full response:`, JSON.stringify(data, null, 2));
+      
+      // Tentar diferentes estruturas de resposta
+      let messagesArray = data;
+      if (data && typeof data === 'object') {
+        // Verificar se é um objeto com propriedades que contém o array
+        if (data.data && Array.isArray(data.data)) {
+          messagesArray = data.data;
+        } else if (data.messages && Array.isArray(data.messages)) {
+          messagesArray = data.messages;
+        } else if (data.results && Array.isArray(data.results)) {
+          messagesArray = data.results;
+        }
+      }
+      
+      console.log(`📋 Messages array info:`, {
+        isArray: Array.isArray(messagesArray),
+        length: Array.isArray(messagesArray) ? messagesArray.length : 'not array',
+        firstItemKeys: Array.isArray(messagesArray) && messagesArray.length > 0 ? Object.keys(messagesArray[0]) : 'no data'
       });
       
-      if (data && Array.isArray(data) && data.length > 0) {
+      if (messagesArray && Array.isArray(messagesArray) && messagesArray.length > 0) {
         const uniqueContacts = new Map();
         
-        for (const msg of data) {
+        for (const msg of messagesArray) {
           const jid = msg.key?.remoteJid || msg.remoteJid || msg.chatId;
           if (jid && jid.includes('@s.whatsapp.net') && !jid.includes('@g.us')) {
             const phoneNumber = jid.split('@')[0];
@@ -166,14 +193,29 @@ async function fetchInstanceContacts(
     
     if (response.ok) {
       const data = await response.json();
-      console.log(`📋 FindChats response structure:`, {
-        isArray: Array.isArray(data),
-        length: Array.isArray(data) ? data.length : 'not array',
-        firstItemKeys: Array.isArray(data) && data.length > 0 ? Object.keys(data[0]) : 'no data'
+      console.log(`📋 FindChats full response:`, JSON.stringify(data, null, 2));
+      
+      // Tentar diferentes estruturas de resposta
+      let chatsArray = data;
+      if (data && typeof data === 'object') {
+        // Verificar se é um objeto com propriedades que contém o array
+        if (data.data && Array.isArray(data.data)) {
+          chatsArray = data.data;
+        } else if (data.chats && Array.isArray(data.chats)) {
+          chatsArray = data.chats;
+        } else if (data.results && Array.isArray(data.results)) {
+          chatsArray = data.results;
+        }
+      }
+      
+      console.log(`📋 Chats array info:`, {
+        isArray: Array.isArray(chatsArray),
+        length: Array.isArray(chatsArray) ? chatsArray.length : 'not array',
+        firstItemKeys: Array.isArray(chatsArray) && chatsArray.length > 0 ? Object.keys(chatsArray[0]) : 'no data'
       });
       
-      if (data && Array.isArray(data) && data.length > 0) {
-        const contacts = data
+      if (chatsArray && Array.isArray(chatsArray) && chatsArray.length > 0) {
+        const contacts = chatsArray
           .filter(chat => {
             const jid = chat.id || chat.jid;
             const isGroup = jid?.includes('@g.us') || chat.isGroup;
