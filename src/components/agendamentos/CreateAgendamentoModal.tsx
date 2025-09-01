@@ -291,6 +291,30 @@ export const CreateAgendamentoModal = ({
         description: "Sua mensagem foi agendada com sucesso.",
       });
 
+      // Tentar processar mensagens imediatamente se a data agendada já passou
+      const now = new Date();
+      if (scheduledDateTime <= now) {
+        toast({
+          title: "Processando mensagem",
+          description: "Tentando enviar a mensagem agora...",
+        });
+        
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            await fetch('https://sbxltdbnqixucjoognfj.supabase.co/functions/v1/send-scheduled-messages', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`,
+              },
+            });
+          }
+        } catch (processError) {
+          console.error('Error processing immediate message:', processError);
+        }
+      }
+
       resetForm();
       onSuccess();
       onOpenChange(false);

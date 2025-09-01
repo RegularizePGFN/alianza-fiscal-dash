@@ -289,8 +289,23 @@ export const AgendamentosList = ({ refreshTrigger, selectedInstance }: Agendamen
               </div>
               
               {message.error_message && (
-                <div className="mt-2 p-2 bg-destructive/10 rounded-md">
-                  <p className="text-sm text-destructive">{message.error_message}</p>
+                <div className="mt-2 p-3 border border-destructive/20 bg-destructive/5 rounded-md">
+                  <div className="flex items-start gap-2">
+                    <div className="flex-shrink-0 mt-0.5">
+                      ❌
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-destructive mb-1">
+                        Falha no envio da mensagem
+                      </p>
+                      <p className="text-sm text-destructive/80">
+                        <strong>Motivo:</strong> {message.error_message}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Tente novamente clicando no botão 🔄 ou verifique se o número de telefone está correto.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
               

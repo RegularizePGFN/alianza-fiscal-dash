@@ -22,6 +22,31 @@ interface UserInstance {
   evolution_api_key: string;
 }
 
+async function formatPhoneNumber(phone: string): string {
+  // Remove todos os caracteres não numéricos
+  let cleaned = phone.replace(/\D/g, '');
+  
+  // Se não começar com código do país, adiciona 55 (Brasil)
+  if (!cleaned.startsWith('55') && cleaned.length >= 10) {
+    cleaned = '55' + cleaned;
+  }
+  
+  // Para números brasileiros, garantir que celulares tenham 9 dígitos no meio
+  if (cleaned.startsWith('55') && cleaned.length === 12) {
+    // Extrair DDD e número
+    const ddd = cleaned.substring(2, 4);
+    const number = cleaned.substring(4);
+    
+    // Se o número não começar com 9 e tiver 8 dígitos, adicionar 9
+    if (number.length === 8 && !number.startsWith('9')) {
+      cleaned = '55' + ddd + '9' + number;
+    }
+  }
+  
+  console.log(`📞 Phone formatting: ${phone} -> ${cleaned}`);
+  return cleaned;
+}
+
 async function sendWhatsAppMessage(
   apiUrl: string,
   apiKey: string, 
@@ -37,6 +62,9 @@ async function sendWhatsAppMessage(
     messageLength: message.length
   });
 
+  // Formatar o número de telefone
+  const formattedPhone = await formatPhoneNumber(phone);
+
   // Normalizar a URL removendo barras extras
   const normalizedApiUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
   const url = `${normalizedApiUrl}/message/sendText/${instanceId}`;
@@ -44,31 +72,61 @@ async function sendWhatsAppMessage(
   console.log(`📡 Final URL: ${url}`);
   
   const requestBody = {
-    number: phone,
+    number: formattedPhone,
     text: message,
   };
   
   console.log(`📤 Request body:`, requestBody);
   
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': apiKey,
-    },
-    body: JSON.stringify(requestBody),
-  });
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': apiKey,
+      },
+      body: JSON.stringify(requestBody),
+    });
 
-  console.log(`📡 Evolution API response status: ${response.status}`);
-  
-  const responseText = await response.text();
-  console.log(`📄 Evolution API response body:`, responseText);
+    console.log(`📡 Evolution API response status: ${response.status}`);
+    
+    const responseText = await response.text();
+    console.log(`📄 Evolution API response body:`, responseText);
 
-  if (!response.ok) {
-    throw new Error(`Evolution API error: ${response.status} ${response.statusText} - ${responseText}`);
+    if (!response.ok) {
+      let errorDetails = responseText;
+      try {
+        const errorData = JSON.parse(responseText);
+        if (errorData.response && errorData.response.message) {
+          const errorMessage = errorData.response.message[0];
+          if (errorMessage.exists === false) {
+            errorDetails = `Número ${formattedPhone} não existe no WhatsApp ou não está válido`;
+          } else {
+            errorDetails = JSON.stringify(errorData.response.message);
+          }
+        }
+      } catch (parseError) {
+        // Se não conseguir fazer parse, mantém o texto original
+      }
+      
+      throw new Error(`Erro da API Evolution (${response.status}): ${errorDetails}`);
+    }
+
+    return JSON.parse(responseText);
+  } catch (error) {
+    console.error(`❌ Error sending WhatsApp message:`, error);
+    
+    // Tratamento de erros mais detalhado
+    let errorMessage = 'Erro desconhecido ao enviar mensagem';
+    
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      errorMessage = 'Erro de conexão com a API Evolution - Verifique se a URL e as credenciais estão corretas';
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    throw new Error(errorMessage);
   }
-
-  return JSON.parse(responseText);
 }
 
 async function processScheduledMessages(userId?: string, userRole?: string) {

@@ -23,8 +23,8 @@ export const useScheduledMessagesProcessor = () => {
   }, []);
 
   useEffect(() => {
-    // Processar mensagens a cada 1 minuto
-    const interval = setInterval(processScheduledMessages, 60000);
+    // Processar mensagens a cada 30 segundos para ser mais responsivo
+    const interval = setInterval(processScheduledMessages, 30000);
     
     // Processar imediatamente ao carregar
     processScheduledMessages();
