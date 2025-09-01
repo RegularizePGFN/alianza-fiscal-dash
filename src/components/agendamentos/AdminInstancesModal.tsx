@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface AdminInstancesModalProps {
@@ -56,6 +56,7 @@ export const AdminInstancesModal = ({
   const [instances, setInstances] = useState<UserInstance[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [editingInstance, setEditingInstance] = useState<UserInstance | null>(null);
   const [formData, setFormData] = useState({
     user_id: "",
     instance_name: "",
@@ -110,46 +111,93 @@ export const AdminInstancesModal = ({
     setLoading(true);
 
     try {
-      const { error } = await supabase
-        .from('user_whatsapp_instances')
-        .insert({
-          user_id: formData.user_id,
-          instance_name: formData.instance_name,
-          evolution_instance_id: formData.evolution_instance_id,
-          evolution_api_url: formData.evolution_api_url,
-          evolution_api_key: formData.evolution_api_key,
-          instance_token: formData.instance_token || null,
-          is_active: true,
+      if (editingInstance) {
+        // Atualizar instância existente
+        const { error } = await supabase
+          .from('user_whatsapp_instances')
+          .update({
+            user_id: formData.user_id,
+            instance_name: formData.instance_name,
+            evolution_instance_id: formData.evolution_instance_id,
+            evolution_api_url: formData.evolution_api_url,
+            evolution_api_key: formData.evolution_api_key,
+            instance_token: formData.instance_token || null,
+          })
+          .eq('id', editingInstance.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Instância atualizada",
+          description: "A instância foi atualizada com sucesso.",
         });
+      } else {
+        // Criar nova instância
+        const { error } = await supabase
+          .from('user_whatsapp_instances')
+          .insert({
+            user_id: formData.user_id,
+            instance_name: formData.instance_name,
+            evolution_instance_id: formData.evolution_instance_id,
+            evolution_api_url: formData.evolution_api_url,
+            evolution_api_key: formData.evolution_api_key,
+            instance_token: formData.instance_token || null,
+            is_active: true,
+          });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Instância adicionada",
-        description: "A instância foi configurada com sucesso.",
-      });
+        toast({
+          title: "Instância adicionada",
+          description: "A instância foi configurada com sucesso.",
+        });
+      }
 
       // Reset form
-      setFormData({
-        user_id: "",
-        instance_name: "",
-        evolution_instance_id: "",
-        evolution_api_url: "http://localhost:8080",
-        evolution_api_key: "",
-        instance_token: "",
-      });
-      setShowForm(false);
+      resetForm();
       fetchData();
     } catch (error: any) {
-      console.error('Error creating instance:', error);
+      console.error('Error saving instance:', error);
       toast({
-        title: "Erro ao adicionar instância",
+        title: editingInstance ? "Erro ao atualizar instância" : "Erro ao adicionar instância",
         description: error.message,
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      user_id: "",
+      instance_name: "",
+      evolution_instance_id: "",
+      evolution_api_url: "http://localhost:8080",
+      evolution_api_key: "",
+      instance_token: "",
+    });
+    setShowForm(false);
+    setEditingInstance(null);
+  };
+
+  const handleEdit = (instance: UserInstance) => {
+    setEditingInstance(instance);
+    setFormData({
+      user_id: instance.user_id,
+      instance_name: instance.instance_name,
+      evolution_instance_id: instance.evolution_instance_id || "",
+      evolution_api_url: instance.evolution_api_url || "http://localhost:8080",
+      evolution_api_key: instance.evolution_api_key || "",
+      instance_token: instance.instance_token || "",
+    });
+    setShowForm(true);
+  };
+
+  const handleAddNew = () => {
+    setEditingInstance(null);
+    resetForm();
+    setShowForm(true);
   };
 
   const deleteInstance = async (id: string) => {
@@ -215,7 +263,7 @@ export const AdminInstancesModal = ({
           <DialogTitle className="flex items-center justify-between">
             Gerenciar Instâncias WhatsApp
             <Button
-              onClick={() => setShowForm(!showForm)}
+              onClick={handleAddNew}
               size="sm"
               className="flex items-center gap-2"
             >
@@ -228,7 +276,9 @@ export const AdminInstancesModal = ({
         {showForm && (
           <Card className="mb-4">
             <CardHeader>
-              <CardTitle className="text-lg">Adicionar Nova Instância</CardTitle>
+              <CardTitle className="text-lg">
+                {editingInstance ? "Editar Instância" : "Adicionar Nova Instância"}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -314,7 +364,7 @@ export const AdminInstancesModal = ({
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setShowForm(false)}
+                    onClick={resetForm}
                   >
                     Cancelar
                   </Button>
@@ -322,7 +372,10 @@ export const AdminInstancesModal = ({
                     type="submit"
                     disabled={loading}
                   >
-                    {loading ? "Adicionando..." : "Adicionar"}
+                    {loading 
+                      ? (editingInstance ? "Atualizando..." : "Adicionando...") 
+                      : (editingInstance ? "Atualizar" : "Adicionar")
+                    }
                   </Button>
                 </div>
               </form>
@@ -354,6 +407,14 @@ export const AdminInstancesModal = ({
                     >
                       {instance.is_active ? "Ativo" : "Inativo"}
                     </Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEdit(instance)}
+                      className="text-blue-600 hover:text-blue-700"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
