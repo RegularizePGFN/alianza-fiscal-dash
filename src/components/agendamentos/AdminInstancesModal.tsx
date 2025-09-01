@@ -389,7 +389,7 @@ export const AdminInstancesModal = ({
                                 </Badge>
                               ) : (
                                 <Button
-                                  onClick={() => addSelectedInstance(instance.profileName || instance.instanceName)}
+                                  onClick={() => addSelectedInstance(instance.instanceName)}
                                   disabled={!selectedUser || loading}
                                   size="sm"
                                 >
