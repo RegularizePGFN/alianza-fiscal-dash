@@ -11,14 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Calendar, Clock, Phone, User, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 
 interface CreateAgendamentoModalProps {
   open: boolean;
@@ -26,8 +21,20 @@ interface CreateAgendamentoModalProps {
   onSuccess: () => void;
 }
 
-interface WhatsAppInstance {
+interface UserInstance {
+  id: string;
   instance_name: string;
+  evolution_instance_id?: string;
+  evolution_api_url?: string;
+  evolution_api_key?: string;
+}
+
+interface Contact {
+  id: string;
+  name: string;
+  phone: string;
+  remoteJid: string;
+  profilePicUrl?: string;
 }
 
 export const CreateAgendamentoModal = ({ 
@@ -38,15 +45,33 @@ export const CreateAgendamentoModal = ({
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [instances, setInstances] = useState<WhatsAppInstance[]>([]);
+  const [loadingContacts, setLoadingContacts] = useState(false);
+  const [step, setStep] = useState<'instance' | 'contact' | 'details'>('instance');
+  const [instances, setInstances] = useState<UserInstance[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [selectedInstance, setSelectedInstance] = useState<string>("");
+  const [selectedContact, setSelectedContact] = useState<string>("");
   const [formData, setFormData] = useState({
-    client_name: "",
-    client_phone: "",
-    message_text: "",
-    scheduled_date: "",
-    scheduled_time: "",
-    instance_name: "",
+    clientName: "",
+    clientPhone: "",
+    messageText: "",
+    scheduledDate: "",
+    scheduledTime: "",
   });
+
+  const resetForm = () => {
+    setFormData({
+      clientName: "",
+      clientPhone: "",
+      messageText: "",
+      scheduledDate: "",
+      scheduledTime: "",
+    });
+    setStep('instance');
+    setSelectedInstance("");
+    setSelectedContact("");
+    setContacts([]);
+  };
 
   const fetchUserInstances = async () => {
     if (!user) return;
@@ -54,7 +79,7 @@ export const CreateAgendamentoModal = ({
     try {
       const { data, error } = await supabase
         .from('user_whatsapp_instances')
-        .select('instance_name')
+        .select('id, instance_name, evolution_instance_id, evolution_api_url, evolution_api_key')
         .eq('user_id', user.id)
         .eq('is_active', true);
 
@@ -64,30 +89,106 @@ export const CreateAgendamentoModal = ({
       console.error('Error fetching instances:', error);
       toast({
         title: "Erro ao carregar instâncias",
-        description: "Você precisa ter pelo menos uma instância do WhatsApp configurada.",
+        description: error.message,
         variant: "destructive",
       });
     }
   };
 
+  const fetchInstanceContacts = async (instanceName: string) => {
+    if (!user || !instanceName) return;
+
+    setLoadingContacts(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No session');
+
+      const response = await fetch('https://sbxltdbnqixucjoognfj.supabase.co/functions/v1/get-instance-contacts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          instanceName,
+          userId: user.id,
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      setContacts(data.contacts || []);
+      
+      if (data.contacts?.length === 0) {
+        toast({
+          title: "Nenhum contato encontrado",
+          description: "Esta instância não possui conversas recentes.",
+        });
+      }
+    } catch (error: any) {
+      console.error('Error fetching contacts:', error);
+      toast({
+        title: "Erro ao carregar contatos",
+        description: error.message,
+        variant: "destructive",
+      });
+      setContacts([]);
+    } finally {
+      setLoadingContacts(false);
+    }
+  };
+
+  const handleInstanceSelect = (instanceName: string) => {
+    setSelectedInstance(instanceName);
+    setStep('contact');
+    fetchInstanceContacts(instanceName);
+  };
+
+  const handleContactSelect = (contactId: string) => {
+    const contact = contacts.find(c => c.id === contactId);
+    if (contact) {
+      setSelectedContact(contactId);
+      setFormData(prev => ({
+        ...prev,
+        clientName: contact.name,
+        clientPhone: contact.phone,
+      }));
+      setStep('details');
+    }
+  };
+
+  const handleManualContact = () => {
+    setSelectedContact("");
+    setFormData(prev => ({
+      ...prev,
+      clientName: "",
+      clientPhone: "",
+    }));
+    setStep('details');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || !selectedInstance) return;
 
     setLoading(true);
     try {
       // Combinar data e hora
-      const scheduledDateTime = new Date(`${formData.scheduled_date}T${formData.scheduled_time}`);
+      const scheduledDateTime = new Date(`${formData.scheduledDate}T${formData.scheduledTime}`);
 
       const { error } = await supabase
         .from('scheduled_messages')
         .insert({
           user_id: user.id,
-          client_name: formData.client_name,
-          client_phone: formData.client_phone,
-          message_text: formData.message_text,
+          instance_name: selectedInstance,
+          client_name: formData.clientName,
+          client_phone: formData.clientPhone,
+          message_text: formData.messageText,
           scheduled_date: scheduledDateTime.toISOString(),
-          instance_name: formData.instance_name,
           status: 'pending',
         });
 
@@ -98,16 +199,7 @@ export const CreateAgendamentoModal = ({
         description: "Sua mensagem foi agendada com sucesso.",
       });
 
-      // Reset form
-      setFormData({
-        client_name: "",
-        client_phone: "",
-        message_text: "",
-        scheduled_date: "",
-        scheduled_time: "",
-        instance_name: "",
-      });
-
+      resetForm();
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {
@@ -125,120 +217,234 @@ export const CreateAgendamentoModal = ({
   useEffect(() => {
     if (open) {
       fetchUserInstances();
+    } else {
+      resetForm();
     }
-  }, [open, user]);
-
-  // Get today's date in YYYY-MM-DD format for min date
-  const today = new Date().toISOString().split('T')[0];
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Novo Agendamento</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <MessageCircle className="h-5 w-5" />
+            Novo Agendamento
+            {step === 'instance' && ' - Selecionar Instância'}
+            {step === 'contact' && ' - Selecionar Contato'}
+            {step === 'details' && ' - Detalhes da Mensagem'}
+          </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="client_name">Nome do Cliente</Label>
-            <Input
-              id="client_name"
-              value={formData.client_name}
-              onChange={(e) => setFormData(prev => ({ ...prev, client_name: e.target.value }))}
-              placeholder="Digite o nome do cliente"
-              required
-            />
+        {step === 'instance' && (
+          <div className="space-y-4">
+            <div className="text-sm text-muted-foreground">
+              Primeiro, selecione a instância do WhatsApp que será usada para enviar a mensagem.
+            </div>
+            
+            <div className="space-y-3">
+              {instances.length === 0 ? (
+                <div className="text-center py-8">
+                  <MessageCircle className="mx-auto h-12 w-12 text-muted-foreground" />
+                  <h3 className="mt-2 text-sm font-semibold text-foreground">
+                    Nenhuma instância ativa
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Configure suas instâncias no painel administrativo.
+                  </p>
+                </div>
+              ) : (
+                instances.map((instance) => (
+                  <div
+                    key={instance.id}
+                    onClick={() => handleInstanceSelect(instance.instance_name)}
+                    className="p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium">{instance.instance_name}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {instance.evolution_instance_id || 'ID não configurado'}
+                        </p>
+                      </div>
+                      <div className="text-primary">→</div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
+        )}
 
-          <div className="space-y-2">
-            <Label htmlFor="client_phone">Telefone do Cliente</Label>
-            <Input
-              id="client_phone"
-              value={formData.client_phone}
-              onChange={(e) => setFormData(prev => ({ ...prev, client_phone: e.target.value }))}
-              placeholder="Ex: 5511999999999"
-              required
-            />
-          </div>
+        {step === 'contact' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-muted-foreground">
+                Selecione um contato recente ou digite manualmente.
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setStep('instance')}
+              >
+                ← Voltar
+              </Button>
+            </div>
+            
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={handleManualContact}
+                className="flex-1"
+              >
+                <User className="h-4 w-4 mr-2" />
+                Digitar Manualmente
+              </Button>
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="instance_name">Instância WhatsApp</Label>
-            <Select
-              value={formData.instance_name}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, instance_name: value }))}
-              required
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione uma instância" />
-              </SelectTrigger>
-              <SelectContent>
-                {instances.map((instance) => (
-                  <SelectItem key={instance.instance_name} value={instance.instance_name}>
-                    {instance.instance_name}
-                  </SelectItem>
+            {loadingContacts ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Carregando contatos...
+                </p>
+              </div>
+            ) : contacts.length === 0 ? (
+              <div className="text-center py-8">
+                <Phone className="mx-auto h-12 w-12 text-muted-foreground" />
+                <h3 className="mt-2 text-sm font-semibold text-foreground">
+                  Nenhum contato encontrado
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Esta instância não possui conversas recentes ou não foi possível conectar.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {contacts.map((contact) => (
+                  <div
+                    key={contact.id}
+                    onClick={() => handleContactSelect(contact.id)}
+                    className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                  >
+                    {contact.profilePicUrl ? (
+                      <img
+                        src={contact.profilePicUrl}
+                        alt={contact.name}
+                        className="w-10 h-10 rounded-full"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                        <User className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <div className="font-medium">{contact.name}</div>
+                      <div className="text-sm text-muted-foreground">{contact.phone}</div>
+                    </div>
+                    <div className="text-primary">→</div>
+                  </div>
                 ))}
-              </SelectContent>
-            </Select>
-            {instances.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                Nenhuma instância disponível. Contate o administrador.
-              </p>
+              </div>
             )}
           </div>
+        )}
 
-          <div className="grid grid-cols-2 gap-4">
+        {step === 'details' && (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-muted-foreground">
+                Instância: <strong>{selectedInstance}</strong>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setStep('contact')}
+              >
+                ← Voltar
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="clientName">Nome do Cliente</Label>
+                <Input
+                  id="clientName"
+                  value={formData.clientName}
+                  onChange={(e) => setFormData(prev => ({ ...prev, clientName: e.target.value }))}
+                  placeholder="Nome do cliente"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="clientPhone">Telefone</Label>
+                <Input
+                  id="clientPhone"
+                  value={formData.clientPhone}
+                  onChange={(e) => setFormData(prev => ({ ...prev, clientPhone: e.target.value }))}
+                  placeholder="5534999999999"
+                  required
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <Label htmlFor="scheduled_date">Data</Label>
-              <Input
-                id="scheduled_date"
-                type="date"
-                value={formData.scheduled_date}
-                onChange={(e) => setFormData(prev => ({ ...prev, scheduled_date: e.target.value }))}
-                min={today}
+              <Label htmlFor="messageText">Mensagem</Label>
+              <Textarea
+                id="messageText"
+                value={formData.messageText}
+                onChange={(e) => setFormData(prev => ({ ...prev, messageText: e.target.value }))}
+                placeholder="Digite a mensagem que será enviada..."
+                className="min-h-[100px]"
                 required
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="scheduled_time">Horário</Label>
-              <Input
-                id="scheduled_time"
-                type="time"
-                value={formData.scheduled_time}
-                onChange={(e) => setFormData(prev => ({ ...prev, scheduled_time: e.target.value }))}
-                required
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="scheduledDate">Data</Label>
+                <Input
+                  id="scheduledDate"
+                  type="date"
+                  value={formData.scheduledDate}
+                  onChange={(e) => setFormData(prev => ({ ...prev, scheduledDate: e.target.value }))}
+                  min={format(new Date(), 'yyyy-MM-dd')}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="scheduledTime">Horário</Label>
+                <Input
+                  id="scheduledTime"
+                  type="time"
+                  value={formData.scheduledTime}
+                  onChange={(e) => setFormData(prev => ({ ...prev, scheduledTime: e.target.value }))}
+                  required
+                />
+              </div>
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="message_text">Mensagem</Label>
-            <Textarea
-              id="message_text"
-              value={formData.message_text}
-              onChange={(e) => setFormData(prev => ({ ...prev, message_text: e.target.value }))}
-              placeholder="Digite a mensagem que será enviada..."
-              rows={4}
-              required
-            />
-          </div>
-
-          <div className="flex justify-end gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              disabled={loading || instances.length === 0}
-            >
-              {loading ? "Criando..." : "Criar Agendamento"}
-            </Button>
-          </div>
-        </form>
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={loading}
+              >
+                {loading ? "Agendando..." : "Agendar Mensagem"}
+              </Button>
+            </div>
+          </form>
+        )}
       </DialogContent>
     </Dialog>
   );
