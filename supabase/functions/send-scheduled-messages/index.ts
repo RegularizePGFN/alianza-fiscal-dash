@@ -71,23 +71,31 @@ async function sendWhatsAppMessage(
   return JSON.parse(responseText);
 }
 
-async function processScheduledMessages() {
+async function processScheduledMessages(userId?: string, userRole?: string) {
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
   );
 
-  console.log('🔄 Starting scheduled messages processing...');
+  console.log('🔄 Starting scheduled messages processing...', { userId, userRole });
 
   // Buscar mensagens pendentes que já chegaram na data/hora programada
   const now = new Date().toISOString();
   console.log('⏰ Current time:', now);
   
-  const { data: messages, error: messagesError } = await supabase
+  let query = supabase
     .from('scheduled_messages')
     .select('*')
     .eq('status', 'pending')
     .lte('scheduled_date', now);
+
+  // Se não for admin e tiver userId, filtrar apenas mensagens do usuário
+  if (userId && userRole !== 'admin') {
+    console.log(`🔒 Filtering messages for user ${userId} (role: ${userRole})`);
+    query = query.eq('user_id', userId);
+  }
+
+  const { data: messages, error: messagesError } = await query;
 
   if (messagesError) {
     console.error('❌ Error fetching scheduled messages:', messagesError);
@@ -198,7 +206,40 @@ Deno.serve(async (req) => {
   }
 
   try {
-    await processScheduledMessages();
+    // Get user information from the request
+    const authHeader = req.headers.get('authorization');
+    let userId: string | undefined;
+    let userRole: string | undefined;
+
+    if (authHeader) {
+      try {
+        const supabaseAuth = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+        );
+        
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user }, error: userError } = await supabaseAuth.auth.getUser(token);
+        
+        if (!userError && user) {
+          userId = user.id;
+          
+          // Fetch user role from profiles
+          const { data: profile } = await supabaseAuth
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+          
+          userRole = profile?.role;
+          console.log(`👤 Processing request from user ${userId} with role ${userRole}`);
+        }
+      } catch (error) {
+        console.log('❌ Could not authenticate user, processing all messages');
+      }
+    }
+
+    await processScheduledMessages(userId, userRole);
     
     return new Response(
       JSON.stringify({ message: 'Scheduled messages processed successfully' }),
