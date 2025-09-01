@@ -17,6 +17,7 @@ import ProfilePage from "./pages/ProfilePage";
 import FinanceiroPage from "./pages/FinanceiroPage";
 import NotFound from "./pages/NotFound";
 import CalculatorPage from "./pages/CalculatorPage";
+import AgendamentosPage from "./pages/AgendamentosPage";
 
 const App = () => (
   <TooltipProvider>
@@ -33,6 +34,7 @@ const App = () => (
       <Route path="/perfil" element={<ProfilePage />} />
       <Route path="/financeiro" element={<FinanceiroPage />} />
       <Route path="/calculadora" element={<CalculatorPage />} />
+      <Route path="/agendamentos" element={<AgendamentosPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
     <Toaster />

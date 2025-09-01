@@ -17,7 +17,8 @@ import {
   FileText,
   User,
   DollarSign,
-  Calculator
+  Calculator,
+  Calendar
 } from "lucide-react";
 
 interface SidebarLinkProps {
@@ -197,6 +198,15 @@ export function AppSidebar() {
             label="Propostas" 
             expanded={expanded}
             active={location.pathname === "/propostas"}
+            isBeta={true}
+          />
+          
+          <SidebarLink 
+            to="/agendamentos" 
+            icon={<Calendar size={20} />} 
+            label="Agendamentos" 
+            expanded={expanded}
+            active={location.pathname === "/agendamentos"}
             isBeta={true}
           />
           
