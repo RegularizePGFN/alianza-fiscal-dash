@@ -20,14 +20,12 @@ interface EvolutionInstance {
 }
 
 async function fetchAvailableInstances(): Promise<EvolutionInstance[]> {
-  const evolutionApiUrl = Deno.env.get('EVOLUTION_API_URL');
-  const evolutionApiKey = Deno.env.get('EVOLUTION_API_KEY');
+  // Use os valores fixos que foram fornecidos
+  const evolutionApiUrl = "https://evoapi.neumocrm.com.br/";
+  const evolutionApiKey = "a9e018ea0e146a0a4ecf1dd0233e7ccf";
   
-  if (!evolutionApiUrl || !evolutionApiKey) {
-    throw new Error('Evolution API credentials not configured');
-  }
-
   console.log(`🔍 Fetching available instances from Evolution API`);
+  console.log(`🔧 Using URL: ${evolutionApiUrl}`);
   
   // Normalizar a URL removendo barras extras
   const normalizedApiUrl = evolutionApiUrl.endsWith('/') ? evolutionApiUrl.slice(0, -1) : evolutionApiUrl;
