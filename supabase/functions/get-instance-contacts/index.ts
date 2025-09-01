@@ -21,6 +21,7 @@ async function fetchInstanceContacts(
 ): Promise<Contact[]> {
   console.log(`🔍 STARTING fetchInstanceContacts for: ${instanceId}`);
   console.log(`🔧 API URL: ${apiUrl}, API Key: ${apiKey ? 'Present' : 'Missing'}`);
+  console.log(`🔍 Phone search filter: ${phoneSearch || 'none'}`);
   
   const normalizedApiUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
   
@@ -94,6 +95,28 @@ async function fetchInstanceContacts(
   return [];
 }
 
+// Função para detectar se o nome é genérico/da instância
+function isGenericName(pushName: string, phoneNumber: string): boolean {
+  if (!pushName) return true;
+  
+  // Nomes genéricos comuns
+  const genericNames = ['Você', 'You'];
+  if (genericNames.includes(pushName)) return true;
+  
+  // Nomes que contêm padrões de instância
+  const instancePatterns = [
+    'Brenda - Aliança Fiscal',
+    'Felipe Santos',
+    'Livia Silva',
+    'Lívia Silva',
+    'Aliança Fiscal',
+    'Santos',
+    'Silva'
+  ];
+  
+  return instancePatterns.some(pattern => pushName.includes(pattern));
+}
+
 function extractContactsFromMessages(data: any, phoneSearch?: string): Contact[] {
   console.log(`🔍 Extracting from messages, data type: ${typeof data}, isArray: ${Array.isArray(data)}`);
   console.log(`🔍 Data structure:`, JSON.stringify(data, null, 2).substring(0, 1000));
@@ -113,10 +136,10 @@ function extractContactsFromMessages(data: any, phoneSearch?: string): Contact[]
       
       uniqueJids.add(jid);
       
-      // Se o pushName for o nome da instância (Brenda - Aliança Fiscal), usar o número
-      const contactName = msg?.pushName && !msg.pushName.includes('Brenda - Aliança Fiscal') 
-        ? msg.pushName 
-        : phoneNumber;
+      // Usar a função para detectar nomes genéricos
+      const contactName = isGenericName(msg?.pushName, phoneNumber)
+        ? phoneNumber
+        : msg.pushName;
       
       contacts.push({
         id: jid,
@@ -171,15 +194,22 @@ function extractContactsFromChats(data: any, phoneSearch?: string): Contact[] {
       if (uniqueJids.has(jid)) return;
       
       uniqueJids.add(jid);
+      
+      // Usar a mesma lógica de detecção de nomes genéricos
+      const pushName = chat?.name || chat?.pushName;
+      const contactName = isGenericName(pushName, phoneNumber)
+        ? phoneNumber
+        : pushName || phoneNumber;
+      
       contacts.push({
         id: jid,
-        name: chat?.name || chat?.pushName || phoneNumber,
+        name: contactName,
         phone: phoneNumber,
         remoteJid: jid,
         profilePicUrl: chat?.profilePicUrl || null
       });
       
-      console.log(`📞 Found: ${phoneNumber} (${chat?.name || chat?.pushName || 'sem nome'})`);
+      console.log(`📞 Found: ${phoneNumber} (${pushName || 'sem nome'})`);
     }
   };
   
