@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus, Edit } from "lucide-react";
+import { Trash2, Plus, Edit, RefreshCw, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface AdminInstancesModalProps {
@@ -46,6 +46,14 @@ interface User {
   email: string;
 }
 
+interface AvailableInstance {
+  instanceName: string;
+  status: string;
+  profileName?: string;
+  profileStatus?: string;
+  isAlreadyAdded: boolean;
+}
+
 export const AdminInstancesModal = ({ 
   open, 
   onOpenChange, 
@@ -55,16 +63,12 @@ export const AdminInstancesModal = ({
   const [loading, setLoading] = useState(false);
   const [instances, setInstances] = useState<UserInstance[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [availableInstances, setAvailableInstances] = useState<AvailableInstance[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [showAvailableInstances, setShowAvailableInstances] = useState(false);
   const [editingInstance, setEditingInstance] = useState<UserInstance | null>(null);
-  const [formData, setFormData] = useState({
-    user_id: "",
-    instance_name: "",
-    evolution_instance_id: "",
-    evolution_api_url: "http://localhost:8080",
-    evolution_api_key: "",
-    instance_token: "",
-  });
+  const [selectedUser, setSelectedUser] = useState("");
+  const [selectedInstance, setSelectedInstance] = useState("");
 
   const fetchData = async () => {
     try {
@@ -106,60 +110,103 @@ export const AdminInstancesModal = ({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const fetchAvailableInstances = async () => {
     setLoading(true);
-
     try {
-      if (editingInstance) {
-        // Atualizar instância existente
-        const { error } = await supabase
-          .from('user_whatsapp_instances')
-          .update({
-            user_id: formData.user_id,
-            instance_name: formData.instance_name,
-            evolution_instance_id: formData.evolution_instance_id,
-            evolution_api_url: formData.evolution_api_url,
-            evolution_api_key: formData.evolution_api_key,
-            instance_token: formData.instance_token || null,
-          })
-          .eq('id', editingInstance.id);
+      const { data, error } = await supabase.functions.invoke('list-available-instances');
+      
+      if (error) throw error;
+      
+      setAvailableInstances(data.instances || []);
+    } catch (error: any) {
+      console.error('Error fetching available instances:', error);
+      toast({
+        title: "Erro ao carregar instâncias",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        if (error) throw error;
+  const addSelectedInstance = async (instanceName: string) => {
+    if (!selectedUser) {
+      toast({
+        title: "Erro",
+        description: "Selecione um usuário primeiro.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-        toast({
-          title: "Instância atualizada",
-          description: "A instância foi atualizada com sucesso.",
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('user_whatsapp_instances')
+        .insert({
+          user_id: selectedUser,
+          instance_name: instanceName,
+          evolution_instance_id: instanceName,
+          evolution_api_url: "https://evoapi.neumocrm.com.br/",
+          evolution_api_key: "a9e018ea0e146a0a4ecf1dd0233e7ccf",
+          is_active: true,
         });
-      } else {
-        // Criar nova instância
-        const { error } = await supabase
-          .from('user_whatsapp_instances')
-          .insert({
-            user_id: formData.user_id,
-            instance_name: formData.instance_name,
-            evolution_instance_id: formData.evolution_instance_id,
-            evolution_api_url: formData.evolution_api_url,
-            evolution_api_key: formData.evolution_api_key,
-            instance_token: formData.instance_token || null,
-            is_active: true,
-          });
 
-        if (error) throw error;
+      if (error) throw error;
 
-        toast({
-          title: "Instância adicionada",
-          description: "A instância foi configurada com sucesso.",
-        });
-      }
+      toast({
+        title: "Instância adicionada",
+        description: `Instância ${instanceName} foi adicionada com sucesso.`,
+      });
 
-      // Reset form
+      // Atualizar listas
+      await fetchData();
+      await fetchAvailableInstances();
+    } catch (error: any) {
+      console.error('Error adding instance:', error);
+      toast({
+        title: "Erro ao adicionar instância",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = (instance: UserInstance) => {
+    setEditingInstance(instance);
+    setSelectedUser(instance.user_id);
+    setSelectedInstance(instance.instance_name);
+    setShowForm(true);
+  };
+
+  const updateInstance = async () => {
+    if (!editingInstance || !selectedUser) return;
+    
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('user_whatsapp_instances')
+        .update({
+          user_id: selectedUser,
+        })
+        .eq('id', editingInstance.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Instância atualizada",
+        description: "A instância foi atualizada com sucesso.",
+      });
+
       resetForm();
       fetchData();
     } catch (error: any) {
-      console.error('Error saving instance:', error);
+      console.error('Error updating instance:', error);
       toast({
-        title: editingInstance ? "Erro ao atualizar instância" : "Erro ao adicionar instância",
+        title: "Erro ao atualizar instância",
         description: error.message,
         variant: "destructive",
       });
@@ -169,35 +216,18 @@ export const AdminInstancesModal = ({
   };
 
   const resetForm = () => {
-    setFormData({
-      user_id: "",
-      instance_name: "",
-      evolution_instance_id: "",
-      evolution_api_url: "http://localhost:8080",
-      evolution_api_key: "",
-      instance_token: "",
-    });
+    setSelectedUser("");
+    setSelectedInstance("");
     setShowForm(false);
+    setShowAvailableInstances(false);
     setEditingInstance(null);
   };
 
-  const handleEdit = (instance: UserInstance) => {
-    setEditingInstance(instance);
-    setFormData({
-      user_id: instance.user_id,
-      instance_name: instance.instance_name,
-      evolution_instance_id: instance.evolution_instance_id || "",
-      evolution_api_url: instance.evolution_api_url || "http://localhost:8080",
-      evolution_api_key: instance.evolution_api_key || "",
-      instance_token: instance.instance_token || "",
-    });
-    setShowForm(true);
-  };
-
-  const handleAddNew = () => {
+  const handleAddFromAvailable = () => {
     setEditingInstance(null);
     resetForm();
-    setShowForm(true);
+    setShowAvailableInstances(true);
+    fetchAvailableInstances();
   };
 
   const deleteInstance = async (id: string) => {
@@ -263,31 +293,128 @@ export const AdminInstancesModal = ({
           <DialogTitle className="flex items-center justify-between">
             Gerenciar Instâncias WhatsApp
             <Button
-              onClick={handleAddNew}
+              onClick={handleAddFromAvailable}
               size="sm"
               className="flex items-center gap-2"
             >
               <Plus className="h-4 w-4" />
-              Nova Instância
+              Buscar Instâncias
             </Button>
           </DialogTitle>
         </DialogHeader>
 
+        {/* Interface para selecionar instâncias disponíveis */}
+        {showAvailableInstances && (
+          <Card className="mb-4">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Instâncias Disponíveis na Evolution API</CardTitle>
+                <Button
+                  onClick={fetchAvailableInstances}
+                  size="sm"
+                  variant="outline"
+                  disabled={loading}
+                  className="flex items-center gap-2"
+                >
+                  <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                  Atualizar
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Selecione um usuário primeiro:</Label>
+                <Select
+                  value={selectedUser}
+                  onValueChange={setSelectedUser}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um usuário" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {users.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.name} ({user.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {loading ? (
+                <div className="text-center py-4">
+                  <div className="animate-spin mx-auto h-8 w-8 border-b-2 border-primary rounded-full"></div>
+                  <p className="text-sm text-muted-foreground mt-2">Carregando instâncias...</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label>Instâncias encontradas:</Label>
+                  {availableInstances.length === 0 ? (
+                    <div className="text-center py-4 text-muted-foreground">
+                      Nenhuma instância encontrada na Evolution API
+                    </div>
+                  ) : (
+                    <div className="grid gap-2">
+                      {availableInstances.map((instance) => (
+                        <Card key={instance.instanceName} className="p-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="font-medium">{instance.instanceName}</div>
+                              <div className="text-sm text-muted-foreground">
+                                Status: {instance.status} | Perfil: {instance.profileName || 'N/A'}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {instance.isAlreadyAdded ? (
+                                <Badge variant="secondary">
+                                  <Check className="h-3 w-3 mr-1" />
+                                  Já adicionada
+                                </Badge>
+                              ) : (
+                                <Button
+                                  onClick={() => addSelectedInstance(instance.instanceName)}
+                                  disabled={!selectedUser || loading}
+                                  size="sm"
+                                >
+                                  Adicionar
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex justify-end">
+                <Button
+                  onClick={resetForm}
+                  variant="outline"
+                >
+                  Fechar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Formulário de edição simplificado */}
         {showForm && (
           <Card className="mb-4">
             <CardHeader>
               <CardTitle className="text-lg">
-                {editingInstance ? "Editar Instância" : "Adicionar Nova Instância"}
+                Editar Instância: {selectedInstance}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="user_select">Usuário</Label>
+                  <Label>Usuário Responsável</Label>
                   <Select
-                    value={formData.user_id}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, user_id: value }))}
-                    required
+                    value={selectedUser}
+                    onValueChange={setSelectedUser}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um usuário" />
@@ -302,64 +429,6 @@ export const AdminInstancesModal = ({
                   </Select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="instance_name">Nome da Instância *</Label>
-                    <Input
-                      id="instance_name"
-                      value={formData.instance_name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, instance_name: e.target.value }))}
-                      placeholder="Ex: vendedor1_whatsapp"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="evolution_instance_id">ID da Instância Evolution *</Label>
-                    <Input
-                      id="evolution_instance_id"
-                      value={formData.evolution_instance_id}
-                      onChange={(e) => setFormData(prev => ({ ...prev, evolution_instance_id: e.target.value }))}
-                      placeholder="Ex: my-instance"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="evolution_api_url">URL da Evolution API</Label>
-                    <Input
-                      id="evolution_api_url"
-                      value={formData.evolution_api_url}
-                      onChange={(e) => setFormData(prev => ({ ...prev, evolution_api_url: e.target.value }))}
-                      placeholder="http://localhost:8080"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="evolution_api_key">Chave da API *</Label>
-                    <Input
-                      id="evolution_api_key"
-                      value={formData.evolution_api_key}
-                      onChange={(e) => setFormData(prev => ({ ...prev, evolution_api_key: e.target.value }))}
-                      placeholder="Sua chave da Evolution API"
-                      type="password"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="instance_token">Token da Instância (opcional)</Label>
-                  <Input
-                    id="instance_token"
-                    value={formData.instance_token}
-                    onChange={(e) => setFormData(prev => ({ ...prev, instance_token: e.target.value }))}
-                    placeholder="Token adicional se necessário"
-                  />
-                </div>
-
                 <div className="flex justify-end gap-3">
                   <Button
                     type="button"
@@ -369,26 +438,24 @@ export const AdminInstancesModal = ({
                     Cancelar
                   </Button>
                   <Button
-                    type="submit"
-                    disabled={loading}
+                    onClick={updateInstance}
+                    disabled={loading || !selectedUser}
                   >
-                    {loading 
-                      ? (editingInstance ? "Atualizando..." : "Adicionando...") 
-                      : (editingInstance ? "Atualizar" : "Adicionar")
-                    }
+                    {loading ? "Atualizando..." : "Atualizar"}
                   </Button>
                 </div>
-              </form>
+              </div>
             </CardContent>
           </Card>
         )}
 
+        {/* Lista de instâncias configuradas */}
         <div className="space-y-4">
           {instances.length === 0 ? (
             <Card>
               <CardContent className="pt-6">
                 <div className="text-center text-muted-foreground">
-                  Nenhuma instância configurada.
+                  Nenhuma instância configurada. Use o botão "Buscar Instâncias" para adicionar.
                 </div>
               </CardContent>
             </Card>
@@ -429,11 +496,7 @@ export const AdminInstancesModal = ({
                   <div className="text-sm text-muted-foreground space-y-1">
                     <p><strong>Usuário:</strong> {instance.user_name} ({instance.user_email})</p>
                     <p><strong>ID Evolution:</strong> {instance.evolution_instance_id || 'Não configurado'}</p>
-                    <p><strong>API URL:</strong> {instance.evolution_api_url || 'Não configurada'}</p>
-                    <p><strong>API Key:</strong> {instance.evolution_api_key ? '••••••••••••••••' : 'Não configurada'}</p>
-                    {instance.instance_token && (
-                      <p><strong>Token:</strong> {instance.instance_token.substring(0, 20)}...</p>
-                    )}
+                    <p><strong>Status:</strong> Conectado à Evolution API</p>
                   </div>
                 </CardContent>
               </Card>
