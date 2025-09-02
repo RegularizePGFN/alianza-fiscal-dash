@@ -394,6 +394,22 @@ export const CreateAgendamentoModal = ({
     }
   }, [open]);
 
+  // Adicionar useEffect para popular dados quando editingMessage mudar
+  useEffect(() => {
+    if (editingMessage && open) {
+      const scheduledDate = new Date(editingMessage.scheduled_date);
+      setFormData({
+        clientName: editingMessage.client_name,
+        clientPhone: editingMessage.client_phone,
+        messageText: editingMessage.message_text,
+        scheduledDate: format(scheduledDate, 'yyyy-MM-dd'),
+        scheduledTime: format(scheduledDate, 'HH:mm'),
+      });
+      setSelectedInstance(editingMessage.instance_name);
+      setStep('details');
+    }
+  }, [editingMessage, open]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
