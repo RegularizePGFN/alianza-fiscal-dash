@@ -1,20 +1,25 @@
 import { Button } from "@/components/ui/button";
-import { Calendar, Settings, Send } from "lucide-react";
+import { Calendar, Settings, Send, List, CalendarDays } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 interface AgendamentosHeaderProps {
   onCreateAgendamento: () => void;
   onManageInstances: () => void;
   showManageInstances: boolean;
   onRefresh?: () => void;
+  viewMode: 'list' | 'calendar';
+  onViewModeChange: (mode: 'list' | 'calendar') => void;
 }
 
 export const AgendamentosHeader = ({ 
   onCreateAgendamento, 
   onManageInstances, 
   showManageInstances,
-  onRefresh 
+  onRefresh,
+  viewMode,
+  onViewModeChange
 }: AgendamentosHeaderProps) => {
   const { toast } = useToast();
 
@@ -59,7 +64,18 @@ export const AgendamentosHeader = ({
         </p>
       </div>
       
-      <div className="flex gap-3">
+      <div className="flex items-center gap-3">
+        {/* View Mode Toggle */}
+        <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && onViewModeChange(value as 'list' | 'calendar')}>
+          <ToggleGroupItem value="list" aria-label="Lista" className="flex items-center gap-2">
+            <List className="h-4 w-4" />
+            Lista
+          </ToggleGroupItem>
+          <ToggleGroupItem value="calendar" aria-label="Agenda" className="flex items-center gap-2">
+            <CalendarDays className="h-4 w-4" />
+            Agenda
+          </ToggleGroupItem>
+        </ToggleGroup>
         <Button
           variant="outline"
           onClick={handleProcessMessages}
