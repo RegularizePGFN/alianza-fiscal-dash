@@ -28,15 +28,9 @@ FORMAS DE PAGAMENTO:
 - Se houver opção "Básica", "Parcelado" ou similar, extraia o valor e quantidade de parcelas
 - Observe que pode haver diferentes modalidades de pagamento
 
-CÁLCULO CORRETO DO PERCENTUAL DE DESCONTO:
-SEMPRE calcule o percentual usando esta fórmula EXATA:
-Percentual = ((Valor_sem_desconto - Valor_com_desconto) / Valor_sem_desconto) * 100
-
-Exemplo: Se valor sem desconto = R$ 11.773,09 e valor com desconto = R$ 6.594,56
-Cálculo: ((11773.09 - 6594.56) / 11773.09) * 100 = 43,98%
-Formato final: "44%" (arredondar para número inteiro mais próximo)
-
-IMPORTANTE: NUNCA use percentuais que aparecem na imagem se eles estiverem incorretos. SEMPRE recalcule!
+CÁLCULOS NECESSÁRIOS:
+- Se não houver percentual explícito, calcule: ((valor_sem_desconto - valor_com_desconto) / valor_sem_desconto) * 100
+- Se a entrada estiver parcelada, some todos os valores para obter o total da entrada
 
 A resposta deve estar em JSON, exatamente no seguinte formato:
 
@@ -60,12 +54,10 @@ A resposta deve estar em JSON, exatamente no seguinte formato:
 INSTRUÇÕES IMPORTANTES:
 - Mantenha valores monetários com "R$" e duas casas decimais
 - Use números inteiros para quantidade de parcelas (sem aspas)
-- Para o percentual, use formato "XX%" (número inteiro + símbolo %)
 - Se alguma informação não estiver visível, use null
 - Se houver múltiplas opções de negociação, extraia a primeira ou mais relevante
 - Seja flexível com os termos: "desconto", "redução", "economia" podem ser sinônimos
 - "Entrada" e "À vista" podem se referir ao mesmo tipo de pagamento
-- SEMPRE recalcule o percentual de desconto, mesmo que apareça na imagem
 `;
 
 /**
