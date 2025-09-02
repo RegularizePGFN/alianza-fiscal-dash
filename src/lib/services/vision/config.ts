@@ -29,7 +29,11 @@ FORMAS DE PAGAMENTO:
 - Observe que pode haver diferentes modalidades de pagamento
 
 CÁLCULOS NECESSÁRIOS:
-- Se não houver percentual explícito, calcule: ((valor_sem_desconto - valor_com_desconto) / valor_sem_desconto) * 100
+- SEMPRE calcule o percentual de desconto manualmente usando a fórmula: ((valor_sem_desconto - valor_com_desconto) / valor_sem_desconto) * 100
+- NÃO extraia percentuais da imagem, sempre faça o cálculo manual
+- Arredonde o resultado para o número inteiro mais próximo e formate como "XX%"
+- Exemplo: Se valor sem desconto = R$ 11.773,09 e valor com desconto = R$ 6.594,56
+  Cálculo: ((11773,09 - 6594,56) / 11773,09) * 100 = 44%
 - Se a entrada estiver parcelada, some todos os valores para obter o total da entrada
 
 A resposta deve estar em JSON, exatamente no seguinte formato:
