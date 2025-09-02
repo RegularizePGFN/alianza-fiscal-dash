@@ -5,8 +5,13 @@ import { format, startOfWeek, addDays, isSameDay, parseISO, isAfter, isBefore, s
 import { ptBR } from "date-fns/locale";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Clock, User, MessageCircle, Calendar } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, User, MessageCircle, Calendar, Edit3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 import { UserRole } from "@/lib/types";
 
 interface CalendarViewProps {
@@ -17,9 +22,16 @@ interface CalendarViewProps {
 
 export const CalendarView = ({ refreshTrigger, selectedInstance, statusFilter }: CalendarViewProps) => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentWeek, setCurrentWeek] = useState(new Date());
+  const [selectedMessage, setSelectedMessage] = useState<any>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    scheduled_date: '',
+    message_text: ''
+  });
 
   const isAdmin = user?.role === UserRole.ADMIN;
 
@@ -119,6 +131,54 @@ export const CalendarView = ({ refreshTrigger, selectedInstance, statusFilter }:
 
   const navigateWeek = (direction: 'prev' | 'next') => {
     setCurrentWeek(prev => addDays(prev, direction === 'next' ? 7 : -7));
+  };
+
+  const handleEditClick = (message: any) => {
+    setSelectedMessage(message);
+    setEditForm({
+      scheduled_date: format(parseISO(message.scheduled_date), "yyyy-MM-dd'T'HH:mm"),
+      message_text: message.message_text
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedMessage || !editForm.scheduled_date || !editForm.message_text.trim()) {
+      toast({
+        title: "Erro",
+        description: "Por favor, preencha todos os campos obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('scheduled_messages')
+        .update({
+          scheduled_date: new Date(editForm.scheduled_date).toISOString(),
+          message_text: editForm.message_text.trim()
+        })
+        .eq('id', selectedMessage.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Agendamento atualizado com sucesso!",
+      });
+
+      setIsEditModalOpen(false);
+      setSelectedMessage(null);
+      fetchMessages(); // Recarregar os dados
+    } catch (error) {
+      console.error('Error updating message:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar agendamento. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading) {
@@ -267,38 +327,36 @@ export const CalendarView = ({ refreshTrigger, selectedInstance, statusFilter }:
                       {dayMessages.map((message) => (
                         <div
                           key={message.id}
+                          onClick={() => handleEditClick(message)}
                           className={`${getEventColor(message.status, message.scheduled_date)} 
-                            border rounded-lg p-3 mb-2 text-xs cursor-pointer 
+                            border rounded-lg p-2 mb-2 text-xs cursor-pointer 
                             transition-all duration-200 hover:scale-[1.02] hover:shadow-md
                             animate-fade-in backdrop-blur-sm hover-lift`}
-                          title={`${message.client_name} - ${message.message_text.substring(0, 50)}...`}
+                          title="Clique para editar este agendamento"
                         >
-                          <div className="flex items-start gap-2 mb-2">
-                            <User className="h-3 w-3 mt-0.5 text-gray-600 flex-shrink-0" />
-                            <div className="font-semibold text-gray-800 truncate flex-1">
-                              {message.client_name}
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-1 flex-1">
+                              <User className="h-3 w-3 text-gray-600 flex-shrink-0" />
+                              <span className="font-semibold text-gray-800 truncate text-xs">
+                                {message.instance_name}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-3 w-3 text-gray-500 flex-shrink-0" />
+                              <span className="text-xs text-gray-600 font-medium">
+                                {format(parseISO(message.scheduled_date), 'HH:mm')}
+                              </span>
                             </div>
                           </div>
                           
-                          <div className="flex items-center gap-1 mb-2 text-gray-600">
-                            <MessageCircle className="h-3 w-3 flex-shrink-0" />
-                            <div className="truncate text-xs">
-                              {message.client_phone}
-                            </div>
-                          </div>
-
                           <div className="flex items-center gap-1 mb-2">
-                            <Clock className="h-3 w-3 text-gray-500 flex-shrink-0" />
-                            <span className="text-xs text-gray-600 font-medium">
-                              {format(parseISO(message.scheduled_date), 'HH:mm')}
+                            <MessageCircle className="h-3 w-3 text-gray-600 flex-shrink-0" />
+                            <span className="text-xs text-gray-600 truncate">
+                              {message.client_phone}
                             </span>
                           </div>
                           
-                          <div className="text-xs text-gray-700 line-clamp-2 mb-2 bg-white/40 rounded p-1">
-                            {message.message_text.substring(0, 60)}...
-                          </div>
-                          
-                          <div className="flex items-center justify-between">
+                          <div className="flex items-center justify-start">
                             {getStatusBadge(message.status)}
                           </div>
                         </div>
@@ -311,6 +369,63 @@ export const CalendarView = ({ refreshTrigger, selectedInstance, statusFilter }:
           )}
         </div>
       </Card>
+      
+      {/* Edit Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit3 className="h-5 w-5" />
+              Editar Agendamento
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedMessage && (
+            <div className="space-y-4">
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600 mb-1">Cliente:</p>
+                <p className="font-semibold">{selectedMessage.client_name || 'Sem nome'}</p>
+                <p className="text-xs text-gray-500 mt-1">{selectedMessage.client_phone}</p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="scheduled_date">Data e Horário</Label>
+                <Input
+                  id="scheduled_date"
+                  type="datetime-local"
+                  value={editForm.scheduled_date}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, scheduled_date: e.target.value }))}
+                  className="w-full"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="message_text">Mensagem</Label>
+                <Textarea
+                  id="message_text"
+                  value={editForm.message_text}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, message_text: e.target.value }))}
+                  placeholder="Digite a mensagem..."
+                  rows={4}
+                  className="w-full"
+                />
+              </div>
+              
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditModalOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button onClick={handleSaveEdit}>
+                  Salvar Alterações
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
