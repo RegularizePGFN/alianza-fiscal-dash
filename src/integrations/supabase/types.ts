@@ -266,6 +266,7 @@ export type Database = {
           id: string
           instance_name: string
           message_text: string
+          requires_approval: boolean
           scheduled_date: string
           sent_at: string | null
           status: string
@@ -280,6 +281,7 @@ export type Database = {
           id?: string
           instance_name: string
           message_text: string
+          requires_approval?: boolean
           scheduled_date: string
           sent_at?: string | null
           status?: string
@@ -294,6 +296,7 @@ export type Database = {
           id?: string
           instance_name?: string
           message_text?: string
+          requires_approval?: boolean
           scheduled_date?: string
           sent_at?: string | null
           status?: string

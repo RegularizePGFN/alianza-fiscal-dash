@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { UserRole } from "@/lib/types";
+import { StatusTabs, MessageStatusFilter } from "./StatusTabs";
 
 interface ScheduledMessage {
   id: string;
@@ -23,6 +24,7 @@ interface ScheduledMessage {
   error_message?: string;
   created_at: string;
   updated_at: string;
+  requires_approval?: boolean;
   profiles?: {
     name: string;
     email: string;
@@ -32,13 +34,27 @@ interface ScheduledMessage {
 interface AgendamentosListProps {
   refreshTrigger: number;
   selectedInstance?: string | null;
+  statusFilter: MessageStatusFilter;
+  onStatusChange: (status: MessageStatusFilter) => void;
 }
 
-export const AgendamentosList = ({ refreshTrigger, selectedInstance }: AgendamentosListProps) => {
+export const AgendamentosList = ({ 
+  refreshTrigger, 
+  selectedInstance, 
+  statusFilter, 
+  onStatusChange 
+}: AgendamentosListProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [messages, setMessages] = useState<ScheduledMessage[]>([]);
+  const [allMessages, setAllMessages] = useState<ScheduledMessage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [counts, setCounts] = useState({
+    scheduled: 0,
+    pending_approval: 0,
+    sent: 0,
+    all: 0
+  });
 
   const isAdmin = user?.role === UserRole.ADMIN;
 
@@ -83,9 +99,11 @@ export const AgendamentosList = ({ refreshTrigger, selectedInstance }: Agendamen
           };
         });
 
-        setMessages(messagesWithProfiles);
+        setAllMessages(messagesWithProfiles);
+        updateCounts(messagesWithProfiles);
       } else {
-        setMessages(messagesData || []);
+        setAllMessages(messagesData || []);
+        updateCounts(messagesData || []);
       }
     } catch (error: any) {
       console.error('Error fetching messages:', error);
@@ -96,6 +114,30 @@ export const AgendamentosList = ({ refreshTrigger, selectedInstance }: Agendamen
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const updateCounts = (allMessages: ScheduledMessage[]) => {
+    const newCounts = {
+      all: allMessages.length,
+      scheduled: allMessages.filter(m => m.status === 'pending' && !m.requires_approval).length,
+      pending_approval: allMessages.filter(m => m.requires_approval === true).length,
+      sent: allMessages.filter(m => m.status === 'sent').length,
+    };
+    setCounts(newCounts);
+  };
+
+  const filterMessages = (messages: ScheduledMessage[], filter: MessageStatusFilter) => {
+    switch (filter) {
+      case 'scheduled':
+        return messages.filter(m => m.status === 'pending' && !m.requires_approval);
+      case 'pending_approval':
+        return messages.filter(m => m.requires_approval === true);
+      case 'sent':
+        return messages.filter(m => m.status === 'sent');
+      case 'all':
+      default:
+        return messages;
     }
   };
 
@@ -177,6 +219,11 @@ export const AgendamentosList = ({ refreshTrigger, selectedInstance }: Agendamen
     fetchMessages();
   }, [user, refreshTrigger, selectedInstance]);
 
+  useEffect(() => {
+    const filteredMessages = filterMessages(allMessages, statusFilter);
+    setMessages(filteredMessages);
+  }, [allMessages, statusFilter]);
+
   if (loading) {
     return (
       <div className="grid gap-4">
@@ -197,34 +244,50 @@ export const AgendamentosList = ({ refreshTrigger, selectedInstance }: Agendamen
     );
   }
 
-  if (messages.length === 0) {
+  const emptyStateContent = () => {
+    const emptyMessages = {
+      all: "Nenhum agendamento encontrado",
+      scheduled: "Nenhuma mensagem agendada",
+      pending_approval: "Nenhuma mensagem aguardando aprovação",
+      sent: "Nenhuma mensagem enviada"
+    };
+
     return (
       <Card>
         <CardContent className="pt-6">
           <div className="text-center">
             <Calendar className="mx-auto h-12 w-12 text-muted-foreground" />
             <h3 className="mt-2 text-sm font-semibold text-foreground">
-              Nenhum agendamento
+              {emptyMessages[statusFilter]}
             </h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Comece criando seu primeiro agendamento de mensagem.
+              {statusFilter === 'all' 
+                ? "Comece criando seu primeiro agendamento de mensagem." 
+                : `Não há mensagens na categoria ${statusFilter === 'scheduled' ? 'agendadas' : 
+                    statusFilter === 'pending_approval' ? 'aguardando aprovação' : 'enviadas'}.`
+              }
             </p>
           </div>
         </CardContent>
       </Card>
     );
-  }
+  };
 
-  return (
+  const messagesList = () => (
     <div className="grid gap-4">
       {messages.map((message) => (
         <Card key={message.id}>
            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
              <CardTitle className="text-sm font-medium flex items-center gap-2">
                <MessageCircle className="h-4 w-4" />
-               {message.client_name}
-               {getStatusBadge(message.status)}
-             </CardTitle>
+                {message.client_name}
+                {getStatusBadge(message.status)}
+                {message.requires_approval && (
+                  <Badge variant="destructive" className="text-xs">
+                    Requer Aprovação
+                  </Badge>
+                )}
+              </CardTitle>
              <div className="flex items-center gap-2">
                {(message.status === 'failed' || message.status === 'cancelled') && (
                  <Button
@@ -321,5 +384,15 @@ export const AgendamentosList = ({ refreshTrigger, selectedInstance }: Agendamen
         </Card>
       ))}
     </div>
+  );
+
+  return (
+    <StatusTabs
+      currentStatus={statusFilter}
+      onStatusChange={onStatusChange}
+      counts={counts}
+    >
+      {messages.length === 0 ? emptyStateContent() : messagesList()}
+    </StatusTabs>
   );
 };
