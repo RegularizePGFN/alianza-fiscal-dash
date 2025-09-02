@@ -256,7 +256,7 @@
   }
   
   .dark [data-radix-select-item] {
-    @apply text-gray-200 hover:bg-gray-700 hover:text-white;
+    @apply text-gray-200 hover:bg-gray-700 hover:text-gray-100;
   }
   
   .dark [data-radix-select-item][data-state=checked] {
