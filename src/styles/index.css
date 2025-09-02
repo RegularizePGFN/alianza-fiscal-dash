@@ -16,5 +16,8 @@
 /* Animations */
 @import './animations.css';
 
+/* Calendar specific styles */
+@import './calendar-animations.css';
+
 /* Legacy styles from App.css - Keep them if still needed */
 @import '../App.css';

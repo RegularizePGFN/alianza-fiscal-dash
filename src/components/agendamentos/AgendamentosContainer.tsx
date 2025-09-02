@@ -55,11 +55,17 @@ export const AgendamentosContainer = () => {
           onStatusChange={setCurrentStatusFilter}
         />
       ) : (
-        <CalendarView
-          refreshTrigger={refreshTrigger}
-          selectedInstance={selectedInstance}
-          statusFilter={currentStatusFilter}
-        />
+        <StatusTabs
+          currentStatus={currentStatusFilter}
+          onStatusChange={setCurrentStatusFilter}
+          counts={{ scheduled: 0, sent: 0, all: 0 }} // Will be updated by the CalendarView
+        >
+          <CalendarView
+            refreshTrigger={refreshTrigger}
+            selectedInstance={selectedInstance}
+            statusFilter={currentStatusFilter}
+          />
+        </StatusTabs>
       )}
 
       <CreateAgendamentoModal
