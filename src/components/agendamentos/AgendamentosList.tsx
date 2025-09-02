@@ -544,85 +544,85 @@ export const AgendamentosList = ({
                     </TableCell>
                   </TableRow>
                   
-                  {/* Linha expandida */}
-                  <Collapsible open={expandedRows.has(message.id)}>
-                    <CollapsibleContent>
-                      <TableRow>
-                          <TableCell colSpan={isAdmin ? 8 : 7} className="bg-muted/30 p-0">
-                            <div className="p-6 space-y-6 w-full">
-                              {/* Layout em grid para organizar as informações */}
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
-                                {/* Informações de tempo */}
-                                <div className="space-y-3">
-                                  <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
-                                    <Clock className="h-4 w-4" />
-                                    Informações de Tempo
-                                  </h4>
-                                  <div className="space-y-2 text-sm">
-                                    <div className="p-3 bg-background border rounded-lg">
-                                      <div className="font-medium text-muted-foreground mb-1">Criado em:</div>
-                                      <div>{format(new Date(message.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</div>
-                                    </div>
-                                    
-                                    {message.sent_at && (
-                                      <div className="p-3 bg-background border rounded-lg">
-                                        <div className="font-medium text-muted-foreground mb-1">Enviado em:</div>
-                                        <div>{format(new Date(message.sent_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</div>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
+                   {/* Linha expandida */}
+                   <Collapsible open={expandedRows.has(message.id)}>
+                     <CollapsibleContent>
+                       <TableRow>
+                         <TableCell colSpan={100} className="bg-muted/30 p-0">
+                           <div className="w-full p-6 space-y-6">
+                             {/* Layout em grid para organizar as informações */}
+                             <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                               {/* Informações de tempo */}
+                               <div className="space-y-3">
+                                 <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
+                                   <Clock className="h-4 w-4" />
+                                   Informações de Tempo
+                                 </h4>
+                                 <div className="space-y-2 text-sm">
+                                   <div className="p-3 bg-background border rounded-lg">
+                                     <div className="font-medium text-muted-foreground mb-1">Criado em:</div>
+                                     <div>{format(new Date(message.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</div>
+                                   </div>
+                                   
+                                   {message.sent_at && (
+                                     <div className="p-3 bg-background border rounded-lg">
+                                       <div className="font-medium text-muted-foreground mb-1">Enviado em:</div>
+                                       <div>{format(new Date(message.sent_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</div>
+                                     </div>
+                                   )}
+                                 </div>
+                               </div>
 
-                                {/* Informações do criador (só se for admin) */}
-                                {isAdmin && (
-                                  <div className="space-y-3">
-                                    <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
-                                      <User className="h-4 w-4" />
-                                      Criado por
-                                    </h4>
-                                    <div className="p-3 bg-background border rounded-lg text-sm">
-                                      {message.profiles ? (
-                                        <>
-                                          <div className="font-medium">{message.profiles.name}</div>
-                                          <div className="text-muted-foreground">{message.profiles.email}</div>
-                                        </>
-                                      ) : (
-                                        <div className="text-muted-foreground">Informação não disponível</div>
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
+                               {/* Informações do criador (só se for admin) */}
+                               {isAdmin && (
+                                 <div className="space-y-3">
+                                   <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
+                                     <User className="h-4 w-4" />
+                                     Criado por
+                                   </h4>
+                                   <div className="p-3 bg-background border rounded-lg text-sm">
+                                     {message.profiles ? (
+                                       <>
+                                         <div className="font-medium">{message.profiles.name}</div>
+                                         <div className="text-muted-foreground">{message.profiles.email}</div>
+                                       </>
+                                     ) : (
+                                       <div className="text-muted-foreground">Informação não disponível</div>
+                                     )}
+                                   </div>
+                                 </div>
+                               )}
 
-                                {/* Status e instância */}
-                                <div className="space-y-3">
-                                  <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
-                                    <MessageCircle className="h-4 w-4" />
-                                    Detalhes
-                                  </h4>
-                                  <div className="space-y-2 text-sm">
-                                    <div className="p-3 bg-background border rounded-lg">
-                                      <div className="font-medium text-muted-foreground mb-1">Instância:</div>
-                                      <div>{message.instance_name}</div>
-                                    </div>
-                                    <div className="p-3 bg-background border rounded-lg">
-                                      <div className="font-medium text-muted-foreground mb-1">Status:</div>
-                                      <div>{getStatusBadge(message.status)}</div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
+                               {/* Status e instância */}
+                               <div className="space-y-3">
+                                 <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
+                                   <MessageCircle className="h-4 w-4" />
+                                   Detalhes
+                                 </h4>
+                                 <div className="space-y-2 text-sm">
+                                   <div className="p-3 bg-background border rounded-lg">
+                                     <div className="font-medium text-muted-foreground mb-1">Instância:</div>
+                                     <div>{message.instance_name}</div>
+                                   </div>
+                                   <div className="p-3 bg-background border rounded-lg">
+                                     <div className="font-medium text-muted-foreground mb-1">Status:</div>
+                                     <div>{getStatusBadge(message.status)}</div>
+                                   </div>
+                                 </div>
+                               </div>
+                             </div>
 
-                              {/* Mensagem completa ocupando toda a largura */}
-                              <div className="w-full space-y-3">
-                                <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
-                                  <MessageCircle className="h-4 w-4" />
-                                  Conteúdo da Mensagem
-                                </h4>
-                                <div className="p-4 bg-background border rounded-lg shadow-sm w-full">
-                                  <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.message_text}</p>
-                                </div>
-                              </div>
-                             
+                             {/* Mensagem completa ocupando toda a largura */}
+                             <div className="w-full space-y-3">
+                               <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
+                                 <MessageCircle className="h-4 w-4" />
+                                 Conteúdo da Mensagem
+                               </h4>
+                               <div className="w-full p-4 bg-background border rounded-lg shadow-sm">
+                                 <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.message_text}</p>
+                               </div>
+                             </div>
+
                              {/* Mensagem de erro se houver */}
                              {message.error_message && (
                                <div className="w-full">
@@ -647,10 +647,10 @@ export const AgendamentosList = ({
                                </div>
                              )}
                            </div>
-                        </TableCell>
-                      </TableRow>
-                    </CollapsibleContent>
-                  </Collapsible>
+                         </TableCell>
+                       </TableRow>
+                     </CollapsibleContent>
+                   </Collapsible>
                 </>
               ))}
             </TableBody>
