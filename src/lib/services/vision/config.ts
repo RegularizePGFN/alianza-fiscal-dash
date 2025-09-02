@@ -17,7 +17,7 @@ Analise cuidadosamente a imagem e extraia as seguintes informações, independen
 
 DADOS A EXTRAIR:
 - CNPJ da empresa (pode aparecer como "CNPJ:" ou em formato XX.XXX.XXX/XXXX-XX)
-- Número do processo (se disponível)
+- Número(s) do(s) processo(s) (se disponível) - ATENÇÃO: pode haver múltiplos números de processos/dívidas na mesma imagem, capture todos e separe por vírgula
 - Valor total sem desconto/redução (pode aparecer como "Total sem desconto", "Valor consolidado", etc.)
 - Valor total com desconto/redução (pode aparecer como "Total a pagar", "Valor com reduções", etc.)
 - Valor do desconto ou percentual de redução (calcule se necessário)
@@ -59,6 +59,7 @@ INSTRUÇÕES IMPORTANTES:
 - Mantenha valores monetários com "R$" e duas casas decimais
 - Use números inteiros para quantidade de parcelas (sem aspas)
 - Se alguma informação não estiver visível, use null
+- Se houver múltiplos números de processo/dívida, liste todos separados por vírgula (ex: "23 4 21 001536-29, 23 4 21 001083-21")
 - Se houver múltiplas opções de negociação, extraia a primeira ou mais relevante
 - Seja flexível com os termos: "desconto", "redução", "economia" podem ser sinônimos
 - "Entrada" e "À vista" podem se referir ao mesmo tipo de pagamento
