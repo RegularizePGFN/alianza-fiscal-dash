@@ -549,68 +549,81 @@ export const AgendamentosList = ({
                     <CollapsibleContent>
                       <TableRow>
                          <TableCell colSpan={isAdmin ? 8 : 7} className="bg-muted/30 p-0">
-                            <div className="p-6 space-y-6 w-full">
-                             {/* Informações de criação e usuário */}
-                             <div className="space-y-2">
-                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                 <Clock className="h-3 w-3" />
-                                 <span>
-                                   Criado em: {format(new Date(message.created_at), "dd/MM/yyyy 'às' HH:mm", {
-                                     locale: ptBR,
-                                   })}
-                                 </span>
+                           <div className="p-6 space-y-4">
+                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                               {/* Coluna esquerda - Informações básicas */}
+                               <div className="space-y-4">
+                                 {/* Informações de criação e usuário */}
+                                 <div className="space-y-3">
+                                   <h4 className="font-semibold text-sm text-foreground">Detalhes do Agendamento</h4>
+                                   <div className="space-y-2">
+                                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                       <Clock className="h-4 w-4" />
+                                       <span>
+                                         Criado em: {format(new Date(message.created_at), "dd/MM/yyyy 'às' HH:mm", {
+                                           locale: ptBR,
+                                         })}
+                                       </span>
+                                     </div>
+                                     
+                                     {message.sent_at && (
+                                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                         <Clock className="h-4 w-4" />
+                                         <span>
+                                           Enviado em: {format(new Date(message.sent_at), "dd/MM/yyyy 'às' HH:mm", {
+                                             locale: ptBR,
+                                           })}
+                                         </span>
+                                       </div>
+                                     )}
+                                     
+                                     {isAdmin && message.profiles && (
+                                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                         <User className="h-4 w-4" />
+                                         <span>
+                                           Criado por: <strong>{message.profiles.name}</strong> ({message.profiles.email})
+                                         </span>
+                                       </div>
+                                     )}
+                                   </div>
+                                 </div>
                                </div>
                                
-                               {message.sent_at && (
-                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                   <Clock className="h-3 w-3" />
-                                   <span>
-                                     Enviado em: {format(new Date(message.sent_at), "dd/MM/yyyy 'às' HH:mm", {
-                                       locale: ptBR,
-                                     })}
-                                   </span>
+                               {/* Coluna direita - Mensagem */}
+                               <div className="space-y-4">
+                             
+                                 {/* Mensagem completa */}
+                                 <div className="space-y-3">
+                                   <h4 className="font-semibold text-sm text-foreground">Conteúdo da Mensagem</h4>
+                                   <div className="p-4 bg-background border rounded-lg shadow-sm">
+                                     <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.message_text}</p>
+                                   </div>
                                  </div>
-                               )}
-                               
-                               {isAdmin && message.profiles && (
-                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                   <User className="h-3 w-3" />
-                                   <span>
-                                     Criado por: <strong>{message.profiles.name}</strong> ({message.profiles.email})
-                                   </span>
-                                 </div>
-                               )}
+                               </div>
                              </div>
                              
-                              {/* Mensagem completa ocupando toda a largura */}
-                              <div className="space-y-3">
-                                <div className="text-sm font-medium text-foreground">Mensagem:</div>
-                                <div className="p-4 bg-background border rounded-lg shadow-sm">
-                                  <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.message_text}</p>
-                                </div>
-                              </div>
-                            
-                            {message.error_message && (
-                              <div className="mt-2 p-3 border border-destructive/20 bg-destructive/5 rounded-md">
-                                <div className="flex items-start gap-2">
-                                  <div className="flex-shrink-0 mt-0.5">
-                                    ❌
-                                  </div>
-                                  <div className="flex-1">
-                                    <p className="text-sm font-medium text-destructive mb-1">
-                                      Falha no envio da mensagem
-                                    </p>
-                                    <p className="text-sm text-destructive/80">
-                                      <strong>Motivo:</strong> {message.error_message}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                      Tente novamente clicando no botão 🔄 ou verifique se o número de telefone está correto.
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </div>
+                             {/* Mensagem de erro ocupa toda a largura */}
+                             {message.error_message && (
+                               <div className="mt-4 p-4 border border-destructive/20 bg-destructive/5 rounded-lg">
+                                 <div className="flex items-start gap-3">
+                                   <div className="flex-shrink-0 mt-0.5">
+                                     ❌
+                                   </div>
+                                   <div className="flex-1">
+                                     <p className="text-sm font-medium text-destructive mb-2">
+                                       Falha no envio da mensagem
+                                     </p>
+                                     <p className="text-sm text-destructive/80 mb-2">
+                                       <strong>Motivo:</strong> {message.error_message}
+                                     </p>
+                                     <p className="text-xs text-muted-foreground">
+                                       Tente novamente clicando no botão 🔄 ou verifique se o número de telefone está correto.
+                                     </p>
+                                   </div>
+                                 </div>
+                               </div>
+                             )}
+                           </div>
                         </TableCell>
                       </TableRow>
                     </CollapsibleContent>

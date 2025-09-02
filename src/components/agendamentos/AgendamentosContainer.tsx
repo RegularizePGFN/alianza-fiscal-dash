@@ -5,7 +5,6 @@ import { AgendamentosList } from "./AgendamentosList";
 import { CalendarView } from "./CalendarView";
 import { CreateAgendamentoModal } from "./CreateAgendamentoModal";
 import { AdminInstancesModal } from "./AdminInstancesModal";
-import { InstanceFilter } from "./InstanceFilter";
 import { StatusTabs, MessageStatusFilter } from "./StatusTabs";
 import { UserRole } from "@/lib/types";
 import { useScheduledMessagesProcessor } from "@/hooks/agendamentos/useScheduledMessagesProcessor";
@@ -38,14 +37,6 @@ export const AgendamentosContainer = () => {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
       />
-      
-      {isAdmin && (
-        <InstanceFilter
-          selectedInstance={selectedInstance}
-          onInstanceSelect={setSelectedInstance}
-          refreshTrigger={refreshTrigger}
-        />
-      )}
       
       {viewMode === 'list' ? (
         <AgendamentosList 
