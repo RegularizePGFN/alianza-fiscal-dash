@@ -31,16 +31,18 @@
   
   /* Proposal cards background */
   .dark .bg-gradient-to-br.from-af-blue-50.to-white {
-    @apply from-gray-800 to-gray-900;
+    background: linear-gradient(to bottom right, hsl(215 20% 25%), hsl(215 20% 17%));
   }
   
   /* Proposal header section */
   .dark .bg-gradient-to-r.from-af-blue-600.to-af-blue-800 {
-    @apply from-blue-600 to-blue-700 text-white;
+    background: linear-gradient(to right, hsl(212 83% 45%), hsl(212 83% 35%));
+    @apply text-white;
   }
   
   .dark .bg-af-blue-700 {
-    @apply bg-blue-700 text-white;
+    @apply bg-blue-700;
+    color: white;
   }
   
   /* Proposal data sections - light backgrounds in cards */
@@ -147,7 +149,7 @@
   }
   
   .dark .bg-gradient-to-r.from-purple-600.to-blue-700.text-white {
-    @apply from-purple-600 to-blue-600;
+    background: linear-gradient(to right, hsl(263 90% 51%), hsl(212 83% 45%));
   }
   
   .dark .bg-white\/20 {
@@ -155,15 +157,12 @@
   }
   
   .dark .bg-gradient-to-r.from-purple-50.to-blue-50 {
-    @apply from-purple-900/20 to-blue-900/20;
+    background: linear-gradient(to right, hsl(263 69% 10% / 0.2), hsl(213 94% 10% / 0.2));
   }
   
   /* Form sections in data tab */
   .dark .bg-slate-50 {
     @apply bg-gray-800;
-  }
-  .dark .bg-white {
-    @apply bg-gray-900;
   }
 
   .dark .bg-gray-50, .dark .bg-gray-100 {
@@ -210,27 +209,31 @@
   
   /* Week navigation header */
   .dark .bg-gradient-to-r.from-white.to-gray-50 {
-    @apply from-gray-900 to-gray-800 text-gray-100;
+    background: linear-gradient(to right, hsl(215 20% 17%), hsl(215 20% 25%));
+    @apply text-gray-100;
   }
   
   /* Calendar main container */
   .dark .bg-gradient-to-br.from-white.to-gray-50\/50 {
-    @apply from-gray-900 to-gray-800;
+    background: linear-gradient(to bottom right, hsl(215 20% 17%), hsl(215 20% 25%));
   }
   
   /* Column headers and time headers */
   .dark .bg-gradient-to-r.from-gray-50.to-gray-100 {
-    @apply from-gray-800 to-gray-700 text-gray-100;
+    background: linear-gradient(to right, hsl(215 20% 25%), hsl(215 20% 22%));
+    @apply text-gray-100;
   }
   
   /* Time slot backgrounds */
   .dark .bg-gradient-to-r.from-gray-50\/80.to-white {
-    @apply from-gray-800 to-gray-700 text-gray-100;
+    background: linear-gradient(to right, hsl(215 20% 25%), hsl(215 20% 22%));
+    @apply text-gray-100;
   }
   
   /* Today column highlighting */
   .dark .bg-gradient-to-r.from-blue-50.to-blue-100 {
-    @apply from-blue-900/40 to-blue-800/40 text-blue-200;
+    background: linear-gradient(to right, hsl(213 94% 20% / 0.4), hsl(213 94% 25% / 0.4));
+    @apply text-blue-200;
   }
   
   .dark .bg-blue-50\/30 {
@@ -239,41 +242,46 @@
   
   /* Event/appointment cards backgrounds - better contrast */
   .dark .bg-gradient-to-r.from-green-100.to-green-200 {
-    @apply from-green-800 to-green-700 text-green-100 border-green-600;
+    background: linear-gradient(to right, hsl(142 76% 25%), hsl(142 76% 22%));
+    @apply text-green-100 border-green-600;
   }
   
   .dark .bg-gradient-to-r.from-blue-100.to-blue-200 {
-    @apply from-blue-800 to-blue-700 text-blue-100 border-blue-600;
+    background: linear-gradient(to right, hsl(213 94% 25%), hsl(213 94% 22%));
+    @apply text-blue-100 border-blue-600;
   }
   
   .dark .bg-gradient-to-r.from-red-100.to-red-200 {
-    @apply from-red-800 to-red-700 text-red-100 border-red-600;
+    background: linear-gradient(to right, hsl(0 84% 25%), hsl(0 84% 22%));
+    @apply text-red-100 border-red-600;
   }
   
   .dark .bg-gradient-to-r.from-gray-100.to-gray-200 {
-    @apply from-gray-700 to-gray-600 text-gray-100 border-gray-500;
+    background: linear-gradient(to right, hsl(215 20% 22%), hsl(215 20% 18%));
+    @apply text-gray-100 border-gray-500;
   }
   
   /* Event card hover states */
   .dark .hover\:from-green-200.hover\:to-green-300:hover {
-    @apply from-green-700 to-green-600;
+    background: linear-gradient(to right, hsl(142 76% 22%), hsl(142 76% 18%));
   }
   
   .dark .hover\:from-blue-200.hover\:to-blue-300:hover {
-    @apply from-blue-700 to-blue-600;
+    background: linear-gradient(to right, hsl(213 94% 22%), hsl(213 94% 18%));
   }
   
   .dark .hover\:from-red-200.hover\:to-red-300:hover {
-    @apply from-red-700 to-red-600;
+    background: linear-gradient(to right, hsl(0 84% 22%), hsl(0 84% 18%));
   }
   
   .dark .hover\:from-gray-200.hover\:to-gray-300:hover {
-    @apply from-gray-600 to-gray-500;
+    background: linear-gradient(to right, hsl(215 20% 18%), hsl(215 20% 15%));
   }
   
   /* Week navigation buttons */
   .dark .hover\:bg-gradient-to-r.hover\:from-gray-50.hover\:to-gray-100:hover {
-    @apply from-gray-700 to-gray-600 text-gray-100;
+    background: linear-gradient(to right, hsl(215 20% 22%), hsl(215 20% 18%));
+    @apply text-gray-100;
   }
   
   /* Today button */
@@ -288,12 +296,15 @@
   
   /* Date title gradient text fix */
   .dark .bg-gradient-to-r.from-blue-600.to-purple-600.bg-clip-text.text-transparent {
-    @apply from-blue-400 to-purple-400;
+    background: linear-gradient(to right, hsl(213 94% 68%), hsl(263 69% 68%));
+    -webkit-background-clip: text;
+    background-clip: text;
   }
   
   /* Empty state container */
   .dark .bg-gradient-to-br.from-gray-50.to-gray-100 {
-    @apply from-gray-800 to-gray-700 border-gray-600;
+    background: linear-gradient(to bottom right, hsl(215 20% 25%), hsl(215 20% 22%));
+    @apply border-gray-600;
   }
   
   .dark .border-gray-200\/60 {
@@ -326,22 +337,14 @@
   }
   
   .dark .hover\:from-gray-100:hover {
-    @apply from-gray-700;
+    background-image: linear-gradient(to right, hsl(215 20% 22%), var(--tw-gradient-to));
   }
   
   .dark .hover\:to-gray-150:hover {
-    @apply to-gray-600;
+    --tw-gradient-to: hsl(215 20% 18%);
   }
   
   /* Status badges improvements */
-  .dark .bg-green-50 {
-    @apply bg-green-900/20 text-green-300;
-  }
-  
-  .dark .bg-blue-50 {
-    @apply bg-blue-900/20 text-blue-300;
-  }
-  
   .dark .bg-yellow-50 {
     @apply bg-yellow-900/20 text-yellow-300;
   }
@@ -384,7 +387,7 @@
   
   /* Card header gradient backgrounds in dark mode */
   .dark .bg-gradient-to-r.from-gray-50.to-white {
-    @apply from-gray-800 to-gray-900;
+    background: linear-gradient(to right, hsl(215 20% 25%), hsl(215 20% 17%));
   }
   
   /* Fix for the ProposalHistory card header in dark mode */
@@ -415,7 +418,8 @@
   }
   
   .dark [data-radix-select-item] {
-    @apply text-gray-200 hover:bg-gray-700 hover:text-white;
+    @apply text-gray-200 hover:bg-gray-700;
+    color: white;
   }
   
   .dark [data-radix-select-item][data-state=checked] {
