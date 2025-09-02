@@ -65,7 +65,7 @@ export const AgendamentosList = ({
   const [sortField, setSortField] = useState<SortField>('scheduled_date');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [searchTerm, setSearchTerm] = useState('');
-  const [instanceFilter, setInstanceFilter] = useState<string>('');
+  const [instanceFilter, setInstanceFilter] = useState<string>('all');
 
   const isAdmin = user?.role === UserRole.ADMIN;
 
@@ -297,7 +297,7 @@ export const AgendamentosList = ({
     }
     
     // Aplicar filtro de instância
-    if (instanceFilter) {
+    if (instanceFilter && instanceFilter !== 'all') {
       filtered = filtered.filter(msg => msg.instance_name === instanceFilter);
     }
     
@@ -391,7 +391,7 @@ export const AgendamentosList = ({
                 <SelectValue placeholder="Filtrar por instância" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas as instâncias</SelectItem>
+                <SelectItem value="all">Todas as instâncias</SelectItem>
                 {getUniqueInstances().map(instance => (
                   <SelectItem key={instance} value={instance}>
                     {instance}
@@ -399,12 +399,12 @@ export const AgendamentosList = ({
                 ))}
               </SelectContent>
             </Select>
-            {(searchTerm || instanceFilter) && (
+            {(searchTerm || (instanceFilter && instanceFilter !== 'all')) && (
               <Button
                 variant="outline"
                 onClick={() => {
                   setSearchTerm('');
-                  setInstanceFilter('');
+                  setInstanceFilter('all');
                 }}
                 className="whitespace-nowrap"
               >
