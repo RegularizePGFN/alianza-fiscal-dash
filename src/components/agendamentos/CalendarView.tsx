@@ -43,7 +43,7 @@ export const CalendarView = ({ refreshTrigger, selectedInstance, statusFilter }:
       
       const { data, error } = await supabase
         .from('scheduled_messages')
-        .select('*, user_profiles(full_name)')
+        .select('*, profiles(name)')
         .gte('scheduled_date', weekStart.toISOString())
         .lte('scheduled_date', weekEnd.toISOString())
         .order('scheduled_date', { ascending: true });
@@ -300,9 +300,9 @@ export const CalendarView = ({ refreshTrigger, selectedInstance, statusFilter }:
                           
                           <div className="flex items-center justify-between">
                             {getStatusBadge(message.status)}
-                            {isAdmin && message.user_profiles && (
+                            {isAdmin && message.profiles && (
                               <span className="text-xs text-gray-600 bg-white/60 px-2 py-1 rounded-full font-medium">
-                                {message.user_profiles.full_name?.split(' ')[0]}
+                                {message.profiles.name?.split(' ')[0]}
                               </span>
                             )}
                           </div>
