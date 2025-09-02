@@ -23,27 +23,27 @@ export const StatusTabs = ({
 }: StatusTabsProps) => {
   return (
     <Tabs value={currentStatus} onValueChange={onStatusChange as (value: string) => void}>
-      <TabsList className="grid w-full grid-cols-4 h-auto">
-        <TabsTrigger value="all" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 min-h-[60px] sm:min-h-[40px]">
-          <span className="text-sm">Todas</span>
+      <TabsList className="grid w-full grid-cols-4">
+        <TabsTrigger value="all" className="flex items-center gap-2">
+          Todas
           <Badge variant="secondary" className="text-xs">
             {counts.all}
           </Badge>
         </TabsTrigger>
-        <TabsTrigger value="scheduled" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 min-h-[60px] sm:min-h-[40px]">
-          <span className="text-sm">Agendadas</span>
+        <TabsTrigger value="scheduled" className="flex items-center gap-2">
+          Agendadas
           <Badge variant="outline" className="text-xs">
             {counts.scheduled}
           </Badge>
         </TabsTrigger>
-        <TabsTrigger value="pending_approval" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 min-h-[60px] sm:min-h-[40px]">
-          <span className="text-sm">Aprovação</span>
+        <TabsTrigger value="pending_approval" className="flex items-center gap-2">
+          Aprovação
           <Badge variant="destructive" className="text-xs">
             {counts.pending_approval}
           </Badge>
         </TabsTrigger>
-        <TabsTrigger value="sent" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 min-h-[60px] sm:min-h-[40px]">
-          <span className="text-sm">Enviadas</span>
+        <TabsTrigger value="sent" className="flex items-center gap-2">
+          Enviadas
           <Badge variant="default" className="text-xs">
             {counts.sent}
           </Badge>

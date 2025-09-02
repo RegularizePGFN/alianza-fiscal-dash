@@ -56,42 +56,6 @@ export type Database = {
         }
         Relationships: []
       }
-      conversation_history: {
-        Row: {
-          contact_phone: string
-          created_at: string
-          id: string
-          instance_name: string
-          message_text: string
-          message_timestamp: string
-          message_type: string
-          updated_at: string
-          whatsapp_message_id: string | null
-        }
-        Insert: {
-          contact_phone: string
-          created_at?: string
-          id?: string
-          instance_name: string
-          message_text: string
-          message_timestamp: string
-          message_type: string
-          updated_at?: string
-          whatsapp_message_id?: string | null
-        }
-        Update: {
-          contact_phone?: string
-          created_at?: string
-          id?: string
-          instance_name?: string
-          message_text?: string
-          message_timestamp?: string
-          message_type?: string
-          updated_at?: string
-          whatsapp_message_id?: string | null
-        }
-        Relationships: []
-      }
       monthly_goals: {
         Row: {
           created_at: string
