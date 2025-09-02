@@ -18,9 +18,10 @@ interface CalendarViewProps {
   refreshTrigger: number;
   selectedInstance: string | null;
   statusFilter: string;
+  onCountsUpdate?: (counts: { scheduled: number; sent: number; all: number }) => void;
 }
 
-export const CalendarView = ({ refreshTrigger, selectedInstance, statusFilter }: CalendarViewProps) => {
+export const CalendarView = ({ refreshTrigger, selectedInstance, statusFilter, onCountsUpdate }: CalendarViewProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [messages, setMessages] = useState<any[]>([]);
@@ -49,25 +50,52 @@ export const CalendarView = ({ refreshTrigger, selectedInstance, statusFilter }:
     try {
       setLoading(true);
       
-      // Get date range for the current week view
+      // First, get ALL messages for counting purposes
+      let allDataQuery = supabase
+        .from('scheduled_messages')
+        .select('*');
+      
+      // Apply user filter for non-admin users
+      if (!isAdmin && user?.id) {
+        allDataQuery = allDataQuery.eq('user_id', user.id);
+      }
+      
+      const { data: allData, error: allError } = await allDataQuery;
+      
+      if (allError) {
+        console.error('Supabase error:', allError);
+        return;
+      }
+      
+      // Calculate and update counts for all messages
+      if (onCountsUpdate && allData) {
+        const counts = {
+          all: allData.length,
+          scheduled: allData.filter(msg => ['pending', 'scheduled'].includes(msg.status)).length,
+          sent: allData.filter(msg => msg.status === 'sent').length
+        };
+        onCountsUpdate(counts);
+      }
+      
+      // Now get data for the current week view
       const weekStart = startOfWeek(currentWeek, { weekStartsOn: 0 });
       const weekEnd = endOfDay(addDays(weekStart, 6));
       
-      const { data, error } = await supabase
+      const { data: weekData, error: weekError } = await supabase
         .from('scheduled_messages')
         .select('*')
         .gte('scheduled_date', weekStart.toISOString())
         .lte('scheduled_date', weekEnd.toISOString())
         .order('scheduled_date', { ascending: true });
 
-      if (error) {
-        console.error('Supabase error:', error);
+      if (weekError) {
+        console.error('Supabase error:', weekError);
         return;
       }
 
-      let filteredMessages = data || [];
+      let filteredMessages = weekData || [];
 
-      // Apply filters in JavaScript instead of SQL to avoid type issues
+      // Apply filters for display
       if (!isAdmin && user?.id) {
         filteredMessages = filteredMessages.filter(msg => msg.user_id === user.id);
       }

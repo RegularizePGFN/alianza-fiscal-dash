@@ -17,6 +17,7 @@ export const AgendamentosContainer = () => {
   const [selectedInstance, setSelectedInstance] = useState<string | null>(null);
   const [currentStatusFilter, setCurrentStatusFilter] = useState<MessageStatusFilter>('all');
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+  const [calendarCounts, setCalendarCounts] = useState({ scheduled: 0, sent: 0, all: 0 });
 
   const isAdmin = user?.role === UserRole.ADMIN;
   
@@ -49,12 +50,13 @@ export const AgendamentosContainer = () => {
         <StatusTabs
           currentStatus={currentStatusFilter}
           onStatusChange={setCurrentStatusFilter}
-          counts={{ scheduled: 0, sent: 0, all: 0 }} // Will be updated by the CalendarView
+          counts={calendarCounts}
         >
           <CalendarView
             refreshTrigger={refreshTrigger}
             selectedInstance={selectedInstance}
             statusFilter={currentStatusFilter}
+            onCountsUpdate={setCalendarCounts}
           />
         </StatusTabs>
       )}
