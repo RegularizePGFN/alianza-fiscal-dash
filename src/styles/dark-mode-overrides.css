@@ -3,6 +3,165 @@
 
 @layer base {
   /* Dark mode specific overrides */
+  
+  /* ========== PROPOSALS SECTION - DARK MODE FIXES ========== */
+  
+  /* Proposals statistics cards - fix icon contrast */
+  .dark .bg-primary\/10 {
+    @apply bg-primary/20;
+  }
+  
+  .dark .text-primary {
+    @apply text-blue-400;
+  }
+  
+  /* Proposals main container */
+  .dark .bg-white.rounded-xl.shadow-sm {
+    @apply bg-gray-900 border border-gray-700;
+  }
+  
+  /* Proposals tab navigation */
+  .dark .bg-af-blue-50 {
+    @apply bg-gray-800;
+  }
+  
+  .dark .bg-af-blue-600.text-white {
+    @apply bg-blue-600 text-white;
+  }
+  
+  /* Proposal cards background */
+  .dark .bg-gradient-to-br.from-af-blue-50.to-white {
+    @apply from-gray-800 to-gray-900;
+  }
+  
+  /* Proposal header section */
+  .dark .bg-gradient-to-r.from-af-blue-600.to-af-blue-800 {
+    @apply from-blue-600 to-blue-700 text-white;
+  }
+  
+  .dark .bg-af-blue-700 {
+    @apply bg-blue-700 text-white;
+  }
+  
+  /* Proposal data sections - light backgrounds in cards */
+  .dark .bg-white.p-2.rounded-md {
+    @apply bg-gray-800 text-gray-100 border-gray-600;
+  }
+  
+  .dark .bg-gray-50.p-2.rounded {
+    @apply bg-gray-700 text-gray-100;
+  }
+  
+  .dark .bg-green-50.text-xs {
+    @apply bg-green-900/30 text-green-300;
+  }
+  
+  /* Proposal form cards */
+  .dark .border-af-blue-200.shadow-md.rounded-xl.bg-white {
+    @apply border-blue-700 bg-gray-900;
+  }
+  
+  /* Button hovers - Proposals specific */
+  .dark .border-af-blue-300.hover\:bg-af-blue-100.hover\:text-af-blue-700:hover {
+    @apply bg-blue-900/30 text-blue-300 border-blue-600;
+  }
+  
+  .dark .bg-af-blue-700.text-white.hover\:bg-af-blue-800:hover {
+    @apply bg-blue-600 text-white;
+  }
+  
+  /* Proposals header text */
+  .dark .text-af-blue-700 {
+    @apply text-blue-400;
+  }
+  
+  .dark .text-af-blue-600 {
+    @apply text-blue-400;
+  }
+  
+  /* Proposals beta badge */
+  .dark .bg-purple-100.text-purple-800 {
+    @apply bg-purple-900/30 text-purple-300;
+  }
+  
+  /* Additional proposal card sections */
+  .dark .bg-blue-50 {
+    @apply bg-blue-900/20;
+  }
+  
+  .dark .text-blue-800 {
+    @apply text-blue-200;
+  }
+  
+  .dark .text-blue-500 {
+    @apply text-blue-400;
+  }
+  
+  .dark .bg-green-50 {
+    @apply bg-green-900/20;
+  }
+  
+  .dark .text-green-800 {
+    @apply text-green-200;
+  }
+  
+  .dark .text-green-500 {
+    @apply text-green-400;
+  }
+  
+  /* Action button icons in proposal history - ensure visibility */
+  .dark .text-af-blue-600.hover\:text-af-blue-900:hover {
+    @apply text-blue-300;
+  }
+  
+  .dark .text-red-600.hover\:text-red-900:hover {
+    @apply text-red-300;
+  }
+  
+  /* Special values in history table - maintain color coding but improve contrast */
+  .dark .text-green-700 {
+    @apply text-green-400 font-semibold;
+  }
+  
+  .dark .text-purple-700 {
+    @apply text-purple-400 font-semibold;
+  }
+  
+  /* Template selector and form elements */
+  .dark .bg-af-blue-500.text-white {
+    @apply bg-blue-600 text-white;
+  }
+  
+  /* Mini proposal card elements */
+  .dark .text-gray-500 {
+    @apply text-gray-400;
+  }
+  
+  .dark .border-gray-100 {
+    @apply border-gray-600;
+  }
+  
+  /* Image processor card */
+  .dark .border-purple-200.overflow-hidden.shadow-md.bg-white {
+    @apply border-purple-700 bg-gray-900;
+  }
+  
+  .dark .bg-gradient-to-r.from-purple-600.to-blue-700.text-white {
+    @apply from-purple-600 to-blue-600 text-white;
+  }
+  
+  .dark .bg-white\/20 {
+    @apply bg-white/30;
+  }
+  
+  .dark .bg-gradient-to-r.from-purple-50.to-blue-50 {
+    @apply from-purple-900/20 to-blue-900/20;
+  }
+  
+  /* Form sections in data tab */
+  .dark .bg-slate-50 {
+    @apply bg-gray-800;
+  }
   .dark .bg-white {
     @apply bg-gray-900;
   }
