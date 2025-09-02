@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, MessageCircle, Phone, Trash2, User, Clock, ChevronDown, ChevronUp, Filter, ArrowUpDown } from "lucide-react";
+import { Calendar, MessageCircle, Phone, Trash2, User, Clock, ChevronDown, ChevronUp, Filter, ArrowUpDown, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +14,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { CreateAgendamentoModal } from "./CreateAgendamentoModal";
 
 interface ScheduledMessage {
   id: string;
@@ -66,8 +67,13 @@ export const AgendamentosList = ({
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [searchTerm, setSearchTerm] = useState('');
   const [instanceFilter, setInstanceFilter] = useState<string>('all');
+  const [editingMessage, setEditingMessage] = useState<ScheduledMessage | null>(null);
 
   const isAdmin = user?.role === UserRole.ADMIN;
+
+  const editMessage = (message: ScheduledMessage) => {
+    setEditingMessage(message);
+  };
 
   const fetchMessages = async () => {
     if (!user) return;
@@ -502,28 +508,39 @@ export const AgendamentosList = ({
                       </TableCell>
                     )}
                     <TableCell>
-                      <div className="flex items-center gap-1">
-                        {(message.status === 'failed' || message.status === 'cancelled') && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => retryMessage(message.id)}
-                            className="text-blue-600 hover:text-blue-700 p-1 h-6 w-6"
-                            title="Tentar novamente"
-                          >
-                            🔄
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteMessage(message.id)}
-                          className="text-destructive hover:text-destructive p-1 h-6 w-6"
-                          title="Excluir agendamento"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
+                       <div className="flex items-center gap-1">
+                         {(message.status === 'failed' || message.status === 'cancelled') && (
+                           <Button
+                             variant="ghost"
+                             size="sm"
+                             onClick={() => retryMessage(message.id)}
+                             className="text-blue-600 hover:text-blue-700 p-1 h-6 w-6"
+                             title="Tentar novamente"
+                           >
+                             🔄
+                           </Button>
+                         )}
+                         {message.status === 'pending' && (
+                           <Button
+                             variant="ghost"
+                             size="sm"
+                             onClick={() => editMessage(message)}
+                             className="text-blue-600 hover:text-blue-700 p-1 h-6 w-6"
+                             title="Editar agendamento"
+                           >
+                             <Edit className="h-3 w-3" />
+                           </Button>
+                         )}
+                         <Button
+                           variant="ghost"
+                           size="sm"
+                           onClick={() => deleteMessage(message.id)}
+                           className="text-destructive hover:text-destructive p-1 h-6 w-6"
+                           title="Excluir agendamento"
+                         >
+                           <Trash2 className="h-3 w-3" />
+                         </Button>
+                       </div>
                     </TableCell>
                   </TableRow>
                   
@@ -531,8 +548,8 @@ export const AgendamentosList = ({
                   <Collapsible open={expandedRows.has(message.id)}>
                     <CollapsibleContent>
                       <TableRow>
-                        <TableCell colSpan={isAdmin ? 8 : 7} className="bg-muted/30">
-                           <div className="p-4 space-y-4">
+                         <TableCell colSpan={isAdmin ? 8 : 7} className="bg-muted/30 p-0">
+                            <div className="p-6 space-y-6 w-full">
                              {/* Informações de criação e usuário */}
                              <div className="space-y-2">
                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -565,13 +582,13 @@ export const AgendamentosList = ({
                                )}
                              </div>
                              
-                             {/* Mensagem completa ocupando toda a largura */}
-                             <div className="w-full">
-                               <div className="text-sm font-medium mb-2">Mensagem:</div>
-                               <div className="p-3 bg-background border rounded-md w-full">
-                                 <p className="text-sm whitespace-pre-wrap">{message.message_text}</p>
-                               </div>
-                             </div>
+                              {/* Mensagem completa ocupando toda a largura */}
+                              <div className="space-y-3">
+                                <div className="text-sm font-medium text-foreground">Mensagem:</div>
+                                <div className="p-4 bg-background border rounded-lg shadow-sm">
+                                  <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.message_text}</p>
+                                </div>
+                              </div>
                             
                             {message.error_message && (
                               <div className="mt-2 p-3 border border-destructive/20 bg-destructive/5 rounded-md">
@@ -614,6 +631,16 @@ export const AgendamentosList = ({
       counts={counts}
     >
       {messages.length === 0 ? emptyStateContent() : messagesList()}
+      
+      <CreateAgendamentoModal
+        open={!!editingMessage}
+        onOpenChange={(open) => !open && setEditingMessage(null)}
+        onSuccess={() => {
+          setEditingMessage(null);
+          fetchMessages();
+        }}
+        editingMessage={editingMessage}
+      />
     </StatusTabs>
   );
 };

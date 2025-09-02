@@ -19,6 +19,25 @@ interface CreateAgendamentoModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  editingMessage?: {
+    id: string;
+    client_name: string;
+    client_phone: string;
+    message_text: string;
+    scheduled_date: string;
+    status: string;
+    instance_name: string;
+    user_id: string;
+    sent_at?: string;
+    error_message?: string;
+    created_at: string;
+    updated_at: string;
+    requires_approval?: boolean;
+    profiles?: {
+      name: string;
+      email: string;
+    };
+  } | null;
 }
 
 interface UserInstance {
@@ -44,7 +63,8 @@ interface Contact {
 export const CreateAgendamentoModal = ({ 
   open, 
   onOpenChange, 
-  onSuccess 
+  onSuccess,
+  editingMessage 
 }: CreateAgendamentoModalProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -66,18 +86,32 @@ export const CreateAgendamentoModal = ({
   });
 
   const resetForm = () => {
-    setFormData({
-      clientName: "",
-      clientPhone: "",
-      messageText: "",
-      scheduledDate: "",
-      scheduledTime: "",
-    });
-    setStep('instance');
-    setSelectedInstance("");
-    setSelectedContact("");
-    setContacts([]);
-    setSearchPhone("");
+    if (editingMessage) {
+      // Se estiver editando, popular com os dados da mensagem
+      const scheduledDate = new Date(editingMessage.scheduled_date);
+      setFormData({
+        clientName: editingMessage.client_name,
+        clientPhone: editingMessage.client_phone,
+        messageText: editingMessage.message_text,
+        scheduledDate: format(scheduledDate, 'yyyy-MM-dd'),
+        scheduledTime: format(scheduledDate, 'HH:mm'),
+      });
+      setSelectedInstance(editingMessage.instance_name);
+      setStep('details');
+    } else {
+      setFormData({
+        clientName: "",
+        clientPhone: "",
+        messageText: "",
+        scheduledDate: "",
+        scheduledTime: "",
+      });
+      setStep('instance');
+      setSelectedInstance("");
+      setSelectedContact("");
+      setContacts([]);
+      setSearchPhone("");
+    }
   };
 
   const fetchUserInstances = async () => {
@@ -272,46 +306,68 @@ export const CreateAgendamentoModal = ({
       // Combinar data e hora
       const scheduledDateTime = new Date(`${formData.scheduledDate}T${formData.scheduledTime}`);
 
-      const { error } = await supabase
-        .from('scheduled_messages')
-        .insert({
-          user_id: user.id,
-          instance_name: selectedInstance,
-          client_name: formData.clientName,
-          client_phone: formData.clientPhone,
-          message_text: formData.messageText,
-          scheduled_date: scheduledDateTime.toISOString(),
-          status: 'pending',
-        });
+      if (editingMessage) {
+        // Modo edição - atualizar agendamento existente
+        const { error } = await supabase
+          .from('scheduled_messages')
+          .update({
+            client_name: formData.clientName,
+            client_phone: formData.clientPhone,
+            message_text: formData.messageText,
+            scheduled_date: scheduledDateTime.toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', editingMessage.id);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Agendamento criado",
-        description: "Sua mensagem foi agendada com sucesso.",
-      });
-
-      // Tentar processar mensagens imediatamente se a data agendada já passou
-      const now = new Date();
-      if (scheduledDateTime <= now) {
         toast({
-          title: "Processando mensagem",
-          description: "Tentando enviar a mensagem agora...",
+          title: "Agendamento atualizado",
+          description: "Sua mensagem foi atualizada com sucesso.",
         });
-        
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session) {
-            await fetch('https://sbxltdbnqixucjoognfj.supabase.co/functions/v1/send-scheduled-messages', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`,
-              },
-            });
+      } else {
+        // Modo criação - inserir novo agendamento
+        const { error } = await supabase
+          .from('scheduled_messages')
+          .insert({
+            user_id: user.id,
+            instance_name: selectedInstance,
+            client_name: formData.clientName,
+            client_phone: formData.clientPhone,
+            message_text: formData.messageText,
+            scheduled_date: scheduledDateTime.toISOString(),
+            status: 'pending',
+          });
+
+        if (error) throw error;
+
+        toast({
+          title: "Agendamento criado",
+          description: "Sua mensagem foi agendada com sucesso.",
+        });
+
+        // Tentar processar mensagens imediatamente se a data agendada já passou
+        const now = new Date();
+        if (scheduledDateTime <= now) {
+          toast({
+            title: "Processando mensagem",
+            description: "Tentando enviar a mensagem agora...",
+          });
+          
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+              await fetch('https://sbxltdbnqixucjoognfj.supabase.co/functions/v1/send-scheduled-messages', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${session.access_token}`,
+                },
+              });
+            }
+          } catch (processError) {
+            console.error('Error processing immediate message:', processError);
           }
-        } catch (processError) {
-          console.error('Error processing immediate message:', processError);
         }
       }
 
@@ -319,9 +375,9 @@ export const CreateAgendamentoModal = ({
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {
-      console.error('Error creating scheduled message:', error);
+      console.error('Error saving scheduled message:', error);
       toast({
-        title: "Erro ao criar agendamento",
+        title: editingMessage ? "Erro ao atualizar agendamento" : "Erro ao criar agendamento",
         description: error.message,
         variant: "destructive",
       });
@@ -344,14 +400,14 @@ export const CreateAgendamentoModal = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MessageCircle className="h-5 w-5" />
-            Novo Agendamento
-            {step === 'instance' && ' - Selecionar Instância'}
-            {step === 'contact' && ' - Selecionar Contato'}
+            {editingMessage ? 'Editar Agendamento' : 'Novo Agendamento'}
+            {!editingMessage && step === 'instance' && ' - Selecionar Instância'}
+            {!editingMessage && step === 'contact' && ' - Selecionar Contato'}
             {step === 'details' && ' - Detalhes da Mensagem'}
           </DialogTitle>
         </DialogHeader>
 
-        {step === 'instance' && (
+        {!editingMessage && step === 'instance' && (
           <div className="space-y-4">
             <div className="text-sm text-muted-foreground">
               Primeiro, selecione a instância do WhatsApp que será usada para enviar a mensagem.
@@ -396,7 +452,7 @@ export const CreateAgendamentoModal = ({
           </div>
         )}
 
-        {step === 'contact' && (
+        {!editingMessage && step === 'contact' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-4">
               <Button 
@@ -497,13 +553,15 @@ export const CreateAgendamentoModal = ({
               <div className="text-sm text-muted-foreground">
                 Instância: <strong>{selectedInstance}</strong>
               </div>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setStep('contact')}
-              >
-                ← Voltar
-              </Button>
+              {!editingMessage && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setStep('contact')}
+                >
+                  ← Voltar
+                </Button>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -550,7 +608,7 @@ export const CreateAgendamentoModal = ({
                   type="date"
                   value={formData.scheduledDate}
                   onChange={(e) => setFormData(prev => ({ ...prev, scheduledDate: e.target.value }))}
-                  min={format(new Date(), 'yyyy-MM-dd')}
+                  min={editingMessage ? undefined : format(new Date(), 'yyyy-MM-dd')}
                   required
                 />
               </div>
@@ -579,7 +637,7 @@ export const CreateAgendamentoModal = ({
                 type="submit"
                 disabled={loading}
               >
-                {loading ? "Agendando..." : "Agendar Mensagem"}
+                {loading ? (editingMessage ? "Salvando..." : "Agendando...") : (editingMessage ? "Salvar Alterações" : "Agendar Mensagem")}
               </Button>
             </div>
           </form>
