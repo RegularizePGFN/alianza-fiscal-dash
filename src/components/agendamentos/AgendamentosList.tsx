@@ -532,46 +532,46 @@ export const AgendamentosList = ({
                     <CollapsibleContent>
                       <TableRow>
                         <TableCell colSpan={isAdmin ? 8 : 7} className="bg-muted/30">
-                          <div className="p-4 space-y-3">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div className="space-y-2">
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  <Clock className="h-3 w-3" />
-                                  <span>
-                                    Criado em: {format(new Date(message.created_at), "dd/MM/yyyy 'às' HH:mm", {
-                                      locale: ptBR,
-                                    })}
-                                  </span>
-                                </div>
-                                
-                                {message.sent_at && (
-                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <Clock className="h-3 w-3" />
-                                    <span>
-                                      Enviado em: {format(new Date(message.sent_at), "dd/MM/yyyy 'às' HH:mm", {
-                                        locale: ptBR,
-                                      })}
-                                    </span>
-                                  </div>
-                                )}
-                                
-                                {isAdmin && message.profiles && (
-                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <User className="h-3 w-3" />
-                                    <span>
-                                      Criado por: <strong>{message.profiles.name}</strong> ({message.profiles.email})
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            
-                            <div className="mt-3">
-                              <div className="text-sm font-medium mb-2">Mensagem:</div>
-                              <div className="p-3 bg-background border rounded-md">
-                                <p className="text-sm whitespace-pre-wrap">{message.message_text}</p>
-                              </div>
-                            </div>
+                           <div className="p-4 space-y-4">
+                             {/* Informações de criação e usuário */}
+                             <div className="space-y-2">
+                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                 <Clock className="h-3 w-3" />
+                                 <span>
+                                   Criado em: {format(new Date(message.created_at), "dd/MM/yyyy 'às' HH:mm", {
+                                     locale: ptBR,
+                                   })}
+                                 </span>
+                               </div>
+                               
+                               {message.sent_at && (
+                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                   <Clock className="h-3 w-3" />
+                                   <span>
+                                     Enviado em: {format(new Date(message.sent_at), "dd/MM/yyyy 'às' HH:mm", {
+                                       locale: ptBR,
+                                     })}
+                                   </span>
+                                 </div>
+                               )}
+                               
+                               {isAdmin && message.profiles && (
+                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                   <User className="h-3 w-3" />
+                                   <span>
+                                     Criado por: <strong>{message.profiles.name}</strong> ({message.profiles.email})
+                                   </span>
+                                 </div>
+                               )}
+                             </div>
+                             
+                             {/* Mensagem completa ocupando toda a largura */}
+                             <div className="w-full">
+                               <div className="text-sm font-medium mb-2">Mensagem:</div>
+                               <div className="p-3 bg-background border rounded-md w-full">
+                                 <p className="text-sm whitespace-pre-wrap">{message.message_text}</p>
+                               </div>
+                             </div>
                             
                             {message.error_message && (
                               <div className="mt-2 p-3 border border-destructive/20 bg-destructive/5 rounded-md">
