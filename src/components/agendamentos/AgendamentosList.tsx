@@ -496,6 +496,14 @@ export const AgendamentosList = ({
                   </SortButton>
                 </TableHead>
                 <TableHead>
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded bg-cyan-100 dark:bg-cyan-900/30">
+                      <MessageCircle className="h-3 w-3 text-cyan-600 dark:text-cyan-400" />
+                    </div>
+                    Mensagem
+                  </div>
+                </TableHead>
+                <TableHead>
                   <SortButton field="scheduled_date">
                     <div className="flex items-center gap-2">
                       <div className="p-1.5 rounded bg-orange-100 dark:bg-orange-900/30">
@@ -579,6 +587,19 @@ export const AgendamentosList = ({
                       </div>
                     </TableCell>
                     <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 rounded-full bg-cyan-100 dark:bg-cyan-900/30">
+                          <MessageCircle className="h-3 w-3 text-cyan-600 dark:text-cyan-400" />
+                        </div>
+                        <span className="text-sm text-muted-foreground truncate max-w-[150px]" title={message.message_text}>
+                          {message.message_text.length > 20 
+                            ? `${message.message_text.slice(0, 20)}...` 
+                            : message.message_text
+                          }
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
                       <div className="flex items-center gap-2 text-sm">
                         <div className="p-1.5 rounded-full bg-orange-100 dark:bg-orange-900/30">
                           <Calendar className="h-3 w-3 text-orange-600 dark:text-orange-400" />
@@ -654,7 +675,7 @@ export const AgendamentosList = ({
                   {/* Linha expandida - só renderiza se estiver expandida */}
                   {expandedRows.has(message.id) && (
                     <TableRow>
-                      <TableCell colSpan={isAdmin ? 8 : 7} className="bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-900/10 dark:to-purple-900/10 p-0 border-t-2 border-blue-200 dark:border-blue-700">
+                      <TableCell colSpan={isAdmin ? 9 : 8} className="bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-900/10 dark:to-purple-900/10 p-0 border-t-2 border-blue-200 dark:border-blue-700">
                         <div className="w-full p-6 space-y-6">
                           {/* Título da seção expandida */}
                           <div className="border-b-2 border-gradient-to-r from-blue-200 to-purple-200 dark:from-blue-700 dark:to-purple-700 pb-4">
