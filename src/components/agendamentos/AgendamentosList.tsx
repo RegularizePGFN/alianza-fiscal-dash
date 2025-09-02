@@ -10,6 +10,7 @@ import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { UserRole } from "@/lib/types";
 import { StatusTabs, MessageStatusFilter } from "./StatusTabs";
+import { ConversationHistory } from "./ConversationHistory";
 
 interface ScheduledMessage {
   id: string;
@@ -372,16 +373,21 @@ export const AgendamentosList = ({
                 </div>
               )}
               
-              {message.sent_at && (
-                <div className="text-xs text-muted-foreground">
-                  Enviado em: {format(new Date(message.sent_at), "dd/MM/yyyy 'às' HH:mm", {
-                    locale: ptBR,
-                  })}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+               {message.sent_at && (
+                 <div className="text-xs text-muted-foreground">
+                   Enviado em: {format(new Date(message.sent_at), "dd/MM/yyyy 'às' HH:mm", {
+                     locale: ptBR,
+                   })}
+                 </div>
+               )}
+             </div>
+
+             <ConversationHistory 
+               contactPhone={message.client_phone}
+               instanceName={message.instance_name}
+             />
+           </CardContent>
+         </Card>
       ))}
     </div>
   );
