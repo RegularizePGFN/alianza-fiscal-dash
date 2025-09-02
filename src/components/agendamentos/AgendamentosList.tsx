@@ -51,7 +51,6 @@ export const AgendamentosList = ({
   const [loading, setLoading] = useState(true);
   const [counts, setCounts] = useState({
     scheduled: 0,
-    pending_approval: 0,
     sent: 0,
     all: 0
   });
@@ -120,8 +119,7 @@ export const AgendamentosList = ({
   const updateCounts = (allMessages: ScheduledMessage[]) => {
     const newCounts = {
       all: allMessages.length,
-      scheduled: allMessages.filter(m => m.status === 'pending' && !m.requires_approval).length,
-      pending_approval: allMessages.filter(m => m.requires_approval === true).length,
+      scheduled: allMessages.filter(m => m.status === 'pending').length,
       sent: allMessages.filter(m => m.status === 'sent').length,
     };
     setCounts(newCounts);
@@ -130,9 +128,7 @@ export const AgendamentosList = ({
   const filterMessages = (messages: ScheduledMessage[], filter: MessageStatusFilter) => {
     switch (filter) {
       case 'scheduled':
-        return messages.filter(m => m.status === 'pending' && !m.requires_approval);
-      case 'pending_approval':
-        return messages.filter(m => m.requires_approval === true);
+        return messages.filter(m => m.status === 'pending');
       case 'sent':
         return messages.filter(m => m.status === 'sent');
       case 'all':
@@ -248,7 +244,6 @@ export const AgendamentosList = ({
     const emptyMessages = {
       all: "Nenhum agendamento encontrado",
       scheduled: "Nenhuma mensagem agendada",
-      pending_approval: "Nenhuma mensagem aguardando aprovação",
       sent: "Nenhuma mensagem enviada"
     };
 
@@ -263,8 +258,7 @@ export const AgendamentosList = ({
             <p className="mt-1 text-sm text-muted-foreground">
               {statusFilter === 'all' 
                 ? "Comece criando seu primeiro agendamento de mensagem." 
-                : `Não há mensagens na categoria ${statusFilter === 'scheduled' ? 'agendadas' : 
-                    statusFilter === 'pending_approval' ? 'aguardando aprovação' : 'enviadas'}.`
+                : `Não há mensagens na categoria ${statusFilter === 'scheduled' ? 'agendadas' : 'enviadas'}.`
               }
             </p>
           </div>

@@ -1,14 +1,13 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 
-export type MessageStatusFilter = 'scheduled' | 'pending_approval' | 'sent' | 'all';
+export type MessageStatusFilter = 'scheduled' | 'sent' | 'all';
 
 interface StatusTabsProps {
   currentStatus: MessageStatusFilter;
   onStatusChange: (status: MessageStatusFilter) => void;
   counts: {
     scheduled: number;
-    pending_approval: number;
     sent: number;
     all: number;
   };
@@ -23,7 +22,7 @@ export const StatusTabs = ({
 }: StatusTabsProps) => {
   return (
     <Tabs value={currentStatus} onValueChange={onStatusChange as (value: string) => void}>
-      <TabsList className="grid w-full grid-cols-4">
+      <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="all" className="flex items-center gap-2">
           Todas
           <Badge variant="secondary" className="text-xs">
@@ -34,12 +33,6 @@ export const StatusTabs = ({
           Agendadas
           <Badge variant="outline" className="text-xs">
             {counts.scheduled}
-          </Badge>
-        </TabsTrigger>
-        <TabsTrigger value="pending_approval" className="flex items-center gap-2">
-          Aprovação
-          <Badge variant="destructive" className="text-xs">
-            {counts.pending_approval}
           </Badge>
         </TabsTrigger>
         <TabsTrigger value="sent" className="flex items-center gap-2">
