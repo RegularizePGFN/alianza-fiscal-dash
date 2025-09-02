@@ -19,19 +19,20 @@ serve(async (req) => {
       throw new Error('contact_phone and instance_name are required');
     }
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
     // Get user authentication token from request
-    const authToken = req.headers.get('Authorization')?.replace('Bearer ', '');
+    const authToken = req.headers.get('Authorization');
     if (!authToken) {
       throw new Error('Authentication required');
     }
 
-    // Set auth for Supabase client
-    await supabase.auth.setAuth(authToken);
+    // Initialize Supabase client with auth token
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: { Authorization: authToken }
+      }
+    });
 
     // Get user info
     const { data: { user }, error: userError } = await supabase.auth.getUser();
