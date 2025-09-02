@@ -1,3 +1,4 @@
+import React from "react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -447,25 +448,22 @@ export const AgendamentosList = ({
             </TableHeader>
             <TableBody>
               {messages.map((message) => (
-                <>
-                  <TableRow key={message.id} className="hover:bg-muted/50">
+                <React.Fragment key={message.id}>
+                  {/* Linha principal do agendamento */}
+                  <TableRow className="hover:bg-muted/50">
                     <TableCell>
-                      <Collapsible>
-                        <CollapsibleTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleRowExpansion(message.id)}
-                            className="p-1 h-6 w-6"
-                          >
-                            {expandedRows.has(message.id) ? (
-                              <ChevronUp className="h-4 w-4" />
-                            ) : (
-                              <ChevronDown className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </CollapsibleTrigger>
-                      </Collapsible>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleRowExpansion(message.id)}
+                        className="p-1 h-6 w-6"
+                      >
+                        {expandedRows.has(message.id) ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                      </Button>
                     </TableCell>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
@@ -508,150 +506,190 @@ export const AgendamentosList = ({
                       </TableCell>
                     )}
                     <TableCell>
-                       <div className="flex items-center gap-1">
-                         {(message.status === 'failed' || message.status === 'cancelled') && (
-                           <Button
-                             variant="ghost"
-                             size="sm"
-                             onClick={() => retryMessage(message.id)}
-                             className="text-blue-600 hover:text-blue-700 p-1 h-6 w-6"
-                             title="Tentar novamente"
-                           >
-                             🔄
-                           </Button>
-                         )}
-                         {message.status === 'pending' && (
-                           <Button
-                             variant="ghost"
-                             size="sm"
-                             onClick={() => editMessage(message)}
-                             className="text-blue-600 hover:text-blue-700 p-1 h-6 w-6"
-                             title="Editar agendamento"
-                           >
-                             <Edit className="h-3 w-3" />
-                           </Button>
-                         )}
-                         <Button
-                           variant="ghost"
-                           size="sm"
-                           onClick={() => deleteMessage(message.id)}
-                           className="text-destructive hover:text-destructive p-1 h-6 w-6"
-                           title="Excluir agendamento"
-                         >
-                           <Trash2 className="h-3 w-3" />
-                         </Button>
-                       </div>
+                      <div className="flex items-center gap-1">
+                        {(message.status === 'failed' || message.status === 'cancelled') && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => retryMessage(message.id)}
+                            className="text-blue-600 hover:text-blue-700 p-1 h-6 w-6"
+                            title="Tentar novamente"
+                          >
+                            🔄
+                          </Button>
+                        )}
+                        {message.status === 'pending' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => editMessage(message)}
+                            className="text-blue-600 hover:text-blue-700 p-1 h-6 w-6"
+                            title="Editar agendamento"
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteMessage(message.id)}
+                          className="text-destructive hover:text-destructive p-1 h-6 w-6"
+                          title="Excluir agendamento"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                   
-                   {/* Linha expandida */}
-                   <Collapsible open={expandedRows.has(message.id)}>
-                     <CollapsibleContent>
-                       <TableRow>
-                         <TableCell colSpan={100} className="bg-muted/30 p-0">
-                           <div className="w-full p-6 space-y-6">
-                             {/* Layout em grid para organizar as informações */}
-                             <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                               {/* Informações de tempo */}
-                               <div className="space-y-3">
-                                 <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
-                                   <Clock className="h-4 w-4" />
-                                   Informações de Tempo
-                                 </h4>
-                                 <div className="space-y-2 text-sm">
-                                   <div className="p-3 bg-background border rounded-lg">
-                                     <div className="font-medium text-muted-foreground mb-1">Criado em:</div>
-                                     <div>{format(new Date(message.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</div>
-                                   </div>
-                                   
-                                   {message.sent_at && (
-                                     <div className="p-3 bg-background border rounded-lg">
-                                       <div className="font-medium text-muted-foreground mb-1">Enviado em:</div>
-                                       <div>{format(new Date(message.sent_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</div>
-                                     </div>
-                                   )}
-                                 </div>
-                               </div>
+                  {/* Linha expandida - só renderiza se estiver expandida */}
+                  {expandedRows.has(message.id) && (
+                    <TableRow>
+                      <TableCell colSpan={isAdmin ? 8 : 7} className="bg-muted/30 p-0">
+                        <div className="w-full p-6 space-y-6">
+                          {/* Título da seção expandida */}
+                          <div className="border-b pb-3">
+                            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                              <MessageCircle className="h-5 w-5" />
+                              Informações do Agendamento
+                            </h3>
+                          </div>
 
-                               {/* Informações do criador (só se for admin) */}
-                               {isAdmin && (
-                                 <div className="space-y-3">
-                                   <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
-                                     <User className="h-4 w-4" />
-                                     Criado por
-                                   </h4>
-                                   <div className="p-3 bg-background border rounded-lg text-sm">
-                                     {message.profiles ? (
-                                       <>
-                                         <div className="font-medium">{message.profiles.name}</div>
-                                         <div className="text-muted-foreground">{message.profiles.email}</div>
-                                       </>
-                                     ) : (
-                                       <div className="text-muted-foreground">Informação não disponível</div>
-                                     )}
-                                   </div>
-                                 </div>
-                               )}
+                          {/* Layout em grid para organizar as informações */}
+                          <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {/* Informações de tempo */}
+                            <div className="space-y-3">
+                              <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
+                                <Clock className="h-4 w-4" />
+                                Datas e Horários
+                              </h4>
+                              <div className="space-y-3">
+                                <div className="p-3 bg-background border rounded-lg">
+                                  <div className="text-xs font-medium text-muted-foreground mb-1">Agendado para:</div>
+                                  <div className="text-sm font-medium">
+                                    {format(new Date(message.scheduled_date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                                  </div>
+                                </div>
+                                
+                                <div className="p-3 bg-background border rounded-lg">
+                                  <div className="text-xs font-medium text-muted-foreground mb-1">Criado em:</div>
+                                  <div className="text-sm">
+                                    {format(new Date(message.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                                  </div>
+                                </div>
+                                
+                                {message.sent_at && (
+                                  <div className="p-3 bg-background border rounded-lg">
+                                    <div className="text-xs font-medium text-muted-foreground mb-1">Enviado em:</div>
+                                    <div className="text-sm">
+                                      {format(new Date(message.sent_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
 
-                               {/* Status e instância */}
-                               <div className="space-y-3">
-                                 <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
-                                   <MessageCircle className="h-4 w-4" />
-                                   Detalhes
-                                 </h4>
-                                 <div className="space-y-2 text-sm">
-                                   <div className="p-3 bg-background border rounded-lg">
-                                     <div className="font-medium text-muted-foreground mb-1">Instância:</div>
-                                     <div>{message.instance_name}</div>
-                                   </div>
-                                   <div className="p-3 bg-background border rounded-lg">
-                                     <div className="font-medium text-muted-foreground mb-1">Status:</div>
-                                     <div>{getStatusBadge(message.status)}</div>
-                                   </div>
-                                 </div>
-                               </div>
-                             </div>
+                            {/* Informações do criador (só se for admin) */}
+                            {isAdmin && (
+                              <div className="space-y-3">
+                                <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
+                                  <User className="h-4 w-4" />
+                                  Criado por
+                                </h4>
+                                <div className="p-3 bg-background border rounded-lg">
+                                  {message.profiles ? (
+                                    <>
+                                      <div className="text-sm font-medium">{message.profiles.name}</div>
+                                      <div className="text-xs text-muted-foreground">{message.profiles.email}</div>
+                                    </>
+                                  ) : (
+                                    <div className="text-sm text-muted-foreground">Informação não disponível</div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
 
-                             {/* Mensagem completa ocupando toda a largura */}
-                             <div className="w-full space-y-3">
-                               <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
-                                 <MessageCircle className="h-4 w-4" />
-                                 Conteúdo da Mensagem
-                               </h4>
-                               <div className="w-full p-4 bg-background border rounded-lg shadow-sm">
-                                 <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.message_text}</p>
-                               </div>
-                             </div>
+                            {/* Status e instância */}
+                            <div className="space-y-3">
+                              <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
+                                <MessageCircle className="h-4 w-4" />
+                                Configurações
+                              </h4>
+                              <div className="space-y-3">
+                                <div className="p-3 bg-background border rounded-lg">
+                                  <div className="text-xs font-medium text-muted-foreground mb-1">Instância:</div>
+                                  <div className="text-sm font-medium">{message.instance_name}</div>
+                                </div>
+                                <div className="p-3 bg-background border rounded-lg">
+                                  <div className="text-xs font-medium text-muted-foreground mb-1">Status:</div>
+                                  <div className="flex items-center gap-2">
+                                    {getStatusBadge(message.status)}
+                                    {message.requires_approval && (
+                                      <Badge variant="destructive" className="text-xs">
+                                        Requer Aprovação
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
 
-                             {/* Mensagem de erro se houver */}
-                             {message.error_message && (
-                               <div className="w-full">
-                                 <div className="p-4 border border-destructive/20 bg-destructive/5 rounded-lg">
-                                   <div className="flex items-start gap-3">
-                                     <div className="flex-shrink-0 mt-0.5 text-lg">
-                                       ❌
-                                     </div>
-                                     <div className="flex-1">
-                                       <p className="text-sm font-medium text-destructive mb-2">
-                                         Falha no envio da mensagem
-                                       </p>
-                                       <p className="text-sm text-destructive/80 mb-2">
-                                         <strong>Motivo:</strong> {message.error_message}
-                                       </p>
-                                       <p className="text-xs text-muted-foreground">
-                                         Tente novamente clicando no botão 🔄 ou verifique se o número de telefone está correto.
-                                       </p>
-                                     </div>
-                                   </div>
-                                 </div>
-                               </div>
-                             )}
-                           </div>
-                         </TableCell>
-                       </TableRow>
-                     </CollapsibleContent>
-                   </Collapsible>
-                </>
+                          {/* Informações do cliente */}
+                          <div className="space-y-3">
+                            <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
+                              <User className="h-4 w-4" />
+                              Dados do Cliente
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="p-3 bg-background border rounded-lg">
+                                <div className="text-xs font-medium text-muted-foreground mb-1">Nome:</div>
+                                <div className="text-sm font-medium">{message.client_name}</div>
+                              </div>
+                              <div className="p-3 bg-background border rounded-lg">
+                                <div className="text-xs font-medium text-muted-foreground mb-1">Telefone:</div>
+                                <div className="text-sm font-medium">{message.client_phone}</div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Mensagem completa */}
+                          <div className="space-y-3">
+                            <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
+                              <MessageCircle className="h-4 w-4" />
+                              Conteúdo da Mensagem
+                            </h4>
+                            <div className="w-full p-4 bg-background border rounded-lg shadow-sm">
+                              <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.message_text}</p>
+                            </div>
+                          </div>
+
+                          {/* Mensagem de erro se houver */}
+                          {message.error_message && (
+                            <div className="space-y-3">
+                              <h4 className="font-semibold text-sm text-destructive flex items-center gap-2">
+                                ❌ Erro no Envio
+                              </h4>
+                              <div className="p-4 border border-destructive/20 bg-destructive/5 rounded-lg">
+                                <div className="space-y-2">
+                                  <p className="text-sm font-medium text-destructive">
+                                    Falha no envio da mensagem
+                                  </p>
+                                  <p className="text-sm text-destructive/80">
+                                    <strong>Motivo:</strong> {message.error_message}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    Tente novamente clicando no botão 🔄 ou verifique se o número de telefone está correto.
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </React.Fragment>
               ))}
             </TableBody>
           </Table>
