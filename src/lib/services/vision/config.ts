@@ -1,4 +1,3 @@
-
 /**
  * Configuration for the vision service
  */
@@ -12,18 +11,28 @@ export const MODEL = 'gpt-4o';
  * Prompt template to send to the vision model
  */
 export const VISION_PROMPT = `
-Esta é uma imagem de uma proposta de parcelamento da PGFN (Procuradoria-Geral da Fazenda Nacional). Extraia os seguintes dados da proposta, levando em consideração que a entrada também pode estar parcelada:
+Esta é uma imagem de uma negociação de dívidas da Receita Federal, PGFN ou sistemas relacionados (como SISPAR, Simples Nacional). 
 
-- CNPJ da empresa
-- Número do processo
-- Valor total da dívida sem redução
-- Valor total com redução
-- Percentual efetivo de redução
-- Valor total da entrada (com ou sem parcelamento)
-- Quantidade de parcelas da entrada e valor de cada parcela (se a entrada for parcelada)
-- Quantidade de parcelas do parcelamento principal e valor de cada parcela
+Analise cuidadosamente a imagem e extraia as seguintes informações, independentemente do layout ou formato apresentado:
 
-A resposta deve estar em JSON, com os campos claramente identificados, exatamente no seguinte formato:
+DADOS A EXTRAIR:
+- CNPJ da empresa (pode aparecer como "CNPJ:" ou em formato XX.XXX.XXX/XXXX-XX)
+- Número do processo (se disponível)
+- Valor total sem desconto/redução (pode aparecer como "Total sem desconto", "Valor consolidado", etc.)
+- Valor total com desconto/redução (pode aparecer como "Total a pagar", "Valor com reduções", etc.)
+- Valor do desconto ou percentual de redução (calcule se necessário)
+- Informações sobre entrada e parcelamento
+
+FORMAS DE PAGAMENTO:
+- Se houver opção "Entrada" ou similar, extraia o valor e quantidade de parcelas
+- Se houver opção "Básica", "Parcelado" ou similar, extraia o valor e quantidade de parcelas
+- Observe que pode haver diferentes modalidades de pagamento
+
+CÁLCULOS NECESSÁRIOS:
+- Se não houver percentual explícito, calcule: ((valor_sem_desconto - valor_com_desconto) / valor_sem_desconto) * 100
+- Se a entrada estiver parcelada, some todos os valores para obter o total da entrada
+
+A resposta deve estar em JSON, exatamente no seguinte formato:
 
 {
   "cnpj": "",
@@ -33,16 +42,22 @@ A resposta deve estar em JSON, com os campos claramente identificados, exatament
   "percentual_de_reducao": "",
   "valor_da_entrada_total": "",
   "entrada_parcelada": {
-    "quantidade_parcelas": ,
+    "quantidade_parcelas": null,
     "valor_parcela": ""
   },
   "parcelamento_principal": {
-    "quantidade_parcelas": ,
+    "quantidade_parcelas": null,
     "valor_parcela": ""
   }
 }
 
-Garanta que os valores monetários mantenham o símbolo "R$" e duas casas decimais. Caso alguma informação não esteja visível na imagem, retorne esse campo como null.
+INSTRUÇÕES IMPORTANTES:
+- Mantenha valores monetários com "R$" e duas casas decimais
+- Use números inteiros para quantidade de parcelas (sem aspas)
+- Se alguma informação não estiver visível, use null
+- Se houver múltiplas opções de negociação, extraia a primeira ou mais relevante
+- Seja flexível com os termos: "desconto", "redução", "economia" podem ser sinônimos
+- "Entrada" e "À vista" podem se referir ao mesmo tipo de pagamento
 `;
 
 /**
