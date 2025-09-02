@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Calendar, Settings, Send, List, CalendarDays } from "lucide-react";
+import { Plus, RefreshCw, Settings, Calendar, List, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -55,54 +55,92 @@ export const AgendamentosHeader = ({
       });
     }
   };
+
   return (
-    <div className="flex items-center justify-between">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Agendamentos</h1>
-        <p className="text-muted-foreground">
-          Programe mensagens do WhatsApp para seus clientes
-        </p>
-      </div>
-      
-      <div className="flex items-center gap-3">
-        {/* View Mode Toggle */}
-        <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && onViewModeChange(value as 'list' | 'calendar')}>
-          <ToggleGroupItem value="list" aria-label="Lista" className="flex items-center gap-2">
-            <List className="h-4 w-4" />
-            Lista
-          </ToggleGroupItem>
-          <ToggleGroupItem value="calendar" aria-label="Agenda" className="flex items-center gap-2">
-            <CalendarDays className="h-4 w-4" />
-            Agenda
-          </ToggleGroupItem>
-        </ToggleGroup>
-        <Button
-          variant="outline"
-          onClick={handleProcessMessages}
-          className="flex items-center gap-2"
-        >
-          <Send className="h-4 w-4" />
-          Processar Pendentes
-        </Button>
+    <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg p-6 border border-blue-200/50 dark:border-blue-700/50 shadow-sm">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex items-center gap-4">
+          <div className="p-3 rounded-xl bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/40 dark:to-purple-900/40">
+            <MessageCircle className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Agendamentos</h1>
+            <p className="text-muted-foreground">
+              Programe mensagens do WhatsApp para seus clientes
+            </p>
+          </div>
+        </div>
         
-        {showManageInstances && (
+        <div className="flex flex-wrap gap-3">
+          {/* View Mode Toggle */}
+          <div className="flex rounded-lg bg-white dark:bg-gray-800 p-1 border border-blue-200 dark:border-blue-700 shadow-sm">
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => onViewModeChange('list')}
+              className={`flex items-center gap-2 transition-all duration-200 ${
+                viewMode === 'list' 
+                  ? 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300' 
+                  : 'hover:bg-blue-50 dark:hover:bg-blue-900/20'
+              }`}
+            >
+              <div className="p-1 rounded bg-blue-100 dark:bg-blue-900/30">
+                <List className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+              </div>
+              Lista
+            </Button>
+            <Button
+              variant={viewMode === 'calendar' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => onViewModeChange('calendar')}
+              className={`flex items-center gap-2 transition-all duration-200 ${
+                viewMode === 'calendar' 
+                  ? 'bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300' 
+                  : 'hover:bg-purple-50 dark:hover:bg-purple-900/20'
+              }`}
+            >
+              <div className="p-1 rounded bg-purple-100 dark:bg-purple-900/30">
+                <Calendar className="h-3 w-3 text-purple-600 dark:text-purple-400" />
+              </div>
+              Agenda
+            </Button>
+          </div>
+          
+          {/* Action Buttons */}
           <Button
             variant="outline"
-            onClick={onManageInstances}
-            className="flex items-center gap-2"
+            onClick={handleProcessMessages}
+            className="flex items-center gap-2 hover:bg-green-50 hover:border-green-300 hover:text-green-700 dark:hover:bg-green-900/30 transition-all duration-200"
           >
-            <Settings className="h-4 w-4" />
-            Gerenciar Instâncias
+            <div className="p-1 rounded bg-green-100 dark:bg-green-900/30">
+              <RefreshCw className="h-3 w-3 text-green-600 dark:text-green-400" />
+            </div>
+            Processar Pendentes
           </Button>
-        )}
-        
-        <Button
-          onClick={onCreateAgendamento}
-          className="flex items-center gap-2"
-        >
-          <Calendar className="h-4 w-4" />
-          Novo Agendamento
-        </Button>
+          
+          {showManageInstances && (
+            <Button
+              variant="outline"
+              onClick={onManageInstances}
+              className="flex items-center gap-2 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 dark:hover:bg-orange-900/30 transition-all duration-200"
+            >
+              <div className="p-1 rounded bg-orange-100 dark:bg-orange-900/30">
+                <Settings className="h-3 w-3 text-orange-600 dark:text-orange-400" />
+              </div>
+              Gerenciar Instâncias
+            </Button>
+          )}
+          
+          <Button
+            onClick={onCreateAgendamento}
+            className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all duration-200"
+          >
+            <div className="p-1 rounded bg-white/20">
+              <Plus className="h-3 w-3" />
+            </div>
+            Novo Agendamento
+          </Button>
+        </div>
       </div>
     </div>
   );

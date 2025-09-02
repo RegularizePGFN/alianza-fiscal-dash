@@ -212,19 +212,36 @@ export const AgendamentosList = ({
 
   const getStatusBadge = (status: string) => {
     const statusMap = {
-      pending: { label: "Pendente", variant: "outline" },
-      sent: { label: "Enviado", variant: "default" },
-      failed: { label: "Falhou", variant: "destructive" },
-      cancelled: { label: "Cancelado", variant: "secondary" },
+      pending: { 
+        label: "Pendente", 
+        variant: "outline" as const,
+        className: "border-orange-300 text-orange-700 bg-orange-50 dark:border-orange-600 dark:text-orange-300 dark:bg-orange-900/30"
+      },
+      sent: { 
+        label: "Enviado", 
+        variant: "default" as const,
+        className: "bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-600"
+      },
+      failed: { 
+        label: "Falhou", 
+        variant: "destructive" as const,
+        className: "bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-600"
+      },
+      cancelled: { 
+        label: "Cancelado", 
+        variant: "secondary" as const,
+        className: "bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-900/30 dark:text-gray-300 dark:border-gray-600"
+      },
     } as const;
 
     const statusInfo = statusMap[status as keyof typeof statusMap] || {
       label: status,
-      variant: "outline"
+      variant: "outline" as const,
+      className: "border-gray-300 text-gray-700 bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:bg-gray-900/30"
     };
 
     return (
-      <Badge variant={statusInfo.variant as any}>
+      <Badge className={statusInfo.className}>
         {statusInfo.label}
       </Badge>
     );
@@ -372,30 +389,42 @@ export const AgendamentosList = ({
       variant="ghost"
       size="sm"
       onClick={() => handleSort(field)}
-      className="h-8 px-2 flex items-center gap-1 hover:bg-muted"
+      className="h-8 px-2 flex items-center gap-1 hover:bg-white/50 dark:hover:bg-gray-800/50 transition-all duration-200"
     >
       {children}
-      <ArrowUpDown className="h-3 w-3" />
+      <ArrowUpDown className="h-3 w-3 text-blue-500" />
     </Button>
   );
 
   const messagesList = () => (
     <div className="space-y-4">
       {/* Filtros */}
-      <Card>
+      <Card className="hover:shadow-md transition-all duration-300 border-opacity-50">
         <CardContent className="pt-4">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
-              <Input
-                placeholder="Buscar por cliente, telefone, instância ou mensagem..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full"
-              />
+              <div className="relative">
+                <Input
+                  placeholder="Buscar por cliente, telefone, instância ou mensagem..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 transition-all duration-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                    <Filter className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                </div>
+              </div>
             </div>
             <Select value={instanceFilter} onValueChange={setInstanceFilter}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Filtrar por instância" />
+              <SelectTrigger className="w-full sm:w-48 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500">
+                <div className="flex items-center gap-2">
+                  <div className="p-1 rounded bg-purple-100 dark:bg-purple-900/30">
+                    <MessageCircle className="h-3 w-3 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <SelectValue placeholder="Filtrar por instância" />
+                </div>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas as instâncias</SelectItem>
@@ -413,9 +442,14 @@ export const AgendamentosList = ({
                   setSearchTerm('');
                   setInstanceFilter('all');
                 }}
-                className="whitespace-nowrap"
+                className="whitespace-nowrap transition-all duration-200 hover:bg-red-50 hover:border-red-300 hover:text-red-700 dark:hover:bg-red-900/30"
               >
-                Limpar Filtros
+                <div className="flex items-center gap-2">
+                  <div className="p-1 rounded bg-red-100 dark:bg-red-900/30">
+                    <Trash2 className="h-3 w-3 text-red-600 dark:text-red-400" />
+                  </div>
+                  Limpar Filtros
+                </div>
               </Button>
             )}
           </div>
@@ -423,74 +457,144 @@ export const AgendamentosList = ({
       </Card>
 
       {/* Tabela */}
-      <Card>
+      <Card className="hover:shadow-lg transition-all duration-300 border-opacity-50">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead className="w-12"></TableHead>
-                <TableHead>
-                  <SortButton field="client_name">Cliente</SortButton>
-                </TableHead>
-                <TableHead>Telefone</TableHead>
-                <TableHead>
-                  <SortButton field="instance_name">Instância</SortButton>
+              <TableRow className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-b-2 border-blue-100 dark:border-blue-800">
+                <TableHead className="w-12">
+                  <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/40 w-fit">
+                    <ChevronDown className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  </div>
                 </TableHead>
                 <TableHead>
-                  <SortButton field="scheduled_date">Data Agendamento</SortButton>
+                  <SortButton field="client_name">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded bg-green-100 dark:bg-green-900/30">
+                        <User className="h-3 w-3 text-green-600 dark:text-green-400" />
+                      </div>
+                      Cliente
+                    </div>
+                  </SortButton>
                 </TableHead>
                 <TableHead>
-                  <SortButton field="status">Status</SortButton>
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded bg-blue-100 dark:bg-blue-900/30">
+                      <Phone className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    Telefone
+                  </div>
                 </TableHead>
-                {isAdmin && <TableHead>Criado por</TableHead>}
-                <TableHead className="w-24">Ações</TableHead>
+                <TableHead>
+                  <SortButton field="instance_name">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded bg-purple-100 dark:bg-purple-900/30">
+                        <MessageCircle className="h-3 w-3 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      Instância
+                    </div>
+                  </SortButton>
+                </TableHead>
+                <TableHead>
+                  <SortButton field="scheduled_date">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded bg-orange-100 dark:bg-orange-900/30">
+                        <Calendar className="h-3 w-3 text-orange-600 dark:text-orange-400" />
+                      </div>
+                      Data Agendamento
+                    </div>
+                  </SortButton>
+                </TableHead>
+                <TableHead>
+                  <SortButton field="status">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded bg-indigo-100 dark:bg-indigo-900/30">
+                        <Clock className="h-3 w-3 text-indigo-600 dark:text-indigo-400" />
+                      </div>
+                      Status
+                    </div>
+                  </SortButton>
+                </TableHead>
+                {isAdmin && (
+                  <TableHead>
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded bg-teal-100 dark:bg-teal-900/30">
+                        <User className="h-3 w-3 text-teal-600 dark:text-teal-400" />
+                      </div>
+                      Criado por
+                    </div>
+                  </TableHead>
+                )}
+                <TableHead className="w-24">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded bg-gray-100 dark:bg-gray-900/30">
+                      <Edit className="h-3 w-3 text-gray-600 dark:text-gray-400" />
+                    </div>
+                    Ações
+                  </div>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {messages.map((message) => (
                 <React.Fragment key={message.id}>
                   {/* Linha principal do agendamento */}
-                  <TableRow className="hover:bg-muted/50">
+                  <TableRow className="hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-purple-50/50 dark:hover:from-blue-900/10 dark:hover:to-purple-900/10 transition-all duration-200">
                     <TableCell>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => toggleRowExpansion(message.id)}
-                        className="p-1 h-6 w-6"
+                        className="p-1 h-6 w-6 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors duration-200"
                       >
                         {expandedRows.has(message.id) ? (
-                          <ChevronUp className="h-4 w-4" />
+                          <ChevronUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                         ) : (
-                          <ChevronDown className="h-4 w-4" />
+                          <ChevronDown className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                         )}
                       </Button>
                     </TableCell>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
-                        <MessageCircle className="h-4 w-4" />
-                        {message.client_name}
+                        <div className="p-1.5 rounded-full bg-green-100 dark:bg-green-900/30">
+                          <User className="h-3 w-3 text-green-600 dark:text-green-400" />
+                        </div>
+                        <span className="text-foreground font-semibold">{message.client_name}</span>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Phone className="h-3 w-3" />
-                        {message.client_phone}
+                        <div className="p-1.5 rounded-full bg-blue-100 dark:bg-blue-900/30">
+                          <Phone className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <span className="text-muted-foreground">{message.client_phone}</span>
                       </div>
                     </TableCell>
-                    <TableCell>{message.instance_name}</TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1 text-sm">
-                        <Calendar className="h-3 w-3" />
-                        {format(new Date(message.scheduled_date), "dd/MM/yy HH:mm", {
-                          locale: ptBR,
-                        })}
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 rounded-full bg-purple-100 dark:bg-purple-900/30">
+                          <MessageCircle className="h-3 w-3 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <span className="font-medium text-purple-700 dark:text-purple-300">{message.instance_name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2 text-sm">
+                        <div className="p-1.5 rounded-full bg-orange-100 dark:bg-orange-900/30">
+                          <Calendar className="h-3 w-3 text-orange-600 dark:text-orange-400" />
+                        </div>
+                        <span className="font-medium text-orange-700 dark:text-orange-300">
+                          {format(new Date(message.scheduled_date), "dd/MM/yy HH:mm", {
+                            locale: ptBR,
+                          })}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {getStatusBadge(message.status)}
                         {message.requires_approval && (
-                          <Badge variant="destructive" className="text-xs">
+                          <Badge className="text-xs bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-600">
                             Aprovação
                           </Badge>
                         )}
@@ -499,8 +603,13 @@ export const AgendamentosList = ({
                     {isAdmin && (
                       <TableCell>
                         {message.profiles && (
-                          <div className="text-sm">
-                            {message.profiles.name}
+                          <div className="flex items-center gap-2">
+                            <div className="p-1.5 rounded-full bg-teal-100 dark:bg-teal-900/30">
+                              <User className="h-3 w-3 text-teal-600 dark:text-teal-400" />
+                            </div>
+                            <span className="text-sm font-medium text-teal-700 dark:text-teal-300">
+                              {message.profiles.name}
+                            </span>
                           </div>
                         )}
                       </TableCell>
@@ -512,7 +621,7 @@ export const AgendamentosList = ({
                             variant="ghost"
                             size="sm"
                             onClick={() => retryMessage(message.id)}
-                            className="text-blue-600 hover:text-blue-700 p-1 h-6 w-6"
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 p-1 h-6 w-6 transition-colors duration-200"
                             title="Tentar novamente"
                           >
                             🔄
@@ -523,7 +632,7 @@ export const AgendamentosList = ({
                             variant="ghost"
                             size="sm"
                             onClick={() => editMessage(message)}
-                            className="text-blue-600 hover:text-blue-700 p-1 h-6 w-6"
+                            className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 p-1 h-6 w-6 transition-colors duration-200"
                             title="Editar agendamento"
                           >
                             <Edit className="h-3 w-3" />
@@ -533,7 +642,7 @@ export const AgendamentosList = ({
                           variant="ghost"
                           size="sm"
                           onClick={() => deleteMessage(message.id)}
-                          className="text-destructive hover:text-destructive p-1 h-6 w-6"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 p-1 h-6 w-6 transition-colors duration-200"
                           title="Excluir agendamento"
                         >
                           <Trash2 className="h-3 w-3" />
@@ -545,43 +654,47 @@ export const AgendamentosList = ({
                   {/* Linha expandida - só renderiza se estiver expandida */}
                   {expandedRows.has(message.id) && (
                     <TableRow>
-                      <TableCell colSpan={isAdmin ? 8 : 7} className="bg-muted/30 p-0">
+                      <TableCell colSpan={isAdmin ? 8 : 7} className="bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-900/10 dark:to-purple-900/10 p-0 border-t-2 border-blue-200 dark:border-blue-700">
                         <div className="w-full p-6 space-y-6">
                           {/* Título da seção expandida */}
-                          <div className="border-b pb-3">
-                            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                              <MessageCircle className="h-5 w-5" />
-                              Informações do Agendamento
+                          <div className="border-b-2 border-gradient-to-r from-blue-200 to-purple-200 dark:from-blue-700 dark:to-purple-700 pb-4">
+                            <h3 className="text-lg font-bold text-foreground flex items-center gap-3">
+                              <div className="p-2 rounded-lg bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30">
+                                <MessageCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                              </div>
+                              Informações Detalhadas do Agendamento
                             </h3>
                           </div>
 
                           {/* Layout em grid para organizar as informações */}
                           <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {/* Informações de tempo */}
-                            <div className="space-y-3">
-                              <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
-                                <Clock className="h-4 w-4" />
+                            <div className="space-y-4">
+                              <h4 className="font-bold text-sm flex items-center gap-2 text-orange-700 dark:text-orange-300">
+                                <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/30">
+                                  <Clock className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                                </div>
                                 Datas e Horários
                               </h4>
                               <div className="space-y-3">
-                                <div className="p-3 bg-background border rounded-lg">
-                                  <div className="text-xs font-medium text-muted-foreground mb-1">Agendado para:</div>
-                                  <div className="text-sm font-medium">
+                                <div className="p-4 bg-white dark:bg-gray-800 border-l-4 border-orange-400 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                                  <div className="text-xs font-semibold text-orange-600 dark:text-orange-400 mb-2 uppercase tracking-wide">Agendado para:</div>
+                                  <div className="text-sm font-bold text-foreground">
                                     {format(new Date(message.scheduled_date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                                   </div>
                                 </div>
                                 
-                                <div className="p-3 bg-background border rounded-lg">
-                                  <div className="text-xs font-medium text-muted-foreground mb-1">Criado em:</div>
-                                  <div className="text-sm">
+                                <div className="p-4 bg-white dark:bg-gray-800 border-l-4 border-blue-400 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                                  <div className="text-xs font-semibold text-blue-600 dark:text-blue-400 mb-2 uppercase tracking-wide">Criado em:</div>
+                                  <div className="text-sm font-medium text-foreground">
                                     {format(new Date(message.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                                   </div>
                                 </div>
                                 
                                 {message.sent_at && (
-                                  <div className="p-3 bg-background border rounded-lg">
-                                    <div className="text-xs font-medium text-muted-foreground mb-1">Enviado em:</div>
-                                    <div className="text-sm">
+                                  <div className="p-4 bg-white dark:bg-gray-800 border-l-4 border-green-400 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                                    <div className="text-xs font-semibold text-green-600 dark:text-green-400 mb-2 uppercase tracking-wide">Enviado em:</div>
+                                    <div className="text-sm font-medium text-foreground">
                                       {format(new Date(message.sent_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                                     </div>
                                   </div>
@@ -591,16 +704,18 @@ export const AgendamentosList = ({
 
                             {/* Informações do criador (só se for admin) */}
                             {isAdmin && (
-                              <div className="space-y-3">
-                                <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
-                                  <User className="h-4 w-4" />
+                              <div className="space-y-4">
+                                <h4 className="font-bold text-sm flex items-center gap-2 text-teal-700 dark:text-teal-300">
+                                  <div className="p-2 rounded-lg bg-teal-100 dark:bg-teal-900/30">
+                                    <User className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+                                  </div>
                                   Criado por
                                 </h4>
-                                <div className="p-3 bg-background border rounded-lg">
+                                <div className="p-4 bg-white dark:bg-gray-800 border-l-4 border-teal-400 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
                                   {message.profiles ? (
                                     <>
-                                      <div className="text-sm font-medium">{message.profiles.name}</div>
-                                      <div className="text-xs text-muted-foreground">{message.profiles.email}</div>
+                                      <div className="text-sm font-bold text-foreground">{message.profiles.name}</div>
+                                      <div className="text-xs text-muted-foreground mt-1">{message.profiles.email}</div>
                                     </>
                                   ) : (
                                     <div className="text-sm text-muted-foreground">Informação não disponível</div>
@@ -610,22 +725,24 @@ export const AgendamentosList = ({
                             )}
 
                             {/* Status e instância */}
-                            <div className="space-y-3">
-                              <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
-                                <MessageCircle className="h-4 w-4" />
+                            <div className="space-y-4">
+                              <h4 className="font-bold text-sm flex items-center gap-2 text-purple-700 dark:text-purple-300">
+                                <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                                  <MessageCircle className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                                </div>
                                 Configurações
                               </h4>
                               <div className="space-y-3">
-                                <div className="p-3 bg-background border rounded-lg">
-                                  <div className="text-xs font-medium text-muted-foreground mb-1">Instância:</div>
-                                  <div className="text-sm font-medium">{message.instance_name}</div>
+                                <div className="p-4 bg-white dark:bg-gray-800 border-l-4 border-purple-400 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                                  <div className="text-xs font-semibold text-purple-600 dark:text-purple-400 mb-2 uppercase tracking-wide">Instância:</div>
+                                  <div className="text-sm font-bold text-foreground">{message.instance_name}</div>
                                 </div>
-                                <div className="p-3 bg-background border rounded-lg">
-                                  <div className="text-xs font-medium text-muted-foreground mb-1">Status:</div>
+                                <div className="p-4 bg-white dark:bg-gray-800 border-l-4 border-indigo-400 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                                  <div className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 mb-2 uppercase tracking-wide">Status:</div>
                                   <div className="flex items-center gap-2">
                                     {getStatusBadge(message.status)}
                                     {message.requires_approval && (
-                                      <Badge variant="destructive" className="text-xs">
+                                      <Badge className="text-xs bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-600">
                                         Requer Aprovação
                                       </Badge>
                                     )}
@@ -636,50 +753,57 @@ export const AgendamentosList = ({
                           </div>
 
                           {/* Informações do cliente */}
-                          <div className="space-y-3">
-                            <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
-                              <User className="h-4 w-4" />
+                          <div className="space-y-4">
+                            <h4 className="font-bold text-sm flex items-center gap-2 text-green-700 dark:text-green-300">
+                              <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
+                                <User className="h-4 w-4 text-green-600 dark:text-green-400" />
+                              </div>
                               Dados do Cliente
                             </h4>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div className="p-3 bg-background border rounded-lg">
-                                <div className="text-xs font-medium text-muted-foreground mb-1">Nome:</div>
-                                <div className="text-sm font-medium">{message.client_name}</div>
+                              <div className="p-4 bg-white dark:bg-gray-800 border-l-4 border-green-400 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                                <div className="text-xs font-semibold text-green-600 dark:text-green-400 mb-2 uppercase tracking-wide">Nome:</div>
+                                <div className="text-sm font-bold text-foreground">{message.client_name}</div>
                               </div>
-                              <div className="p-3 bg-background border rounded-lg">
-                                <div className="text-xs font-medium text-muted-foreground mb-1">Telefone:</div>
-                                <div className="text-sm font-medium">{message.client_phone}</div>
+                              <div className="p-4 bg-white dark:bg-gray-800 border-l-4 border-blue-400 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                                <div className="text-xs font-semibold text-blue-600 dark:text-blue-400 mb-2 uppercase tracking-wide">Telefone:</div>
+                                <div className="text-sm font-bold text-foreground">{message.client_phone}</div>
                               </div>
                             </div>
                           </div>
 
                           {/* Mensagem completa */}
-                          <div className="space-y-3">
-                            <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
-                              <MessageCircle className="h-4 w-4" />
+                          <div className="space-y-4">
+                            <h4 className="font-bold text-sm flex items-center gap-2 text-indigo-700 dark:text-indigo-300">
+                              <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/30">
+                                <MessageCircle className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                              </div>
                               Conteúdo da Mensagem
                             </h4>
-                            <div className="w-full p-4 bg-background border rounded-lg shadow-sm">
-                              <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.message_text}</p>
+                            <div className="w-full p-6 bg-white dark:bg-gray-800 border-l-4 border-indigo-400 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                              <p className="text-sm whitespace-pre-wrap leading-relaxed text-foreground">{message.message_text}</p>
                             </div>
                           </div>
 
                           {/* Mensagem de erro se houver */}
                           {message.error_message && (
-                            <div className="space-y-3">
-                              <h4 className="font-semibold text-sm text-destructive flex items-center gap-2">
-                                ❌ Erro no Envio
+                            <div className="space-y-4">
+                              <h4 className="font-bold text-sm flex items-center gap-2 text-red-700 dark:text-red-300">
+                                <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30">
+                                  <span className="text-red-600 dark:text-red-400">❌</span>
+                                </div>
+                                Erro no Envio
                               </h4>
-                              <div className="p-4 border border-destructive/20 bg-destructive/5 rounded-lg">
-                                <div className="space-y-2">
-                                  <p className="text-sm font-medium text-destructive">
+                              <div className="p-6 bg-white dark:bg-gray-800 border-l-4 border-red-400 rounded-lg shadow-sm">
+                                <div className="space-y-3">
+                                  <p className="text-sm font-bold text-red-700 dark:text-red-300">
                                     Falha no envio da mensagem
                                   </p>
-                                  <p className="text-sm text-destructive/80">
-                                    <strong>Motivo:</strong> {message.error_message}
+                                  <p className="text-sm text-foreground">
+                                    <strong className="text-red-600 dark:text-red-400">Motivo:</strong> {message.error_message}
                                   </p>
-                                  <p className="text-xs text-muted-foreground">
-                                    Tente novamente clicando no botão 🔄 ou verifique se o número de telefone está correto.
+                                  <p className="text-xs text-muted-foreground bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded border-l-2 border-yellow-400">
+                                    💡 <strong>Dica:</strong> Tente novamente clicando no botão 🔄 ou verifique se o número de telefone está correto.
                                   </p>
                                 </div>
                               </div>
