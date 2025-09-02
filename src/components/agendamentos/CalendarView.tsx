@@ -263,9 +263,11 @@ export const CalendarView = ({ refreshTrigger, selectedInstance, statusFilter }:
       <Card className="overflow-hidden shadow-lg border-0 bg-gradient-to-br from-white to-gray-50/50">
         <div className="grid grid-cols-8 border-b border-gray-200/60">
           {/* Time column header */}
-          <div className="p-4 border-r border-gray-200/60 bg-gradient-to-r from-gray-50 to-gray-100 font-semibold text-sm text-gray-600 flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            Horário
+          <div className="p-4 border-r border-gray-200/60 bg-gradient-to-r from-gray-50 to-gray-100 font-semibold text-sm text-gray-600 flex items-center justify-center">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Horário
+            </div>
           </div>
           
           {/* Day headers */}
@@ -278,7 +280,7 @@ export const CalendarView = ({ refreshTrigger, selectedInstance, statusFilter }:
                   : 'bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-150'
               }`}>
                 <div className="font-semibold text-xs uppercase tracking-wide">
-                  {format(day, 'EEE', { locale: ptBR })}
+                  {format(day, 'EEEE', { locale: ptBR })}
                 </div>
                 <div className={`text-xl font-bold mt-1 ${isToday ? 'text-blue-600' : 'text-gray-700'}`}>
                   {format(day, 'd')}
@@ -308,20 +310,20 @@ export const CalendarView = ({ refreshTrigger, selectedInstance, statusFilter }:
           ) : (
             timeSlots.map((time, timeIndex) => (
               <div key={time} className="grid grid-cols-8 border-b last:border-b-0 border-gray-100/80 min-h-[70px] hover:bg-gray-50/30 transition-colors">
-                {/* Time label */}
-                <div className="p-3 border-r border-gray-200/60 bg-gradient-to-r from-gray-50/80 to-white text-sm font-semibold text-gray-600 flex items-start justify-center pt-4">
+                {/* Time label - usando exatamente o mesmo padding que o header */}
+                <div className="p-4 border-r border-gray-200/60 bg-gradient-to-r from-gray-50/80 to-white text-sm font-semibold text-gray-600 flex items-center justify-center">
                   <span className="bg-white px-2 py-1 rounded-md shadow-sm border border-gray-200/80">
                     {time}
                   </span>
                 </div>
                 
-                {/* Day cells */}
+                {/* Day cells - usando exatamente o mesmo padding que o header */}
                 {weekDays.map((day, dayIndex) => {
                   const dayMessages = getMessagesForTimeSlot(day, time);
                   const isToday = isSameDay(day, new Date());
                   
                   return (
-                    <div key={dayIndex} className={`p-2 border-r last:border-r-0 border-gray-200/60 relative transition-colors ${
+                    <div key={dayIndex} className={`p-4 border-r last:border-r-0 border-gray-200/60 relative transition-colors ${
                       isToday ? 'bg-blue-50/30' : ''
                     }`}>
                       {dayMessages.map((message) => (
