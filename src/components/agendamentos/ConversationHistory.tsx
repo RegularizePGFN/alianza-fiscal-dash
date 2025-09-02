@@ -37,8 +37,11 @@ export const ConversationHistory = ({ contactPhone, instanceName }: Conversation
         }
       });
 
+      console.log('Function response:', { data, error });
+
       if (error) {
-        throw new Error(error.message);
+        console.error('Function error details:', error);
+        throw new Error(error.message || 'Erro na função');
       }
 
       if (data?.success && data?.messages) {
@@ -58,13 +61,23 @@ export const ConversationHistory = ({ contactPhone, instanceName }: Conversation
           });
         }
       } else {
-        throw new Error('Erro ao buscar histórico de conversas');
+        console.error('Unexpected response format:', data);
+        throw new Error(data?.error || 'Formato de resposta inesperado');
       }
     } catch (error: any) {
       console.error('Error fetching conversation history:', error);
+      
+      // Melhor tratamento de erro
+      let errorMessage = "Não foi possível buscar o histórico de conversas.";
+      if (error.message?.includes('Instance not found')) {
+        errorMessage = "Instância não encontrada ou não configurada.";
+      } else if (error.message?.includes('Evolution API')) {
+        errorMessage = "Erro na API do WhatsApp. Verifique a configuração da instância.";
+      }
+      
       toast({
         title: "Erro ao buscar histórico",
-        description: error.message || "Não foi possível buscar o histórico de conversas.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
