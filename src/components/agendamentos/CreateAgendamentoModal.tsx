@@ -339,7 +339,18 @@ export const CreateAgendamentoModal = ({
             status: 'pending',
           });
 
-        if (error) throw error;
+        if (error) {
+          // Se for erro de mensagem duplicada (constraint violation)
+          if (error.code === '23505' && error.message.includes('unique_scheduled_message')) {
+            toast({
+              title: "Mensagem duplicada",
+              description: "Já existe um agendamento idêntico para este contato na mesma data e horário.",
+              variant: "destructive",
+            });
+            return;
+          }
+          throw error;
+        }
 
         toast({
           title: "Agendamento criado",
