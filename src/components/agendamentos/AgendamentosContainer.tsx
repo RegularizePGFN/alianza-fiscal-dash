@@ -5,6 +5,11 @@ import { AgendamentosList } from "./AgendamentosList";
 import { CalendarView } from "./CalendarView";
 import { CreateAgendamentoModal } from "./CreateAgendamentoModal";
 import { AdminInstancesModal } from "./AdminInstancesModal";
+import { AgendamentosTypeSelector } from "./AgendamentosTypeSelector";
+import { RecurringSchedulesKanban } from "./RecurringSchedulesKanban";
+import { CreateRecurringScheduleModal } from "./CreateRecurringScheduleModal";
+import { Button } from "@/components/ui/button";
+import { Repeat } from "lucide-react";
 
 import { StatusTabs, MessageStatusFilter } from "./StatusTabs";
 import { UserRole } from "@/lib/types";
@@ -12,7 +17,9 @@ import { useScheduledMessagesProcessor } from "@/hooks/agendamentos/useScheduled
 
 export const AgendamentosContainer = () => {
   const { user } = useAuth();
+  const [agendamentoType, setAgendamentoType] = useState<'conventional' | 'recurring'>('conventional');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showCreateRecurringModal, setShowCreateRecurringModal] = useState(false);
   const [showInstancesModal, setShowInstancesModal] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [selectedInstance, setSelectedInstance] = useState<string | null>(null);
@@ -31,41 +38,90 @@ export const AgendamentosContainer = () => {
 
   return (
     <div className="space-y-6">
-      <AgendamentosHeader
-        onCreateAgendamento={() => setShowCreateModal(true)}
-        onManageInstances={() => setShowInstancesModal(true)}
-        showManageInstances={isAdmin}
-        onRefresh={handleRefresh}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
+      {/* Card de seleção de tipo de agendamento */}
+      <AgendamentosTypeSelector
+        activeType={agendamentoType}
+        onTypeChange={setAgendamentoType}
       />
 
-      
-      {viewMode === 'list' ? (
-        <AgendamentosList 
-          refreshTrigger={refreshTrigger} 
-          selectedInstance={selectedInstance}
-          statusFilter={currentStatusFilter}
-          onStatusChange={setCurrentStatusFilter}
-        />
-      ) : (
-        <StatusTabs
-          currentStatus={currentStatusFilter}
-          onStatusChange={setCurrentStatusFilter}
-          counts={calendarCounts}
-        >
-          <CalendarView
-            refreshTrigger={refreshTrigger}
-            selectedInstance={selectedInstance}
-            statusFilter={currentStatusFilter}
-            onCountsUpdate={setCalendarCounts}
+      {agendamentoType === 'conventional' ? (
+        <>
+          <AgendamentosHeader
+            onCreateAgendamento={() => setShowCreateModal(true)}
+            onManageInstances={() => setShowInstancesModal(true)}
+            showManageInstances={isAdmin}
+            onRefresh={handleRefresh}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
           />
-        </StatusTabs>
+
+          {viewMode === 'list' ? (
+            <AgendamentosList 
+              refreshTrigger={refreshTrigger} 
+              selectedInstance={selectedInstance}
+              statusFilter={currentStatusFilter}
+              onStatusChange={setCurrentStatusFilter}
+            />
+          ) : (
+            <StatusTabs
+              currentStatus={currentStatusFilter}
+              onStatusChange={setCurrentStatusFilter}
+              counts={calendarCounts}
+            >
+              <CalendarView
+                refreshTrigger={refreshTrigger}
+                selectedInstance={selectedInstance}
+                statusFilter={currentStatusFilter}
+                onCountsUpdate={setCalendarCounts}
+              />
+            </StatusTabs>
+          )}
+        </>
+      ) : (
+        <>
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-semibold">Agendamentos Recorrentes</h2>
+              <p className="text-muted-foreground">Gerencie mensagens recorrentes por etapa do funil</p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setShowCreateRecurringModal(true)}
+                className="flex items-center gap-2"
+              >
+                <Repeat className="h-4 w-4" />
+                Novo Agendamento Recorrente
+              </Button>
+              {isAdmin && (
+                <Button
+                  variant="outline"
+                  onClick={() => setShowInstancesModal(true)}
+                >
+                  Gerenciar Instâncias
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                onClick={handleRefresh}
+              >
+                Atualizar
+              </Button>
+            </div>
+          </div>
+          
+          <RecurringSchedulesKanban refreshTrigger={refreshTrigger} />
+        </>
       )}
 
       <CreateAgendamentoModal
         open={showCreateModal}
         onOpenChange={setShowCreateModal}
+        onSuccess={handleRefresh}
+      />
+
+      <CreateRecurringScheduleModal
+        open={showCreateRecurringModal}
+        onOpenChange={setShowCreateRecurringModal}
         onSuccess={handleRefresh}
       />
 

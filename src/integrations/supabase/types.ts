@@ -251,6 +251,75 @@ export type Database = {
         }
         Relationships: []
       }
+      recurring_message_schedules: {
+        Row: {
+          client_name: string
+          client_phone: string
+          created_at: string
+          day_of_month: number | null
+          day_of_week: number | null
+          end_date: string | null
+          execution_time: string
+          funnel_stage: Database["public"]["Enums"]["funnel_stage"]
+          id: string
+          instance_name: string
+          is_active: boolean
+          last_execution_date: string | null
+          message_text: string
+          next_execution_date: string | null
+          recurrence_interval: number
+          recurrence_type: Database["public"]["Enums"]["recurrence_type"]
+          start_date: string
+          total_executions: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_name: string
+          client_phone: string
+          created_at?: string
+          day_of_month?: number | null
+          day_of_week?: number | null
+          end_date?: string | null
+          execution_time: string
+          funnel_stage?: Database["public"]["Enums"]["funnel_stage"]
+          id?: string
+          instance_name: string
+          is_active?: boolean
+          last_execution_date?: string | null
+          message_text: string
+          next_execution_date?: string | null
+          recurrence_interval?: number
+          recurrence_type: Database["public"]["Enums"]["recurrence_type"]
+          start_date: string
+          total_executions?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_name?: string
+          client_phone?: string
+          created_at?: string
+          day_of_month?: number | null
+          day_of_week?: number | null
+          end_date?: string | null
+          execution_time?: string
+          funnel_stage?: Database["public"]["Enums"]["funnel_stage"]
+          id?: string
+          instance_name?: string
+          is_active?: boolean
+          last_execution_date?: string | null
+          message_text?: string
+          next_execution_date?: string | null
+          recurrence_interval?: number
+          recurrence_type?: Database["public"]["Enums"]["recurrence_type"]
+          start_date?: string
+          total_executions?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       recurring_schedules: {
         Row: {
           client_name: string
@@ -503,7 +572,15 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      funnel_stage:
+        | "prospeccao"
+        | "qualificacao"
+        | "proposta_enviada"
+        | "negociacao"
+        | "venda_realizada"
+        | "cobranca"
+        | "pos_venda"
+      recurrence_type: "daily" | "weekly" | "monthly"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -630,6 +707,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      funnel_stage: [
+        "prospeccao",
+        "qualificacao",
+        "proposta_enviada",
+        "negociacao",
+        "venda_realizada",
+        "cobranca",
+        "pos_venda",
+      ],
+      recurrence_type: ["daily", "weekly", "monthly"],
+    },
   },
 } as const
