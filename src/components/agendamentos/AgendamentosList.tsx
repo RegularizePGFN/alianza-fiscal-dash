@@ -596,7 +596,7 @@ export const AgendamentosList = ({
                         <div className="p-1.5 rounded-full bg-purple-100 dark:bg-purple-900/30">
                           <MessageCircle className="h-3 w-3 text-purple-600 dark:text-purple-400" />
                         </div>
-                        <span className="font-medium text-purple-700 dark:text-purple-300">{message.instance_name}</span>
+                        <span className="font-medium text-foreground">{message.instance_name}</span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -617,11 +617,11 @@ export const AgendamentosList = ({
                         <div className="p-1.5 rounded-full bg-orange-100 dark:bg-orange-900/30">
                           <Calendar className="h-3 w-3 text-orange-600 dark:text-orange-400" />
                         </div>
-                        <span className="font-medium text-orange-700 dark:text-orange-300">
-                          {format(new Date(message.scheduled_date), "dd/MM/yy HH:mm", {
-                            locale: ptBR,
-                          })}
-                        </span>
+                         <span className="font-medium text-foreground">
+                           {format(new Date(message.scheduled_date), "dd/MM/yy HH:mm", {
+                             locale: ptBR,
+                           })}
+                         </span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -641,9 +641,9 @@ export const AgendamentosList = ({
                             <div className="p-1.5 rounded-full bg-teal-100 dark:bg-teal-900/30">
                               <User className="h-3 w-3 text-teal-600 dark:text-teal-400" />
                             </div>
-                            <span className="text-sm font-medium text-teal-700 dark:text-teal-300">
-                              {message.profiles.name}
-                            </span>
+                             <span className="text-sm font-medium text-foreground">
+                               {message.profiles.name}
+                             </span>
                           </div>
                         )}
                       </TableCell>
@@ -704,7 +704,7 @@ export const AgendamentosList = ({
                           <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {/* Informações de tempo */}
                             <div className="space-y-4">
-                              <h4 className="font-bold text-sm flex items-center gap-2 text-orange-700 dark:text-orange-300">
+                              <h4 className="font-bold text-sm flex items-center gap-2 text-foreground">
                                 <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/30">
                                   <Clock className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                                 </div>
@@ -739,7 +739,7 @@ export const AgendamentosList = ({
                             {/* Informações do criador (só se for admin) */}
                             {isAdmin && (
                               <div className="space-y-4">
-                                <h4 className="font-bold text-sm flex items-center gap-2 text-teal-700 dark:text-teal-300">
+                                <h4 className="font-bold text-sm flex items-center gap-2 text-foreground">
                                   <div className="p-2 rounded-lg bg-teal-100 dark:bg-teal-900/30">
                                     <User className="h-4 w-4 text-teal-600 dark:text-teal-400" />
                                   </div>
@@ -760,7 +760,7 @@ export const AgendamentosList = ({
 
                             {/* Status e instância */}
                             <div className="space-y-4">
-                              <h4 className="font-bold text-sm flex items-center gap-2 text-purple-700 dark:text-purple-300">
+                              <h4 className="font-bold text-sm flex items-center gap-2 text-foreground">
                                 <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
                                   <MessageCircle className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                                 </div>
@@ -788,7 +788,7 @@ export const AgendamentosList = ({
 
                           {/* Informações do cliente */}
                           <div className="space-y-4">
-                            <h4 className="font-bold text-sm flex items-center gap-2 text-green-700 dark:text-green-300">
+                            <h4 className="font-bold text-sm flex items-center gap-2 text-foreground">
                               <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
                                 <User className="h-4 w-4 text-green-600 dark:text-green-400" />
                               </div>
@@ -808,7 +808,7 @@ export const AgendamentosList = ({
 
                           {/* Mensagem completa */}
                           <div className="space-y-4">
-                            <h4 className="font-bold text-sm flex items-center gap-2 text-indigo-700 dark:text-indigo-300">
+                            <h4 className="font-bold text-sm flex items-center gap-2 text-foreground">
                               <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/30">
                                 <MessageCircle className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                               </div>
@@ -822,7 +822,7 @@ export const AgendamentosList = ({
                           {/* Mensagem de erro se houver */}
                           {message.error_message && (
                             <div className="space-y-4">
-                              <h4 className="font-bold text-sm flex items-center gap-2 text-red-700 dark:text-red-300">
+                              <h4 className="font-bold text-sm flex items-center gap-2 text-foreground">
                                 <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30">
                                   <span className="text-red-600 dark:text-red-400">❌</span>
                                 </div>
@@ -896,18 +896,18 @@ export const AgendamentosList = ({
                     size="sm"
                     onClick={() => setCurrentPage(1)}
                     disabled={currentPage === 1}
-                    className="h-8 w-8 p-0"
+                    className="h-8 px-3"
                   >
-                    ⏮
+                    Primeira
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setCurrentPage(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="h-8 w-8 p-0"
+                    className="h-8 px-3"
                   >
-                    ⏪
+                    Anterior
                   </Button>
                   
                   {/* Páginas */}
@@ -946,18 +946,18 @@ export const AgendamentosList = ({
                     size="sm"
                     onClick={() => setCurrentPage(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="h-8 w-8 p-0"
+                    className="h-8 px-3"
                   >
-                    ⏩
+                    Próxima
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setCurrentPage(totalPages)}
                     disabled={currentPage === totalPages}
-                    className="h-8 w-8 p-0"
+                    className="h-8 px-3"
                   >
-                    ⏭
+                    Última
                   </Button>
                 </div>
               </div>
