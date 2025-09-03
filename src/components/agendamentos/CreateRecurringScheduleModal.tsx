@@ -15,6 +15,7 @@ import { CalendarIcon, Repeat } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { UserRole } from "@/lib/types";
+import { FunnelStage, FUNNEL_STAGES } from "@/lib/types/recurringSchedules";
 
 interface CreateRecurringScheduleModalProps {
   open: boolean;
@@ -42,14 +43,14 @@ export const CreateRecurringScheduleModal = ({
   const [clientPhone, setClientPhone] = useState("");
   const [messageText, setMessageText] = useState("");
   const [selectedInstance, setSelectedInstance] = useState("");
+  const [funnelStage, setFunnelStage] = useState<FunnelStage>('prospeccao');
+  const [executionTime, setExecutionTime] = useState("09:00");
   const [recurrenceType, setRecurrenceType] = useState<'daily' | 'weekly' | 'monthly'>('monthly');
   const [recurrenceInterval, setRecurrenceInterval] = useState(1);
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
-  const [totalOccurrences, setTotalOccurrences] = useState<number>();
   const [dayOfMonth, setDayOfMonth] = useState<number>(1);
   const [dayOfWeek, setDayOfWeek] = useState<number>(1);
-  const [endType, setEndType] = useState<'date' | 'occurrences'>('date');
 
   const isAdmin = user?.role === UserRole.ADMIN;
 
@@ -141,20 +142,21 @@ export const CreateRecurringScheduleModal = ({
         client_phone: clientPhone,
         message_text: messageText,
         instance_name: selectedInstance,
+        funnel_stage: funnelStage,
+        execution_time: executionTime,
         recurrence_type: recurrenceType,
         recurrence_interval: recurrenceInterval,
         start_date: format(startDate, 'yyyy-MM-dd'),
-        end_date: endType === 'date' && endDate ? format(endDate, 'yyyy-MM-dd') : null,
-        total_occurrences: endType === 'occurrences' ? totalOccurrences : null,
+        end_date: endDate ? format(endDate, 'yyyy-MM-dd') : null,
         day_of_month: recurrenceType === 'monthly' ? dayOfMonth : null,
         day_of_week: recurrenceType === 'weekly' ? dayOfWeek : null,
         next_execution_date: format(nextExecutionDate, 'yyyy-MM-dd'),
         is_active: true,
-        executions_count: 0
+        total_executions: 0
       };
 
       const { error } = await supabase
-        .from('recurring_schedules')
+        .from('recurring_message_schedules')
         .insert([scheduleData]);
 
       if (error) throw error;
@@ -169,14 +171,14 @@ export const CreateRecurringScheduleModal = ({
       setClientPhone("");
       setMessageText("");
       setSelectedInstance("");
+      setFunnelStage('prospeccao');
+      setExecutionTime("09:00");
       setRecurrenceType('monthly');
       setRecurrenceInterval(1);
       setStartDate(undefined);
       setEndDate(undefined);
-      setTotalOccurrences(undefined);
       setDayOfMonth(1);
       setDayOfWeek(1);
-      setEndType('date');
 
       onSuccess();
       onOpenChange(false);
@@ -252,6 +254,41 @@ export const CreateRecurringScheduleModal = ({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="funnelStage">Etapa do Funil</Label>
+              <Select value={funnelStage} onValueChange={(value: FunnelStage) => setFunnelStage(value)} required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a etapa do funil" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(FUNNEL_STAGES).map(([key, config]) => (
+                    <SelectItem key={key} value={key}>
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-3 h-3 rounded-full" 
+                          style={{ backgroundColor: config.color }}
+                        />
+                        {config.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="executionTime">Horário de Execução</Label>
+              <Input
+                id="executionTime"
+                type="time"
+                value={executionTime}
+                onChange={(e) => setExecutionTime(e.target.value)}
+                required
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -369,57 +406,32 @@ export const CreateRecurringScheduleModal = ({
               </Popover>
             </div>
 
-            <div className="space-y-4">
-              <Label>Término</Label>
-              <Select value={endType} onValueChange={(value: any) => setEndType(value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="date">Por data</SelectItem>
-                  <SelectItem value="occurrences">Por número de execuções</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {endType === 'date' && (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !endDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {endDate ? format(endDate, "dd/MM/yyyy", { locale: ptBR }) : "Selecione a data final"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={endDate}
-                      onSelect={setEndDate}
-                      initialFocus
-                      locale={ptBR}
-                      disabled={(date) => startDate ? date <= startDate : false}
-                    />
-                  </PopoverContent>
-                </Popover>
-              )}
-
-              {endType === 'occurrences' && (
-                <div className="space-y-2">
-                  <Input
-                    type="number"
-                    min="1"
-                    max="365"
-                    value={totalOccurrences || ''}
-                    onChange={(e) => setTotalOccurrences(Number(e.target.value))}
-                    placeholder="Número de execuções"
+            <div className="space-y-2">
+              <Label>Data de Término (Opcional)</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !endDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {endDate ? format(endDate, "dd/MM/yyyy", { locale: ptBR }) : "Selecione a data final (opcional)"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={endDate}
+                    onSelect={setEndDate}
+                    initialFocus
+                    locale={ptBR}
+                    disabled={(date) => startDate ? date <= startDate : false}
                   />
-                </div>
-              )}
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 
