@@ -83,6 +83,8 @@ export const AdminInstancesModal = ({
 
   const fetchData = async () => {
     try {
+      console.log('🔍 AdminInstancesModal: Iniciando fetchData...');
+      
       // Buscar instâncias com usuários associados
       const { data: instancesData, error: instancesError } = await supabase
         .from('user_whatsapp_instances')
@@ -99,6 +101,9 @@ export const AdminInstancesModal = ({
         `)
         .order('created_at', { ascending: false });
 
+      console.log('📊 AdminInstancesModal: instancesData recebida:', instancesData);
+      console.log('❗ AdminInstancesModal: instancesError:', instancesError);
+
       if (instancesError) throw instancesError;
 
       // Buscar usuários
@@ -106,6 +111,9 @@ export const AdminInstancesModal = ({
         .from('profiles')
         .select('id, name, email')
         .order('name');
+
+      console.log('👥 AdminInstancesModal: usersData recebida:', usersData);
+      console.log('❗ AdminInstancesModal: usersError:', usersError);
 
       if (usersError) throw usersError;
 
@@ -119,6 +127,12 @@ export const AdminInstancesModal = ({
           access_type: access.access_type
         })) || [];
 
+        console.log(`🔧 AdminInstancesModal: Processando instância ${instance.instance_name}:`, {
+          mainUser,
+          instanceUsers,
+          access_count: instance.user_instance_access?.length || 0
+        });
+
         return {
           ...instance,
           user_name: mainUser?.name,
@@ -127,10 +141,12 @@ export const AdminInstancesModal = ({
         };
       }) || [];
 
+      console.log('✅ AdminInstancesModal: processedInstances final:', processedInstances);
+      
       setInstances(processedInstances);
       setUsers(usersData || []);
     } catch (error: any) {
-      console.error('Error fetching data:', error);
+      console.error('❌ AdminInstancesModal: Error fetching data:', error);
       toast({
         title: "Erro ao carregar dados",
         description: error.message,
