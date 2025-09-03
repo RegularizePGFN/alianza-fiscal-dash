@@ -293,7 +293,10 @@ export const RecurringSchedulesList = ({
   };
 
   const getUniqueInstances = () => {
-    return [...new Set(allSchedules.map(schedule => schedule.instance_name))].sort();
+    return [...new Set(allSchedules
+      .map(schedule => schedule.instance_name)
+      .filter(name => name && name.trim() !== '')
+    )].sort();
   };
 
   useEffect(() => {

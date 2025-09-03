@@ -331,7 +331,10 @@ export const AgendamentosList = ({
   };
 
   const getUniqueInstances = () => {
-    return [...new Set(allMessages.map(msg => msg.instance_name))].sort();
+    return [...new Set(allMessages
+      .map(msg => msg.instance_name)
+      .filter(name => name && name.trim() !== '')
+    )].sort();
   };
 
   useEffect(() => {
