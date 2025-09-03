@@ -161,21 +161,29 @@ async function checkIfShouldExecute(
   today: string, 
   currentTime: string
 ): Promise<boolean> {
-  // Check if execution time matches (within 1 minute tolerance)
+  console.log(`Checking schedule ${schedule.id} for ${schedule.client_name}`);
+  console.log(`Schedule time: ${schedule.execution_time}, Current time: ${currentTime}`);
+  
+  // Check if execution time matches (within 2 minute tolerance)
   const scheduleTime = schedule.execution_time;
   const [scheduleHour, scheduleMinute] = scheduleTime.split(':').map(Number);
   const [currentHour, currentMinute] = currentTime.split(':').map(Number);
   
   const scheduleMinutes = scheduleHour * 60 + scheduleMinute;
   const currentMinutes = currentHour * 60 + currentMinute;
+  const timeDiff = Math.abs(currentMinutes - scheduleMinutes);
   
-  // Allow 1 minute tolerance
-  if (Math.abs(currentMinutes - scheduleMinutes) > 1) {
+  console.log(`Time difference: ${timeDiff} minutes`);
+  
+  // Allow 2 minute tolerance
+  if (timeDiff > 2) {
+    console.log(`Time not in range. Schedule: ${scheduleTime}, Current: ${currentTime}`);
     return false;
   }
 
   // Check if already executed today
   if (schedule.last_execution_date === today) {
+    console.log(`Already executed today: ${schedule.last_execution_date}`);
     return false;
   }
 
@@ -183,26 +191,39 @@ async function checkIfShouldExecute(
   const todayDate = new Date(today);
   
   const daysSinceStart = Math.floor((todayDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  console.log(`Days since start: ${daysSinceStart}`);
   
   switch (schedule.recurrence_type) {
     case 'daily':
       // Check if it's been the right number of days since start
-      return daysSinceStart >= 0 && daysSinceStart % schedule.recurrence_interval === 0;
+      const dailyResult = daysSinceStart >= 0 && daysSinceStart % schedule.recurrence_interval === 0;
+      console.log(`Daily check: ${dailyResult} (interval: ${schedule.recurrence_interval})`);
+      return dailyResult;
       
     case 'weekly':
       // Check if it's the right day of the week and interval
       const weeksSinceStart = Math.floor(daysSinceStart / 7);
-      return todayDate.getDay() === schedule.day_of_week && 
-             weeksSinceStart % schedule.recurrence_interval === 0;
+      const todayWeekDay = todayDate.getDay();
+      const scheduleWeekDay = schedule.day_of_week;
+      const weeklyDayMatch = todayWeekDay === scheduleWeekDay;
+      const weeklyIntervalMatch = weeksSinceStart % schedule.recurrence_interval === 0;
+      
+      console.log(`Weekly check - Today: ${todayWeekDay}, Schedule: ${scheduleWeekDay}, Day match: ${weeklyDayMatch}`);
+      console.log(`Weekly check - Weeks since start: ${weeksSinceStart}, Interval: ${schedule.recurrence_interval}, Interval match: ${weeklyIntervalMatch}`);
+      
+      return weeklyDayMatch && weeklyIntervalMatch;
              
     case 'monthly':
       // Check if it's the right day of the month and interval
       const monthsSinceStart = (todayDate.getFullYear() - startDate.getFullYear()) * 12 + 
                               (todayDate.getMonth() - startDate.getMonth());
-      return todayDate.getDate() === schedule.day_of_month && 
-             monthsSinceStart % schedule.recurrence_interval === 0;
+      const monthlyResult = todayDate.getDate() === schedule.day_of_month && 
+                           monthsSinceStart % schedule.recurrence_interval === 0;
+      console.log(`Monthly check: ${monthlyResult} (months since start: ${monthsSinceStart}, interval: ${schedule.recurrence_interval})`);
+      return monthlyResult;
              
     default:
+      console.log(`Unknown recurrence type: ${schedule.recurrence_type}`);
       return false;
   }
 }
