@@ -81,7 +81,7 @@ export const AgendamentosContainer = () => {
         <>
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-2xl font-semibold">Agendamentos Recorrentes</h2>
+              <h2 className="text-lg font-medium">Agendamentos Recorrentes</h2>
               <p className="text-muted-foreground">Gerencie mensagens recorrentes por etapa do funil</p>
             </div>
             <div className="flex gap-2">

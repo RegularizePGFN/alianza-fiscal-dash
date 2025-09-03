@@ -66,7 +66,7 @@ export const AgendamentosHeader = ({
             <MessageCircle className="h-8 w-8 text-blue-600 dark:text-blue-400" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Agendamentos</h1>
+            <h1 className="text-lg font-semibold text-foreground">Agendamentos</h1>
             <p className="text-muted-foreground">
               Programe mensagens do WhatsApp para seus clientes
             </p>
