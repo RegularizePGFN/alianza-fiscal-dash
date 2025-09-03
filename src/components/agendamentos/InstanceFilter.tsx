@@ -32,25 +32,28 @@ export const InstanceFilter = ({
   const isAdmin = user?.role === UserRole.ADMIN;
 
   const fetchInstancesWithCounts = async () => {
-    if (!user || !isAdmin) return;
+    if (!user) return;
 
     try {
-      // Buscar todas as instâncias ativas com usuários que têm acesso
-      const { data: instancesData, error: instancesError } = await supabase
+      setLoading(true);
+
+      let instancesQuery = supabase
         .from('user_whatsapp_instances')
-        .select(`
-          instance_name,
-          user_id,
-          user_instance_access (
-            id,
-            user_id,
-            profiles (
-              id,
-              name
-            )
-          )
-        `)
+        .select('instance_name, user_id')
         .eq('is_active', true);
+
+      // Se não for admin, filtrar apenas instâncias com acesso do usuário
+      if (!isAdmin) {
+        const { data: userAccess } = await supabase
+          .from('user_instance_access')
+          .select('instance_id')
+          .eq('user_id', user.id);
+
+        const instanceIds = userAccess?.map(access => access.instance_id) || [];
+        instancesQuery = instancesQuery.in('id', instanceIds);
+      }
+
+      const { data: instancesData, error: instancesError } = await instancesQuery;
 
       if (instancesError) throw instancesError;
 
@@ -58,6 +61,13 @@ export const InstanceFilter = ({
         setInstances([]);
         return;
       }
+
+      // Buscar informações dos usuários
+      const userIds = [...new Set(instancesData.map(inst => inst.user_id))];
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, name')
+        .in('id', userIds);
 
       // Buscar contagem de mensagens por instância
       const { data: messagesCount, error: messagesError } = await supabase
@@ -75,17 +85,11 @@ export const InstanceFilter = ({
 
       // Combinar dados
       const instancesWithCounts = instancesData.map(instance => {
-        const usersWithAccess = instance.user_instance_access || [];
-        const userNames = usersWithAccess
-          .map((access: any) => access.profiles?.name)
-          .filter(name => name)
-          .join(', ');
+        const profile = profilesData?.find(p => p.id === instance.user_id);
         
         return {
           instance_name: instance.instance_name,
-          user_name: usersWithAccess.length > 0 
-            ? `${usersWithAccess.length} usuário${usersWithAccess.length > 1 ? 's' : ''} com acesso`
-            : '0 usuários com acesso',
+          user_name: profile?.name || 'Usuário não encontrado',
           user_id: instance.user_id,
           message_count: messageCounts[instance.instance_name] || 0,
         };

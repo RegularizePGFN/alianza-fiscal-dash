@@ -83,27 +83,9 @@ export const AdminInstancesModal = ({
 
   const fetchData = async () => {
     try {
-      // Buscar instâncias com usuários associados
-      const { data: instancesData, error: instancesError } = await supabase
-        .from('user_whatsapp_instances')
-        .select(`
-          *,
-          user_instance_access (
-            id,
-            user_id,
-            access_type,
-            profiles (
-              id,
-              name,
-              email
-            )
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (instancesError) throw instancesError;
-
-      // Buscar usuários
+      setLoading(true);
+      
+      // Buscar usuários primeiro
       const { data: usersData, error: usersError } = await supabase
         .from('profiles')
         .select('id, name, email')
@@ -111,22 +93,55 @@ export const AdminInstancesModal = ({
 
       if (usersError) throw usersError;
 
-      // Processar dados das instâncias
-      const processedInstances = instancesData?.map(instance => {
-        const instanceUsers = instance.user_instance_access?.map((access: any) => ({
-          user_id: access.user_id,
-          name: access.profiles?.name || 'Usuário não encontrado',
-          email: access.profiles?.email || '',
-          access_type: access.access_type
-        })) || [];
+      // Buscar instâncias
+      const { data: instancesData, error: instancesError } = await supabase
+        .from('user_whatsapp_instances')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-        return {
-          ...instance,
-          users: instanceUsers,
-        };
-      }) || [];
-      
-      setInstances(processedInstances);
+      if (instancesError) throw instancesError;
+
+      // Buscar acessos de usuário para cada instância
+      const instancesWithUsers = await Promise.all(
+        (instancesData || []).map(async (instance) => {
+          const { data: accessData } = await supabase
+            .from('user_instance_access')
+            .select('user_id, access_type')
+            .eq('instance_id', instance.id);
+
+          const userIds = accessData?.map(access => access.user_id) || [];
+          
+          let users: InstanceUser[] = [];
+          if (userIds.length > 0) {
+            const { data: profilesData } = await supabase
+              .from('profiles')
+              .select('id, name, email')
+              .in('id', userIds);
+
+            users = (accessData || []).map(access => {
+              const profile = profilesData?.find(p => p.id === access.user_id);
+              return {
+                user_id: access.user_id,
+                name: profile?.name || 'Usuário não encontrado',
+                email: profile?.email || '',
+                access_type: access.access_type
+              };
+            });
+          }
+
+          // Encontrar o usuário principal (owner da instância)
+          const mainUser = usersData?.find(u => u.id === instance.user_id);
+
+          return {
+            ...instance,
+            user_name: mainUser?.name,
+            user_email: mainUser?.email,
+            users
+          };
+        })
+      );
+
+      setInstances(instancesWithUsers);
       setUsers(usersData || []);
     } catch (error: any) {
       console.error('Error fetching data:', error);
