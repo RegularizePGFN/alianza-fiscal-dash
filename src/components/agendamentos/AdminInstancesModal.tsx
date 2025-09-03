@@ -595,6 +595,7 @@ export const AdminInstancesModal = ({
                         </h4>
                         <div className="flex items-center gap-2">
                           <Select
+                            value=""
                             onValueChange={(userId) => {
                               if (userId) {
                                 addUserToInstance(instance.id, userId);
