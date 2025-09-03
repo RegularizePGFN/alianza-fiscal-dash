@@ -164,23 +164,6 @@ async function checkIfShouldExecute(
   console.log(`Checking schedule ${schedule.id} for ${schedule.client_name}`);
   console.log(`Schedule time: ${schedule.execution_time}, Current time: ${currentTime}`);
   
-  // Check if execution time matches (within 2 minute tolerance)
-  const scheduleTime = schedule.execution_time;
-  const [scheduleHour, scheduleMinute] = scheduleTime.split(':').map(Number);
-  const [currentHour, currentMinute] = currentTime.split(':').map(Number);
-  
-  const scheduleMinutes = scheduleHour * 60 + scheduleMinute;
-  const currentMinutes = currentHour * 60 + currentMinute;
-  const timeDiff = Math.abs(currentMinutes - scheduleMinutes);
-  
-  console.log(`Time difference: ${timeDiff} minutes`);
-  
-  // Allow 2 minute tolerance
-  if (timeDiff > 2) {
-    console.log(`Time not in range. Schedule: ${scheduleTime}, Current: ${currentTime}`);
-    return false;
-  }
-
   // Check if already executed today
   if (schedule.last_execution_date === today) {
     console.log(`Already executed today: ${schedule.last_execution_date}`);
@@ -193,33 +176,54 @@ async function checkIfShouldExecute(
   const daysSinceStart = Math.floor((todayDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
   console.log(`Days since start: ${daysSinceStart}`);
   
+  // Verificar se hoje é um dia válido para execução baseado no tipo de recorrência
+  let shouldExecuteToday = false;
+  
   switch (schedule.recurrence_type) {
     case 'daily':
-      // Para diário, executa todos os dias a partir da data de início
-      const dailyResult = daysSinceStart >= 0;
-      console.log(`Daily check: ${dailyResult} (days since start: ${daysSinceStart})`);
-      return dailyResult;
+      shouldExecuteToday = daysSinceStart >= 0;
+      console.log(`Daily check: ${shouldExecuteToday} (days since start: ${daysSinceStart})`);
+      break;
       
     case 'weekly':
-      // Para semanal, executa apenas no dia da semana correto, toda semana
       const todayWeekDay = todayDate.getDay();
       const scheduleWeekDay = schedule.day_of_week;
-      const weeklyDayMatch = todayWeekDay === scheduleWeekDay;
+      shouldExecuteToday = todayWeekDay === scheduleWeekDay && daysSinceStart >= 0;
       
-      console.log(`Weekly check - Today: ${todayWeekDay}, Schedule: ${scheduleWeekDay}, Day match: ${weeklyDayMatch}`);
-      
-      return weeklyDayMatch && daysSinceStart >= 0;
+      console.log(`Weekly check - Today: ${todayWeekDay}, Schedule: ${scheduleWeekDay}, Should execute: ${shouldExecuteToday}`);
+      break;
              
     case 'monthly':
-      // Para mensal, executa apenas no dia do mês correto, todo mês
       const monthlyDayMatch = todayDate.getDate() === schedule.day_of_month;
-      console.log(`Monthly check - Today: ${todayDate.getDate()}, Schedule: ${schedule.day_of_month}, Day match: ${monthlyDayMatch}`);
-      return monthlyDayMatch && daysSinceStart >= 0;
+      shouldExecuteToday = monthlyDayMatch && daysSinceStart >= 0;
+      console.log(`Monthly check - Today: ${todayDate.getDate()}, Schedule: ${schedule.day_of_month}, Should execute: ${shouldExecuteToday}`);
+      break;
              
     default:
       console.log(`Unknown recurrence type: ${schedule.recurrence_type}`);
       return false;
   }
+  
+  if (!shouldExecuteToday) {
+    console.log(`Today is not a valid execution day for this schedule`);
+    return false;
+  }
+
+  // Verificar se o horário já passou (executa se ainda não executou hoje e o horário já chegou)
+  const scheduleTime = schedule.execution_time;
+  const [scheduleHour, scheduleMinute] = scheduleTime.split(':').map(Number);
+  const [currentHour, currentMinute] = currentTime.split(':').map(Number);
+  
+  const scheduleMinutes = scheduleHour * 60 + scheduleMinute;
+  const currentMinutes = currentHour * 60 + currentMinute;
+  
+  console.log(`Time check - Schedule: ${scheduleMinutes} minutes, Current: ${currentMinutes} minutes`);
+  
+  // Se o horário atual é maior ou igual ao horário agendado, executa
+  const shouldExecuteNow = currentMinutes >= scheduleMinutes;
+  
+  console.log(`Should execute now: ${shouldExecuteNow}`);
+  return shouldExecuteNow;
 }
 
 function calculateNextExecutionDate(schedule: RecurringSchedule, currentDate: string): string {
