@@ -69,6 +69,8 @@ export const AgendamentosList = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [instanceFilter, setInstanceFilter] = useState<string>('all');
   const [editingMessage, setEditingMessage] = useState<ScheduledMessage | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const isAdmin = user?.role === UserRole.ADMIN;
 
@@ -335,7 +337,18 @@ export const AgendamentosList = ({
   useEffect(() => {
     const processedMessages = filterAndSortMessages(allMessages, statusFilter);
     setMessages(processedMessages);
+    setCurrentPage(1); // Reset página ao mudar filtros
   }, [allMessages, statusFilter, sortField, sortOrder, searchTerm, instanceFilter]);
+
+  // Aplicar paginação
+  const getPaginatedMessages = (messages: ScheduledMessage[]) => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return messages.slice(startIndex, endIndex);
+  };
+
+  const totalPages = Math.ceil(messages.length / itemsPerPage);
+  const paginatedMessages = getPaginatedMessages(messages);
 
   if (loading) {
     return (
@@ -544,7 +557,7 @@ export const AgendamentosList = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {messages.map((message) => (
+              {paginatedMessages.map((message) => (
                 <React.Fragment key={message.id}>
                   {/* Linha principal do agendamento */}
                   <TableRow className="hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-purple-50/50 dark:hover:from-blue-900/10 dark:hover:to-purple-900/10 transition-all duration-200">
@@ -840,6 +853,118 @@ export const AgendamentosList = ({
           </Table>
         </CardContent>
       </Card>
+
+      {/* Paginação */}
+      {messages.length > 0 && (
+        <Card className="hover:shadow-md transition-all duration-300 border-opacity-50">
+          <CardContent className="py-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              {/* Informações da paginação */}
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>
+                  Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, messages.length)} de {messages.length} agendamentos
+                </span>
+              </div>
+
+              {/* Controles de paginação */}
+              <div className="flex items-center gap-4">
+                {/* Seletor de itens por página */}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Itens por página:</span>
+                  <Select 
+                    value={itemsPerPage.toString()} 
+                    onValueChange={(value) => {
+                      setItemsPerPage(Number(value));
+                      setCurrentPage(1);
+                    }}
+                  >
+                    <SelectTrigger className="w-20 h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Botões de navegação */}
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                    className="h-8 w-8 p-0"
+                  >
+                    ⏮
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="h-8 w-8 p-0"
+                  >
+                    ⏪
+                  </Button>
+                  
+                  {/* Páginas */}
+                  <div className="flex items-center gap-1 mx-2">
+                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                      const pageNum = i + 1;
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={currentPage === pageNum ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(pageNum)}
+                          className="h-8 w-8 p-0"
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+                    {totalPages > 5 && (
+                      <>
+                        <span className="text-muted-foreground">...</span>
+                        <Button
+                          variant={currentPage === totalPages ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(totalPages)}
+                          className="h-8 w-8 p-0"
+                        >
+                          {totalPages}
+                        </Button>
+                      </>
+                    )}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="h-8 w-8 p-0"
+                  >
+                    ⏩
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
+                    className="h-8 w-8 p-0"
+                  >
+                    ⏭
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 

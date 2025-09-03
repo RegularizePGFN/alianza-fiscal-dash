@@ -26,18 +26,6 @@ export const StatusTabs = ({
       <Tabs value={currentStatus} onValueChange={onStatusChange as (value: string) => void}>
         <TabsList className="grid w-full grid-cols-3 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-1 border border-blue-200/50 dark:border-blue-700/50">
           <TabsTrigger 
-            value="all" 
-            className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-200 data-[state=active]:border data-[state=active]:border-blue-200 dark:data-[state=active]:bg-gray-800 dark:data-[state=active]:border-blue-700"
-          >
-            <div className="p-1.5 rounded-full bg-blue-100 dark:bg-blue-900/30">
-              <Calendar className="h-3 w-3 text-blue-600 dark:text-blue-400" />
-            </div>
-            <span className="font-medium">Todas</span>
-            <Badge className="text-xs bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-600">
-              {counts.all}
-            </Badge>
-          </TabsTrigger>
-          <TabsTrigger 
             value="scheduled" 
             className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-200 data-[state=active]:border data-[state=active]:border-orange-200 dark:data-[state=active]:bg-gray-800 dark:data-[state=active]:border-orange-700"
           >
@@ -59,6 +47,18 @@ export const StatusTabs = ({
             <span className="font-medium">Enviadas</span>
             <Badge className="text-xs bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-600">
               {counts.sent}
+            </Badge>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="all" 
+            className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-200 data-[state=active]:border data-[state=active]:border-blue-200 dark:data-[state=active]:bg-gray-800 dark:data-[state=active]:border-blue-700"
+          >
+            <div className="p-1.5 rounded-full bg-blue-100 dark:bg-blue-900/30">
+              <Calendar className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+            </div>
+            <span className="font-medium">Todas</span>
+            <Badge className="text-xs bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-600">
+              {counts.all}
             </Badge>
           </TabsTrigger>
         </TabsList>
