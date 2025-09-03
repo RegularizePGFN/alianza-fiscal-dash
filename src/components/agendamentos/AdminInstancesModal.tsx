@@ -83,26 +83,23 @@ export const AdminInstancesModal = ({
 
   const fetchData = async () => {
     try {
-      console.log('🔍 AdminInstancesModal: Iniciando fetchData...');
-      
       // Buscar instâncias com usuários associados
       const { data: instancesData, error: instancesError } = await supabase
         .from('user_whatsapp_instances')
         .select(`
           *,
           user_instance_access (
+            id,
             user_id,
             access_type,
             profiles (
+              id,
               name,
               email
             )
           )
         `)
         .order('created_at', { ascending: false });
-
-      console.log('📊 AdminInstancesModal: instancesData recebida:', instancesData);
-      console.log('❗ AdminInstancesModal: instancesError:', instancesError);
 
       if (instancesError) throw instancesError;
 
@@ -112,14 +109,10 @@ export const AdminInstancesModal = ({
         .select('id, name, email')
         .order('name');
 
-      console.log('👥 AdminInstancesModal: usersData recebida:', usersData);
-      console.log('❗ AdminInstancesModal: usersError:', usersError);
-
       if (usersError) throw usersError;
 
       // Processar dados das instâncias
       const processedInstances = instancesData?.map(instance => {
-        const mainUser = usersData?.find(u => u.id === instance.user_id);
         const instanceUsers = instance.user_instance_access?.map((access: any) => ({
           user_id: access.user_id,
           name: access.profiles?.name || 'Usuário não encontrado',
@@ -127,31 +120,23 @@ export const AdminInstancesModal = ({
           access_type: access.access_type
         })) || [];
 
-        console.log(`🔧 AdminInstancesModal: Processando instância ${instance.instance_name}:`, {
-          mainUser,
-          instanceUsers,
-          access_count: instance.user_instance_access?.length || 0
-        });
-
         return {
           ...instance,
-          user_name: mainUser?.name,
-          user_email: mainUser?.email,
           users: instanceUsers,
         };
       }) || [];
-
-      console.log('✅ AdminInstancesModal: processedInstances final:', processedInstances);
       
       setInstances(processedInstances);
       setUsers(usersData || []);
     } catch (error: any) {
-      console.error('❌ AdminInstancesModal: Error fetching data:', error);
+      console.error('Error fetching data:', error);
       toast({
         title: "Erro ao carregar dados",
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
