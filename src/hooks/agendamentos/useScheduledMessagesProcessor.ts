@@ -1,9 +1,26 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+// Global lock para evitar execuções simultâneas
+let isProcessingGlobally = false;
+
 export const useScheduledMessagesProcessor = () => {
+  const isProcessingRef = useRef(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
   const processScheduledMessages = useCallback(async () => {
+    // Verifica se já está processando (local ou globalmente)
+    if (isProcessingRef.current || isProcessingGlobally) {
+      console.log('🚫 Skipping scheduled messages processing - already running');
+      return;
+    }
+
     try {
+      isProcessingRef.current = true;
+      isProcessingGlobally = true;
+      
+      console.log('🔄 Starting scheduled messages processing...');
+      
       const response = await fetch('https://sbxltdbnqixucjoognfj.supabase.co/functions/v1/send-scheduled-messages', {
         method: 'POST',
         headers: {
@@ -16,20 +33,34 @@ export const useScheduledMessagesProcessor = () => {
         throw new Error('Failed to process scheduled messages');
       }
 
-      console.log('Scheduled messages processed successfully');
+      console.log('✅ Scheduled messages processed successfully');
     } catch (error) {
-      console.error('Error processing scheduled messages:', error);
+      console.error('❌ Error processing scheduled messages:', error);
+    } finally {
+      isProcessingRef.current = false;
+      isProcessingGlobally = false;
     }
   }, []);
 
   useEffect(() => {
-    // Processar mensagens a cada 30 segundos para ser mais responsivo
-    const interval = setInterval(processScheduledMessages, 30000);
+    // Limpar intervalo anterior se existir
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
     
-    // Processar imediatamente ao carregar
-    processScheduledMessages();
+    // Processar mensagens a cada 60 segundos (aumentando o intervalo)
+    intervalRef.current = setInterval(processScheduledMessages, 60000);
+    
+    // Processar imediatamente ao carregar (com delay para evitar conflitos)
+    setTimeout(processScheduledMessages, 2000);
 
-    return () => clearInterval(interval);
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      isProcessingRef.current = false;
+    };
   }, [processScheduledMessages]);
 
   return { processScheduledMessages };

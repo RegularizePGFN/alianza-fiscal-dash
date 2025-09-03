@@ -255,6 +255,20 @@ async function processScheduledMessages(userId?: string, userRole?: string) {
         .eq('id', message.id);
     }
   }
+
+  // Reverter mensagens que ainda estão como "processing" de volta para "pending"
+  // (caso algo tenha dado errado no processo)
+  const { error: revertError } = await supabase
+    .from('scheduled_messages')
+    .update({ status: 'pending' })
+    .eq('status', 'processing')
+    .in('id', messageIds);
+
+  if (revertError) {
+    console.error('❌ Error reverting processing messages:', revertError);
+  } else {
+    console.log('🔄 Reverted any remaining processing messages back to pending');
+  }
 }
 
 Deno.serve(async (req) => {
