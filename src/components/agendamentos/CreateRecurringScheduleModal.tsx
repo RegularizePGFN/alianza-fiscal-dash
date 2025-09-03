@@ -320,11 +320,13 @@ export const CreateRecurringScheduleModal = ({
                 <SelectValue placeholder="Selecione uma instância" />
               </SelectTrigger>
               <SelectContent>
-                {instances.map((instance) => (
-                  <SelectItem key={instance.id} value={instance.instance_name || `instance-${instance.id}`}>
-                    {instance.instance_name || `Instância ${instance.id}`}
-                  </SelectItem>
-                ))}
+                {instances
+                  .filter(instance => instance.instance_name && instance.instance_name.trim() !== '')
+                  .map((instance) => (
+                    <SelectItem key={instance.id} value={instance.instance_name}>
+                      {instance.instance_name}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
@@ -337,17 +339,19 @@ export const CreateRecurringScheduleModal = ({
                   <SelectValue placeholder="Selecione a etapa do funil" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(FUNNEL_STAGES).map(([key, config]) => (
-                    <SelectItem key={key} value={key}>
-                      <div className="flex items-center gap-2">
-                        <div 
-                          className="w-3 h-3 rounded-full" 
-                          style={{ backgroundColor: config.color }}
-                        />
-                        {config.label}
-                      </div>
-                    </SelectItem>
-                  ))}
+                  {Object.entries(FUNNEL_STAGES)
+                    .filter(([key]) => key && key.trim() !== '')
+                    .map(([key, config]) => (
+                      <SelectItem key={key} value={key}>
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-3 h-3 rounded-full" 
+                            style={{ backgroundColor: config.color }}
+                          />
+                          {config.label}
+                        </div>
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
