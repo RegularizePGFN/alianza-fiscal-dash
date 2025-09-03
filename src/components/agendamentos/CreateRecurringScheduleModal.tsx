@@ -46,7 +46,7 @@ export const CreateRecurringScheduleModal = ({
   const [funnelStage, setFunnelStage] = useState<FunnelStage>('prospeccao');
   const [executionTime, setExecutionTime] = useState("09:00");
   const [recurrenceType, setRecurrenceType] = useState<'daily' | 'weekly' | 'monthly'>('monthly');
-  const [recurrenceInterval, setRecurrenceInterval] = useState(1);
+  
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [dayOfMonth, setDayOfMonth] = useState<number>(1);
@@ -98,24 +98,51 @@ export const CreateRecurringScheduleModal = ({
     }
   }, [user, open, isAdmin]);
 
-  const calculateNextExecutionDate = (startDate: Date, recurrenceType: string, interval: number, dayOfMonth?: number, dayOfWeek?: number): Date => {
+  const calculateNextExecutionDate = (startDate: Date, recurrenceType: string, dayOfMonth?: number, dayOfWeek?: number): Date => {
+    const today = new Date();
     const nextDate = new Date(startDate);
     
     switch (recurrenceType) {
       case 'daily':
-        nextDate.setDate(nextDate.getDate() + interval);
-        break;
+        // Se a data de início for hoje ou no futuro, usar ela, senão próximo dia
+        if (nextDate >= today) {
+          return nextDate;
+        } else {
+          return new Date(today.getTime() + 24 * 60 * 60 * 1000); // Amanhã
+        }
       case 'weekly':
-        const currentDay = nextDate.getDay();
         const targetDay = dayOfWeek || 1;
+        
+        // Se a data de início for hoje e for o dia correto da semana
+        if (nextDate.toDateString() === today.toDateString() && today.getDay() === targetDay) {
+          return today;
+        }
+        
+        // Calcular próxima ocorrência do dia da semana
+        const currentDay = today.getDay();
         const daysUntilTarget = (targetDay - currentDay + 7) % 7;
-        nextDate.setDate(nextDate.getDate() + (daysUntilTarget === 0 ? 7 * interval : daysUntilTarget));
-        break;
+        const weeklyNextOccurrence = new Date(today);
+        weeklyNextOccurrence.setDate(today.getDate() + (daysUntilTarget === 0 ? 7 : daysUntilTarget));
+        
+        // Se a próxima ocorrência for antes da data de início, usar data de início
+        return weeklyNextOccurrence >= nextDate ? weeklyNextOccurrence : nextDate;
       case 'monthly':
         const targetDayOfMonth = dayOfMonth || 1;
-        nextDate.setMonth(nextDate.getMonth() + interval);
-        nextDate.setDate(Math.min(targetDayOfMonth, new Date(nextDate.getFullYear(), nextDate.getMonth() + 1, 0).getDate()));
-        break;
+        
+        // Se a data de início for hoje e for o dia correto do mês
+        if (nextDate.toDateString() === today.toDateString() && today.getDate() === targetDayOfMonth) {
+          return today;
+        }
+        
+        // Calcular próxima ocorrência do dia do mês
+        const monthlyNextOccurrence = new Date(today.getFullYear(), today.getMonth(), targetDayOfMonth);
+        if (monthlyNextOccurrence <= today) {
+          monthlyNextOccurrence.setMonth(monthlyNextOccurrence.getMonth() + 1);
+        }
+        monthlyNextOccurrence.setDate(Math.min(targetDayOfMonth, new Date(monthlyNextOccurrence.getFullYear(), monthlyNextOccurrence.getMonth() + 1, 0).getDate()));
+        
+        // Se a próxima ocorrência for antes da data de início, usar data de início
+        return monthlyNextOccurrence >= nextDate ? monthlyNextOccurrence : nextDate;
     }
     
     return nextDate;
@@ -131,7 +158,6 @@ export const CreateRecurringScheduleModal = ({
       const nextExecutionDate = calculateNextExecutionDate(
         startDate,
         recurrenceType,
-        recurrenceInterval,
         dayOfMonth,
         dayOfWeek
       );
@@ -145,7 +171,7 @@ export const CreateRecurringScheduleModal = ({
         funnel_stage: funnelStage,
         execution_time: executionTime,
         recurrence_type: recurrenceType,
-        recurrence_interval: recurrenceInterval,
+        recurrence_interval: 1,
         start_date: format(startDate, 'yyyy-MM-dd'),
         end_date: endDate ? format(endDate, 'yyyy-MM-dd') : null,
         day_of_month: recurrenceType === 'monthly' ? dayOfMonth : null,
@@ -174,7 +200,7 @@ export const CreateRecurringScheduleModal = ({
       setFunnelStage('prospeccao');
       setExecutionTime("09:00");
       setRecurrenceType('monthly');
-      setRecurrenceInterval(1);
+      
       setStartDate(undefined);
       setEndDate(undefined);
       setDayOfMonth(1);
@@ -307,39 +333,18 @@ export const CreateRecurringScheduleModal = ({
           <div className="space-y-4 p-4 border rounded-lg bg-gray-50 dark:bg-gray-900/50">
             <h4 className="font-semibold text-sm">Configurações de Recorrência</h4>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Tipo de Recorrência</Label>
-                <Select value={recurrenceType} onValueChange={(value: any) => setRecurrenceType(value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="daily">Diário</SelectItem>
-                    <SelectItem value="weekly">Semanal</SelectItem>
-                    <SelectItem value="monthly">Mensal</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Intervalo</Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    min="1"
-                    max="12"
-                    value={recurrenceInterval}
-                    onChange={(e) => setRecurrenceInterval(Number(e.target.value))}
-                    className="w-20"
-                  />
-                  <span className="text-sm text-muted-foreground">
-                    {recurrenceType === 'daily' && `dia${recurrenceInterval > 1 ? 's' : ''}`}
-                    {recurrenceType === 'weekly' && `semana${recurrenceInterval > 1 ? 's' : ''}`}
-                    {recurrenceType === 'monthly' && `mês${recurrenceInterval > 1 ? 'es' : ''}`}
-                  </span>
-                </div>
-              </div>
+            <div className="space-y-2">
+              <Label>Tipo de Recorrência</Label>
+              <Select value={recurrenceType} onValueChange={(value: any) => setRecurrenceType(value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">Diário</SelectItem>
+                  <SelectItem value="weekly">Semanal</SelectItem>
+                  <SelectItem value="monthly">Mensal</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {recurrenceType === 'weekly' && (

@@ -195,32 +195,26 @@ async function checkIfShouldExecute(
   
   switch (schedule.recurrence_type) {
     case 'daily':
-      // Check if it's been the right number of days since start
-      const dailyResult = daysSinceStart >= 0 && daysSinceStart % schedule.recurrence_interval === 0;
-      console.log(`Daily check: ${dailyResult} (interval: ${schedule.recurrence_interval})`);
+      // Para diário, executa todos os dias a partir da data de início
+      const dailyResult = daysSinceStart >= 0;
+      console.log(`Daily check: ${dailyResult} (days since start: ${daysSinceStart})`);
       return dailyResult;
       
     case 'weekly':
-      // Check if it's the right day of the week and interval
-      const weeksSinceStart = Math.floor(daysSinceStart / 7);
+      // Para semanal, executa apenas no dia da semana correto, toda semana
       const todayWeekDay = todayDate.getDay();
       const scheduleWeekDay = schedule.day_of_week;
       const weeklyDayMatch = todayWeekDay === scheduleWeekDay;
-      const weeklyIntervalMatch = weeksSinceStart % schedule.recurrence_interval === 0;
       
       console.log(`Weekly check - Today: ${todayWeekDay}, Schedule: ${scheduleWeekDay}, Day match: ${weeklyDayMatch}`);
-      console.log(`Weekly check - Weeks since start: ${weeksSinceStart}, Interval: ${schedule.recurrence_interval}, Interval match: ${weeklyIntervalMatch}`);
       
-      return weeklyDayMatch && weeklyIntervalMatch;
+      return weeklyDayMatch && daysSinceStart >= 0;
              
     case 'monthly':
-      // Check if it's the right day of the month and interval
-      const monthsSinceStart = (todayDate.getFullYear() - startDate.getFullYear()) * 12 + 
-                              (todayDate.getMonth() - startDate.getMonth());
-      const monthlyResult = todayDate.getDate() === schedule.day_of_month && 
-                           monthsSinceStart % schedule.recurrence_interval === 0;
-      console.log(`Monthly check: ${monthlyResult} (months since start: ${monthsSinceStart}, interval: ${schedule.recurrence_interval})`);
-      return monthlyResult;
+      // Para mensal, executa apenas no dia do mês correto, todo mês
+      const monthlyDayMatch = todayDate.getDate() === schedule.day_of_month;
+      console.log(`Monthly check - Today: ${todayDate.getDate()}, Schedule: ${schedule.day_of_month}, Day match: ${monthlyDayMatch}`);
+      return monthlyDayMatch && daysSinceStart >= 0;
              
     default:
       console.log(`Unknown recurrence type: ${schedule.recurrence_type}`);
