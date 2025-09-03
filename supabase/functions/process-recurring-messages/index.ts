@@ -164,9 +164,10 @@ async function checkIfShouldExecute(
   console.log(`Checking schedule ${schedule.id} for ${schedule.client_name}`);
   console.log(`Schedule time: ${schedule.execution_time}, Current time: ${currentTime}`);
   
-  // Check if already executed today
-  if (schedule.last_execution_date === today) {
-    console.log(`Already executed today: ${schedule.last_execution_date}`);
+  // Check if already executed today, BUT only if total_executions > 0
+  // This allows edited schedules with 0 executions to run even if last_execution_date is today
+  if (schedule.last_execution_date === today && schedule.total_executions > 0) {
+    console.log(`Already executed today: ${schedule.last_execution_date} (total executions: ${schedule.total_executions})`);
     return false;
   }
 
