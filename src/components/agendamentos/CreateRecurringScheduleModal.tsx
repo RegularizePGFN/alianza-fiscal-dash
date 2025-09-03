@@ -60,13 +60,13 @@ export const CreateRecurringScheduleModal = ({
   // Load editing data when modal opens
   useEffect(() => {
     if (open && editingSchedule) {
-      setClientName(editingSchedule.client_name);
-      setClientPhone(editingSchedule.client_phone);
-      setMessageText(editingSchedule.message_text);
-      setSelectedInstance(editingSchedule.instance_name);
-      setFunnelStage(editingSchedule.funnel_stage);
-      setExecutionTime(editingSchedule.execution_time);
-      setRecurrenceType(editingSchedule.recurrence_type);
+      setClientName(editingSchedule.client_name || "");
+      setClientPhone(editingSchedule.client_phone || "");
+      setMessageText(editingSchedule.message_text || "");
+      setSelectedInstance(editingSchedule.instance_name || "");
+      setFunnelStage(editingSchedule.funnel_stage || 'prospeccao');
+      setExecutionTime(editingSchedule.execution_time || "09:00");
+      setRecurrenceType(editingSchedule.recurrence_type || 'monthly');
       setStartDate(new Date(editingSchedule.start_date));
       setEndDate(editingSchedule.end_date ? new Date(editingSchedule.end_date) : undefined);
       setDayOfMonth(editingSchedule.day_of_month || 1);
@@ -321,8 +321,8 @@ export const CreateRecurringScheduleModal = ({
               </SelectTrigger>
               <SelectContent>
                 {instances.map((instance) => (
-                  <SelectItem key={instance.id} value={instance.instance_name}>
-                    {instance.instance_name}
+                  <SelectItem key={instance.id} value={instance.instance_name || `instance-${instance.id}`}>
+                    {instance.instance_name || `Instância ${instance.id}`}
                   </SelectItem>
                 ))}
               </SelectContent>
