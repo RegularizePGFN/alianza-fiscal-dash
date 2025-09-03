@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, Eye, Power, PowerOff } from "lucide-react";
+import { Trash2, Eye, Power, PowerOff, Edit } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
@@ -26,9 +26,10 @@ import {
 
 interface RecurringSchedulesKanbanProps {
   refreshTrigger: number;
+  onEditSchedule?: (schedule: RecurringMessageSchedule) => void;
 }
 
-export const RecurringSchedulesKanban = ({ refreshTrigger }: RecurringSchedulesKanbanProps) => {
+export const RecurringSchedulesKanban = ({ refreshTrigger, onEditSchedule }: RecurringSchedulesKanbanProps) => {
   const { user } = useAuth();
   const [schedules, setSchedules] = useState<RecurringMessageSchedule[]>([]);
   const [loading, setLoading] = useState(true);
@@ -169,7 +170,17 @@ export const RecurringSchedulesKanban = ({ refreshTrigger }: RecurringSchedulesK
                             size="sm"
                             variant="ghost"
                             className="h-6 w-6 p-0"
+                            onClick={() => onEditSchedule?.(schedule)}
+                            title="Editar agendamento"
+                          >
+                            <Edit className="h-3 w-3 text-blue-600" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0"
                             onClick={() => toggleScheduleStatus(schedule.id, schedule.is_active)}
+                            title={schedule.is_active ? "Desativar" : "Ativar"}
                           >
                             {schedule.is_active ? (
                               <Power className="h-3 w-3 text-green-600" />
@@ -185,6 +196,7 @@ export const RecurringSchedulesKanban = ({ refreshTrigger }: RecurringSchedulesK
                               setScheduleToDelete(schedule.id);
                               setDeleteDialogOpen(true);
                             }}
+                            title="Excluir agendamento"
                           >
                             <Trash2 className="h-3 w-3 text-red-600" />
                           </Button>

@@ -22,7 +22,9 @@ export const AgendamentosContainer = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showCreateRecurringModal, setShowCreateRecurringModal] = useState(false);
   const [showInstancesModal, setShowInstancesModal] = useState(false);
+  const [createScheduleModalOpen, setCreateScheduleModalOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [editingSchedule, setEditingSchedule] = useState<any>(null);
   const [selectedInstance, setSelectedInstance] = useState<string | null>(null);
   const [currentStatusFilter, setCurrentStatusFilter] = useState<MessageStatusFilter>('all');
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
@@ -38,6 +40,16 @@ export const AgendamentosContainer = () => {
 
   const handleRefresh = () => {
     setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleEditSchedule = (schedule: any) => {
+    setEditingSchedule(schedule);
+    setCreateScheduleModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setCreateScheduleModalOpen(false);
+    setEditingSchedule(null);
   };
 
   return (
@@ -90,7 +102,7 @@ export const AgendamentosContainer = () => {
             </div>
             <div className="flex gap-2">
               <Button
-                onClick={() => setShowCreateRecurringModal(true)}
+                onClick={() => setCreateScheduleModalOpen(true)}
                 className="flex items-center gap-2"
               >
                 <Repeat className="h-4 w-4" />
@@ -113,7 +125,10 @@ export const AgendamentosContainer = () => {
             </div>
           </div>
           
-          <RecurringSchedulesKanban refreshTrigger={refreshTrigger} />
+          <RecurringSchedulesKanban 
+            refreshTrigger={refreshTrigger}
+            onEditSchedule={handleEditSchedule}
+          />
         </>
       )}
 
@@ -124,9 +139,13 @@ export const AgendamentosContainer = () => {
       />
 
       <CreateRecurringScheduleModal
-        open={showCreateRecurringModal}
-        onOpenChange={setShowCreateRecurringModal}
-        onSuccess={handleRefresh}
+        open={createScheduleModalOpen}
+        onOpenChange={handleModalClose}
+        onSuccess={() => {
+          handleRefresh();
+          handleModalClose();
+        }}
+        editingSchedule={editingSchedule}
       />
 
       {isAdmin && (

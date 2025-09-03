@@ -15,12 +15,13 @@ import { CalendarIcon, Repeat } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { UserRole } from "@/lib/types";
-import { FunnelStage, FUNNEL_STAGES } from "@/lib/types/recurringSchedules";
+import { FunnelStage, FUNNEL_STAGES, RecurringMessageSchedule } from "@/lib/types/recurringSchedules";
 
 interface CreateRecurringScheduleModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  editingSchedule?: RecurringMessageSchedule;
 }
 
 interface UserInstance {
@@ -32,6 +33,7 @@ export const CreateRecurringScheduleModal = ({
   open,
   onOpenChange,
   onSuccess,
+  editingSchedule,
 }: CreateRecurringScheduleModalProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -53,6 +55,37 @@ export const CreateRecurringScheduleModal = ({
   const [dayOfWeek, setDayOfWeek] = useState<number>(1);
 
   const isAdmin = user?.role === UserRole.ADMIN;
+  const isEditing = !!editingSchedule;
+
+  // Load editing data when modal opens
+  useEffect(() => {
+    if (open && editingSchedule) {
+      setClientName(editingSchedule.client_name);
+      setClientPhone(editingSchedule.client_phone);
+      setMessageText(editingSchedule.message_text);
+      setSelectedInstance(editingSchedule.instance_name);
+      setFunnelStage(editingSchedule.funnel_stage);
+      setExecutionTime(editingSchedule.execution_time);
+      setRecurrenceType(editingSchedule.recurrence_type);
+      setStartDate(new Date(editingSchedule.start_date));
+      setEndDate(editingSchedule.end_date ? new Date(editingSchedule.end_date) : undefined);
+      setDayOfMonth(editingSchedule.day_of_month || 1);
+      setDayOfWeek(editingSchedule.day_of_week || 1);
+    } else if (open && !editingSchedule) {
+      // Reset form for new creation
+      setClientName("");
+      setClientPhone("");
+      setMessageText("");
+      setSelectedInstance("");
+      setFunnelStage('prospeccao');
+      setExecutionTime("09:00");
+      setRecurrenceType('monthly');
+      setStartDate(undefined);
+      setEndDate(undefined);
+      setDayOfMonth(1);
+      setDayOfWeek(1);
+    }
+  }, [open, editingSchedule]);
 
   // Fetch user instances
   useEffect(() => {
@@ -181,16 +214,30 @@ export const CreateRecurringScheduleModal = ({
         total_executions: 0
       };
 
-      const { error } = await supabase
-        .from('recurring_message_schedules')
-        .insert([scheduleData]);
+      if (isEditing) {
+        const { error } = await supabase
+          .from('recurring_message_schedules')
+          .update(scheduleData)
+          .eq('id', editingSchedule.id);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Agendamento recorrente criado",
-        description: "O agendamento recorrente foi criado com sucesso e será processado automaticamente.",
-      });
+        toast({
+          title: "Agendamento recorrente atualizado",
+          description: "O agendamento recorrente foi atualizado com sucesso.",
+        });
+      } else {
+        const { error } = await supabase
+          .from('recurring_message_schedules')
+          .insert([scheduleData]);
+
+        if (error) throw error;
+
+        toast({
+          title: "Agendamento recorrente criado",
+          description: "O agendamento recorrente foi criado com sucesso e será processado automaticamente.",
+        });
+      }
 
       // Reset form
       setClientName("");
@@ -209,9 +256,9 @@ export const CreateRecurringScheduleModal = ({
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {
-      console.error('Error creating recurring schedule:', error);
+      console.error('Error saving recurring schedule:', error);
       toast({
-        title: "Erro ao criar agendamento recorrente",
+        title: isEditing ? "Erro ao atualizar agendamento recorrente" : "Erro ao criar agendamento recorrente",
         description: error.message,
         variant: "destructive",
       });
@@ -238,7 +285,7 @@ export const CreateRecurringScheduleModal = ({
             <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
               <Repeat className="h-5 w-5 text-purple-600 dark:text-purple-400" />
             </div>
-            Novo Agendamento Recorrente
+            {isEditing ? 'Editar Agendamento Recorrente' : 'Novo Agendamento Recorrente'}
           </DialogTitle>
         </DialogHeader>
 
@@ -445,7 +492,7 @@ export const CreateRecurringScheduleModal = ({
               Cancelar
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "Criando..." : "Criar Agendamento Recorrente"}
+              {loading ? (isEditing ? "Atualizando..." : "Criando...") : (isEditing ? "Atualizar Agendamento" : "Criar Agendamento Recorrente")}
             </Button>
           </DialogFooter>
         </form>

@@ -19,9 +19,10 @@ export const AgendamentosTabsContainer = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('scheduled');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showCreateRecurringModal, setShowCreateRecurringModal] = useState(false);
   const [showInstancesModal, setShowInstancesModal] = useState(false);
+  const [createScheduleModalOpen, setCreateScheduleModalOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [editingSchedule, setEditingSchedule] = useState<any>(null);
   const [currentStatusFilter, setCurrentStatusFilter] = useState<MessageStatusFilter>('all');
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [calendarCounts, setCalendarCounts] = useState({ scheduled: 0, sent: 0, all: 0 });
@@ -35,11 +36,21 @@ export const AgendamentosTabsContainer = () => {
     setRefreshTrigger(prev => prev + 1);
   };
 
+  const handleEditSchedule = (schedule: any) => {
+    setEditingSchedule(schedule);
+    setCreateScheduleModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setCreateScheduleModalOpen(false);
+    setEditingSchedule(null);
+  };
+
   const handleCreateClick = () => {
     if (activeTab === 'scheduled') {
       setShowCreateModal(true);
     } else {
-      setShowCreateRecurringModal(true);
+      setCreateScheduleModalOpen(true);
     }
   };
 
@@ -115,9 +126,13 @@ export const AgendamentosTabsContainer = () => {
       />
 
       <CreateRecurringScheduleModal
-        open={showCreateRecurringModal}
-        onOpenChange={setShowCreateRecurringModal}
-        onSuccess={handleRefresh}
+        open={createScheduleModalOpen}
+        onOpenChange={handleModalClose}
+        onSuccess={() => {
+          handleRefresh();
+          handleModalClose();
+        }}
+        editingSchedule={editingSchedule}
       />
 
       {isAdmin && (
