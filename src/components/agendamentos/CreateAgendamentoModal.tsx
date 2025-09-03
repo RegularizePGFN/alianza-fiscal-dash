@@ -142,7 +142,7 @@ export const CreateAgendamentoModal = ({
 
       // Se for admin, buscar informações dos usuários das instâncias
       if (user.role === 'admin' && instancesData && instancesData.length > 0) {
-        const userIds = [...new Set(instancesData.map(inst => inst.user_id))];
+        const userIds = [...new Set(instancesData.map(inst => inst.user_id).filter(Boolean))] as string[];
         
         const { data: profilesData } = await supabase
           .from('profiles')

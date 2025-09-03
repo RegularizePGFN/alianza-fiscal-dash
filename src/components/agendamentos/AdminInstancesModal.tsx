@@ -19,7 +19,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Plus, Edit, RefreshCw, Check } from "lucide-react";
+import { Trash2, Plus, Edit, RefreshCw, Check, UserPlus, UserMinus, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface AdminInstancesModalProps {
@@ -39,6 +39,14 @@ interface UserInstance {
   is_active: boolean;
   user_name?: string;
   user_email?: string;
+  users?: InstanceUser[];
+}
+
+interface InstanceUser {
+  user_id: string;
+  name: string;
+  email: string;
+  access_type: string;
 }
 
 interface User {
@@ -75,10 +83,20 @@ export const AdminInstancesModal = ({
 
   const fetchData = async () => {
     try {
-      // Buscar instâncias
+      // Buscar instâncias com usuários associados
       const { data: instancesData, error: instancesError } = await supabase
         .from('user_whatsapp_instances')
-        .select('*')
+        .select(`
+          *,
+          user_instance_access (
+            user_id,
+            access_type,
+            profiles:user_id (
+              name,
+              email
+            )
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (instancesError) throw instancesError;
@@ -91,17 +109,25 @@ export const AdminInstancesModal = ({
 
       if (usersError) throw usersError;
 
-      // Fazer join manual
-      const instancesWithUsers = instancesData?.map(instance => {
-        const user = usersData?.find(u => u.id === instance.user_id);
+      // Processar dados das instâncias
+      const processedInstances = instancesData?.map(instance => {
+        const mainUser = usersData?.find(u => u.id === instance.user_id);
+        const instanceUsers = instance.user_instance_access?.map((access: any) => ({
+          user_id: access.user_id,
+          name: access.profiles?.name || 'Usuário não encontrado',
+          email: access.profiles?.email || '',
+          access_type: access.access_type
+        })) || [];
+
         return {
           ...instance,
-          user_name: user?.name,
-          user_email: user?.email,
+          user_name: mainUser?.name,
+          user_email: mainUser?.email,
+          users: instanceUsers,
         };
       }) || [];
 
-      setInstances(instancesWithUsers);
+      setInstances(processedInstances);
       setUsers(usersData || []);
     } catch (error: any) {
       console.error('Error fetching data:', error);
@@ -160,6 +186,7 @@ export const AdminInstancesModal = ({
 
     setLoading(true);
     try {
+      // 1. Criar a instância
       const instanceData = {
         user_id: selectedUser,
         instance_name: instanceName.trim(),
@@ -171,11 +198,24 @@ export const AdminInstancesModal = ({
       
       console.log("📝 Inserting instance data:", instanceData);
 
-      const { error } = await supabase
+      const { data: newInstance, error: instanceError } = await supabase
         .from('user_whatsapp_instances')
-        .insert(instanceData);
+        .insert(instanceData)
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (instanceError) throw instanceError;
+
+      // 2. Adicionar acesso do usuário à instância
+      const { error: accessError } = await supabase
+        .from('user_instance_access')
+        .insert({
+          user_id: selectedUser,
+          instance_id: newInstance.id,
+          access_type: 'owner'
+        });
+
+      if (accessError) throw accessError;
 
       toast({
         title: "Instância adicionada",
@@ -197,44 +237,75 @@ export const AdminInstancesModal = ({
     }
   };
 
+  const addUserToInstance = async (instanceId: string, userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('user_instance_access')
+        .insert({
+          user_id: userId,
+          instance_id: instanceId,
+          access_type: 'user'
+        });
+
+      if (error) {
+        if (error.code === '23505') { // Unique constraint violation
+          toast({
+            title: "Erro",
+            description: "Este usuário já tem acesso a esta instância.",
+            variant: "destructive",
+          });
+          return;
+        }
+        throw error;
+      }
+
+      toast({
+        title: "Usuário adicionado",
+        description: "Usuário foi adicionado à instância com sucesso.",
+      });
+
+      fetchData();
+    } catch (error: any) {
+      console.error('Error adding user to instance:', error);
+      toast({
+        title: "Erro ao adicionar usuário",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const removeUserFromInstance = async (instanceId: string, userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('user_instance_access')
+        .delete()
+        .eq('instance_id', instanceId)
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Usuário removido",
+        description: "Usuário foi removido da instância com sucesso.",
+      });
+
+      fetchData();
+    } catch (error: any) {
+      console.error('Error removing user from instance:', error);
+      toast({
+        title: "Erro ao remover usuário",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleEdit = (instance: UserInstance) => {
     setEditingInstance(instance);
     setSelectedUser(instance.user_id);
     setSelectedInstance(instance.instance_name);
     setShowForm(true);
-  };
-
-  const updateInstance = async () => {
-    if (!editingInstance || !selectedUser) return;
-    
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('user_whatsapp_instances')
-        .update({
-          user_id: selectedUser,
-        })
-        .eq('id', editingInstance.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Instância atualizada",
-        description: "A instância foi atualizada com sucesso.",
-      });
-
-      resetForm();
-      fetchData();
-    } catch (error: any) {
-      console.error('Error updating instance:', error);
-      toast({
-        title: "Erro ao atualizar instância",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
   };
 
   const resetForm = () => {
@@ -254,6 +325,7 @@ export const AdminInstancesModal = ({
 
   const deleteInstance = async (id: string) => {
     try {
+      // A exclusão em cascata removerá automaticamente os acessos
       const { error } = await supabase
         .from('user_whatsapp_instances')
         .delete()
@@ -310,7 +382,7 @@ export const AdminInstancesModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             Gerenciar Instâncias WhatsApp
@@ -345,7 +417,7 @@ export const AdminInstancesModal = ({
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Selecione um usuário primeiro:</Label>
+                <Label>Selecione um usuário responsável:</Label>
                 <Select
                   value={selectedUser}
                   onValueChange={setSelectedUser}
@@ -470,55 +542,6 @@ export const AdminInstancesModal = ({
           </Card>
         )}
 
-        {/* Formulário de edição simplificado */}
-        {showForm && (
-          <Card className="mb-4">
-            <CardHeader>
-              <CardTitle className="text-lg">
-                Editar Instância: {selectedInstance}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Usuário Responsável</Label>
-                  <Select
-                    value={selectedUser}
-                    onValueChange={setSelectedUser}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um usuário" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {users.map((user) => (
-                        <SelectItem key={user.id} value={user.id}>
-                          {user.name} ({user.email})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex justify-end gap-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={resetForm}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    onClick={updateInstance}
-                    disabled={loading || !selectedUser}
-                  >
-                    {loading ? "Atualizando..." : "Atualizar"}
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {/* Lista de instâncias configuradas */}
         <div className="space-y-4">
           {instances.length === 0 ? (
@@ -533,10 +556,10 @@ export const AdminInstancesModal = ({
             instances.map((instance) => (
               <Card key={instance.id}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    {instance.instance_name}
-                  </CardTitle>
                   <div className="flex items-center gap-2">
+                    <CardTitle className="text-sm font-medium">
+                      {instance.instance_name}
+                    </CardTitle>
                     <Badge 
                       variant={instance.is_active ? "default" : "secondary"}
                       className="cursor-pointer"
@@ -544,14 +567,8 @@ export const AdminInstancesModal = ({
                     >
                       {instance.is_active ? "Ativo" : "Inativo"}
                     </Badge>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(instance)}
-                      className="text-blue-600 hover:text-blue-700"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
+                  </div>
+                  <div className="flex items-center gap-2">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -563,10 +580,73 @@ export const AdminInstancesModal = ({
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-sm text-muted-foreground space-y-1">
-                    <p><strong>Usuário:</strong> {instance.user_name} ({instance.user_email})</p>
-                    <p><strong>ID Evolution:</strong> {instance.evolution_instance_id || 'Não configurado'}</p>
-                    <p><strong>Status:</strong> Conectado à Evolution API</p>
+                  <div className="space-y-4">
+                    <div className="text-sm text-muted-foreground space-y-1">
+                      <p><strong>ID Evolution:</strong> {instance.evolution_instance_id || 'Não configurado'}</p>
+                      <p><strong>Status:</strong> Conectado à Evolution API</p>
+                    </div>
+
+                    {/* Usuários com acesso */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-medium flex items-center gap-2">
+                          <Users className="h-4 w-4" />
+                          Usuários com acesso ({instance.users?.length || 0})
+                        </h4>
+                        <div className="flex items-center gap-2">
+                          <Select
+                            onValueChange={(userId) => {
+                              if (userId) {
+                                addUserToInstance(instance.id, userId);
+                              }
+                            }}
+                          >
+                            <SelectTrigger className="w-[200px] h-8">
+                              <SelectValue placeholder="Adicionar usuário" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {users
+                                .filter(user => !instance.users?.some(u => u.user_id === user.id))
+                                .map((user) => (
+                                  <SelectItem key={user.id} value={user.id}>
+                                    {user.name}
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      {instance.users && instance.users.length > 0 ? (
+                        <div className="grid gap-2">
+                          {instance.users.map((user) => (
+                            <div key={user.user_id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                              <div className="flex items-center gap-2">
+                                <Badge variant={user.access_type === 'owner' ? 'default' : 'secondary'}>
+                                  {user.access_type === 'owner' ? 'Responsável' : 'Usuário'}
+                                </Badge>
+                                <span className="text-sm font-medium">{user.name}</span>
+                                <span className="text-xs text-muted-foreground">({user.email})</span>
+                              </div>
+                              {user.access_type !== 'owner' && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeUserFromInstance(instance.id, user.user_id)}
+                                  className="text-destructive hover:text-destructive p-1 h-8 w-8"
+                                >
+                                  <UserMinus className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-muted-foreground text-center py-2">
+                          Nenhum usuário com acesso ainda
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>

@@ -56,6 +56,42 @@ export type Database = {
         }
         Relationships: []
       }
+      conversation_history: {
+        Row: {
+          contact_phone: string
+          created_at: string
+          id: string
+          instance_name: string
+          message_text: string
+          message_timestamp: string
+          message_type: string
+          updated_at: string
+          whatsapp_message_id: string | null
+        }
+        Insert: {
+          contact_phone: string
+          created_at?: string
+          id?: string
+          instance_name: string
+          message_text: string
+          message_timestamp: string
+          message_type: string
+          updated_at?: string
+          whatsapp_message_id?: string | null
+        }
+        Update: {
+          contact_phone?: string
+          created_at?: string
+          id?: string
+          instance_name?: string
+          message_text?: string
+          message_timestamp?: string
+          message_type?: string
+          updated_at?: string
+          whatsapp_message_id?: string | null
+        }
+        Relationships: []
+      }
       monthly_goals: {
         Row: {
           created_at: string
@@ -304,6 +340,41 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_instance_access: {
+        Row: {
+          access_type: string
+          created_at: string
+          id: string
+          instance_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_type?: string
+          created_at?: string
+          id?: string
+          instance_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_type?: string
+          created_at?: string
+          id?: string
+          instance_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_instance_access_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "user_whatsapp_instances"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_whatsapp_instances: {
         Row: {

@@ -171,23 +171,28 @@ async function processScheduledMessages(userId?: string, userRole?: string) {
     console.log(`📞 Processing message ${message.id} for user ${message.user_id}, instance: ${message.instance_name}`);
     
     try {
-      // Buscar configurações da instância do usuário
+      // Buscar configurações da instância do usuário considerando a nova estrutura de acesso
       const { data: userInstance, error: instanceError } = await supabase
         .from('user_whatsapp_instances')
-        .select('evolution_instance_id, evolution_api_url, evolution_api_key')
-        .eq('user_id', message.user_id)
+        .select(`
+          evolution_instance_id, 
+          evolution_api_url, 
+          evolution_api_key,
+          user_instance_access!inner (user_id)
+        `)
         .eq('instance_name', message.instance_name)
+        .eq('user_instance_access.user_id', message.user_id)
         .single();
 
       if (instanceError || !userInstance) {
         console.error(`❌ Instance not found for message ${message.id}:`, instanceError);
-        console.log(`🔍 Looking for user_id: ${message.user_id}, instance_name: ${message.instance_name}`);
+        console.log(`🔍 Looking for instance_name: ${message.instance_name}, user_id: ${message.user_id}`);
         
         await supabase
           .from('scheduled_messages')
           .update({
             status: 'failed',
-            error_message: 'Instância não encontrada para o usuário',
+            error_message: 'Instância não encontrada ou usuário sem acesso',
           })
           .eq('id', message.id);
         continue;
