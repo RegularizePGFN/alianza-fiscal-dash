@@ -545,7 +545,7 @@ export const AgendamentosList = ({
             </TableHeader>
             <TableBody>
               {messages.map((message) => (
-                <React.Fragment key={message.id}>
+                <div key={message.id}>
                   {/* Linha principal do agendamento */}
                   <TableRow className="hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-purple-50/50 dark:hover:from-blue-900/10 dark:hover:to-purple-900/10 transition-all duration-200">
                     <TableCell>
@@ -834,7 +834,7 @@ export const AgendamentosList = ({
                       </TableCell>
                     </TableRow>
                   )}
-                </React.Fragment>
+                </div>
               ))}
             </TableBody>
           </Table>

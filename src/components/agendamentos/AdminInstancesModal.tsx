@@ -91,7 +91,7 @@ export const AdminInstancesModal = ({
           user_instance_access (
             user_id,
             access_type,
-            profiles:user_id (
+            profiles (
               name,
               email
             )
