@@ -14,6 +14,7 @@ import { Repeat } from "lucide-react";
 import { StatusTabs, MessageStatusFilter } from "./StatusTabs";
 import { UserRole } from "@/lib/types";
 import { useScheduledMessagesProcessor } from "@/hooks/agendamentos/useScheduledMessagesProcessor";
+import { useRecurringMessagesProcessor } from "@/hooks/agendamentos/useRecurringMessagesProcessor";
 
 export const AgendamentosContainer = () => {
   const { user } = useAuth();
@@ -31,6 +32,9 @@ export const AgendamentosContainer = () => {
   
   // Hook que processa mensagens agendadas automaticamente
   useScheduledMessagesProcessor();
+  
+  // Hook que processa agendamentos recorrentes automaticamente
+  useRecurringMessagesProcessor();
 
   const handleRefresh = () => {
     setRefreshTrigger(prev => prev + 1);
