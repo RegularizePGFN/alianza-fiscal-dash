@@ -11,15 +11,17 @@ interface AgendamentosHeaderProps {
   onRefresh?: () => void;
   viewMode: 'list' | 'calendar';
   onViewModeChange: (mode: 'list' | 'calendar') => void;
+  isRecurring?: boolean;
 }
 
 export const AgendamentosHeader = ({ 
   onCreateAgendamento, 
   onManageInstances, 
-  showManageInstances,
+  showManageInstances, 
   onRefresh,
   viewMode,
-  onViewModeChange
+  onViewModeChange,
+  isRecurring = false
 }: AgendamentosHeaderProps) => {
   const { toast } = useToast();
 
@@ -138,7 +140,7 @@ export const AgendamentosHeader = ({
             <div className="p-1 rounded bg-white/20">
               <Plus className="h-3 w-3" />
             </div>
-            Novo Agendamento
+            {isRecurring ? 'Nova Mensagem Recorrente' : 'Novo Agendamento'}
           </Button>
         </div>
       </div>

@@ -251,6 +251,72 @@ export type Database = {
         }
         Relationships: []
       }
+      recurring_schedules: {
+        Row: {
+          client_name: string
+          client_phone: string
+          created_at: string
+          day_of_month: number | null
+          day_of_week: number | null
+          end_date: string | null
+          executions_count: number
+          id: string
+          instance_name: string
+          is_active: boolean
+          last_execution_date: string | null
+          message_text: string
+          next_execution_date: string
+          recurrence_interval: number
+          recurrence_type: string
+          start_date: string
+          total_occurrences: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_name: string
+          client_phone: string
+          created_at?: string
+          day_of_month?: number | null
+          day_of_week?: number | null
+          end_date?: string | null
+          executions_count?: number
+          id?: string
+          instance_name: string
+          is_active?: boolean
+          last_execution_date?: string | null
+          message_text: string
+          next_execution_date: string
+          recurrence_interval?: number
+          recurrence_type: string
+          start_date: string
+          total_occurrences?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_name?: string
+          client_phone?: string
+          created_at?: string
+          day_of_month?: number | null
+          day_of_week?: number | null
+          end_date?: string | null
+          executions_count?: number
+          id?: string
+          instance_name?: string
+          is_active?: boolean
+          last_execution_date?: string | null
+          message_text?: string
+          next_execution_date?: string
+          recurrence_interval?: number
+          recurrence_type?: string
+          start_date?: string
+          total_occurrences?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sales: {
         Row: {
           client_document: string
