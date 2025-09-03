@@ -15,8 +15,7 @@ export const useRecurringSchedules = (refreshTrigger: number) => {
     try {
       setLoading(true);
       let query = supabase.from('recurring_message_schedules').select(`
-        *,
-        profiles!recurring_message_schedules_user_id_fkey(name)
+        *
       `);
 
       if (!isAdmin) {

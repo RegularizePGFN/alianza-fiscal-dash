@@ -41,8 +41,7 @@ export const RecurringSchedulesKanban = ({ refreshTrigger }: RecurringSchedulesK
     try {
       setLoading(true);
       let query = supabase.from('recurring_message_schedules').select(`
-        *,
-        profiles!recurring_message_schedules_user_id_fkey(name)
+        *
       `);
 
       if (!isAdmin) {
@@ -138,98 +137,93 @@ export const RecurringSchedulesKanban = ({ refreshTrigger }: RecurringSchedulesK
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="flex gap-4 overflow-x-auto pb-4">
         {Object.entries(FUNNEL_STAGES).map(([stage, config]) => (
-          <Card key={stage} className="h-fit">
-            <CardHeader className="pb-3">
-              <CardTitle 
-                className="text-sm font-medium flex items-center gap-2"
-                style={{ color: config.color }}
-              >
-                <div 
-                  className="w-3 h-3 rounded-full" 
-                  style={{ backgroundColor: config.color }}
-                />
-                {config.label}
-                <Badge variant="secondary" className="ml-auto">
-                  {schedulesByStage[stage as FunnelStage]?.length || 0}
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {schedulesByStage[stage as FunnelStage]?.map((schedule) => (
-                <Card key={schedule.id} className="p-3 border-l-4" style={{ borderLeftColor: config.color }}>
-                  <div className="space-y-2">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h4 className="font-medium text-sm">{schedule.client_name}</h4>
-                        <p className="text-xs text-muted-foreground">{schedule.client_phone}</p>
-                      </div>
-                      <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-6 w-6 p-0"
-                          onClick={() => toggleScheduleStatus(schedule.id, schedule.is_active)}
-                        >
-                          {schedule.is_active ? (
-                            <Power className="h-3 w-3" />
-                          ) : (
-                            <PowerOff className="h-3 w-3" />
-                          )}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-6 w-6 p-0"
-                          onClick={() => {
-                            setScheduleToDelete(schedule.id);
-                            setDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Badge 
-                          variant={schedule.is_active ? "default" : "secondary"}
-                          className="text-xs"
-                        >
-                          {RECURRENCE_TYPE_LABELS[schedule.recurrence_type]}
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          {schedule.execution_time}
-                        </Badge>
-                      </div>
-                      
-                      <p className="text-xs text-muted-foreground line-clamp-2">
-                        {schedule.message_text}
-                      </p>
-                      
-                      <div className="text-xs text-muted-foreground">
-                        Instância: {schedule.instance_name}
-                      </div>
-                      
-                      {isAdmin && (
-                        <div className="text-xs text-muted-foreground">
-                          Por: {(schedule as any).profiles?.name || 'N/A'}
+          <div key={stage} className="flex-shrink-0 w-80">
+            <Card className="h-full">
+              <CardHeader className="pb-3">
+                <CardTitle 
+                  className="text-sm font-medium flex items-center gap-2"
+                >
+                  <div 
+                    className="w-3 h-3 rounded-full" 
+                    style={{ backgroundColor: config.color }}
+                  />
+                  {config.label}
+                  <Badge variant="secondary" className="ml-auto">
+                    {schedulesByStage[stage as FunnelStage]?.length || 0}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 max-h-96 overflow-y-auto">
+                {schedulesByStage[stage as FunnelStage]?.map((schedule) => (
+                  <Card key={schedule.id} className="p-3 border-l-4 bg-muted/30" style={{ borderLeftColor: config.color }}>
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-sm truncate">{schedule.client_name}</h4>
+                          <p className="text-xs text-muted-foreground truncate">{schedule.client_phone}</p>
                         </div>
-                      )}
+                        <div className="flex gap-1 ml-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0"
+                            onClick={() => toggleScheduleStatus(schedule.id, schedule.is_active)}
+                          >
+                            {schedule.is_active ? (
+                              <Power className="h-3 w-3 text-green-600" />
+                            ) : (
+                              <PowerOff className="h-3 w-3 text-red-600" />
+                            )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0"
+                            onClick={() => {
+                              setScheduleToDelete(schedule.id);
+                              setDeleteDialogOpen(true);
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3 text-red-600" />
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge 
+                            variant={schedule.is_active ? "default" : "secondary"}
+                            className="text-xs"
+                          >
+                            {RECURRENCE_TYPE_LABELS[schedule.recurrence_type]}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {schedule.execution_time}
+                          </Badge>
+                        </div>
+                        
+                        <p className="text-xs text-muted-foreground line-clamp-2 break-words">
+                          {schedule.message_text}
+                        </p>
+                        
+                        <div className="text-xs text-muted-foreground truncate">
+                          <strong>Instância:</strong> {schedule.instance_name}
+                        </div>
+                      </div>
                     </div>
+                  </Card>
+                ))}
+                
+                {!schedulesByStage[stage as FunnelStage]?.length && (
+                  <div className="text-center py-8 text-xs text-muted-foreground">
+                    Nenhum agendamento nesta etapa
                   </div>
-                </Card>
-              ))}
-              
-              {!schedulesByStage[stage as FunnelStage]?.length && (
-                <div className="text-center py-8 text-sm text-muted-foreground">
-                  Nenhum agendamento nesta etapa
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         ))}
       </div>
 
