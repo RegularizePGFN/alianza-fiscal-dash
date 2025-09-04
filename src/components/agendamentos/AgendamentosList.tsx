@@ -5,10 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, MessageCircle, Phone, Trash2, User, Clock, ChevronDown, ChevronUp, Filter, ArrowUpDown, Edit, CheckSquare, Square } from "lucide-react";
+import { Calendar as CalendarIcon, MessageCircle, Phone, Trash2, User, Clock, ChevronDown, ChevronUp, Filter, ArrowUpDown, Edit, CheckSquare, Square } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useToast } from "@/hooks/use-toast";
 import { UserRole } from "@/lib/types";
 import { StatusTabs, MessageStatusFilter } from "./StatusTabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -16,6 +15,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { CreateAgendamentoModal } from "./CreateAgendamentoModal";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface ScheduledMessage {
   id: string;
@@ -54,7 +57,8 @@ export const AgendamentosList = ({
   onStatusChange 
 }: AgendamentosListProps) => {
   const { user } = useAuth();
-  const { toast } = useToast();
+  // Remover toast duplicado - usar apenas sonner
+  // const { toast: toastFunction } = useToast();
   const [messages, setMessages] = useState<ScheduledMessage[]>([]);
   const [allMessages, setAllMessages] = useState<ScheduledMessage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,6 +74,10 @@ export const AgendamentosList = ({
   const [instanceFilter, setInstanceFilter] = useState<string>('all');
   const [statusDetailFilter, setStatusDetailFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('all');
+  const [customDateRange, setCustomDateRange] = useState<{
+    from: Date | undefined;
+    to: Date | undefined;
+  } | undefined>(undefined);
   const [selectedMessages, setSelectedMessages] = useState<Set<string>>(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [editingMessage, setEditingMessage] = useState<ScheduledMessage | null>(null);
@@ -131,11 +139,7 @@ export const AgendamentosList = ({
       }
     } catch (error: any) {
       console.error('Error fetching messages:', error);
-      toast({
-        title: "Erro ao carregar agendamentos",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error("Erro ao carregar agendamentos");
     } finally {
       setLoading(false);
     }
@@ -200,19 +204,12 @@ export const AgendamentosList = ({
         throw error;
       }
 
-      toast({
-        title: "✅ Agendamento removido",
-        description: "O agendamento foi removido com sucesso.",
-      });
+      toast.success("Agendamento removido com sucesso");
       
       fetchMessages();
     } catch (error: any) {
       console.error('💥 Erro completo ao deletar:', error);
-      toast({
-        title: "❌ Erro ao remover agendamento",
-        description: `Detalhes: ${error.message || 'Erro desconhecido'}`,
-        variant: "destructive",
-      });
+      toast.error(`Erro ao remover agendamento: ${error.message || 'Erro desconhecido'}`);
     }
   };
 
@@ -232,21 +229,14 @@ export const AgendamentosList = ({
         }
       }
 
-      toast({
-        title: "Agendamentos removidos",
-        description: `${selectedMessages.size} agendamento(s) foram removidos com sucesso.`,
-      });
+      toast.success(`${selectedMessages.size} agendamento(s) foram removidos com sucesso`);
       
       setSelectedMessages(new Set());
       setShowBulkActions(false);
       fetchMessages();
     } catch (error: any) {
       console.error('Error bulk deleting messages:', error);
-      toast({
-        title: "Erro ao remover agendamentos",
-        description: `Detalhes: ${error.message || 'Erro desconhecido'}`,
-        variant: "destructive",
-      });
+      toast.error(`Erro ao remover agendamentos: ${error.message || 'Erro desconhecido'}`);
     }
   };
 
@@ -287,19 +277,12 @@ export const AgendamentosList = ({
 
       if (error) throw error;
 
-      toast({
-        title: "Mensagem reagendada",
-        description: "A mensagem foi colocada novamente na fila para envio.",
-      });
+      toast.success("Mensagem reagendada com sucesso");
       
       fetchMessages();
     } catch (error: any) {
       console.error('Error retrying message:', error);
-      toast({
-        title: "Erro ao reagendar mensagem",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(`Erro ao reagendar mensagem: ${error.message}`);
     }
   };
 
@@ -425,29 +408,48 @@ export const AgendamentosList = ({
     
     // Aplicar filtro de data
     if (dateFilter && dateFilter !== 'all') {
-      const today = new Date();
-      const yesterday = new Date(today);
-      yesterday.setDate(today.getDate() - 1);
-      const weekAgo = new Date(today);
-      weekAgo.setDate(today.getDate() - 7);
-      const monthAgo = new Date(today);
-      monthAgo.setMonth(today.getMonth() - 1);
-      
-      filtered = filtered.filter(msg => {
-        const msgDate = new Date(msg.scheduled_date);
-        switch (dateFilter) {
-          case 'today':
-            return msgDate.toDateString() === today.toDateString();
-          case 'yesterday':
-            return msgDate.toDateString() === yesterday.toDateString();
-          case 'week':
-            return msgDate >= weekAgo;
-          case 'month':
-            return msgDate >= monthAgo;
-          default:
-            return true;
+      if (dateFilter === 'custom') {
+        // Filtro de data personalizada
+        if (customDateRange?.from) {
+          filtered = filtered.filter(msg => {
+            const msgDate = new Date(msg.scheduled_date);
+            const fromDate = customDateRange.from!;
+            const toDate = customDateRange.to || customDateRange.from!;
+            
+            // Incluir o dia completo (do início ao fim do dia)
+            const startOfFrom = new Date(fromDate);
+            startOfFrom.setHours(0, 0, 0, 0);
+            const endOfTo = new Date(toDate);
+            endOfTo.setHours(23, 59, 59, 999);
+            
+            return msgDate >= startOfFrom && msgDate <= endOfTo;
+          });
         }
-      });
+      } else {
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(today.getDate() - 1);
+        const weekAgo = new Date(today);
+        weekAgo.setDate(today.getDate() - 7);
+        const monthAgo = new Date(today);
+        monthAgo.setMonth(today.getMonth() - 1);
+        
+        filtered = filtered.filter(msg => {
+          const msgDate = new Date(msg.scheduled_date);
+          switch (dateFilter) {
+            case 'today':
+              return msgDate.toDateString() === today.toDateString();
+            case 'yesterday':
+              return msgDate.toDateString() === yesterday.toDateString();
+            case 'week':
+              return msgDate >= weekAgo;
+            case 'month':
+              return msgDate >= monthAgo;
+            default:
+              return true;
+          }
+        });
+      }
     }
     
     return sortMessages(filtered);
@@ -466,7 +468,7 @@ export const AgendamentosList = ({
     setCurrentPage(1); // Reset página ao mudar filtros
     setSelectedMessages(new Set()); // Limpar seleção ao filtrar
     setShowBulkActions(false);
-  }, [allMessages, statusFilter, sortField, sortOrder, searchTerm, instanceFilter, statusDetailFilter, dateFilter]);
+  }, [allMessages, statusFilter, sortField, sortOrder, searchTerm, instanceFilter, statusDetailFilter, dateFilter, customDateRange]);
 
   // Aplicar paginação
   const getPaginatedMessages = (messages: ScheduledMessage[]) => {
@@ -596,7 +598,7 @@ export const AgendamentosList = ({
                   <SelectValue placeholder="Instância" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
+                   <SelectItem value="all">Todas | Instâncias</SelectItem>
                   {getUniqueInstances().map(instance => (
                     <SelectItem key={instance} value={instance}>
                       {instance}
@@ -611,7 +613,7 @@ export const AgendamentosList = ({
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="all">Todos | Status</SelectItem>
                   <SelectItem value="pending">Pendentes</SelectItem>
                   <SelectItem value="sent">Enviados</SelectItem>
                   <SelectItem value="failed">Falharam</SelectItem>
@@ -624,43 +626,74 @@ export const AgendamentosList = ({
                 <SelectTrigger className="w-36">
                   <SelectValue placeholder="Período" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="today">Hoje</SelectItem>
-                  <SelectItem value="yesterday">Ontem</SelectItem>
-                  <SelectItem value="week">Última semana</SelectItem>
-                  <SelectItem value="month">Último mês</SelectItem>
-                </SelectContent>
+                 <SelectContent>
+                   <SelectItem value="all">Todas | Datas</SelectItem>
+                   <SelectItem value="today">Hoje</SelectItem>
+                   <SelectItem value="yesterday">Ontem</SelectItem>
+                   <SelectItem value="week">Última semana</SelectItem>
+                   <SelectItem value="month">Último mês</SelectItem>
+                   <SelectItem value="custom">Data personalizada</SelectItem>
+                 </SelectContent>
               </Select>
               
-              {/* Botões de ação */}
-              {!showBulkActions && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={selectAllVisibleMessages}
-                  className="h-10"
-                >
-                  <CheckSquare className="h-4 w-4 mr-2" />
-                  Selecionar Visíveis
-                </Button>
-              )}
+               {/* Seletor de data personalizada */}
+               {dateFilter === 'custom' && (
+                 <div className="flex items-center gap-2">
+                   <Popover>
+                     <PopoverTrigger asChild>
+                       <Button
+                         variant="outline"
+                         className={cn(
+                           "w-40 justify-start text-left font-normal",
+                           !customDateRange.from && "text-muted-foreground"
+                         )}
+                       >
+                         <CalendarIcon className="mr-2 h-4 w-4" />
+                         {customDateRange?.from ? (
+                           customDateRange.to ? (
+                             <>
+                               {format(customDateRange.from, "dd/MM/yy")} -{" "}
+                               {format(customDateRange.to, "dd/MM/yy")}
+                             </>
+                           ) : (
+                             format(customDateRange.from, "dd/MM/yyyy")
+                           )
+                         ) : (
+                           <span>Selecionar das...</span>
+                         )}
+                       </Button>
+                     </PopoverTrigger>
+                     <PopoverContent className="w-auto p-0" align="start">
+                       <Calendar
+                         initialFocus
+                         mode="range"
+                         defaultMonth={customDateRange?.from}
+                         selected={customDateRange}
+                         onSelect={(range) => setCustomDateRange(range as any)}
+                         numberOfMonths={2}
+                         className="pointer-events-auto"
+                       />
+                     </PopoverContent>
+                   </Popover>
+                 </div>
+               )}
               
-              {(searchTerm || instanceFilter !== 'all' || statusDetailFilter !== 'all' || dateFilter !== 'all') && (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setSearchTerm('');
-                    setInstanceFilter('all');
-                    setStatusDetailFilter('all');
-                    setDateFilter('all');
-                  }}
-                  className="h-10"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Limpar
-                </Button>
-              )}
+               {(searchTerm || instanceFilter !== 'all' || statusDetailFilter !== 'all' || dateFilter !== 'all' || customDateRange?.from) && (
+                 <Button
+                   variant="outline"
+                   onClick={() => {
+                     setSearchTerm('');
+                     setInstanceFilter('all');
+                     setStatusDetailFilter('all');
+                     setDateFilter('all');
+                     setCustomDateRange(undefined);
+                   }}
+                   className="h-10"
+                 >
+                   <Trash2 className="h-4 w-4 mr-2" />
+                   Limpar
+                 </Button>
+               )}
             </div>
           </div>
         </CardContent>
