@@ -22,6 +22,7 @@ interface CreateRecurringScheduleModalProps {
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
   editingSchedule?: RecurringMessageSchedule;
+  preSelectedFunnelStage?: string | null;
 }
 
 interface UserInstance {
@@ -34,6 +35,7 @@ export const CreateRecurringScheduleModal = ({
   onOpenChange,
   onSuccess,
   editingSchedule,
+  preSelectedFunnelStage,
 }: CreateRecurringScheduleModalProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -45,7 +47,7 @@ export const CreateRecurringScheduleModal = ({
   const [clientPhone, setClientPhone] = useState("");
   const [messageText, setMessageText] = useState("");
   const [selectedInstance, setSelectedInstance] = useState("");
-  const [funnelStage, setFunnelStage] = useState<FunnelStage>('prospeccao');
+  const [funnelStage, setFunnelStage] = useState<string>('prospeccao');
   const [executionTime, setExecutionTime] = useState("09:00");
   const [recurrenceType, setRecurrenceType] = useState<'daily' | 'weekly' | 'monthly'>('monthly');
   
@@ -59,7 +61,9 @@ export const CreateRecurringScheduleModal = ({
 
   // Load editing data when modal opens
   useEffect(() => {
-    if (open && editingSchedule) {
+    if (preSelectedFunnelStage) {
+      setFunnelStage(preSelectedFunnelStage);
+    } else if (open && editingSchedule) {
       setClientName(editingSchedule.client_name || "");
       setClientPhone(editingSchedule.client_phone || "");
       setMessageText(editingSchedule.message_text || "");
@@ -201,7 +205,7 @@ export const CreateRecurringScheduleModal = ({
         client_phone: clientPhone,
         message_text: messageText,
         instance_name: selectedInstance,
-        funnel_stage: funnelStage,
+        funnel_stage: funnelStage as FunnelStage,
         execution_time: executionTime,
         recurrence_type: recurrenceType,
         recurrence_interval: 1,
@@ -217,7 +221,7 @@ export const CreateRecurringScheduleModal = ({
       if (isEditing) {
         const { error } = await supabase
           .from('recurring_message_schedules')
-          .update(scheduleData)
+          .update(scheduleData as any)
           .eq('id', editingSchedule.id);
 
         if (error) throw error;
@@ -227,9 +231,9 @@ export const CreateRecurringScheduleModal = ({
           description: "O agendamento recorrente foi atualizado com sucesso.",
         });
       } else {
-        const { error } = await supabase
-          .from('recurring_message_schedules')
-          .insert([scheduleData]);
+      const { error } = await supabase
+        .from('recurring_message_schedules')
+        .insert([scheduleData] as any);
 
         if (error) throw error;
 
@@ -334,7 +338,7 @@ export const CreateRecurringScheduleModal = ({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="funnelStage">Etapa do Funil</Label>
-              <Select value={funnelStage} onValueChange={(value: FunnelStage) => setFunnelStage(value)} required>
+              <Select value={funnelStage} onValueChange={setFunnelStage} required>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a etapa do funil" />
                 </SelectTrigger>

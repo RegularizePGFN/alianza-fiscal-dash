@@ -26,6 +26,7 @@ export const AgendamentosContainer = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [editingSchedule, setEditingSchedule] = useState<any>(null);
   const [selectedInstance, setSelectedInstance] = useState<string | null>(null);
+  const [preSelectedFunnelStage, setPreSelectedFunnelStage] = useState<string | null>(null);
   const [currentStatusFilter, setCurrentStatusFilter] = useState<MessageStatusFilter>('all');
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [calendarCounts, setCalendarCounts] = useState({ scheduled: 0, sent: 0, all: 0 });
@@ -50,6 +51,12 @@ export const AgendamentosContainer = () => {
   const handleModalClose = () => {
     setCreateScheduleModalOpen(false);
     setEditingSchedule(null);
+    setPreSelectedFunnelStage(null);
+  };
+
+  const handleCreateSchedule = (funnelStage: string) => {
+    setPreSelectedFunnelStage(funnelStage);
+    setCreateScheduleModalOpen(true);
   };
 
   return (
@@ -128,6 +135,7 @@ export const AgendamentosContainer = () => {
           <RecurringSchedulesKanban 
             refreshTrigger={refreshTrigger}
             onEditSchedule={handleEditSchedule}
+            onCreateSchedule={handleCreateSchedule}
           />
         </>
       )}
@@ -146,6 +154,7 @@ export const AgendamentosContainer = () => {
           handleModalClose();
         }}
         editingSchedule={editingSchedule}
+        preSelectedFunnelStage={preSelectedFunnelStage}
       />
 
       {isAdmin && (

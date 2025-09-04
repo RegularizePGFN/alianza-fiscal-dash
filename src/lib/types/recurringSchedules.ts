@@ -5,7 +5,8 @@ export type FunnelStage =
   | 'negociacao'
   | 'venda_realizada'
   | 'cobranca'
-  | 'pos_venda';
+  | 'pos_venda'
+  | string; // Allow custom stages
 
 export type RecurrenceType = 'daily' | 'weekly' | 'monthly';
 
