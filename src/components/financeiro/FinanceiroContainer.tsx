@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { FinanceiroHeader } from "./FinanceiroHeader";
 import { CostManagement } from "./CostManagement";
 import { LucroLiquido } from "./LucroLiquido";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,10 +19,8 @@ export function FinanceiroContainer() {
   };
 
   return (
-    <div className="space-y-4">
-      <FinanceiroHeader />
-      
-      <Tabs defaultValue="overview" className="space-y-4">
+    <div className="space-y-6">
+      <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="costs">Gerenciar Custos</TabsTrigger>
@@ -39,7 +36,7 @@ export function FinanceiroContainer() {
           />
         </TabsContent>
         
-        <TabsContent value="costs">
+        <TabsContent value="costs" className="space-y-4">
           <CostManagement onCostChange={handleCostChange} />
         </TabsContent>
       </Tabs>

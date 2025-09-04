@@ -57,63 +57,53 @@ export function VariableCostManagement({ onCostChange }: VariableCostManagementP
   };
 
   return (
-    <div className="space-y-6">
-      <Card className="border-blue-200 shadow-sm">
-        <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 dark:bg-blue-800/50 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <CardTitle className="text-blue-800 dark:text-blue-200">Custos Variáveis</CardTitle>
-                <CardDescription className="text-blue-600 dark:text-blue-300">
-                  Gerencie custos com datas específicas (parcelas, funcionários temporários, etc.)
-                </CardDescription>
-              </div>
-            </div>
-            <Button 
-              onClick={() => setShowForm(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar Custo Variável
-            </Button>
+    <div className="space-y-4">
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-foreground">Filtros e Controles</h3>
+            <p className="text-sm text-muted-foreground">Organize custos por período</p>
           </div>
-        </CardHeader>
-        
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-4 mb-6">
-            <label className="text-sm font-medium">Filtrar por mês:</label>
-            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {generateMonthOptions().map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Button 
+            onClick={() => setShowForm(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+            size="sm"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Adicionar
+          </Button>
+        </div>
 
-          {showForm && (
-            <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border">
-              <CostForm
-                cost={editingCost}
-                costType="variable"
-                onSave={handleCostSaved}
-                onCancel={() => {
-                  setShowForm(false);
-                  setEditingCost(null);
-                }}
-              />
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        <div className="flex items-center gap-4 p-3 bg-muted/30 rounded-lg">
+          <label className="text-sm font-medium">Filtrar por mês:</label>
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {generateMonthOptions().map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {showForm && (
+          <div className="p-4 bg-muted/50 rounded-lg border">
+            <CostForm
+              cost={editingCost}
+              costType="variable"
+              onSave={handleCostSaved}
+              onCancel={() => {
+                setShowForm(false);
+                setEditingCost(null);
+              }}
+            />
+          </div>
+        )}
+      </div>
       
       <VariableCostList
         costs={costs}
