@@ -3,7 +3,8 @@ import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, DollarSign, Minus, Plus, Users } from "lucide-react";
 import { useSalesData } from "@/hooks/financeiro/useSalesData";
-import { useCosts } from "@/hooks/financeiro/useCosts";
+import { useFixedCosts } from "@/hooks/financeiro/useFixedCosts";
+import { useVariableCosts } from "@/hooks/financeiro/useVariableCosts";
 import { useCommissions } from "@/hooks/financeiro/useCommissions";
 import { MonthSelector } from "./MonthSelector";
 import { DailyProfitChart } from "./charts/DailyProfitChart";
@@ -26,13 +27,20 @@ export function LucroLiquido({
   onMonthChange 
 }: LucroLiquidoProps) {
   const { salesData, loading: salesLoading } = useSalesData();
-  const { costs, loading: costsLoading, fetchCosts } = useCosts();
+  
+  // Usar os MESMOS hooks que as abas de gerenciamento usam
+  const { costs: fixedCosts, loading: fixedCostsLoading } = useFixedCosts();
+  
+  // Criar string do mês no formato que o hook espera (YYYY-MM)
+  const monthString = `${selectedYear}-${selectedMonth.toString().padStart(2, '0')}`;
+  const { costs: variableCosts, loading: variableCostsLoading } = useVariableCosts(monthString);
+  
   const { commissions, totalCommissions, loading: commissionsLoading } = useCommissions(selectedMonth, selectedYear);
 
   // Simplificar o useEffect para evitar loops infinitos
   useEffect(() => {
     if (refreshTrigger) {
-      fetchCosts();
+      console.log('RefreshTrigger activated, data will be refreshed automatically by hooks');
     }
   }, [refreshTrigger]);
 
@@ -72,15 +80,15 @@ export function LucroLiquido({
 
     const monthlyRevenue = filteredSales.reduce((total, sale) => total + Number(sale.gross_amount), 0);
 
-    // Calcular custos fixos
-    const totalFixedCosts = costs
-      .filter(cost => cost.type === 'fixed')
-      .reduce((total, cost) => total + Number(cost.amount), 0);
+    // Calcular custos fixos usando exatamente o MESMO cálculo da aba Gerenciar Custos
+    const totalFixedCosts = fixedCosts.reduce((total, cost) => total + Number(cost.amount), 0);
+    
+    // Calcular custos variáveis usando exatamente o MESMO cálculo da aba Gerenciar Custos  
+    const totalVariableCosts = variableCosts.reduce((total, cost) => total + Number(cost.amount), 0);
 
-    // Calcular custos variáveis
-    const totalVariableCosts = costs
-      .filter(cost => cost.type === 'variable')
-      .reduce((total, cost) => total + Number(cost.amount), 0);
+    console.log(`Financeiro - Custos fixos: R$ ${totalFixedCosts.toFixed(2)}`);
+    console.log(`Financeiro - Custos variáveis (${monthString}): R$ ${totalVariableCosts.toFixed(2)}`);
+    console.log(`Financeiro - Comissões: R$ ${totalCommissions.toFixed(2)}`);
 
     // Custo total = custos fixos + custos variáveis (SEM comissões, pois elas aparecem separadamente)
     const totalCosts = totalFixedCosts + totalVariableCosts;
@@ -99,9 +107,9 @@ export function LucroLiquido({
       profitMargin,
       filteredSales
     };
-  }, [salesData, costs, totalCommissions, selectedMonth, selectedYear]);
+  }, [salesData, fixedCosts, variableCosts, totalCommissions, selectedMonth, selectedYear, monthString]);
 
-  if (salesLoading || costsLoading || commissionsLoading) {
+  if (salesLoading || fixedCostsLoading || variableCostsLoading || commissionsLoading) {
     return (
       <div className="space-y-6">
         <div className="animate-pulse">
