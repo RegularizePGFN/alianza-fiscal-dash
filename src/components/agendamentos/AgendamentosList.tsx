@@ -164,38 +164,52 @@ export const AgendamentosList = ({
 
   const deleteMessage = async (id: string) => {
     try {
-      console.log('Tentando excluir agendamento:', id);
-      console.log('User ID:', user?.id);
-      console.log('User role:', user?.role);
+      console.log('🗑️ Tentando excluir agendamento:', id);
+      console.log('👤 User ID:', user?.id);
+      console.log('🎭 User role:', user?.role);
       
+      // Primeiro verificar se conseguimos buscar a mensagem
       const { data: messageData, error: fetchError } = await supabase
         .from('scheduled_messages')
         .select('*')
         .eq('id', id)
         .single();
       
-      console.log('Dados da mensagem:', messageData);
-      console.log('Erro ao buscar:', fetchError);
+      console.log('📨 Dados da mensagem:', messageData);
+      if (fetchError) {
+        console.error('❌ Erro ao buscar mensagem:', fetchError);
+        throw new Error(`Erro ao buscar mensagem: ${fetchError.message}`);
+      }
       
+      // Verificar se o usuário tem permissão
+      console.log('🔍 Verificando permissões...');
+      console.log('   - User owns message:', messageData?.user_id === user?.id);
+      console.log('   - User is admin:', user?.role === 'admin');
+      
+      // Tentar excluir
+      console.log('🚀 Executando exclusão...');
       const { error } = await supabase
         .from('scheduled_messages')
         .delete()
         .eq('id', id);
 
-      console.log('Resultado da exclusão:', { error });
+      console.log('📋 Resultado da exclusão:', { error });
 
-      if (error) throw error;
+      if (error) {
+        console.error('💥 Erro na exclusão:', error);
+        throw error;
+      }
 
       toast({
-        title: "Agendamento removido",
+        title: "✅ Agendamento removido",
         description: "O agendamento foi removido com sucesso.",
       });
       
       fetchMessages();
     } catch (error: any) {
-      console.error('Error deleting message:', error);
+      console.error('💥 Erro completo ao deletar:', error);
       toast({
-        title: "Erro ao remover agendamento",
+        title: "❌ Erro ao remover agendamento",
         description: `Detalhes: ${error.message || 'Erro desconhecido'}`,
         variant: "destructive",
       });
