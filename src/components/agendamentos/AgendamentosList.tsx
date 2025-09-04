@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, MessageCircle, Phone, Trash2, User, Clock, ChevronDown, ChevronUp, Filter, ArrowUpDown, Edit } from "lucide-react";
+import { Calendar, MessageCircle, Phone, Trash2, User, Clock, ChevronDown, ChevronUp, Filter, ArrowUpDown, Edit, CheckSquare, Square } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -68,6 +68,10 @@ export const AgendamentosList = ({
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [searchTerm, setSearchTerm] = useState('');
   const [instanceFilter, setInstanceFilter] = useState<string>('all');
+  const [statusDetailFilter, setStatusDetailFilter] = useState<string>('all');
+  const [dateFilter, setDateFilter] = useState<string>('all');
+  const [selectedMessages, setSelectedMessages] = useState<Set<string>>(new Set());
+  const [showBulkActions, setShowBulkActions] = useState(false);
   const [editingMessage, setEditingMessage] = useState<ScheduledMessage | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -160,10 +164,25 @@ export const AgendamentosList = ({
 
   const deleteMessage = async (id: string) => {
     try {
+      console.log('Tentando excluir agendamento:', id);
+      console.log('User ID:', user?.id);
+      console.log('User role:', user?.role);
+      
+      const { data: messageData, error: fetchError } = await supabase
+        .from('scheduled_messages')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      console.log('Dados da mensagem:', messageData);
+      console.log('Erro ao buscar:', fetchError);
+      
       const { error } = await supabase
         .from('scheduled_messages')
         .delete()
         .eq('id', id);
+
+      console.log('Resultado da exclusão:', { error });
 
       if (error) throw error;
 
@@ -177,10 +196,68 @@ export const AgendamentosList = ({
       console.error('Error deleting message:', error);
       toast({
         title: "Erro ao remover agendamento",
-        description: error.message,
+        description: `Detalhes: ${error.message || 'Erro desconhecido'}`,
         variant: "destructive",
       });
     }
+  };
+
+  const deleteBulkMessages = async () => {
+    try {
+      console.log('Tentando excluir agendamentos em massa:', Array.from(selectedMessages));
+      
+      for (const id of selectedMessages) {
+        const { error } = await supabase
+          .from('scheduled_messages')
+          .delete()
+          .eq('id', id);
+        
+        if (error) {
+          console.error('Erro ao excluir mensagem:', id, error);
+          throw error;
+        }
+      }
+
+      toast({
+        title: "Agendamentos removidos",
+        description: `${selectedMessages.size} agendamento(s) foram removidos com sucesso.`,
+      });
+      
+      setSelectedMessages(new Set());
+      setShowBulkActions(false);
+      fetchMessages();
+    } catch (error: any) {
+      console.error('Error bulk deleting messages:', error);
+      toast({
+        title: "Erro ao remover agendamentos",
+        description: `Detalhes: ${error.message || 'Erro desconhecido'}`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const toggleMessageSelection = (messageId: string) => {
+    setSelectedMessages(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(messageId)) {
+        newSet.delete(messageId);
+      } else {
+        newSet.add(messageId);
+      }
+      setShowBulkActions(newSet.size > 0);
+      return newSet;
+    });
+  };
+
+  const selectAllVisibleMessages = () => {
+    const visibleIds = new Set(paginatedMessages.map(msg => msg.id));
+    setSelectedMessages(visibleIds);
+    setShowBulkActions(visibleIds.size > 0);
+  };
+
+  const clearSelection = () => {
+    setSelectedMessages(new Set());
+    setShowBulkActions(false);
   };
 
   const retryMessage = async (id: string) => {
@@ -309,8 +386,8 @@ export const AgendamentosList = ({
     });
   };
 
-  const filterAndSortMessages = (allMessages: ScheduledMessage[], statusFilter: MessageStatusFilter) => {
-    let filtered = filterMessages(allMessages, statusFilter);
+  const filterAndSortMessages = (allMessages: ScheduledMessage[], statusFilterTab: MessageStatusFilter) => {
+    let filtered = filterMessages(allMessages, statusFilterTab);
     
     // Aplicar filtro de busca
     if (searchTerm) {
@@ -327,6 +404,38 @@ export const AgendamentosList = ({
       filtered = filtered.filter(msg => msg.instance_name === instanceFilter);
     }
     
+    // Aplicar filtro de status adicional
+    if (statusDetailFilter && statusDetailFilter !== 'all') {
+      filtered = filtered.filter(msg => msg.status === statusDetailFilter);
+    }
+    
+    // Aplicar filtro de data
+    if (dateFilter && dateFilter !== 'all') {
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      const weekAgo = new Date(today);
+      weekAgo.setDate(today.getDate() - 7);
+      const monthAgo = new Date(today);
+      monthAgo.setMonth(today.getMonth() - 1);
+      
+      filtered = filtered.filter(msg => {
+        const msgDate = new Date(msg.scheduled_date);
+        switch (dateFilter) {
+          case 'today':
+            return msgDate.toDateString() === today.toDateString();
+          case 'yesterday':
+            return msgDate.toDateString() === yesterday.toDateString();
+          case 'week':
+            return msgDate >= weekAgo;
+          case 'month':
+            return msgDate >= monthAgo;
+          default:
+            return true;
+        }
+      });
+    }
+    
     return sortMessages(filtered);
   };
 
@@ -341,7 +450,9 @@ export const AgendamentosList = ({
     const processedMessages = filterAndSortMessages(allMessages, statusFilter);
     setMessages(processedMessages);
     setCurrentPage(1); // Reset página ao mudar filtros
-  }, [allMessages, statusFilter, sortField, sortOrder, searchTerm, instanceFilter]);
+    setSelectedMessages(new Set()); // Limpar seleção ao filtrar
+    setShowBulkActions(false);
+  }, [allMessages, statusFilter, sortField, sortOrder, searchTerm, instanceFilter, statusDetailFilter, dateFilter]);
 
   // Aplicar paginação
   const getPaginatedMessages = (messages: ScheduledMessage[]) => {
@@ -417,8 +528,37 @@ export const AgendamentosList = ({
       {/* Filtros */}
       <Card className="hover:shadow-md transition-all duration-300 border-opacity-50">
         <CardContent className="pt-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
+          {/* Ações em massa */}
+          {showBulkActions && (
+            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <CheckSquare className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                    {selectedMessages.size} agendamento(s) selecionado(s)
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    size="sm" 
+                    variant="destructive" 
+                    onClick={deleteBulkMessages}
+                    className="h-8"
+                  >
+                    <Trash2 className="h-3 w-3 mr-1" />
+                    Excluir Selecionados
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={clearSelection} className="h-8">
+                    Cancelar
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <div className="flex flex-col gap-4">
+            {/* Linha 1: Busca */}
+            <div className="w-full">
               <div className="relative">
                 <Input
                   placeholder="Buscar por cliente, telefone, instância ou mensagem..."
@@ -433,41 +573,81 @@ export const AgendamentosList = ({
                 </div>
               </div>
             </div>
-            <Select value={instanceFilter} onValueChange={setInstanceFilter}>
-              <SelectTrigger className="w-full sm:w-48 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500">
-                <div className="flex items-center gap-2">
-                  <div className="p-1 rounded bg-purple-100 dark:bg-purple-900/30">
-                    <MessageCircle className="h-3 w-3 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <SelectValue placeholder="Filtrar por instância" />
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as instâncias</SelectItem>
-                {getUniqueInstances().map(instance => (
-                  <SelectItem key={instance} value={instance}>
-                    {instance}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {(searchTerm || (instanceFilter && instanceFilter !== 'all')) && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSearchTerm('');
-                  setInstanceFilter('all');
-                }}
-                className="whitespace-nowrap transition-all duration-200 hover:bg-red-50 hover:border-red-300 hover:text-red-700 dark:hover:bg-red-900/30"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="p-1 rounded bg-red-100 dark:bg-red-900/30">
-                    <Trash2 className="h-3 w-3 text-red-600 dark:text-red-400" />
-                  </div>
-                  Limpar Filtros
-                </div>
-              </Button>
-            )}
+            
+            {/* Linha 2: Filtros */}
+            <div className="flex flex-wrap gap-3">
+              {/* Filtro por Instância */}
+              <Select value={instanceFilter} onValueChange={setInstanceFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Instância" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  {getUniqueInstances().map(instance => (
+                    <SelectItem key={instance} value={instance}>
+                      {instance}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              {/* Filtro por Status */}
+              <Select value={statusDetailFilter} onValueChange={setStatusDetailFilter}>
+                <SelectTrigger className="w-36">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="pending">Pendentes</SelectItem>
+                  <SelectItem value="sent">Enviados</SelectItem>
+                  <SelectItem value="failed">Falharam</SelectItem>
+                  <SelectItem value="cancelled">Cancelados</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {/* Filtro por Data */}
+              <Select value={dateFilter} onValueChange={setDateFilter}>
+                <SelectTrigger className="w-36">
+                  <SelectValue placeholder="Período" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="today">Hoje</SelectItem>
+                  <SelectItem value="yesterday">Ontem</SelectItem>
+                  <SelectItem value="week">Última semana</SelectItem>
+                  <SelectItem value="month">Último mês</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {/* Botões de ação */}
+              {!showBulkActions && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={selectAllVisibleMessages}
+                  className="h-10"
+                >
+                  <CheckSquare className="h-4 w-4 mr-2" />
+                  Selecionar Visíveis
+                </Button>
+              )}
+              
+              {(searchTerm || instanceFilter !== 'all' || statusDetailFilter !== 'all' || dateFilter !== 'all') && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setInstanceFilter('all');
+                    setStatusDetailFilter('all');
+                    setDateFilter('all');
+                  }}
+                  className="h-10"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Limpar
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -479,9 +659,24 @@ export const AgendamentosList = ({
             <TableHeader>
               <TableRow className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-b-2 border-blue-100 dark:border-blue-800">
                 <TableHead className="w-12">
-                  <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/40 w-fit">
-                    <ChevronDown className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      if (selectedMessages.size === paginatedMessages.length) {
+                        clearSelection();
+                      } else {
+                        selectAllVisibleMessages();
+                      }
+                    }}
+                    className="h-6 w-6 p-0"
+                  >
+                    {selectedMessages.size === paginatedMessages.length && paginatedMessages.length > 0 ? (
+                      <CheckSquare className="h-4 w-4 text-blue-600" />
+                    ) : (
+                      <Square className="h-4 w-4 text-gray-400" />
+                    )}
+                  </Button>
                 </TableHead>
                 <TableHead>
                   <SortButton field="client_name">
@@ -565,18 +760,32 @@ export const AgendamentosList = ({
                   {/* Linha principal do agendamento */}
                   <TableRow className="hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-purple-50/50 dark:hover:from-blue-900/10 dark:hover:to-purple-900/10 transition-all duration-200">
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleRowExpansion(message.id)}
-                        className="p-1 h-6 w-6 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors duration-200"
-                      >
-                        {expandedRows.has(message.id) ? (
-                          <ChevronUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                        )}
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleMessageSelection(message.id)}
+                          className="p-1 h-6 w-6"
+                        >
+                          {selectedMessages.has(message.id) ? (
+                            <CheckSquare className="h-4 w-4 text-blue-600" />
+                          ) : (
+                            <Square className="h-4 w-4 text-gray-400" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleRowExpansion(message.id)}
+                          className="p-1 h-6 w-6 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors duration-200"
+                        >
+                          {expandedRows.has(message.id) ? (
+                            <ChevronUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                          )}
+                        </Button>
+                      </div>
                     </TableCell>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
@@ -675,15 +884,18 @@ export const AgendamentosList = ({
                             <Edit className="h-3 w-3" />
                           </Button>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteMessage(message.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 p-1 h-6 w-6 transition-colors duration-200"
-                          title="Excluir agendamento"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              console.log('Clique no botão delete para:', message.id);
+                              deleteMessage(message.id);
+                            }}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 p-1 h-6 w-6 transition-colors duration-200"
+                            title="Excluir agendamento"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -691,7 +903,7 @@ export const AgendamentosList = ({
                   {/* Linha expandida - só renderiza se estiver expandida */}
                   {expandedRows.has(message.id) && (
                     <TableRow>
-                      <TableCell colSpan={isAdmin ? 9 : 8} className="bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-900/10 dark:to-purple-900/10 p-0 border-t-2 border-blue-200 dark:border-blue-700">
+                      <TableCell colSpan={isAdmin ? 10 : 9} className="bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-900/10 dark:to-purple-900/10 p-0 border-t-2 border-blue-200 dark:border-blue-700">
                         <div className="w-full p-6 space-y-6">
                           {/* Título da seção expandida */}
                           <div className="border-b-2 border-gradient-to-r from-blue-200 to-purple-200 dark:from-blue-700 dark:to-purple-700 pb-4">
