@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar, Clock, Phone, User, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { usePredefinedMessages } from "@/hooks/usePredefinedMessages";
 
 interface CreateAgendamentoModalProps {
   open: boolean;
@@ -68,6 +69,7 @@ export const CreateAgendamentoModal = ({
 }: CreateAgendamentoModalProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { messages: predefinedMessages } = usePredefinedMessages();
   const [loading, setLoading] = useState(false);
   const [loadingContacts, setLoadingContacts] = useState(false);
   const [searchPhone, setSearchPhone] = useState("");
@@ -626,6 +628,37 @@ export const CreateAgendamentoModal = ({
                 required
               />
             </div>
+
+            {/* Chips das mensagens pré-definidas */}
+            {predefinedMessages.length > 0 && (
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Mensagens Pré-Definidas</Label>
+                <div className="flex flex-wrap gap-2">
+                  {predefinedMessages.map((message) => (
+                    <Button
+                      key={message.id}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setFormData(prev => ({ ...prev, messageText: message.content }))}
+                      className="h-8 px-3 text-xs rounded-full bg-gradient-to-r from-blue-50 to-purple-50 
+                               hover:from-blue-100 hover:to-purple-100 border-blue-200 hover:border-blue-300 
+                               text-blue-700 hover:text-blue-800 transition-all duration-200
+                               dark:from-blue-900/20 dark:to-purple-900/20 dark:hover:from-blue-900/30 
+                               dark:hover:to-purple-900/30 dark:border-blue-800 dark:hover:border-blue-700 
+                               dark:text-blue-300 dark:hover:text-blue-200"
+                    >
+                      {message.name}
+                    </Button>
+                  ))}
+                </div>
+                {predefinedMessages.length > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Clique em uma mensagem para preencher automaticamente o campo acima
+                  </p>
+                )}
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
