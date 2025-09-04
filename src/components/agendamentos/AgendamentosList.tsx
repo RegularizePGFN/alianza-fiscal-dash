@@ -593,10 +593,10 @@ export const AgendamentosList = ({
             {/* Linha 2: Filtros */}
             <div className="flex flex-wrap gap-3">
               {/* Filtro por Instância */}
-              <Select value={instanceFilter} onValueChange={setInstanceFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Instância" />
-                </SelectTrigger>
+               <Select value={instanceFilter} onValueChange={setInstanceFilter}>
+                 <SelectTrigger className="w-48">
+                   <SelectValue placeholder="Instância" />
+                 </SelectTrigger>
                 <SelectContent>
                    <SelectItem value="all">Todas | Instâncias</SelectItem>
                   {getUniqueInstances().map(instance => (

@@ -115,6 +115,8 @@ export const RecurringSchedulesKanban = ({
   const [newStageName, setNewStageName] = useState("");
   const [editingStageId, setEditingStageId] = useState<string | null>(null);
   const [editingStageLabel, setEditingStageLabel] = useState("");
+  const [editingColorStageId, setEditingColorStageId] = useState<string | null>(null);
+  const [editingColor, setEditingColor] = useState("");
   
   // Carregar stages e ordem do localStorage
   const [funnelStages, setFunnelStages] = useState<Record<string, CustomFunnelStage>>(() => {
@@ -344,6 +346,34 @@ export const RecurringSchedulesKanban = ({
     setEditingStageLabel("");
   };
 
+  const handleEditColor = (stageId: string, currentColor: string) => {
+    setEditingColorStageId(stageId);
+    setEditingColor(currentColor);
+  };
+
+  const saveColorEdit = () => {
+    if (!editingColorStageId || !editingColor.trim()) return;
+    
+    const newStages = { ...funnelStages };
+    newStages[editingColorStageId].color = editingColor.trim();
+    
+    setFunnelStages(newStages);
+    saveCustomStages(newStages, stageOrder);
+    
+    setEditingColorStageId(null);
+    setEditingColor("");
+    
+    toast({
+      title: "Sucesso",
+      description: "Cor da etapa atualizada com sucesso",
+    });
+  };
+
+  const cancelColorEdit = () => {
+    setEditingColorStageId(null);
+    setEditingColor("");
+  };
+
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
@@ -421,13 +451,48 @@ export const RecurringSchedulesKanban = ({
                               >
                                 <GripVertical className="h-4 w-4 text-muted-foreground" />
                               </div>
-                              <div 
-                                className="w-3 h-3 rounded-full" 
-                                style={{ backgroundColor: stage.color }}
-                              />
+                               {/* Edição de cor */}
+                               {editingColorStageId === stageId ? (
+                                 <div className="flex items-center gap-1">
+                                   <Input
+                                     value={editingColor}
+                                     onChange={(e) => setEditingColor(e.target.value)}
+                                     className="h-6 text-xs px-2 w-20"
+                                     placeholder="#FF0000"
+                                     onKeyDown={(e) => {
+                                       if (e.key === 'Enter') saveColorEdit();
+                                       if (e.key === 'Escape') cancelColorEdit();
+                                     }}
+                                     autoFocus
+                                   />
+                                   <Button
+                                     size="sm"
+                                     variant="ghost"
+                                     className="h-5 w-5 p-0"
+                                     onClick={saveColorEdit}
+                                   >
+                                     <Check className="h-3 w-3 text-green-600" />
+                                   </Button>
+                                   <Button
+                                     size="sm"
+                                     variant="ghost"
+                                     className="h-5 w-5 p-0"
+                                     onClick={cancelColorEdit}
+                                   >
+                                     <X className="h-3 w-3 text-red-600" />
+                                   </Button>
+                                 </div>
+                               ) : (
+                                 <div 
+                                   className="w-3 h-3 rounded-full cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-gray-300" 
+                                   style={{ backgroundColor: stage.color }}
+                                   onClick={() => handleEditColor(stageId, stage.color)}
+                                   title="Clique para alterar cor"
+                                 />
+                               )}
                               
-                              {/* Nome editável */}
-                              {editingStageId === stageId ? (
+                               {/* Nome editável */}
+                               {editingStageId === stageId && editingColorStageId !== stageId ? (
                                 <div className="flex items-center gap-1 flex-1">
                                   <Input
                                     value={editingStageLabel}
@@ -456,15 +521,15 @@ export const RecurringSchedulesKanban = ({
                                     <X className="h-3 w-3 text-red-600" />
                                   </Button>
                                 </div>
-                              ) : (
+                               ) : editingColorStageId !== stageId ? (
                                 <span 
                                   className="flex-1 cursor-pointer hover:bg-muted/50 px-1 py-0.5 rounded"
                                   onClick={() => handleEditStage(stageId, stage.label)}
                                   title="Clique para editar"
                                 >
                                   {stage.label}
-                                </span>
-                              )}
+                                 </span>
+                               ) : null}
                               
                               <Badge variant="secondary" className="ml-auto">
                                 {schedulesByStage[stageId]?.length || 0}
@@ -517,9 +582,9 @@ export const RecurringSchedulesKanban = ({
                                         ref={provided.innerRef}
                                         {...provided.draggableProps}
                                         {...provided.dragHandleProps}
-                                        className={`p-3 border-l-4 bg-muted/30 cursor-move ${
-                                          snapshot.isDragging ? 'shadow-lg rotate-1 z-50' : ''
-                                        }`}
+                                          className={`p-3 border-l-4 bg-muted/30 ${
+                                            snapshot.isDragging ? 'shadow-lg rotate-1 z-50' : ''
+                                          }`}
                                         style={{ 
                                           borderLeftColor: stage.color,
                                           ...provided.draggableProps.style 
