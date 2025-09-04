@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/auth";
 import { AgendamentosHeader } from "./AgendamentosHeader";
-import { AgendamentosList } from "./AgendamentosList";
+import { AgendamentosListWithDashboard } from "./AgendamentosListWithDashboard";
 import { CalendarView } from "./CalendarView";
 import { CreateAgendamentoModal } from "./CreateAgendamentoModal";
 import { AdminInstancesModal } from "./AdminInstancesModal";
@@ -98,8 +98,8 @@ export const AgendamentosContainer = () => {
           />
 
           {viewMode === 'list' ? (
-            <AgendamentosList 
-              refreshTrigger={refreshTrigger} 
+            <AgendamentosListWithDashboard 
+              refreshTrigger={refreshTrigger}
               selectedInstance={selectedInstance}
               statusFilter={currentStatusFilter}
               onStatusChange={setCurrentStatusFilter}
@@ -127,14 +127,17 @@ export const AgendamentosContainer = () => {
               <p className="text-muted-foreground">Gerencie mensagens recorrentes por etapa do funil</p>
             </div>
             <div className="flex gap-2">
-              <Button
-                onClick={() => setIsAddingStage(true)}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Novo Funil
-              </Button>
+              {/* Apenas admins podem criar novos funis */}
+              {isAdmin && (
+                <Button
+                  onClick={() => setIsAddingStage(true)}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Novo Funil
+                </Button>
+              )}
               {isAdmin && (
                 <Button
                   variant="outline"

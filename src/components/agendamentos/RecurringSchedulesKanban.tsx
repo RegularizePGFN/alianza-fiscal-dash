@@ -380,7 +380,9 @@ export const RecurringSchedulesKanban = ({
     const { source, destination, type } = result;
 
     if (type === 'STAGE') {
-      // Reordering stages/columns
+      // Apenas admins podem reordenar stages/colunas
+      if (!isAdmin) return;
+      
       const newOrder = Array.from(stageOrder);
       const [removed] = newOrder.splice(source.index, 1);
       newOrder.splice(destination.index, 0, removed);
@@ -445,14 +447,17 @@ export const RecurringSchedulesKanban = ({
                         <Card className={`h-full ${snapshot.isDragging ? 'shadow-lg rotate-2' : ''}`}>
                           <CardHeader className="pb-3">
                             <CardTitle className="text-sm font-medium flex items-center gap-2">
-                              <div 
-                                {...provided.dragHandleProps}
-                                className="cursor-move"
-                              >
-                                <GripVertical className="h-4 w-4 text-muted-foreground" />
-                              </div>
-                               {/* Edição de cor */}
-                               {editingColorStageId === stageId ? (
+                               {/* Apenas admins podem mover colunas */}
+                               {isAdmin && (
+                                 <div 
+                                   {...provided.dragHandleProps}
+                                   className="cursor-move"
+                                 >
+                                   <GripVertical className="h-4 w-4 text-muted-foreground" />
+                                 </div>
+                               )}
+                               {/* Edição de cor - apenas para admins */}
+                               {isAdmin && editingColorStageId === stageId ? (
                                  <div className="flex items-center gap-2">
                                    <div className="flex flex-wrap gap-1 p-2 bg-white rounded-lg border shadow-sm">
                                      {[
@@ -494,81 +499,84 @@ export const RecurringSchedulesKanban = ({
                                  </div>
                                ) : (
                                  <div 
-                                   className="w-3 h-3 rounded-full cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-gray-300" 
+                                   className={`w-3 h-3 rounded-full ${isAdmin ? 'cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-gray-300' : ''}`}
                                    style={{ backgroundColor: stage.color }}
-                                   onClick={() => handleEditColor(stageId, stage.color)}
-                                   title="Clique para alterar cor"
+                                   onClick={isAdmin ? () => handleEditColor(stageId, stage.color) : undefined}
+                                   title={isAdmin ? "Clique para alterar cor" : "Cor do funil"}
                                  />
                                )}
                               
-                               {/* Nome editável */}
-                               {editingStageId === stageId && editingColorStageId !== stageId ? (
-                                <div className="flex items-center gap-1 flex-1">
-                                  <Input
-                                    value={editingStageLabel}
-                                    onChange={(e) => setEditingStageLabel(e.target.value)}
-                                    className="h-6 text-sm px-2"
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') saveStageEdit();
-                                      if (e.key === 'Escape') cancelStageEdit();
-                                    }}
-                                    autoFocus
-                                  />
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-5 w-5 p-0"
-                                    onClick={saveStageEdit}
-                                  >
-                                    <Check className="h-3 w-3 text-green-600" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-5 w-5 p-0"
-                                    onClick={cancelStageEdit}
-                                  >
-                                    <X className="h-3 w-3 text-red-600" />
-                                  </Button>
-                                </div>
-                               ) : editingColorStageId !== stageId ? (
-                                <span 
-                                  className="flex-1 cursor-pointer hover:bg-muted/50 px-1 py-0.5 rounded"
-                                  onClick={() => handleEditStage(stageId, stage.label)}
-                                  title="Clique para editar"
-                                >
-                                  {stage.label}
-                                 </span>
-                               ) : null}
+                                {/* Nome editável - apenas para admins */}
+                                {isAdmin && editingStageId === stageId && editingColorStageId !== stageId ? (
+                                 <div className="flex items-center gap-1 flex-1">
+                                   <Input
+                                     value={editingStageLabel}
+                                     onChange={(e) => setEditingStageLabel(e.target.value)}
+                                     className="h-6 text-sm px-2"
+                                     onKeyDown={(e) => {
+                                       if (e.key === 'Enter') saveStageEdit();
+                                       if (e.key === 'Escape') cancelStageEdit();
+                                     }}
+                                     autoFocus
+                                   />
+                                   <Button
+                                     size="sm"
+                                     variant="ghost"
+                                     className="h-5 w-5 p-0"
+                                     onClick={saveStageEdit}
+                                   >
+                                     <Check className="h-3 w-3 text-green-600" />
+                                   </Button>
+                                   <Button
+                                     size="sm"
+                                     variant="ghost"
+                                     className="h-5 w-5 p-0"
+                                     onClick={cancelStageEdit}
+                                   >
+                                     <X className="h-3 w-3 text-red-600" />
+                                   </Button>
+                                 </div>
+                                ) : editingColorStageId !== stageId ? (
+                                 <span 
+                                   className={`flex-1 px-1 py-0.5 rounded ${isAdmin ? 'cursor-pointer hover:bg-muted/50' : ''}`}
+                                   onClick={isAdmin ? () => handleEditStage(stageId, stage.label) : undefined}
+                                   title={isAdmin ? "Clique para editar" : "Nome do funil"}
+                                 >
+                                   {stage.label}
+                                  </span>
+                                ) : null}
                               
                               <Badge variant="secondary" className="ml-auto">
                                 {schedulesByStage[stageId]?.length || 0}
                               </Badge>
                               
-              <div className="flex gap-1">
-                <Button
-                  size="sm"
-                  variant="ghost" 
-                  className="h-6 w-6 p-0"
-                  onClick={() => onCreateSchedule?.(stageId)}
-                  title="Adicionar agendamento nesta etapa"
-                >
-                  <Plus className="h-3 w-3 text-green-600" />
-                </Button>
-                
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-6 w-6 p-0"
-                  onClick={() => {
-                    setStageToDelete(stageId);
-                    setDeleteStageDialogOpen(true);
-                  }}
-                  title="Excluir etapa"
-                >
-                  <X className="h-3 w-3 text-red-600" />
-                </Button>
-              </div>
+               <div className="flex gap-1">
+                 <Button
+                   size="sm"
+                   variant="ghost" 
+                   className="h-6 w-6 p-0"
+                   onClick={() => onCreateSchedule?.(stageId)}
+                   title="Adicionar agendamento nesta etapa"
+                 >
+                   <Plus className="h-3 w-3 text-green-600" />
+                 </Button>
+                 
+                 {/* Apenas admins podem excluir etapas */}
+                 {isAdmin && (
+                   <Button
+                     size="sm"
+                     variant="ghost"
+                     className="h-6 w-6 p-0"
+                     onClick={() => {
+                       setStageToDelete(stageId);
+                       setDeleteStageDialogOpen(true);
+                     }}
+                     title="Excluir etapa"
+                   >
+                     <X className="h-3 w-3 text-red-600" />
+                   </Button>
+                 )}
+               </div>
                             </CardTitle>
                           </CardHeader>
                           
@@ -694,8 +702,8 @@ export const RecurringSchedulesKanban = ({
               
               {provided.placeholder}
               
-              {/* Add New Stage Card */}
-              {isAddingStage && (
+              {/* Add New Stage Card - apenas para admins */}
+              {isAdmin && isAddingStage && (
                 <div className="flex-shrink-0 w-80">
                   <Card className="h-full border-dashed border-2">
                     <CardContent className="flex items-center justify-center h-full p-6">
