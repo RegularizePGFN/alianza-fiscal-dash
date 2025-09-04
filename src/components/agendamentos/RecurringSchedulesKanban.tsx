@@ -470,32 +470,30 @@ export const RecurringSchedulesKanban = ({
                                 {schedulesByStage[stageId]?.length || 0}
                               </Badge>
                               
-                              <div className="flex gap-1">
-                                <Button
-                                  size="sm"
-                                  variant="ghost" 
-                                  className="h-6 w-6 p-0"
-                                  onClick={() => onCreateSchedule?.(stageId)}
-                                  title="Adicionar agendamento nesta etapa"
-                                >
-                                  <Plus className="h-3 w-3 text-green-600" />
-                                </Button>
-                                
-                                {!Object.keys(FUNNEL_STAGES).includes(stageId) && (
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-6 w-6 p-0"
-                                    onClick={() => {
-                                      setStageToDelete(stageId);
-                                      setDeleteStageDialogOpen(true);
-                                    }}
-                                    title="Excluir etapa"
-                                  >
-                                    <X className="h-3 w-3 text-red-600" />
-                                  </Button>
-                                )}
-                              </div>
+              <div className="flex gap-1">
+                <Button
+                  size="sm"
+                  variant="ghost" 
+                  className="h-6 w-6 p-0"
+                  onClick={() => onCreateSchedule?.(stageId)}
+                  title="Adicionar agendamento nesta etapa"
+                >
+                  <Plus className="h-3 w-3 text-green-600" />
+                </Button>
+                
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 w-6 p-0"
+                  onClick={() => {
+                    setStageToDelete(stageId);
+                    setDeleteStageDialogOpen(true);
+                  }}
+                  title="Excluir etapa"
+                >
+                  <X className="h-3 w-3 text-red-600" />
+                </Button>
+              </div>
                             </CardTitle>
                           </CardHeader>
                           
