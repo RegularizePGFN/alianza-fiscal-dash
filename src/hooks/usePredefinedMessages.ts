@@ -21,10 +21,16 @@ export const usePredefinedMessages = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('predefined_messages')
-        .select('*')
-        .order('name');
+        .select('*');
+
+      // Se não for admin, filtrar apenas mensagens do usuário atual
+      if (user.role !== 'admin') {
+        query = query.eq('user_id', user.id);
+      }
+
+      const { data, error } = await query.order('name');
 
       if (error) throw error;
 
