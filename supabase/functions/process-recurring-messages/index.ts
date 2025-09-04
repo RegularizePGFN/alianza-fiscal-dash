@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { toZonedTime, format } from "https://esm.sh/date-fns-tz@3.0.0";
 
 interface RecurringSchedule {
   id: string;
@@ -46,10 +47,12 @@ serve(async (req) => {
 
     console.log('Processing recurring schedules...');
 
-    // Get current date and time
+    // Get current date and time in São Paulo timezone
+    const timezone = 'America/Sao_Paulo';
     const now = new Date();
-    const today = now.toISOString().split('T')[0]; // YYYY-MM-DD
-    const currentTime = now.toTimeString().split(' ')[0].substring(0, 5); // HH:MM
+    const nowInSP = toZonedTime(now, timezone);
+    const today = format(nowInSP, 'yyyy-MM-dd', { timeZone: timezone }); // YYYY-MM-DD
+    const currentTime = format(nowInSP, 'HH:mm', { timeZone: timezone }); // HH:MM
 
     console.log(`Current date: ${today}, time: ${currentTime}`);
 
@@ -171,8 +174,8 @@ async function checkIfShouldExecute(
     return false;
   }
 
-  const startDate = new Date(schedule.start_date);
-  const todayDate = new Date(today);
+  const startDate = new Date(schedule.start_date + 'T00:00:00-03:00'); // SP timezone
+  const todayDate = new Date(today + 'T00:00:00-03:00'); // SP timezone
   
   const daysSinceStart = Math.floor((todayDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
   console.log(`Days since start: ${daysSinceStart}`);
@@ -187,7 +190,10 @@ async function checkIfShouldExecute(
       break;
       
     case 'weekly':
-      const todayWeekDay = todayDate.getDay();
+      // Use SP timezone for day of week calculation
+      const timezone = 'America/Sao_Paulo';
+      const nowInSP = toZonedTime(new Date(), timezone);
+      const todayWeekDay = nowInSP.getDay();
       const scheduleWeekDay = schedule.day_of_week;
       shouldExecuteToday = todayWeekDay === scheduleWeekDay && daysSinceStart >= 0;
       
