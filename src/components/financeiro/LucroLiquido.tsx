@@ -77,12 +77,14 @@ export function LucroLiquido({
       .filter(cost => cost.type === 'fixed')
       .reduce((total, cost) => total + Number(cost.amount), 0);
 
-    // Calcular custos variáveis (incluindo comissões automáticas)
+    // Calcular custos variáveis
     const totalVariableCosts = costs
       .filter(cost => cost.type === 'variable')
       .reduce((total, cost) => total + Number(cost.amount), 0);
 
-    const totalCosts = totalFixedCosts + totalVariableCosts + totalCommissions;
+    // IMPORTANTE: Não somar totalCommissions separadamente, 
+    // pois as comissões já estão incluídas nos custos fixos automaticamente
+    const totalCosts = totalFixedCosts + totalVariableCosts;
 
     // Calcular lucro líquido
     const netProfit = monthlyRevenue - totalCosts;
@@ -92,7 +94,7 @@ export function LucroLiquido({
       monthlyRevenue,
       totalFixedCosts,
       totalVariableCosts,
-      totalCommissions,
+      totalCommissions: 0, // Zerando para não duplicar, já que comissões estão nos custos fixos
       totalCosts,
       netProfit,
       profitMargin,
@@ -133,7 +135,7 @@ export function LucroLiquido({
     {
       title: "Custos Totais",
       value: calculations.totalCosts,
-      description: "Fixos + Variáveis + Comissões",
+      description: "Fixos + Variáveis (comissões inclusas)",
       icon: Minus,
       color: "text-red-600"
     },
@@ -242,10 +244,10 @@ export function LucroLiquido({
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-purple-600">
-                  {formatCurrency(calculations.totalCommissions)}
+                  Incluídas nos Custos Fixos
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Comissões automáticas (5%)
+                  Adicionadas automaticamente
                 </p>
               </CardContent>
             </Card>
