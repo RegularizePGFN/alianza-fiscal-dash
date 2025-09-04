@@ -871,18 +871,13 @@ export const AgendamentosList = ({
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2 text-sm">
-                        <div className="p-1.5 rounded-full bg-orange-100 dark:bg-orange-900/30">
-                          <Calendar className="h-3 w-3 text-orange-600 dark:text-orange-400" />
-                        </div>
-                         <span className="font-medium text-foreground">
-                           {format(new Date(message.scheduled_date), "dd/MM/yy HH:mm", {
-                             locale: ptBR,
-                           })}
-                         </span>
-                      </div>
-                    </TableCell>
+                     <TableCell>
+                       <span className="font-medium text-foreground">
+                         {format(new Date(message.scheduled_date), "dd/MM/yy HH:mm", {
+                           locale: ptBR,
+                         })}
+                       </span>
+                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {getStatusBadge(message.status)}
