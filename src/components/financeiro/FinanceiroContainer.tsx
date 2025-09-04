@@ -3,17 +3,15 @@ import { useState } from "react";
 import { CostManagement } from "./CostManagement";
 import { LucroLiquido } from "./LucroLiquido";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useCommissionSync } from "@/hooks/financeiro/useCommissionSync";
+import { useCleanupCommissions } from "@/hooks/financeiro/useCleanupCommissions";
 
 export function FinanceiroContainer() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
-  // Inicializar sincronização de comissões
-  useCommissionSync({
-    onCommissionUpdate: () => setRefreshTrigger(prev => prev + 1)
-  });
+  // Limpar comissões duplicadas (executar apenas uma vez)
+  useCleanupCommissions();
 
   const handleCostChange = () => {
     setRefreshTrigger(prev => prev + 1);
