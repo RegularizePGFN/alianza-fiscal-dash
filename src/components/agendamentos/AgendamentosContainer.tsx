@@ -62,26 +62,25 @@ export const AgendamentosContainer = () => {
   return (
     <div className="space-y-6">
       {/* Header com seletores de tipo */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-foreground">Agendamentos</h1>
-        <div className="flex items-center gap-3">
+      <div className="flex justify-start items-center">
+        <div className="flex items-center gap-2">
           <Button
             variant={agendamentoType === 'conventional' ? 'default' : 'outline'}
             onClick={() => setAgendamentoType('conventional')}
-            className="flex items-center gap-2 h-10 px-6"
+            className="flex items-center gap-2 h-8 px-4"
             size="sm"
           >
-            <Clock className="h-4 w-4" />
+            <Clock className="h-3 w-3" />
             Convencional
           </Button>
           
           <Button
             variant={agendamentoType === 'recurring' ? 'default' : 'outline'}
             onClick={() => setAgendamentoType('recurring')}
-            className="flex items-center gap-2 h-10 px-6"
+            className="flex items-center gap-2 h-8 px-4"
             size="sm"
           >
-            <Repeat className="h-4 w-4" />
+            <Repeat className="h-3 w-3" />
             Recorrente
           </Button>
         </div>

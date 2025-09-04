@@ -453,18 +453,28 @@ export const RecurringSchedulesKanban = ({
                               </div>
                                {/* Edição de cor */}
                                {editingColorStageId === stageId ? (
-                                 <div className="flex items-center gap-1">
-                                   <Input
-                                     value={editingColor}
-                                     onChange={(e) => setEditingColor(e.target.value)}
-                                     className="h-6 text-xs px-2 w-20"
-                                     placeholder="#FF0000"
-                                     onKeyDown={(e) => {
-                                       if (e.key === 'Enter') saveColorEdit();
-                                       if (e.key === 'Escape') cancelColorEdit();
-                                     }}
-                                     autoFocus
-                                   />
+                                 <div className="flex items-center gap-2">
+                                   <div className="flex flex-wrap gap-1 p-2 bg-white rounded-lg border shadow-sm">
+                                     {[
+                                       '#ef4444', // red
+                                       '#f97316', // orange  
+                                       '#eab308', // yellow
+                                       '#22c55e', // green
+                                       '#06b6d4', // cyan
+                                       '#3b82f6', // blue
+                                       '#8b5cf6', // violet
+                                       '#ec4899', // pink
+                                       '#64748b', // slate
+                                       '#dc2626'  // dark red
+                                     ].map((color) => (
+                                       <div
+                                         key={color}
+                                         className="w-5 h-5 rounded-full cursor-pointer hover:scale-110 transition-transform border-2 border-white shadow-sm"
+                                         style={{ backgroundColor: color }}
+                                         onClick={() => setEditingColor(color)}
+                                       />
+                                     ))}
+                                   </div>
                                    <Button
                                      size="sm"
                                      variant="ghost"

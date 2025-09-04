@@ -580,10 +580,10 @@ export const AgendamentosList = ({
                   placeholder="Buscar por cliente, telefone, instância ou mensagem..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 transition-all duration-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="pl-12 transition-all duration-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <div className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                  <div className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/30 mr-2">
                     <Filter className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   </div>
                 </div>
