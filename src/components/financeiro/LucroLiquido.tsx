@@ -8,6 +8,7 @@ import { useCommissions } from "@/hooks/financeiro/useCommissions";
 import { MonthSelector } from "./MonthSelector";
 import { DailyProfitChart } from "./charts/DailyProfitChart";
 import { CommissionChart } from "./charts/CommissionChart";
+import { startOfMonth, endOfMonth } from "date-fns";
 
 interface LucroLiquidoProps {
   refreshTrigger?: number;
@@ -44,11 +45,30 @@ export function LucroLiquido({
 
   // Memoizar cálculos para evitar recálculos desnecessários
   const calculations = useMemo(() => {
-    // Filtrar vendas do mês selecionado
+    // Usar a mesma lógica dos relatórios para filtrar vendas
+    const selectedDate = new Date(selectedYear, selectedMonth - 1, 1);
+    const startDate = startOfMonth(selectedDate);
+    const endDate = endOfMonth(selectedDate);
+    
+    // Converter datas para string no formato YYYY-MM-DD para comparação
+    const startDateStr = startDate.toISOString().split('T')[0];
+    const endDateStr = endDate.toISOString().split('T')[0];
+    
+    console.log(`Financeiro - Filtrando vendas de ${startDateStr} até ${endDateStr}`);
+    
     const filteredSales = salesData.filter(sale => {
-      const saleDate = new Date(sale.sale_date);
-      return saleDate.getMonth() + 1 === selectedMonth && saleDate.getFullYear() === selectedYear;
+      // Garantir que sale_date está no formato correto
+      if (typeof sale.sale_date !== 'string' || !sale.sale_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        console.warn(`Data de venda inválida: ${sale.sale_date} para venda ${sale.id}`);
+        return false;
+      }
+      
+      // Comparar datas como strings no formato YYYY-MM-DD
+      return sale.sale_date >= startDateStr && sale.sale_date <= endDateStr;
     });
+
+    console.log(`Financeiro - Total de vendas filtradas: ${filteredSales.length}`);
+    console.log(`Financeiro - Valor total: R$ ${filteredSales.reduce((total, sale) => total + Number(sale.gross_amount), 0).toFixed(2)}`);
 
     const monthlyRevenue = filteredSales.reduce((total, sale) => total + Number(sale.gross_amount), 0);
 
