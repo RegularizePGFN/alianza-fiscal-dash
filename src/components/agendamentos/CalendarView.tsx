@@ -5,9 +5,10 @@ import { format, startOfWeek, addDays, isSameDay, parseISO, isAfter, isBefore, s
 import { ptBR } from "date-fns/locale";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Clock, User, MessageCircle, Calendar, Edit3 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, User, MessageCircle, Calendar, Edit3, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -29,6 +30,7 @@ export const CalendarView = ({ refreshTrigger, selectedInstance, statusFilter, o
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [selectedMessage, setSelectedMessage] = useState<any>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [editForm, setEditForm] = useState({
     scheduled_date: '',
     message_text: ''
@@ -204,6 +206,36 @@ export const CalendarView = ({ refreshTrigger, selectedInstance, statusFilter, o
       toast({
         title: "Erro",
         description: "Erro ao atualizar agendamento. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteMessage = async () => {
+    if (!selectedMessage) return;
+
+    try {
+      const { error } = await supabase
+        .from('scheduled_messages')
+        .delete()
+        .eq('id', selectedMessage.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Agendamento excluído com sucesso!",
+      });
+
+      setIsEditModalOpen(false);
+      setIsDeleteDialogOpen(false);
+      setSelectedMessage(null);
+      fetchMessages(); // Recarregar os dados
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir agendamento. Tente novamente.",
         variant: "destructive",
       });
     }
@@ -441,21 +473,52 @@ export const CalendarView = ({ refreshTrigger, selectedInstance, statusFilter, o
                 />
               </div>
               
-              <div className="flex justify-end gap-2 pt-4">
+              <div className="flex justify-between items-center pt-4">
                 <Button
-                  variant="outline"
-                  onClick={() => setIsEditModalOpen(false)}
+                  variant="destructive"
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                  className="flex items-center gap-2"
                 >
-                  Cancelar
+                  <Trash2 className="h-4 w-4" />
+                  Excluir
                 </Button>
-                <Button onClick={handleSaveEdit}>
-                  Salvar Alterações
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsEditModalOpen(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleSaveEdit}>
+                    Salvar Alterações
+                  </Button>
+                </div>
               </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você tem certeza que gostaria de apagar este agendamento? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteMessage}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Excluir Agendamento
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

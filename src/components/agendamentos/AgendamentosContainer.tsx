@@ -5,11 +5,10 @@ import { AgendamentosList } from "./AgendamentosList";
 import { CalendarView } from "./CalendarView";
 import { CreateAgendamentoModal } from "./CreateAgendamentoModal";
 import { AdminInstancesModal } from "./AdminInstancesModal";
-import { AgendamentosTypeSelector } from "./AgendamentosTypeSelector";
 import { RecurringSchedulesKanban } from "./RecurringSchedulesKanban";
 import { CreateRecurringScheduleModal } from "./CreateRecurringScheduleModal";
 import { Button } from "@/components/ui/button";
-import { Repeat, Plus } from "lucide-react";
+import { Repeat, Plus, Clock } from "lucide-react";
 
 import { StatusTabs, MessageStatusFilter } from "./StatusTabs";
 import { UserRole } from "@/lib/types";
@@ -62,11 +61,31 @@ export const AgendamentosContainer = () => {
 
   return (
     <div className="space-y-6">
-      {/* Card de seleção de tipo de agendamento */}
-      <AgendamentosTypeSelector
-        activeType={agendamentoType}
-        onTypeChange={setAgendamentoType}
-      />
+      {/* Header com seletores de tipo */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-foreground">Agendamentos</h1>
+        <div className="flex items-center gap-3">
+          <Button
+            variant={agendamentoType === 'conventional' ? 'default' : 'outline'}
+            onClick={() => setAgendamentoType('conventional')}
+            className="flex items-center gap-2 h-10 px-6"
+            size="sm"
+          >
+            <Clock className="h-4 w-4" />
+            Convencional
+          </Button>
+          
+          <Button
+            variant={agendamentoType === 'recurring' ? 'default' : 'outline'}
+            onClick={() => setAgendamentoType('recurring')}
+            className="flex items-center gap-2 h-10 px-6"
+            size="sm"
+          >
+            <Repeat className="h-4 w-4" />
+            Recorrente
+          </Button>
+        </div>
+      </div>
 
       {agendamentoType === 'conventional' ? (
         <>
