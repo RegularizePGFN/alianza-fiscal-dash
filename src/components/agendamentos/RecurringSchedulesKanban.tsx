@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, Edit, Power, PowerOff, Plus, X, GripVertical } from "lucide-react";
+import { Trash2, Edit, Power, PowerOff, Plus, X, GripVertical, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
@@ -30,6 +30,8 @@ interface RecurringSchedulesKanbanProps {
   refreshTrigger: number;
   onEditSchedule?: (schedule: RecurringMessageSchedule) => void;
   onCreateSchedule?: (funnelStage: string) => void;
+  isAddingStage?: boolean;
+  onAddingStageChange?: (isAdding: boolean) => void;
 }
 
 interface CustomFunnelStage {
@@ -58,10 +60,50 @@ const getNextColor = (existingStages: Record<string, CustomFunnelStage>): string
   return colors.find(color => !usedColors.includes(color)) || colors[0];
 };
 
+// Função para salvar etapas customizadas no localStorage
+const saveCustomStages = (stages: Record<string, CustomFunnelStage>, order: string[]) => {
+  localStorage.setItem('customFunnelStages', JSON.stringify(stages));
+  localStorage.setItem('funnelStageOrder', JSON.stringify(order));
+};
+
+// Função para carregar etapas customizadas do localStorage
+const loadCustomStages = (): { stages: Record<string, CustomFunnelStage>, order: string[] } => {
+  try {
+    const savedStages = localStorage.getItem('customFunnelStages');
+    const savedOrder = localStorage.getItem('funnelStageOrder');
+    
+    if (savedStages && savedOrder) {
+      return {
+        stages: JSON.parse(savedStages),
+        order: JSON.parse(savedOrder)
+      };
+    }
+  } catch (error) {
+    console.error('Error loading custom stages:', error);
+  }
+  
+  // Retornar stages padrão se não houver salvos
+  const defaultStages: Record<string, CustomFunnelStage> = {};
+  Object.entries(FUNNEL_STAGES).forEach(([key, value]) => {
+    defaultStages[key] = {
+      id: key,
+      label: value.label,
+      color: value.color
+    };
+  });
+  
+  return {
+    stages: defaultStages,
+    order: Object.keys(FUNNEL_STAGES)
+  };
+};
+
 export const RecurringSchedulesKanban = ({ 
   refreshTrigger, 
   onEditSchedule, 
-  onCreateSchedule 
+  onCreateSchedule,
+  isAddingStage = false,
+  onAddingStageChange
 }: RecurringSchedulesKanbanProps) => {
   const { user } = useAuth();
   const [schedules, setSchedules] = useState<RecurringMessageSchedule[]>([]);
@@ -71,22 +113,19 @@ export const RecurringSchedulesKanban = ({
   const [scheduleToDelete, setScheduleToDelete] = useState<string | null>(null);
   const [stageToDelete, setStageToDelete] = useState<string | null>(null);
   const [newStageName, setNewStageName] = useState("");
-  const [isAddingStage, setIsAddingStage] = useState(false);
+  const [editingStageId, setEditingStageId] = useState<string | null>(null);
+  const [editingStageLabel, setEditingStageLabel] = useState("");
   
-  // State to manage custom funnel stages
+  // Carregar stages e ordem do localStorage
   const [funnelStages, setFunnelStages] = useState<Record<string, CustomFunnelStage>>(() => {
-    const defaultStages: Record<string, CustomFunnelStage> = {};
-    Object.entries(FUNNEL_STAGES).forEach(([key, value]) => {
-      defaultStages[key] = {
-        id: key,
-        label: value.label,
-        color: value.color
-      };
-    });
-    return defaultStages;
+    const { stages } = loadCustomStages();
+    return stages;
   });
   
-  const [stageOrder, setStageOrder] = useState<string[]>(Object.keys(FUNNEL_STAGES));
+  const [stageOrder, setStageOrder] = useState<string[]>(() => {
+    const { order } = loadCustomStages();
+    return order;
+  });
 
   const isAdmin = user?.role === UserRole.ADMIN;
 
@@ -213,6 +252,9 @@ export const RecurringSchedulesKanban = ({
       const newOrder = stageOrder.filter(id => id !== stageToDelete);
       setStageOrder(newOrder);
 
+      // Salvar no localStorage
+      saveCustomStages(newStages, newOrder);
+
       toast({
         title: "Sucesso",
         description: `Etapa excluída junto com ${schedulesToDelete.length} agendamento(s)`,
@@ -234,7 +276,7 @@ export const RecurringSchedulesKanban = ({
   const addNewStage = () => {
     if (!newStageName.trim()) return;
 
-    const stageId = newStageName.toLowerCase().replace(/\s+/g, '_');
+    const stageId = newStageName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
     
     if (funnelStages[stageId]) {
       toast({
@@ -251,15 +293,55 @@ export const RecurringSchedulesKanban = ({
       color: getNextColor(funnelStages)
     };
 
-    setFunnelStages(prev => ({ ...prev, [stageId]: newStage }));
-    setStageOrder(prev => [...prev, stageId]);
+    const newStages = { ...funnelStages, [stageId]: newStage };
+    const newOrder = [...stageOrder, stageId];
+    
+    setFunnelStages(newStages);
+    setStageOrder(newOrder);
+    
+    // Salvar no localStorage
+    saveCustomStages(newStages, newOrder);
+    
     setNewStageName("");
-    setIsAddingStage(false);
+    onAddingStageChange?.(false);
 
     toast({
       title: "Sucesso", 
       description: "Nova etapa adicionada com sucesso",
     });
+  };
+
+  const handleEditStage = (stageId: string, currentLabel: string) => {
+    setEditingStageId(stageId);
+    setEditingStageLabel(currentLabel);
+  };
+
+  const saveStageEdit = () => {
+    if (!editingStageId || !editingStageLabel.trim()) return;
+
+    const newStages = {
+      ...funnelStages,
+      [editingStageId]: {
+        ...funnelStages[editingStageId],
+        label: editingStageLabel.trim()
+      }
+    };
+
+    setFunnelStages(newStages);
+    saveCustomStages(newStages, stageOrder);
+    
+    setEditingStageId(null);
+    setEditingStageLabel("");
+
+    toast({
+      title: "Sucesso",
+      description: "Nome da etapa atualizado com sucesso",
+    });
+  };
+
+  const cancelStageEdit = () => {
+    setEditingStageId(null);
+    setEditingStageLabel("");
   };
 
   const onDragEnd = (result: DropResult) => {
@@ -273,6 +355,7 @@ export const RecurringSchedulesKanban = ({
       const [removed] = newOrder.splice(source.index, 1);
       newOrder.splice(destination.index, 0, removed);
       setStageOrder(newOrder);
+      saveCustomStages(funnelStages, newOrder);
       return;
     }
 
@@ -342,7 +425,47 @@ export const RecurringSchedulesKanban = ({
                                 className="w-3 h-3 rounded-full" 
                                 style={{ backgroundColor: stage.color }}
                               />
-                              {stage.label}
+                              
+                              {/* Nome editável */}
+                              {editingStageId === stageId ? (
+                                <div className="flex items-center gap-1 flex-1">
+                                  <Input
+                                    value={editingStageLabel}
+                                    onChange={(e) => setEditingStageLabel(e.target.value)}
+                                    className="h-6 text-sm px-2"
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') saveStageEdit();
+                                      if (e.key === 'Escape') cancelStageEdit();
+                                    }}
+                                    autoFocus
+                                  />
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-5 w-5 p-0"
+                                    onClick={saveStageEdit}
+                                  >
+                                    <Check className="h-3 w-3 text-green-600" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-5 w-5 p-0"
+                                    onClick={cancelStageEdit}
+                                  >
+                                    <X className="h-3 w-3 text-red-600" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <span 
+                                  className="flex-1 cursor-pointer hover:bg-muted/50 px-1 py-0.5 rounded"
+                                  onClick={() => handleEditStage(stageId, stage.label)}
+                                  title="Clique para editar"
+                                >
+                                  {stage.label}
+                                </span>
+                              )}
+                              
                               <Badge variant="secondary" className="ml-auto">
                                 {schedulesByStage[stageId]?.length || 0}
                               </Badge>
@@ -499,10 +622,10 @@ export const RecurringSchedulesKanban = ({
               {provided.placeholder}
               
               {/* Add New Stage Card */}
-              <div className="flex-shrink-0 w-80">
-                <Card className="h-full border-dashed border-2">
-                  <CardContent className="flex items-center justify-center h-full p-6">
-                    {isAddingStage ? (
+              {isAddingStage && (
+                <div className="flex-shrink-0 w-80">
+                  <Card className="h-full border-dashed border-2">
+                    <CardContent className="flex items-center justify-center h-full p-6">
                       <div className="space-y-3 w-full">
                         <Input
                           placeholder="Nome da nova etapa"
@@ -511,7 +634,7 @@ export const RecurringSchedulesKanban = ({
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') addNewStage();
                             if (e.key === 'Escape') {
-                              setIsAddingStage(false);
+                              onAddingStageChange?.(false);
                               setNewStageName("");
                             }
                           }}
@@ -525,7 +648,7 @@ export const RecurringSchedulesKanban = ({
                             size="sm" 
                             variant="outline" 
                             onClick={() => {
-                              setIsAddingStage(false);
+                              onAddingStageChange?.(false);
                               setNewStageName("");
                             }}
                           >
@@ -533,19 +656,10 @@ export const RecurringSchedulesKanban = ({
                           </Button>
                         </div>
                       </div>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        className="w-full h-full text-muted-foreground hover:text-primary"
-                        onClick={() => setIsAddingStage(true)}
-                      >
-                        <Plus className="h-6 w-6 mr-2" />
-                        Adicionar Nova Etapa
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
             </div>
           )}
         </Droppable>

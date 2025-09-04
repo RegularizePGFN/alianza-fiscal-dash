@@ -9,7 +9,7 @@ import { AgendamentosTypeSelector } from "./AgendamentosTypeSelector";
 import { RecurringSchedulesKanban } from "./RecurringSchedulesKanban";
 import { CreateRecurringScheduleModal } from "./CreateRecurringScheduleModal";
 import { Button } from "@/components/ui/button";
-import { Repeat } from "lucide-react";
+import { Repeat, Plus } from "lucide-react";
 
 import { StatusTabs, MessageStatusFilter } from "./StatusTabs";
 import { UserRole } from "@/lib/types";
@@ -27,6 +27,7 @@ export const AgendamentosContainer = () => {
   const [editingSchedule, setEditingSchedule] = useState<any>(null);
   const [selectedInstance, setSelectedInstance] = useState<string | null>(null);
   const [preSelectedFunnelStage, setPreSelectedFunnelStage] = useState<string | null>(null);
+  const [isAddingStage, setIsAddingStage] = useState(false);
   const [currentStatusFilter, setCurrentStatusFilter] = useState<MessageStatusFilter>('all');
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [calendarCounts, setCalendarCounts] = useState({ scheduled: 0, sent: 0, all: 0 });
@@ -109,11 +110,12 @@ export const AgendamentosContainer = () => {
             </div>
             <div className="flex gap-2">
               <Button
-                onClick={() => setCreateScheduleModalOpen(true)}
+                onClick={() => setIsAddingStage(true)}
+                variant="outline"
                 className="flex items-center gap-2"
               >
-                <Repeat className="h-4 w-4" />
-                Novo Agendamento Recorrente
+                <Plus className="h-4 w-4" />
+                Novo Funil
               </Button>
               {isAdmin && (
                 <Button
@@ -136,6 +138,8 @@ export const AgendamentosContainer = () => {
             refreshTrigger={refreshTrigger}
             onEditSchedule={handleEditSchedule}
             onCreateSchedule={handleCreateSchedule}
+            isAddingStage={isAddingStage}
+            onAddingStageChange={setIsAddingStage}
           />
         </>
       )}
