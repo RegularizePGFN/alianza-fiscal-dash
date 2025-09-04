@@ -761,16 +761,13 @@ export const AgendamentosList = ({
                     Mensagem
                   </div>
                 </TableHead>
-                <TableHead>
-                  <SortButton field="scheduled_date">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded bg-orange-100 dark:bg-orange-900/30">
-                        <Calendar className="h-3 w-3 text-orange-600 dark:text-orange-400" />
-                      </div>
-                      Data Agendamento
-                    </div>
-                  </SortButton>
-                </TableHead>
+                 <TableHead>
+                   <SortButton field="scheduled_date">
+                     <div className="flex items-center gap-2">
+                       Data Agendamento
+                     </div>
+                   </SortButton>
+                 </TableHead>
                 <TableHead>
                   <SortButton field="status">
                     <div className="flex items-center gap-2">
