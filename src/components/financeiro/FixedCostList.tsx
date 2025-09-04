@@ -90,7 +90,7 @@ export function FixedCostList({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Controles de Ordenação */}
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -120,8 +120,8 @@ export function FixedCostList({
         </div>
       </div>
 
-      {/* Lista de Custos Fixos */}
-      <div className="space-y-3">
+      {/* Área de Rolagem para Lista de Custos */}
+      <div className="max-h-[400px] overflow-y-auto space-y-3 pr-2">
         {sortedCosts.map(cost => (
           <Card key={cost.id} className="hover:shadow-md transition-all duration-200">
             <CardContent className="p-4">
@@ -176,34 +176,34 @@ export function FixedCostList({
             </CardContent>
           </Card>
         ))}
-        
-        {/* Card de Total */}
-        <Card className="border-2 border-emerald-200 bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 dark:border-emerald-800">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-emerald-100 dark:bg-emerald-800/50 rounded-lg">
-                  <Building className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-                </div>
-                <div>
-                  <h4 className="text-lg font-semibold text-emerald-800 dark:text-emerald-200">
-                    Total dos Custos Fixos
-                  </h4>
-                  <p className="text-sm text-emerald-600 dark:text-emerald-300">
-                    Mensalmente • {costs.length} {costs.length === 1 ? 'custo' : 'custos'}
-                  </p>
-                </div>
+      </div>
+      
+      {/* Card de Total Fixo no Rodapé */}
+      <Card className="border-2 border-emerald-200 bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 dark:border-emerald-800">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-100 dark:bg-emerald-800/50 rounded-lg">
+                <Building className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
               </div>
-              <div className="text-right">
-                <span className="text-3xl font-bold text-emerald-700 dark:text-emerald-300">
-                  {formatCurrency(totalAmount)}
-                </span>
-                <p className="text-sm text-emerald-600 dark:text-emerald-400">por mês</p>
+              <div>
+                <h4 className="text-lg font-semibold text-emerald-800 dark:text-emerald-200">
+                  Total dos Custos Fixos
+                </h4>
+                <p className="text-sm text-emerald-600 dark:text-emerald-300">
+                  Mensalmente • {costs.length} {costs.length === 1 ? 'custo' : 'custos'}
+                </p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            <div className="text-right">
+              <span className="text-3xl font-bold text-emerald-700 dark:text-emerald-300">
+                {formatCurrency(totalAmount)}
+              </span>
+              <p className="text-sm text-emerald-600 dark:text-emerald-400">por mês</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
