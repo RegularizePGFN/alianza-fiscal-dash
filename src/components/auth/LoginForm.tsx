@@ -7,11 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
 
-interface LoginFormProps {
-  onSwitchToRegister: () => void;
-}
+interface LoginFormProps {}
 
-export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
+export function LoginForm({}: LoginFormProps) {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -78,17 +76,6 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
           {isLoading ? "Entrando..." : "Entrar"}
         </Button>
       </form>
-      
-      <div className="mt-4 text-sm text-center">
-        Não tem uma conta?{" "}
-        <Button 
-          variant="link" 
-          className="p-0 h-auto font-semibold"
-          onClick={onSwitchToRegister}
-        >
-          Cadastre-se
-        </Button>
-      </div>
     </>
   );
 }
