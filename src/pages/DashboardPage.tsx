@@ -7,6 +7,7 @@ import { SalespeopleCommissionsCard } from "@/components/dashboard/salespeople-c
 import { DailyResultsCard } from "@/components/dashboard/daily-results";
 import { SalespersonWeeklyCard } from "@/components/dashboard/weekly-sales";
 import { DailyResultsToday } from "@/components/dashboard/daily-results-today";
+import { TeamDailySalesCard } from "@/components/dashboard/team-daily-sales";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
@@ -30,6 +31,9 @@ export default function DashboardPage() {
             
             {/* Daily Results Cards - positioned between the main cards */}
             <DailyResultsToday />
+            
+            {/* Team Daily Sales - visible to all users */}
+            <TeamDailySalesCard />
             
             <GoalsCommissionsSection summary={summary} salesData={salesData} />
             
