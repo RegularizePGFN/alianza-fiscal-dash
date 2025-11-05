@@ -20,22 +20,18 @@ export const useTeamDailySales = () => {
         setLoading(true);
         const today = getTodayISO();
 
-        const { data: teamSales, error } = await supabase
-          .from("sales")
-          .select("gross_amount")
-          .eq("sale_date", today);
+        // Usar RPC function para bypass RLS e obter dados agregados da equipe
+        const { data: result, error } = await supabase
+          .rpc('get_team_daily_sales', {
+            sale_date_param: today
+          });
 
         if (error) throw error;
 
-        if (teamSales) {
-          const totalAmount = teamSales.reduce(
-            (sum, sale) => sum + Number(sale.gross_amount),
-            0
-          );
-
+        if (result && result.length > 0) {
           setData({
-            totalSales: teamSales.length,
-            totalAmount,
+            totalSales: Number(result[0].total_sales),
+            totalAmount: Number(result[0].total_amount),
           });
         }
       } catch (error) {
