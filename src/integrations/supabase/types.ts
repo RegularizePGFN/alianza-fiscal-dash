@@ -583,21 +583,20 @@ export type Database = {
     }
     Functions: {
       clean_duplicate_proposals: {
-        Args: never
+        Args: Record<PropertyKey, never>
         Returns: {
           deleted_count: number
           details: string
         }[]
       }
-      get_current_user_role: { Args: never; Returns: string }
-      get_team_daily_sales: {
-        Args: { sale_date_param: string }
-        Returns: {
-          total_amount: number
-          total_sales: number
-        }[]
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
-      is_felipe_user: { Args: never; Returns: boolean }
+      is_felipe_user: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       funnel_stage:
