@@ -17,6 +17,7 @@ import {
   FileText,
   User,
   DollarSign,
+  History,
   Calculator,
   Calendar
 } from "lucide-react";
@@ -123,6 +124,9 @@ export function AppSidebar() {
   // Check if user has admin privileges
   const isAdmin = user?.role === UserRole.ADMIN;
   
+  // Check if user is a salesperson (not admin)
+  const isSalesperson = user?.role === UserRole.SALESPERSON;
+  
   // Check if user has access to financial section
   const hasFinanceAccess = user?.email === 'felipe.souza@socialcriativo.com';
   
@@ -210,12 +214,23 @@ export function AppSidebar() {
             isBeta={true}
           />
           
+          {/* Salesperson History - only for salespeople */}
+          {isSalesperson && (
+            <SidebarLink 
+              to="/meu-historico" 
+              icon={<History size={20} />} 
+              label="Meu Histórico" 
+              expanded={expanded}
+              active={location.pathname === "/meu-historico"}
+            />
+          )}
+          
           {/* Financial section - only for specific user */}
           {hasFinanceAccess && (
             <SidebarLink 
               to="/financeiro" 
               icon={<Calculator size={20} />} 
-              label="Financeiro" 
+              label="Financeiro"
               expanded={expanded}
               active={location.pathname === "/financeiro"}
             />
