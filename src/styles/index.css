@@ -1,14 +1,268 @@
 
-/* Base styles */
-@import './base.css';
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-/* Theme */
-@import './theme/dark.css';
+/* Base Tailwind directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* Component specific styles */
-@import './components/goal-meter.css';
-@import './components/cards.css';
-@import './components/interactive.css';
+@layer base {
+  :root {
+    /* Background & Foreground */
+    --background: 220 20% 97%;
+    --foreground: 220 30% 10%;
+
+    /* Cards */
+    --card: 0 0% 100%;
+    --card-foreground: 220 30% 10%;
+
+    /* Popover */
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 30% 10%;
+
+    /* Primary - Deep Blue */
+    --primary: 220 80% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary - Neutral */
+    --secondary: 220 15% 94%;
+    --secondary-foreground: 220 30% 25%;
+
+    /* Muted */
+    --muted: 220 15% 96%;
+    --muted-foreground: 220 10% 45%;
+
+    /* Accent */
+    --accent: 220 15% 94%;
+    --accent-foreground: 220 30% 15%;
+
+    /* Destructive */
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Success */
+    --success: 150 70% 40%;
+    --success-foreground: 0 0% 100%;
+
+    /* Warning */
+    --warning: 40 95% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    /* Borders & Input */
+    --border: 220 15% 90%;
+    --input: 220 15% 90%;
+    --ring: 220 80% 45%;
+
+    /* Radius */
+    --radius: 0.625rem;
+
+    /* Sidebar */
+    --sidebar-background: 220 30% 12%;
+    --sidebar-foreground: 220 15% 95%;
+    --sidebar-primary: 220 80% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 25% 18%;
+    --sidebar-accent-foreground: 220 15% 95%;
+    --sidebar-border: 220 25% 20%;
+    --sidebar-ring: 220 80% 55%;
+    
+    /* KPI Card Colors - Semantic */
+    --kpi-blue: 220 80% 50%;
+    --kpi-blue-bg: 220 80% 97%;
+    --kpi-green: 150 70% 40%;
+    --kpi-green-bg: 150 70% 97%;
+    --kpi-purple: 270 70% 55%;
+    --kpi-purple-bg: 270 70% 97%;
+    --kpi-amber: 40 95% 50%;
+    --kpi-amber-bg: 40 95% 97%;
+
+    /* Chart Colors */
+    --chart-1: 220 80% 50%;
+    --chart-2: 150 70% 45%;
+    --chart-3: 270 70% 55%;
+    --chart-4: 40 95% 50%;
+    --chart-5: 0 75% 55%;
+  }
+
+  .dark {
+    /* Background & Foreground */
+    --background: 220 25% 8%;
+    --foreground: 220 15% 95%;
+
+    /* Cards */
+    --card: 220 25% 11%;
+    --card-foreground: 220 15% 95%;
+
+    /* Popover */
+    --popover: 220 25% 11%;
+    --popover-foreground: 220 15% 95%;
+
+    /* Primary */
+    --primary: 220 80% 60%;
+    --primary-foreground: 220 25% 8%;
+
+    /* Secondary */
+    --secondary: 220 20% 18%;
+    --secondary-foreground: 220 15% 85%;
+
+    /* Muted */
+    --muted: 220 20% 16%;
+    --muted-foreground: 220 15% 60%;
+
+    /* Accent */
+    --accent: 220 20% 18%;
+    --accent-foreground: 220 15% 95%;
+
+    /* Destructive */
+    --destructive: 0 70% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Success */
+    --success: 150 70% 45%;
+    --success-foreground: 0 0% 100%;
+
+    /* Warning */
+    --warning: 40 95% 55%;
+    --warning-foreground: 0 0% 100%;
+
+    /* Borders & Input */
+    --border: 220 20% 18%;
+    --input: 220 20% 18%;
+    --ring: 220 80% 60%;
+    
+    /* Sidebar */
+    --sidebar-background: 220 30% 6%;
+    --sidebar-foreground: 220 15% 95%;
+    --sidebar-primary: 220 80% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 25% 12%;
+    --sidebar-accent-foreground: 220 15% 95%;
+    --sidebar-border: 220 25% 15%;
+    --sidebar-ring: 220 80% 60%;
+
+    /* KPI Card Colors - Dark Mode */
+    --kpi-blue: 220 80% 60%;
+    --kpi-blue-bg: 220 40% 15%;
+    --kpi-green: 150 70% 50%;
+    --kpi-green-bg: 150 40% 15%;
+    --kpi-purple: 270 70% 65%;
+    --kpi-purple-bg: 270 40% 15%;
+    --kpi-amber: 40 95% 55%;
+    --kpi-amber-bg: 40 40% 15%;
+
+    /* Chart Colors - Dark Mode */
+    --chart-1: 220 80% 60%;
+    --chart-2: 150 70% 50%;
+    --chart-3: 270 70% 65%;
+    --chart-4: 40 95% 55%;
+    --chart-5: 0 70% 55%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+
+  /* Goal meter styles */
+  .goal-meter {
+    position: relative;
+    height: 10px;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    @apply bg-secondary dark:bg-muted;
+  }
+
+  .goal-meter-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    --progress-value: 0%;
+    width: var(--progress-value);
+    animation: progress-fill 1.5s ease-in-out;
+    transition: width 1.5s ease;
+  }
+
+  .goal-meter-fill.under {
+    @apply bg-primary;
+  }
+
+  .goal-meter-fill.goal {
+    @apply bg-success;
+  }
+
+  /* Card styles */
+  .card-hover {
+    @apply transition-all duration-300;
+  }
+  
+  .card-hover:hover {
+    @apply shadow-md transform-gpu -translate-y-0.5;
+  }
+  
+  .glass-effect {
+    @apply bg-card/80 backdrop-blur-sm;
+  }
+
+  /* Daily salespeople table */
+  .daily-salespeople-table th,
+  .daily-salespeople-table td {
+    text-align: center !important;
+  }
+}
+
+@layer utilities {
+  /* Number animation for count-up effect */
+  @keyframes countUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .animate-count-up {
+    animation: countUp 0.5s ease-out forwards;
+  }
+
+  /* Subtle hover lift */
+  .hover-lift {
+    @apply transition-all duration-200;
+  }
+  
+  .hover-lift:hover {
+    @apply -translate-y-0.5 shadow-md;
+  }
+
+  /* KPI value styling */
+  .kpi-value {
+    @apply text-2xl font-bold tracking-tight;
+  }
+
+  .kpi-label {
+    @apply text-xs font-medium text-muted-foreground uppercase tracking-wide;
+  }
+
+  /* Table improvements */
+  .table-value-right {
+    @apply text-right font-mono tabular-nums;
+  }
+
+  /* Skeleton animation */
+  @keyframes skeleton-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  
+  .skeleton-animate {
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+  }
+}
 
 /* Dark mode overrides */
 @import './dark-mode-overrides.css';
@@ -19,5 +273,5 @@
 /* Calendar specific styles */
 @import './calendar-animations.css';
 
-/* Legacy styles from App.css - Keep them if still needed */
+/* Legacy styles from App.css */
 @import '../App.css';
