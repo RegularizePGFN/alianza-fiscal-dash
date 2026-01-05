@@ -19,7 +19,10 @@ import {
   DollarSign,
   History,
   Calculator,
-  Calendar
+  Calendar,
+  LayoutDashboard,
+  TrendingUp,
+  UserCog
 } from "lucide-react";
 
 interface SidebarLinkProps {
@@ -35,17 +38,17 @@ interface SidebarLinkProps {
 const SidebarLink = ({ to, icon, label, expanded, active, isBeta, onClick }: SidebarLinkProps) => {
   return (
     <motion.li
-      whileHover={{ x: 2 }}
+      whileHover={{ x: expanded ? 4 : 0 }}
       transition={{ type: "spring", stiffness: 400, damping: 25 }}
     >
       <Link 
         to={to}
         className={cn(
-          "flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 relative overflow-hidden group",
+          "flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 relative group",
           expanded ? "justify-start" : "justify-center px-2",
           active 
-            ? "bg-gradient-to-r from-sidebar-accent to-sidebar-accent/80 text-sidebar-accent-foreground font-medium shadow-lg shadow-sidebar-accent/20" 
-            : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+            ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+            : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
         )}
         onClick={(e) => {
           if (onClick) {
@@ -54,58 +57,77 @@ const SidebarLink = ({ to, icon, label, expanded, active, isBeta, onClick }: Sid
           }
         }}
       >
-        <motion.div 
-          className={cn(
-            "transition-all duration-200 relative z-10", 
-            active ? "text-sidebar-accent-foreground" : "text-sidebar-foreground/70 group-hover:text-sidebar-accent-foreground"
-          )}
-          whileHover={{ scale: 1.1 }}
-          transition={{ type: "spring", stiffness: 400, damping: 10 }}
-        >
+        {/* Active indicator bar */}
+        {active && (
+          <motion.div
+            className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-primary rounded-r-full"
+            layoutId="activeIndicator"
+            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+          />
+        )}
+        
+        <span className={cn(
+          "flex-shrink-0 transition-colors duration-200",
+          active ? "text-primary" : "text-sidebar-foreground/60 group-hover:text-sidebar-foreground"
+        )}>
           {icon}
-        </motion.div>
+        </span>
+        
         <AnimatePresence>
           {expanded && (
             <motion.div 
-              className="relative flex items-center"
+              className="relative flex items-center min-w-0"
               initial={{ opacity: 0, width: 0 }}
               animate={{ opacity: 1, width: "auto" }}
               exit={{ opacity: 0, width: 0 }}
               transition={{ duration: 0.2 }}
             >
-              <span className="truncate">{label}</span>
+              <span className={cn(
+                "truncate text-sm",
+                active && "font-medium"
+              )}>{label}</span>
               {isBeta && (
-                <motion.span 
-                  className="absolute -top-3 -right-8 text-[9px] px-1.5 py-0.5 rounded-full bg-gradient-to-r from-purple-100 to-purple-50 text-purple-800 font-medium border border-purple-200/50"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", delay: 0.1 }}
-                >
+                <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-medium">
                   beta
-                </motion.span>
+                </span>
               )}
             </motion.div>
           )}
         </AnimatePresence>
+        
         {!expanded && isBeta && (
-          <motion.span 
-            className="absolute top-0.5 right-0.5 text-[8px] px-1 py-0 rounded-full bg-gradient-to-r from-purple-100 to-purple-50 text-purple-800 font-medium"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", delay: 0.1 }}
-          >
-            β
-          </motion.span>
-        )}
-        {active && (
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl"
-            layoutId="activeBackground"
-            transition={{ type: "spring", stiffness: 400, damping: 30 }}
-          />
+          <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-primary" />
         )}
       </Link>
     </motion.li>
+  );
+};
+
+interface SidebarGroupProps {
+  title: string;
+  children: React.ReactNode;
+  expanded: boolean;
+}
+
+const SidebarGroup = ({ title, children, expanded }: SidebarGroupProps) => {
+  return (
+    <div className="space-y-1">
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="px-3 py-2"
+          >
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40">
+              {title}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <ul className="space-y-0.5">{children}</ul>
+    </div>
   );
 };
 
@@ -121,181 +143,168 @@ export function AppSidebar() {
     logout();
   };
   
-  // Check if user has admin privileges
   const isAdmin = user?.role === UserRole.ADMIN;
-  
-  // Check if user is a salesperson (not admin)
   const isSalesperson = user?.role === UserRole.SALESPERSON;
-  
-  // Check if user has access to financial section
   const hasFinanceAccess = user?.email === 'felipe.souza@socialcriativo.com';
   
   return (
     <motion.div 
       className={cn(
-        "bg-gradient-to-b from-sidebar to-sidebar/95 relative h-screen flex flex-col shadow-xl border-r border-sidebar-border/30 backdrop-blur-sm",
+        "bg-sidebar h-screen flex flex-col border-r border-sidebar-border",
         expanded ? "w-60" : "w-16"
       )}
       animate={{ width: expanded ? 240 : 64 }}
-      transition={{ duration: 0.3, ease: "easeInOut" }}
+      transition={{ duration: 0.2, ease: "easeInOut" }}
     >
-      <motion.div 
-        className="flex items-center justify-between p-4 border-b border-sidebar-border/30 bg-gradient-to-r from-sidebar-accent/20 to-sidebar-accent/10"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      >
+      {/* Header */}
+      <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
         <AnimatePresence>
           {expanded && (
-            <motion.h1 
-              className="text-sidebar-foreground font-bold text-xl overflow-hidden truncate"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex items-center gap-2"
             >
-              Aliança<span className="text-primary">Fiscal</span>
-            </motion.h1>
+              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+                <LayoutDashboard className="w-4 h-4 text-primary-foreground" />
+              </div>
+              <span className="font-semibold text-sidebar-foreground">
+                Aliança<span className="text-primary">Fiscal</span>
+              </span>
+            </motion.div>
           )}
         </AnimatePresence>
-        <motion.button 
+        
+        <button 
           onClick={toggleSidebar}
-          className="p-2 rounded-xl hover:bg-sidebar-accent text-sidebar-foreground transition-colors duration-200"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          className="p-2 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-sidebar-foreground transition-colors"
         >
-          <motion.div
-            animate={{ rotate: expanded ? 0 : 180 }}
-            transition={{ duration: 0.3 }}
-          >
-            {expanded ? <ChevronLeft size={20} /> : <Menu size={20} />}
+          <motion.div animate={{ rotate: expanded ? 0 : 180 }} transition={{ duration: 0.2 }}>
+            {expanded ? <ChevronLeft size={18} /> : <Menu size={18} />}
           </motion.div>
-        </motion.button>
-      </motion.div>
+        </button>
+      </div>
       
-      <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-2 bg-gradient-to-b from-sidebar-accent/5 to-transparent">
-        <motion.ul 
-          className="space-y-2"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-6">
+        {/* Comercial Group */}
+        <SidebarGroup title="Comercial" expanded={expanded}>
           <SidebarLink 
             to="/dashboard" 
-            icon={<Home size={20} />} 
+            icon={<Home size={18} />} 
             label="Dashboard" 
             expanded={expanded}
             active={location.pathname === "/dashboard"}
           />
-          
           <SidebarLink 
             to="/vendas" 
-            icon={<ShoppingCart size={20} />} 
+            icon={<ShoppingCart size={18} />} 
             label="Vendas" 
             expanded={expanded}
             active={location.pathname === "/vendas"}
           />
-          
           <SidebarLink 
             to="/propostas" 
-            icon={<FileText size={20} />} 
+            icon={<FileText size={18} />} 
             label="Propostas" 
             expanded={expanded}
             active={location.pathname === "/propostas"}
             isBeta={true}
           />
-          
           <SidebarLink 
             to="/agendamentos" 
-            icon={<Calendar size={20} />} 
+            icon={<Calendar size={18} />} 
             label="Agendamentos" 
             expanded={expanded}
             active={location.pathname === "/agendamentos"}
             isBeta={true}
           />
-          
-          {/* Salesperson History - only for salespeople */}
           {isSalesperson && (
             <SidebarLink 
               to="/meu-historico" 
-              icon={<History size={20} />} 
+              icon={<History size={18} />} 
               label="Meu Histórico" 
               expanded={expanded}
               active={location.pathname === "/meu-historico"}
             />
           )}
-          
-          {/* Financial section - only for specific user */}
-          {hasFinanceAccess && (
+        </SidebarGroup>
+        
+        {/* Administrativo Group - Only for admins */}
+        {isAdmin && (
+          <SidebarGroup title="Administrativo" expanded={expanded}>
+            <SidebarLink 
+              to="/usuarios" 
+              icon={<Users size={18} />} 
+              label="Usuários" 
+              expanded={expanded}
+              active={location.pathname === "/usuarios"}
+            />
+            <SidebarLink 
+              to="/relatorios" 
+              icon={<BarChart3 size={18} />} 
+              label="Relatórios" 
+              expanded={expanded}
+              active={location.pathname === "/relatorios"}
+            />
+            <SidebarLink 
+              to="/comissoes" 
+              icon={<DollarSign size={18} />} 
+              label="Comissões" 
+              expanded={expanded}
+              active={location.pathname === "/comissoes"}
+            />
+            {hasFinanceAccess && (
+              <SidebarLink 
+                to="/financeiro" 
+                icon={<Calculator size={18} />} 
+                label="Financeiro"
+                expanded={expanded}
+                active={location.pathname === "/financeiro"}
+              />
+            )}
+            <SidebarLink 
+              to="/configuracoes" 
+              icon={<Settings size={18} />} 
+              label="Configurações" 
+              expanded={expanded}
+              active={location.pathname === "/configuracoes"}
+            />
+          </SidebarGroup>
+        )}
+        
+        {/* Finance for non-admin with access */}
+        {!isAdmin && hasFinanceAccess && (
+          <SidebarGroup title="Financeiro" expanded={expanded}>
             <SidebarLink 
               to="/financeiro" 
-              icon={<Calculator size={20} />} 
+              icon={<Calculator size={18} />} 
               label="Financeiro"
               expanded={expanded}
               active={location.pathname === "/financeiro"}
             />
-          )}
-          
-          {/* Admin links */}
-          {isAdmin && (
-            <>
-              <SidebarLink 
-                to="/usuarios" 
-                icon={<Users size={20} />} 
-                label="Usuários" 
-                expanded={expanded}
-                active={location.pathname === "/usuarios"}
-              />
-              <SidebarLink 
-                to="/relatorios" 
-                icon={<BarChart3 size={20} />} 
-                label="Relatórios" 
-                expanded={expanded}
-                active={location.pathname === "/relatorios"}
-              />
-              <SidebarLink 
-                to="/comissoes" 
-                icon={<DollarSign size={20} />} 
-                label="Comissões" 
-                expanded={expanded}
-                active={location.pathname === "/comissoes"}
-              />
-              <SidebarLink 
-                to="/configuracoes" 
-                icon={<Settings size={20} />} 
-                label="Configurações" 
-                expanded={expanded}
-                active={location.pathname === "/configuracoes"}
-              />
-            </>
-          )}
-          
-          <SidebarLink 
-            to="/perfil" 
-            icon={<User size={20} />} 
-            label="Perfil" 
-            expanded={expanded}
-            active={location.pathname === "/perfil"}
-          />
-        </motion.ul>
+          </SidebarGroup>
+        )}
       </nav>
       
-      <motion.div 
-        className="mt-auto border-t border-sidebar-border/30 p-3 bg-gradient-to-r from-sidebar-accent/10 to-sidebar-accent/5"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
-        <ul className="space-y-1">
-          <SidebarLink 
-            to="#" 
-            icon={<LogOut size={20} />} 
-            label="Sair" 
-            expanded={expanded} 
-            onClick={handleLogout}
-          />
-        </ul>
-      </motion.div>
+      {/* Footer */}
+      <div className="border-t border-sidebar-border p-2 space-y-0.5">
+        <SidebarLink 
+          to="/perfil" 
+          icon={<User size={18} />} 
+          label="Perfil" 
+          expanded={expanded}
+          active={location.pathname === "/perfil"}
+        />
+        <SidebarLink 
+          to="#" 
+          icon={<LogOut size={18} />} 
+          label="Sair" 
+          expanded={expanded} 
+          onClick={handleLogout}
+        />
+      </div>
     </motion.div>
   );
 }

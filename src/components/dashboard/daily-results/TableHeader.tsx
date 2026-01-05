@@ -1,6 +1,8 @@
 
 import { useDailyResults } from "./DailyResultsContext";
 import { SortColumn } from "./types";
+import { ArrowUp, ArrowDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function TableHeader() {
   const { sortColumn, sortDirection, setSortColumn, setSortDirection } = useDailyResults();
@@ -14,43 +16,47 @@ export function TableHeader() {
     }
   };
 
-  const getSortIndicator = (column: SortColumn) => {
+  const SortIcon = ({ column }: { column: SortColumn }) => {
     if (sortColumn !== column) return null;
-    return sortDirection === 'asc' ? '↑' : '↓';
+    return sortDirection === 'asc' 
+      ? <ArrowUp className="h-3 w-3 inline ml-0.5" />
+      : <ArrowDown className="h-3 w-3 inline ml-0.5" />;
   };
 
+  const headerClass = "py-2 px-3 font-medium text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors whitespace-nowrap";
+
   return (
-    <thead>
-      <tr className="bg-muted/50">
+    <thead className="sticky top-0 z-10 bg-muted/50">
+      <tr>
         <th 
           onClick={() => handleSort('name')} 
-          className="py-1.5 px-2 font-medium text-xs border-b border-r border-border/30 cursor-pointer"
+          className={cn(headerClass, "text-left rounded-tl-lg")}
         >
-          Nome {getSortIndicator('name')}
+          Vendedor <SortIcon column="name" />
         </th>
         <th 
           onClick={() => handleSort('salesCount')} 
-          className="py-1.5 px-2 font-medium text-xs border-b border-r border-border/30 cursor-pointer text-center"
+          className={cn(headerClass, "text-center")}
         >
-          Vendas {getSortIndicator('salesCount')}
+          Vendas <SortIcon column="salesCount" />
         </th>
         <th 
           onClick={() => handleSort('salesAmount')} 
-          className="py-1.5 px-2 font-medium text-xs border-b border-r border-border/30 cursor-pointer text-center"
+          className={cn(headerClass, "text-right")}
         >
-          Valor {getSortIndicator('salesAmount')}
+          Valor <SortIcon column="salesAmount" />
         </th>
         <th 
           onClick={() => handleSort('proposals')} 
-          className="py-1.5 px-2 font-medium text-xs border-b border-r border-border/30 cursor-pointer text-center"
+          className={cn(headerClass, "text-center")}
         >
-          Propostas {getSortIndicator('proposals')}
+          Propostas <SortIcon column="proposals" />
         </th>
         <th 
           onClick={() => handleSort('fees')} 
-          className="py-1.5 px-2 font-medium text-xs border-b border-border/30 cursor-pointer text-center"
+          className={cn(headerClass, "text-right rounded-tr-lg")}
         >
-          Honorários {getSortIndicator('fees')}
+          Honorários <SortIcon column="fees" />
         </th>
       </tr>
     </thead>

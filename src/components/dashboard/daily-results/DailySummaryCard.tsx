@@ -2,9 +2,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sale, PaymentMethod } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
-import { CircleDollarSign, Users, CalendarDays, ArrowDown, ArrowUp } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { CircleDollarSign, ShoppingCart, CalendarDays, TrendingUp, TrendingDown } from "lucide-react";
 import { useMemo } from "react";
+import { motion } from "framer-motion";
+import { useCountUp, useCountUpCurrency } from "@/hooks/useCountUp";
+import { cn } from "@/lib/utils";
 
 interface DailySummaryCardProps {
   todaySales: Sale[];
@@ -13,23 +15,19 @@ interface DailySummaryCardProps {
 }
 
 export function DailySummaryCard({ todaySales, currentDate, previousDaySales = [] }: DailySummaryCardProps) {
-  // Calculate totals
   const totalSalesCount = todaySales.length;
   const totalSalesAmount = todaySales.reduce((sum, sale) => sum + sale.gross_amount, 0);
 
-  // Calculate previous day metrics for comparison
   const prevDaySalesCount = previousDaySales.length;
   const prevDaySalesAmount = previousDaySales.reduce((sum, sale) => sum + sale.gross_amount, 0);
 
-  // Calculate trends
   const salesCountTrend = prevDaySalesCount > 0 
     ? ((totalSalesCount - prevDaySalesCount) / prevDaySalesCount) * 100
-    : 0;
+    : null;
   const salesAmountTrend = prevDaySalesAmount > 0 
     ? ((totalSalesAmount - prevDaySalesAmount) / prevDaySalesAmount) * 100
-    : 0;
+    : null;
   
-  // Payment Method Breakdown
   const paymentMethodBreakdown = useMemo(() => {
     const breakdown = {
       [PaymentMethod.PIX]: { count: 0, amount: 0 },
@@ -45,7 +43,6 @@ export function DailySummaryCard({ todaySales, currentDate, previousDaySales = [
       }
     });
     
-    // Calculate percentages
     const total = todaySales.length;
     return Object.keys(breakdown).map(method => ({
       method: method as PaymentMethod,
@@ -55,97 +52,107 @@ export function DailySummaryCard({ todaySales, currentDate, previousDaySales = [
     })).filter(item => item.count > 0);
   }, [todaySales]);
 
-  // Colors for payment methods
-  const paymentMethodColors = {
-    [PaymentMethod.PIX]: "bg-emerald-500 dark:bg-emerald-600",
-    [PaymentMethod.BOLETO]: "bg-amber-500 dark:bg-amber-600",
-    [PaymentMethod.CREDIT]: "bg-violet-500 dark:bg-violet-600",
-    [PaymentMethod.DEBIT]: "bg-blue-500 dark:bg-blue-600"
+  const paymentMethodColors: Record<PaymentMethod, string> = {
+    [PaymentMethod.PIX]: "bg-emerald-500",
+    [PaymentMethod.BOLETO]: "bg-amber-500",
+    [PaymentMethod.CREDIT]: "bg-violet-500",
+    [PaymentMethod.DEBIT]: "bg-blue-500"
+  };
+
+  const animatedCount = useCountUp(totalSalesCount);
+  const animatedAmount = useCountUpCurrency(totalSalesAmount);
+
+  const TrendBadge = ({ value }: { value: number | null }) => {
+    if (value === null) return null;
+    const isPositive = value >= 0;
+    return (
+      <span className={cn(
+        "inline-flex items-center gap-0.5 text-xs font-medium px-1.5 py-0.5 rounded",
+        isPositive 
+          ? "text-success bg-success/10" 
+          : "text-destructive bg-destructive/10"
+      )}>
+        {isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+        {Math.abs(value).toFixed(0)}%
+      </span>
+    );
   };
   
   return (
-    <Card className="transition-all duration-300 hover:shadow-md dark:border-gray-700">
-      <CardHeader className="pb-2 px-4 pt-3">
-        <CardTitle className="text-sm font-medium flex items-center gap-1">
-          <CalendarDays className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-          <span>Resumo do Dia</span>
-          <span className="text-xs ml-2 bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 px-2 py-0.5 rounded-full">
-            {currentDate}
-          </span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="px-4 pb-3 pt-0">
-        <div className="grid grid-cols-2 gap-3">
-          {/* Total sales count with trend */}
-          <div className="bg-purple-50 dark:bg-purple-900/20 rounded-md p-2 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-800/50">
-              <Users className="h-5 w-5 text-purple-700 dark:text-purple-300" />
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <Card className="h-full border-0 shadow-sm hover-lift">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-[hsl(var(--kpi-blue)/0.1)]">
+                <CalendarDays className="h-4 w-4 text-[hsl(var(--kpi-blue))]" />
+              </div>
+              <CardTitle className="text-sm font-medium">
+                Resumo do Dia
+              </CardTitle>
             </div>
-            <div>
-              <p className="text-xs text-muted-foreground dark:text-gray-300">Total de Vendas</p>
+            <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
+              {currentDate}
+            </span>
+          </div>
+        </CardHeader>
+        
+        <CardContent className="space-y-4">
+          {/* Main Metrics */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="p-3 rounded-lg bg-muted/50">
+              <div className="flex items-center gap-2 mb-1">
+                <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Vendas</span>
+              </div>
               <div className="flex items-center gap-2">
-                <h4 className="text-xl font-bold dark:text-white">{totalSalesCount}</h4>
-                {prevDaySalesCount > 0 && (
-                  <div className={`flex items-center text-xs px-1.5 py-0.5 rounded ${salesCountTrend >= 0 ? 'text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-900/30' : 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-900/30'}`}>
-                    {salesCountTrend >= 0 ? (
-                      <ArrowUp className="h-3 w-3 mr-0.5" />
-                    ) : (
-                      <ArrowDown className="h-3 w-3 mr-0.5" />
-                    )}
-                    {Math.abs(salesCountTrend).toFixed(1)}%
-                  </div>
-                )}
+                <span className="text-xl font-bold">{animatedCount}</span>
+                <TrendBadge value={salesCountTrend} />
+              </div>
+            </div>
+            
+            <div className="p-3 rounded-lg bg-muted/50">
+              <div className="flex items-center gap-2 mb-1">
+                <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Valor Total</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-bold">{animatedAmount}</span>
+                <TrendBadge value={salesAmountTrend} />
               </div>
             </div>
           </div>
           
-          {/* Total sales amount with trend */}
-          <div className="bg-purple-50 dark:bg-purple-900/20 rounded-md p-2 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-800/50">
-              <CircleDollarSign className="h-5 w-5 text-purple-700 dark:text-purple-300" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground dark:text-gray-300">Total em Valor</p>
-              <div className="flex items-center gap-2">
-                <h4 className="text-xl font-bold dark:text-white">{formatCurrency(totalSalesAmount)}</h4>
-                {prevDaySalesAmount > 0 && (
-                  <div className={`flex items-center text-xs px-1.5 py-0.5 rounded ${salesAmountTrend >= 0 ? 'text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-900/30' : 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-900/30'}`}>
-                    {salesAmountTrend >= 0 ? (
-                      <ArrowUp className="h-3 w-3 mr-0.5" />
-                    ) : (
-                      <ArrowDown className="h-3 w-3 mr-0.5" />
-                    )}
-                    {Math.abs(salesAmountTrend).toFixed(1)}%
+          {/* Payment Methods */}
+          {paymentMethodBreakdown.length > 0 && (
+            <div className="pt-3 border-t border-border">
+              <p className="text-xs font-medium text-muted-foreground mb-2">Formas de Pagamento</p>
+              <div className="space-y-2">
+                {paymentMethodBreakdown.map((item) => (
+                  <div key={item.method} className="flex items-center gap-3">
+                    <span className="text-xs text-muted-foreground w-14">{item.method}</span>
+                    <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
+                      <motion.div 
+                        className={cn("h-full rounded-full", paymentMethodColors[item.method])}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${item.percentage}%` }}
+                        transition={{ duration: 0.6, delay: 0.2 }}
+                      />
+                    </div>
+                    <span className="text-xs text-muted-foreground font-mono w-16 text-right">
+                      {item.count}x • {item.percentage.toFixed(0)}%
+                    </span>
                   </div>
-                )}
+                ))}
               </div>
             </div>
-          </div>
-        </div>
-        
-        {/* Payment Methods Breakdown */}
-        {paymentMethodBreakdown.length > 0 && (
-          <div className="mt-3">
-            <p className="text-xs text-muted-foreground dark:text-gray-300 mb-2">Formas de Pagamento</p>
-            <div className="space-y-2">
-              {paymentMethodBreakdown.map((item) => (
-                <div key={item.method} className="flex items-center gap-2">
-                  <div className="text-xs w-16 dark:text-gray-300">{item.method}</div>
-                  <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-700 rounded overflow-hidden">
-                    <div 
-                      className={`h-full ${paymentMethodColors[item.method]}`} 
-                      style={{ width: `${item.percentage}%` }}
-                    ></div>
-                  </div>
-                  <Badge variant="outline" className="ml-2 dark:border-gray-600 dark:text-gray-300">
-                    {item.count}x ({item.percentage.toFixed(0)}%)
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          )}
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }

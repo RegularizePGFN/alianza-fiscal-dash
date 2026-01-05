@@ -1,267 +1,100 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 
-@layer base {
-  /* Dark mode specific overrides */
-  .dark .bg-white {
-    @apply bg-gray-900;
-  }
+/* Dark mode specific overrides - use plain CSS instead of @layer */
 
-  .dark .bg-gray-50, .dark .bg-gray-100 {
-    @apply bg-gray-800;
-  }
+/* Dark mode base overrides */
+.dark .bg-white {
+  background-color: rgb(17 24 39);
+}
 
-  .dark [data-radix-popper-content-wrapper] {
-    @apply bg-gray-800 text-gray-100 border-gray-700;
-  }
+.dark .bg-gray-50, 
+.dark .bg-gray-100 {
+  background-color: rgb(31 41 55);
+}
 
-  /* Header styling in dark mode */
-  .dark .app-header {
-    @apply bg-gray-900/95 backdrop-blur-sm border-gray-700;
-  }
-  
-  /* Form fields in dark mode - specific for Proposals section */
-  .dark input:not([type="color"]), 
-  .dark textarea, 
-  .dark select,
-  .dark .form-field {
-    @apply bg-gray-800 border-gray-600 text-gray-100;
-  }
-  
-  .dark input:disabled, 
-  .dark textarea:disabled,
-  .dark select:disabled {
-    @apply bg-gray-900 border-gray-700 text-gray-400;
-  }
+.dark [data-radix-popper-content-wrapper] {
+  background-color: rgb(31 41 55);
+  color: rgb(243 244 246);
+  border-color: rgb(55 65 81);
+}
 
-  /* Placeholder text in dark mode */
-  .dark input::placeholder, 
-  .dark textarea::placeholder {
-    @apply text-gray-400;
-  }
-  
-  /* Background colors for cards and panels in dark mode */
-  .dark .data-card,
-  .dark .card-content,
-  .dark .panel {
-    @apply bg-gray-800 border-gray-700;
-  }
-  
-  /* Agendamentos Calendar View - Dark Mode Contrast Fixes */
-  
-  /* Week navigation header */
-  .dark .bg-gradient-to-r.from-white.to-gray-50 {
-    @apply from-gray-900 to-gray-800 text-gray-100;
-  }
-  
-  /* Calendar main container */
-  .dark .bg-gradient-to-br.from-white.to-gray-50\/50 {
-    @apply from-gray-900 to-gray-800;
-  }
-  
-  /* Column headers and time headers */
-  .dark .bg-gradient-to-r.from-gray-50.to-gray-100 {
-    @apply from-gray-800 to-gray-700 text-gray-100;
-  }
-  
-  /* Time slot backgrounds */
-  .dark .bg-gradient-to-r.from-gray-50\/80.to-white {
-    @apply from-gray-800 to-gray-700 text-gray-100;
-  }
-  
-  /* Today column highlighting */
-  .dark .bg-gradient-to-r.from-blue-50.to-blue-100 {
-    @apply from-blue-900/40 to-blue-800/40 text-blue-200;
-  }
-  
-  .dark .bg-blue-50\/30 {
-    @apply bg-blue-900/20;
-  }
-  
-  /* Event/appointment cards backgrounds - better contrast */
-  .dark .bg-gradient-to-r.from-green-100.to-green-200 {
-    @apply from-green-800 to-green-700 text-green-100 border-green-600;
-  }
-  
-  .dark .bg-gradient-to-r.from-blue-100.to-blue-200 {
-    @apply from-blue-800 to-blue-700 text-blue-100 border-blue-600;
-  }
-  
-  .dark .bg-gradient-to-r.from-red-100.to-red-200 {
-    @apply from-red-800 to-red-700 text-red-100 border-red-600;
-  }
-  
-  .dark .bg-gradient-to-r.from-gray-100.to-gray-200 {
-    @apply from-gray-700 to-gray-600 text-gray-100 border-gray-500;
-  }
-  
-  /* Event card hover states */
-  .dark .hover\:from-green-200.hover\:to-green-300:hover {
-    @apply from-green-700 to-green-600;
-  }
-  
-  .dark .hover\:from-blue-200.hover\:to-blue-300:hover {
-    @apply from-blue-700 to-blue-600;
-  }
-  
-  .dark .hover\:from-red-200.hover\:to-red-300:hover {
-    @apply from-red-700 to-red-600;
-  }
-  
-  .dark .hover\:from-gray-200.hover\:to-gray-300:hover {
-    @apply from-gray-600 to-gray-500;
-  }
-  
-  /* Week navigation buttons */
-  .dark .hover\:bg-gradient-to-r.hover\:from-gray-50.hover\:to-gray-100:hover {
-    @apply from-gray-700 to-gray-600 text-gray-100;
-  }
-  
-  /* Today button */
-  .dark .hover\:bg-blue-50:hover {
-    @apply bg-blue-900/30 text-blue-200;
-  }
-  
-  /* Time slot labels */
-  .dark .bg-white {
-    @apply bg-gray-800 text-gray-100 border-gray-600;
-  }
-  
-  /* Date title gradient text fix */
-  .dark .bg-gradient-to-r.from-blue-600.to-purple-600.bg-clip-text.text-transparent {
-    @apply from-blue-400 to-purple-400;
-  }
-  
-  /* Empty state container */
-  .dark .bg-gradient-to-br.from-gray-50.to-gray-100 {
-    @apply from-gray-800 to-gray-700 border-gray-600;
-  }
-  
-  .dark .border-gray-200\/60 {
-    @apply border-gray-600;
-  }
-  
-  .dark .border-gray-100\/80 {
-    @apply border-gray-700;
-  }
-  
-  .dark .text-gray-600 {
-    @apply text-gray-300;
-  }
-  
-  .dark .text-gray-700 {
-    @apply text-gray-200;
-  }
-  
-  .dark .text-gray-800 {
-    @apply text-gray-100;
-  }
-  
-  .dark .text-gray-500 {
-    @apply text-gray-400;
-  }
-  
-  /* Calendar view improvements */
-  .dark .hover\:bg-gray-50\/30:hover {
-    @apply bg-gray-700/30;
-  }
-  
-  .dark .hover\:from-gray-100:hover {
-    @apply from-gray-700;
-  }
-  
-  .dark .hover\:to-gray-150:hover {
-    @apply to-gray-600;
-  }
-  
-  /* Status badges improvements */
-  .dark .bg-green-50 {
-    @apply bg-green-900/20 text-green-300;
-  }
-  
-  .dark .bg-blue-50 {
-    @apply bg-blue-900/20 text-blue-300;
-  }
-  
-  .dark .bg-yellow-50 {
-    @apply bg-yellow-900/20 text-yellow-300;
-  }
-  
-  .dark .bg-red-50 {
-    @apply bg-red-900/20 text-red-300;
-  }
-  
-  .dark .bg-purple-50 {
-    @apply bg-purple-900/20 text-purple-300;
-  }
-  
-  /* Time slot labels */
-  .dark .shadow-sm {
-    @apply shadow-gray-900/50;
-  }
-  
-  .dark .border-gray-200\/80 {
-    @apply border-gray-600;
-  }
-  
-  /* Chart elements in dark mode */
-  .dark .recharts-cartesian-grid-horizontal line,
-  .dark .recharts-cartesian-grid-vertical line {
-    @apply stroke-gray-700;
-  }
-  
-  .dark .recharts-tooltip-wrapper .recharts-default-tooltip {
-    @apply bg-gray-800 border-gray-600;
-  }
-  
-  .dark .recharts-text {
-    @apply fill-gray-300;
-  }
+/* Header styling in dark mode */
+.dark .app-header {
+  background-color: rgb(17 24 39 / 0.95);
+  backdrop-filter: blur(4px);
+  border-color: rgb(55 65 81);
+}
 
-  /* Weekly reports specific dark mode styles */
-  .dark .recharts-legend-item-text {
-    @apply fill-gray-200 text-gray-200;
-  }
-  
-  /* Card header gradient backgrounds in dark mode */
-  .dark .bg-gradient-to-r.from-gray-50.to-white {
-    @apply from-gray-800 to-gray-900;
-  }
-  
-  /* Fix for the ProposalHistory card header in dark mode */
-  .dark .text-slate-700 {
-    @apply text-slate-200;
-  }
-  
-  /* Fix for all card headers in dark mode - more specific targeting */
-  .dark .Card > .CardHeader,
-  .dark .card > .card-header,
-  .dark .MuiCard-root > .MuiCardHeader-root {
-    @apply bg-gray-800 border-gray-700;
-  }
-  
-  /* Specific fix for the Proposals history card header */
-  .dark #history-card-header {
-    @apply bg-gray-800 border-gray-700;
-  }
-  
-  /* Weekly performance card styles */
-  .dark .recharts-bar-rectangle {
-    @apply stroke-gray-700;
-  }
-  
-  /* Select dropdown dark mode styling */
-  .dark [data-radix-select-content] {
-    @apply bg-gray-800 border-gray-700;
-  }
-  
-  .dark [data-radix-select-item] {
-    @apply text-gray-200 hover:bg-gray-700 hover:text-gray-100;
-  }
-  
-  .dark [data-radix-select-item][data-state=checked] {
-    @apply bg-gray-700;
-  }
+/* Form fields in dark mode */
+.dark input:not([type="color"]), 
+.dark textarea, 
+.dark select,
+.dark .form-field {
+  background-color: rgb(31 41 55);
+  border-color: rgb(75 85 99);
+  color: rgb(243 244 246);
+}
+
+.dark input:disabled, 
+.dark textarea:disabled,
+.dark select:disabled {
+  background-color: rgb(17 24 39);
+  border-color: rgb(55 65 81);
+  color: rgb(156 163 175);
+}
+
+/* Placeholder text in dark mode */
+.dark input::placeholder, 
+.dark textarea::placeholder {
+  color: rgb(156 163 175);
+}
+
+/* Background colors for cards and panels in dark mode */
+.dark .data-card,
+.dark .card-content,
+.dark .panel {
+  background-color: rgb(31 41 55);
+  border-color: rgb(55 65 81);
+}
+
+/* Chart elements in dark mode */
+.dark .recharts-cartesian-grid-horizontal line,
+.dark .recharts-cartesian-grid-vertical line {
+  stroke: rgb(55 65 81);
+}
+
+.dark .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: rgb(31 41 55) !important;
+  border-color: rgb(75 85 99) !important;
+}
+
+.dark .recharts-text {
+  fill: rgb(209 213 219);
+}
+
+.dark .recharts-legend-item-text {
+  fill: rgb(229 231 235);
+  color: rgb(229 231 235);
+}
+
+/* Select dropdown dark mode styling */
+.dark [data-radix-select-content] {
+  background-color: rgb(31 41 55);
+  border-color: rgb(55 65 81);
+}
+
+.dark [data-radix-select-item] {
+  color: rgb(229 231 235);
+}
+
+.dark [data-radix-select-item]:hover {
+  background-color: rgb(55 65 81);
+  color: rgb(243 244 246);
+}
+
+.dark [data-radix-select-item][data-state=checked] {
+  background-color: rgb(55 65 81);
 }
 
 /* Font family for PDF generation */
@@ -269,8 +102,6 @@
   font-family: 'Roboto', sans-serif !important;
 }
 
-/* Apply Roboto to all proposal cards by default */
-.preview-proposal, 
 [ref="proposalRef"] {
   font-family: 'Roboto', sans-serif !important;
 }
