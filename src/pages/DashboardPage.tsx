@@ -10,6 +10,7 @@ import { DailyResultsToday } from "@/components/dashboard/daily-results-today";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
+import { TodayDataProvider } from "@/contexts/TodayDataContext";
 
 export default function DashboardPage() {
   const { salesData, summary, trends, loading } = useDashboardData();
@@ -18,29 +19,31 @@ export default function DashboardPage() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <DashboardHeader isLoading={loading} />
+      <TodayDataProvider>
+        <div className="space-y-6">
+          <DashboardHeader isLoading={loading} />
 
-        {loading ? (
-          <LoadingSpinner />
-        ) : (
-          <div className="space-y-6 animate-fade-in">
-            {/* DailyResultsCard - only visible to admin users */}
-            {isAdmin && <DailyResultsCard salesData={salesData} />}
-            
-            {/* Daily Results Cards - positioned between the main cards */}
-            <DailyResultsToday />
-            
-            <GoalsCommissionsSection summary={summary} salesData={salesData} />
-            
-            {/* Admin-only commission projections card */}
-            {isAdmin && <SalespeopleCommissionsCard />}
-            
-            {/* Weekly Reports - Single full width card */}
-            <SalespersonWeeklyCard salesData={salesData} />
-          </div>
-        )}
-      </div>
+          {loading ? (
+            <LoadingSpinner />
+          ) : (
+            <div className="space-y-6 animate-fade-in">
+              {/* DailyResultsCard - only visible to admin users */}
+              {isAdmin && <DailyResultsCard salesData={salesData} />}
+              
+              {/* Daily Results Cards - positioned between the main cards */}
+              <DailyResultsToday />
+              
+              <GoalsCommissionsSection summary={summary} salesData={salesData} />
+              
+              {/* Admin-only commission projections card */}
+              {isAdmin && <SalespeopleCommissionsCard />}
+              
+              {/* Weekly Reports - Single full width card */}
+              <SalespersonWeeklyCard salesData={salesData} />
+            </div>
+          )}
+        </div>
+      </TodayDataProvider>
     </AppLayout>
   );
 }

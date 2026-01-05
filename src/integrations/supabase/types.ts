@@ -597,6 +597,16 @@ export type Database = {
           total_sales: number
         }[]
       }
+      get_today_dashboard_summary: {
+        Args: { p_user_id?: string }
+        Returns: {
+          salespeople: Json
+          total_fees: number
+          total_proposals_count: number
+          total_sales_amount: number
+          total_sales_count: number
+        }[]
+      }
       is_felipe_user: { Args: never; Returns: boolean }
     }
     Enums: {
