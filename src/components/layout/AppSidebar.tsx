@@ -37,10 +37,7 @@ interface SidebarLinkProps {
 
 const SidebarLink = ({ to, icon, label, expanded, active, isBeta, onClick }: SidebarLinkProps) => {
   return (
-    <motion.li
-      whileHover={{ x: expanded ? 4 : 0 }}
-      transition={{ type: "spring", stiffness: 400, damping: 25 }}
-    >
+    <li>
       <Link 
         to={to}
         className={cn(
@@ -59,11 +56,7 @@ const SidebarLink = ({ to, icon, label, expanded, active, isBeta, onClick }: Sid
       >
         {/* Active indicator bar */}
         {active && (
-          <motion.div
-            className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-primary rounded-r-full"
-            layoutId="activeIndicator"
-            transition={{ type: "spring", stiffness: 500, damping: 30 }}
-          />
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-primary rounded-r-full" />
         )}
         
         <span className={cn(
@@ -73,33 +66,25 @@ const SidebarLink = ({ to, icon, label, expanded, active, isBeta, onClick }: Sid
           {icon}
         </span>
         
-        <AnimatePresence>
-          {expanded && (
-            <motion.div 
-              className="relative flex items-center min-w-0"
-              initial={{ opacity: 0, width: 0 }}
-              animate={{ opacity: 1, width: "auto" }}
-              exit={{ opacity: 0, width: 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <span className={cn(
-                "truncate text-sm",
-                active && "font-medium"
-              )}>{label}</span>
-              {isBeta && (
-                <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-medium">
-                  beta
-                </span>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {expanded && (
+          <div className="relative flex items-center min-w-0">
+            <span className={cn(
+              "truncate text-sm",
+              active && "font-medium"
+            )}>{label}</span>
+            {isBeta && (
+              <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-medium">
+                beta
+              </span>
+            )}
+          </div>
+        )}
         
         {!expanded && isBeta && (
           <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-primary" />
         )}
       </Link>
-    </motion.li>
+    </li>
   );
 };
 
