@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { UserRole } from "@/lib/types";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+
 import { 
   BarChart3, 
   Home, 
@@ -97,20 +97,13 @@ interface SidebarGroupProps {
 const SidebarGroup = ({ title, children, expanded }: SidebarGroupProps) => {
   return (
     <div className="space-y-1">
-      <AnimatePresence>
-        {expanded && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="px-3 py-2"
-          >
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40">
-              {title}
-            </span>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {expanded && (
+        <div className="px-3 py-2">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40">
+            {title}
+          </span>
+        </div>
+      )}
       <ul className="space-y-0.5">{children}</ul>
     </div>
   );
@@ -133,41 +126,30 @@ export function AppSidebar() {
   const hasFinanceAccess = user?.email === 'felipe.souza@socialcriativo.com';
   
   return (
-    <motion.div 
+    <div 
       className={cn(
-        "bg-sidebar h-screen flex flex-col border-r border-sidebar-border",
+        "bg-sidebar h-screen flex flex-col border-r border-sidebar-border transition-all duration-200",
         expanded ? "w-60" : "w-16"
       )}
-      animate={{ width: expanded ? 240 : 64 }}
-      transition={{ duration: 0.2, ease: "easeInOut" }}
     >
       {/* Header */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
-        <AnimatePresence>
-          {expanded && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex items-center gap-2"
-            >
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <LayoutDashboard className="w-4 h-4 text-primary-foreground" />
-              </div>
-              <span className="font-semibold text-sidebar-foreground">
-                Aliança<span className="text-primary">Fiscal</span>
-              </span>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {expanded && (
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+              <LayoutDashboard className="w-4 h-4 text-primary-foreground" />
+            </div>
+            <span className="font-semibold text-sidebar-foreground">
+              Aliança<span className="text-primary">Fiscal</span>
+            </span>
+          </div>
+        )}
         
         <button 
           onClick={toggleSidebar}
           className="p-2 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-sidebar-foreground transition-colors"
         >
-          <motion.div animate={{ rotate: expanded ? 0 : 180 }} transition={{ duration: 0.2 }}>
-            {expanded ? <ChevronLeft size={18} /> : <Menu size={18} />}
-          </motion.div>
+          {expanded ? <ChevronLeft size={18} /> : <Menu size={18} />}
         </button>
       </div>
       
@@ -290,6 +272,6 @@ export function AppSidebar() {
           onClick={handleLogout}
         />
       </div>
-    </motion.div>
+    </div>
   );
 }
