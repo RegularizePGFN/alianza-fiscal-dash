@@ -65,8 +65,11 @@ export function DailyResultCard({ salesData }: DailyResultCardProps) {
   const animatedAverage = useCountUpCurrency(totals.averageSalesAmount);
 
   const formatTooltip = (value: number, name: string) => {
-    if (name === "Vendas") {
+    if (name === "Valor") {
       return formatCurrency(value);
+    }
+    if (name === "Qtd") {
+      return `${value} vendas`;
     }
     return value;
   };
@@ -150,6 +153,14 @@ export function DailyResultCard({ salesData }: DailyResultCardProps) {
                     axisLine={false}
                     width={35}
                   />
+                  <YAxis 
+                    yAxisId="right"
+                    orientation="right"
+                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                    tickLine={false}
+                    axisLine={false}
+                    width={25}
+                  />
                   <Tooltip
                     formatter={formatTooltip}
                     labelFormatter={(label) => `Dia ${label}`}
@@ -164,11 +175,20 @@ export function DailyResultCard({ salesData }: DailyResultCardProps) {
                   <Area 
                     type="monotone" 
                     dataKey="value" 
-                    name="Vendas"
+                    name="Valor"
                     yAxisId="left"
                     stroke="hsl(var(--chart-1))" 
                     strokeWidth={2}
                     fill="url(#colorValue)"
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="count" 
+                    name="Qtd"
+                    yAxisId="right"
+                    stroke="hsl(var(--chart-2))" 
+                    strokeWidth={2}
+                    dot={{ r: 3, fill: 'hsl(var(--chart-2))' }}
                   />
                 </AreaChart>
               </ResponsiveContainer>
