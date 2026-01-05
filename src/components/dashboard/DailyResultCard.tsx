@@ -3,7 +3,7 @@ import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sale } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, Area, AreaChart } from "recharts";
+import { ComposedChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Area } from "recharts";
 import { ChartContainer } from "@/components/ui/chart";
 import { motion } from "framer-motion";
 import { TrendingUp } from "lucide-react";
@@ -124,7 +124,7 @@ export function DailyResultCard({ salesData }: DailyResultCardProps) {
               className="w-full h-full"
             >
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart 
+                <ComposedChart 
                   data={dailyData}
                   margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
                 >
@@ -190,7 +190,7 @@ export function DailyResultCard({ salesData }: DailyResultCardProps) {
                     strokeWidth={2}
                     dot={{ r: 3, fill: 'hsl(var(--chart-2))' }}
                   />
-                </AreaChart>
+                </ComposedChart>
               </ResponsiveContainer>
             </ChartContainer>
           </div>
