@@ -1,17 +1,15 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sale } from "@/lib/types";
 import { Users, Calendar } from "lucide-react";
 import { motion } from "framer-motion";
 import { DailyResultsContent } from "./DailyResultsContent";
 import { DailyResultsProvider } from "./DailyResultsContext";
 
 interface DailySalesTeamCardProps {
-  todaySales: Sale[];
   currentDate: string;
 }
 
-export function DailySalesTeamCard({ todaySales, currentDate }: DailySalesTeamCardProps) {
+export function DailySalesTeamCard({ currentDate }: DailySalesTeamCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -37,10 +35,7 @@ export function DailySalesTeamCard({ todaySales, currentDate }: DailySalesTeamCa
         </CardHeader>
         <CardContent className="pt-0">
           <DailyResultsProvider>
-            <DailyResultsContent 
-              todaySales={todaySales}
-              currentDate={currentDate}
-            />
+            <DailyResultsContent />
           </DailyResultsProvider>
         </CardContent>
       </Card>

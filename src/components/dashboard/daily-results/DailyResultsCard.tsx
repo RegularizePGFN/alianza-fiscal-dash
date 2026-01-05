@@ -26,7 +26,6 @@ export function DailyResultsCard({ salesData }: DailyResultsProps) {
       
       setIsLoading(true);
       try {
-        // Get today's date in ISO format
         const today = getTodayISO();
         
         // Calculate yesterday's date
@@ -34,7 +33,7 @@ export function DailyResultsCard({ salesData }: DailyResultsProps) {
         yesterdayDate.setDate(yesterdayDate.getDate() - 1);
         const yesterday = yesterdayDate.toISOString().split('T')[0];
         
-        // Filter today's sales
+        // Filter today's sales from already loaded data
         const todaySalesArr = salesData.filter(sale => 
           sale.sale_date === today
         );
@@ -91,7 +90,6 @@ export function DailyResultsCard({ salesData }: DailyResultsProps) {
           currentDate={currentDate} 
         />
         <DailySalesTeamCard 
-          todaySales={todaySales} 
           currentDate={currentDate} 
         />
       </div>
