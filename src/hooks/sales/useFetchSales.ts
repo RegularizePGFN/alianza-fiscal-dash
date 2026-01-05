@@ -45,67 +45,80 @@ export const useFetchSales = (user: User | null) => {
         return;
       }
       
-      console.log("Fetching sales for user:", user.id, "with role:", user.role);
+      console.log("Fetching all sales for user:", user.id, "with role:", user.role);
       lastFetchTimestampRef.current = now;
       
-      // Simple query without filters - RLS is disabled
-      const { data, error } = await supabase
-        .from('sales')
-        .select('*')
-        .order('sale_date', { ascending: false });
+      // Fetch all sales with pagination to bypass 1000 row limit
+      const PAGE_SIZE = 1000;
+      let allData: any[] = [];
+      let from = 0;
+      let hasMore = true;
       
-      if (error) {
-        console.error("Error querying Supabase:", error);
-        throw error;
-      }
-      
-      if (!isMountedRef.current) {
-        console.log("Component unmounted during fetch, aborting data processing");
-        return;
-      }
-      
-      if (data) {
-        console.log("Sales data retrieved:", data.length, "records");
-        if (data.length > 0) {
-          // Log sample dates for debugging
-          console.log("First 3 sale dates from database:");
-          data.slice(0, 3).forEach((sale, i) => {
-            console.log(`Sale ${i+1}:`, sale.id, "Date:", sale.sale_date, "Type:", typeof sale.sale_date);
-          });
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('sales')
+          .select('*')
+          .order('sale_date', { ascending: false })
+          .range(from, from + PAGE_SIZE - 1);
+        
+        if (error) {
+          console.error("Error querying Supabase:", error);
+          throw error;
         }
         
-        // Client-side filtering based on user role
-        let filteredData = data;
-        if (user.role === UserRole.SALESPERSON) {
-          filteredData = data.filter(sale => sale.salesperson_id === user.id);
-          console.log("Filtered data for salesperson:", filteredData.length, "records");
+        if (!isMountedRef.current) {
+          console.log("Component unmounted during fetch, aborting");
+          return;
         }
         
-        // Map data and ensure all required fields are present
-        const formattedSales: Sale[] = filteredData.map((sale) => {
-          // Preservar exatamente a string da data como está no banco de dados
-          // Isso é crucial para comparações posteriores
-          return {
-            id: sale.id,
-            salesperson_id: sale.salesperson_id,
-            salesperson_name: sale.salesperson_name || 'Unknown',
-            gross_amount: sale.gross_amount,
-            net_amount: sale.gross_amount, // Use gross_amount as net_amount
-            payment_method: convertToPaymentMethod(sale.payment_method),
-            installments: sale.installments || 1,
-            // Ensure we use the date exactly as stored in the database
-            sale_date: sale.sale_date,
-            created_at: sale.created_at,
-            client_name: sale.client_name || 'Client',
-            client_phone: sale.client_phone || '',
-            client_document: sale.client_document || ''
-          };
+        if (data && data.length > 0) {
+          allData = [...allData, ...data];
+          console.log(`Fetched batch: ${data.length} records (total: ${allData.length})`);
+          from += PAGE_SIZE;
+          hasMore = data.length === PAGE_SIZE;
+        } else {
+          hasMore = false;
+        }
+      }
+      
+      console.log("Total sales retrieved:", allData.length, "records");
+      
+      if (allData.length > 0) {
+        // Log sample dates for debugging
+        console.log("First 3 sale dates from database:");
+        allData.slice(0, 3).forEach((sale, i) => {
+          console.log(`Sale ${i+1}:`, sale.id, "Date:", sale.sale_date, "Type:", typeof sale.sale_date);
         });
-        
-        if (isMountedRef.current) {
-          setSales(formattedSales);
-          console.log("Sales data after mapping:", formattedSales.length, "records");
-        }
+      }
+      
+      // Client-side filtering based on user role
+      let filteredData = allData;
+      if (user.role === UserRole.SALESPERSON) {
+        filteredData = allData.filter(sale => sale.salesperson_id === user.id);
+        console.log("Filtered data for salesperson:", filteredData.length, "records");
+      }
+      
+      // Map data and ensure all required fields are present
+      const formattedSales: Sale[] = filteredData.map((sale) => {
+        return {
+          id: sale.id,
+          salesperson_id: sale.salesperson_id,
+          salesperson_name: sale.salesperson_name || 'Unknown',
+          gross_amount: sale.gross_amount,
+          net_amount: sale.gross_amount,
+          payment_method: convertToPaymentMethod(sale.payment_method),
+          installments: sale.installments || 1,
+          sale_date: sale.sale_date,
+          created_at: sale.created_at,
+          client_name: sale.client_name || 'Client',
+          client_phone: sale.client_phone || '',
+          client_document: sale.client_document || ''
+        };
+      });
+      
+      if (isMountedRef.current) {
+        setSales(formattedSales);
+        console.log("Sales data after mapping:", formattedSales.length, "records");
       }
     } catch (error: any) {
       console.error('Error fetching sales:', error);

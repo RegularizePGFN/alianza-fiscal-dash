@@ -2,10 +2,57 @@
 import { read, utils, write } from 'xlsx';
 import { Sale } from './types';
 import { convertToPaymentMethod } from './utils';
+import { supabase } from '@/integrations/supabase/client';
 
 // Function to export sales data to Excel
 export const exportSalesToExcel = (salesData: Sale[]) => {
   generateExcelFile(salesData, `vendas_${new Date().toISOString().split('T')[0]}`);
+};
+
+// Function to fetch ALL sales from database with pagination and export to Excel
+export const exportAllSalesToExcel = async (onProgress?: (loaded: number) => void): Promise<number> => {
+  const PAGE_SIZE = 1000;
+  let allData: any[] = [];
+  let from = 0;
+  let hasMore = true;
+  
+  while (hasMore) {
+    const { data, error } = await supabase
+      .from('sales')
+      .select('*')
+      .order('sale_date', { ascending: false })
+      .range(from, from + PAGE_SIZE - 1);
+    
+    if (error) throw error;
+    
+    if (data && data.length > 0) {
+      allData = [...allData, ...data];
+      onProgress?.(allData.length);
+      from += PAGE_SIZE;
+      hasMore = data.length === PAGE_SIZE;
+    } else {
+      hasMore = false;
+    }
+  }
+  
+  // Map to Sale format
+  const formattedSales: Sale[] = allData.map((sale) => ({
+    id: sale.id,
+    salesperson_id: sale.salesperson_id,
+    salesperson_name: sale.salesperson_name || 'Unknown',
+    gross_amount: sale.gross_amount,
+    net_amount: sale.gross_amount,
+    payment_method: convertToPaymentMethod(sale.payment_method),
+    installments: sale.installments || 1,
+    sale_date: sale.sale_date,
+    created_at: sale.created_at,
+    client_name: sale.client_name || 'Client',
+    client_phone: sale.client_phone || '',
+    client_document: sale.client_document || ''
+  }));
+  
+  generateExcelFile(formattedSales, `vendas_completo_${new Date().toISOString().split('T')[0]}`);
+  return formattedSales.length;
 };
 
 // Function to generate Excel file from sales data
