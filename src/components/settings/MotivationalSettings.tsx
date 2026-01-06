@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useMotivationalSettings, useUpdateMotivationalSettings } from "@/hooks/useMotivationalSettings";
 import { Trophy, Loader2, Save, Eye, Sparkles } from "lucide-react";
@@ -20,6 +21,7 @@ export function MotivationalSettings() {
   const [prizeDescription, setPrizeDescription] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [displayTopCount, setDisplayTopCount] = useState(5);
 
   useEffect(() => {
     if (settings) {
@@ -28,6 +30,7 @@ export function MotivationalSettings() {
       setPrizeDescription(settings.prize_description || "");
       setStartDate(settings.start_date || "");
       setEndDate(settings.end_date || "");
+      setDisplayTopCount(settings.display_top_count);
     }
   }, [settings]);
 
@@ -39,6 +42,7 @@ export function MotivationalSettings() {
         prize_description: prizeDescription || null,
         start_date: startDate || null,
         end_date: endDate || null,
+        display_top_count: displayTopCount,
       });
       toast({
         title: "Configurações salvas",
@@ -151,6 +155,24 @@ export function MotivationalSettings() {
               className="dark:bg-gray-700/50"
               rows={3}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="display-top">Exibir no Ranking</Label>
+            <Select
+              value={displayTopCount.toString()}
+              onValueChange={(value) => setDisplayTopCount(parseInt(value))}
+            >
+              <SelectTrigger id="display-top" className="dark:bg-gray-700/50">
+                <SelectValue placeholder="Selecione quantos exibir" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="3">Top 3</SelectItem>
+                <SelectItem value="5">Top 5</SelectItem>
+                <SelectItem value="10">Top 10</SelectItem>
+                <SelectItem value="0">Mostrar todos</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

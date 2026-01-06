@@ -8,6 +8,7 @@ export interface MotivationalSettings {
   prize_description: string | null;
   start_date: string | null;
   end_date: string | null;
+  display_top_count: number;
   created_at: string;
   updated_at: string;
 }
