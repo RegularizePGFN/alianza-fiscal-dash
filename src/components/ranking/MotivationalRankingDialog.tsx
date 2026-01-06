@@ -54,11 +54,7 @@ function RankingTable({
       }
       return a.amount_position - b.amount_position;
     })
-    .filter((entry) => {
-      if (displayTopCount === 0) return true;
-      const position = type === "volume" ? entry.volume_position : entry.amount_position;
-      return position <= displayTopCount;
-    });
+    .slice(0, displayTopCount > 0 ? displayTopCount : undefined);
 
   return (
     <div className="flex-1 min-w-0">
