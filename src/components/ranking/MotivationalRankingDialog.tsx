@@ -14,6 +14,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useMotivationalRanking, getWeekPeriod, RankingEntry } from "@/hooks/useMotivationalRanking";
+import { useMotivationalSettings } from "@/hooks/useMotivationalSettings";
 import { useAuth } from "@/contexts/auth";
 import { formatCurrency } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -37,19 +38,27 @@ function RankingTable({
   data,
   type,
   currentUserId,
+  displayTopCount,
 }: {
   title: string;
   icon: React.ComponentType<{ className?: string }>;
   data: RankingEntry[];
   type: "volume" | "amount";
   currentUserId?: string;
+  displayTopCount: number;
 }) {
-  const sortedData = [...data].sort((a, b) => {
-    if (type === "volume") {
-      return a.volume_position - b.volume_position;
-    }
-    return a.amount_position - b.amount_position;
-  });
+  const sortedData = [...data]
+    .sort((a, b) => {
+      if (type === "volume") {
+        return a.volume_position - b.volume_position;
+      }
+      return a.amount_position - b.amount_position;
+    })
+    .filter((entry) => {
+      if (displayTopCount === 0) return true;
+      const position = type === "volume" ? entry.volume_position : entry.amount_position;
+      return position <= displayTopCount;
+    });
 
   return (
     <div className="flex-1 min-w-0">
@@ -100,8 +109,10 @@ function RankingTable({
 
 export function MotivationalRankingDialog() {
   const { data: ranking, isLoading, error } = useMotivationalRanking();
+  const { data: settings } = useMotivationalSettings();
   const { user } = useAuth();
   const weekPeriod = getWeekPeriod();
+  const displayTopCount = settings?.display_top_count ?? 5;
 
   return (
     <Dialog>
@@ -164,6 +175,7 @@ export function MotivationalRankingDialog() {
                 data={ranking || []}
                 type="volume"
                 currentUserId={user?.id}
+                displayTopCount={displayTopCount}
               />
               <RankingTable
                 title="Faturamento (R$)"
@@ -171,6 +183,7 @@ export function MotivationalRankingDialog() {
                 data={ranking || []}
                 type="amount"
                 currentUserId={user?.id}
+                displayTopCount={displayTopCount}
               />
             </div>
           )}
