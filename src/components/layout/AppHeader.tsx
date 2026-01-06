@@ -1,9 +1,10 @@
 
-import { User, ArrowLeft, Bell } from "lucide-react";
+import { User, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { NotificationsPopover } from "@/components/notifications/NotificationsPopover";
+import { MotivationalRankingDialog } from "@/components/ranking/MotivationalRankingDialog";
 import { useAuth } from "@/contexts/auth";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -86,6 +87,13 @@ export function AppHeader() {
           </motion.div>
         )}
         
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <MotivationalRankingDialog />
+        </motion.div>
+
         <motion.div
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
