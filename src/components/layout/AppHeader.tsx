@@ -24,16 +24,20 @@ function PositionBadge({ position }: { position: number }) {
 function RankingTable({ 
   entries, 
   type, 
-  currentUserId 
+  currentUserId,
+  displayTopCount 
 }: { 
   entries: RankingEntry[]; 
   type: "volume" | "amount";
   currentUserId?: string;
+  displayTopCount: number;
 }) {
-  const sortedEntries = [...entries].sort((a, b) => {
-    if (type === "volume") return a.volume_position - b.volume_position;
-    return a.amount_position - b.amount_position;
-  });
+  const sortedEntries = [...entries]
+    .sort((a, b) => {
+      if (type === "volume") return a.volume_position - b.volume_position;
+      return a.amount_position - b.amount_position;
+    })
+    .slice(0, displayTopCount > 0 ? displayTopCount : undefined);
 
   return (
     <div className="space-y-2">
@@ -168,8 +172,8 @@ function MotivationalRankingButton() {
 
         {ranking && ranking.length > 0 && (
           <div className="space-y-6 mt-2">
-            <RankingTable entries={ranking} type="volume" currentUserId={user?.id} />
-            <RankingTable entries={ranking} type="amount" currentUserId={user?.id} />
+            <RankingTable entries={ranking} type="volume" currentUserId={user?.id} displayTopCount={settings?.display_top_count ?? 5} />
+            <RankingTable entries={ranking} type="amount" currentUserId={user?.id} displayTopCount={settings?.display_top_count ?? 5} />
           </div>
         )}
       </DialogContent>
