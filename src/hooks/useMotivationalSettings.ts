@@ -25,6 +25,8 @@ export function useMotivationalSettings() {
       if (error) throw error;
       return data as MotivationalSettings;
     },
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 }
 
