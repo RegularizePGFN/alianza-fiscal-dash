@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SettingsHeader } from "@/components/settings/SettingsHeader";
 import { MonthlyGoalsSettings } from "@/components/settings/MonthlyGoalsSettings";
+import { MotivationalSettings } from "@/components/settings/MotivationalSettings";
 
 export default function SettingsPage() {
   const { user } = useAuth();
@@ -42,11 +43,15 @@ export default function SettingsPage() {
         >
           <TabsList className="dark:bg-gray-700/50">
             <TabsTrigger value="monthly-goals" className="dark:data-[state=active]:bg-gray-600">Metas Mensais</TabsTrigger>
-            {/* Add more tabs here as needed */}
+            <TabsTrigger value="motivational" className="dark:data-[state=active]:bg-gray-600">Motivacional</TabsTrigger>
           </TabsList>
           
           <TabsContent value="monthly-goals" className="space-y-4">
             <MonthlyGoalsSettings />
+          </TabsContent>
+
+          <TabsContent value="motivational" className="space-y-4">
+            <MotivationalSettings />
           </TabsContent>
         </Tabs>
       </div>

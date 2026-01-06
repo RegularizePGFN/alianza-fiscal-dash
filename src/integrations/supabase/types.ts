@@ -122,6 +122,39 @@ export type Database = {
         }
         Relationships: []
       }
+      motivational_settings: {
+        Row: {
+          created_at: string
+          end_date: string | null
+          id: string
+          is_active: boolean
+          prize_description: string | null
+          prize_title: string
+          start_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          prize_description?: string | null
+          prize_title?: string
+          start_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          prize_description?: string | null
+          prize_title?: string
+          start_date?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
