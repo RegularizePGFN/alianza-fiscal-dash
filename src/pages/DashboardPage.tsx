@@ -7,6 +7,7 @@ import { SalespeopleCommissionsCard } from "@/components/dashboard/salespeople-c
 import { DailyResultsCard } from "@/components/dashboard/daily-results";
 import { SalespersonWeeklyCard } from "@/components/dashboard/weekly-sales";
 import { DailyResultsToday } from "@/components/dashboard/daily-results-today";
+import { TeamDailyResultCard } from "@/components/dashboard/TeamDailyResultCard";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
@@ -22,6 +23,9 @@ export default function DashboardPage() {
       <TodayDataProvider>
         <div className="space-y-6">
           <DashboardHeader isLoading={loading} />
+          
+          {/* Team Daily Result - visible for ALL users */}
+          <TeamDailyResultCard />
 
           {loading ? (
             <LoadingSpinner />
