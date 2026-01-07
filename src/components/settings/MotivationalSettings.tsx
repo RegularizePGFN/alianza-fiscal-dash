@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,30 +9,115 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useMotivationalSettings, useUpdateMotivationalSettings } from "@/hooks/useMotivationalSettings";
-import { Trophy, Loader2, Save, Eye, Sparkles } from "lucide-react";
+import { Trophy, Loader2, Save, Eye, Sparkles, Upload, Trash2, ImageIcon } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export function MotivationalSettings() {
   const { toast } = useToast();
   const { data: settings, isLoading, error } = useMotivationalSettings();
   const updateSettings = useUpdateMotivationalSettings();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isActive, setIsActive] = useState(false);
   const [prizeTitle, setPrizeTitle] = useState("");
   const [prizeDescription, setPrizeDescription] = useState("");
+  const [prizeImageUrl, setPrizeImageUrl] = useState<string | null>(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [displayTopCount, setDisplayTopCount] = useState(5);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     if (settings) {
       setIsActive(settings.is_active);
       setPrizeTitle(settings.prize_title);
       setPrizeDescription(settings.prize_description || "");
+      setPrizeImageUrl(settings.prize_image_url);
       setStartDate(settings.start_date || "");
       setEndDate(settings.end_date || "");
       setDisplayTopCount(settings.display_top_count);
     }
   }, [settings]);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Arquivo inválido",
+        description: "Por favor, selecione uma imagem.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "Arquivo muito grande",
+        description: "A imagem deve ter no máximo 2MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `prize-banner-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("motivational")
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("motivational")
+        .getPublicUrl(fileName);
+
+      const newImageUrl = urlData.publicUrl;
+      setPrizeImageUrl(newImageUrl);
+
+      // Save to database
+      await updateSettings.mutateAsync({ prize_image_url: newImageUrl });
+
+      toast({
+        title: "Imagem enviada",
+        description: "A imagem do prêmio foi atualizada.",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Erro ao enviar imagem",
+        description: err.message || "Não foi possível enviar a imagem.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingImage(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    try {
+      setPrizeImageUrl(null);
+      await updateSettings.mutateAsync({ prize_image_url: null });
+      toast({
+        title: "Imagem removida",
+        description: "A imagem do prêmio foi removida.",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Erro ao remover imagem",
+        description: err.message || "Não foi possível remover a imagem.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -134,6 +219,61 @@ export function MotivationalSettings() {
           <CardDescription>Configure o prêmio e detalhes do motivacional</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Image Upload Section */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <ImageIcon className="h-4 w-4" />
+              Imagem do Prêmio (opcional)
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Dimensões recomendadas: 800 x 200 pixels (proporção 4:1)
+            </p>
+            
+            {prizeImageUrl ? (
+              <div className="space-y-2">
+                <div className="relative rounded-lg overflow-hidden border border-border">
+                  <img 
+                    src={prizeImageUrl} 
+                    alt="Preview do prêmio" 
+                    className="w-full h-auto object-cover"
+                    style={{ maxHeight: "150px" }}
+                  />
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleRemoveImage}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Remover Imagem
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingImage}
+                >
+                  {uploadingImage ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4 mr-2" />
+                  )}
+                  {uploadingImage ? "Enviando..." : "Escolher Imagem"}
+                </Button>
+              </div>
+            )}
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="prize-title">Título do Prêmio</Label>
             <Input
@@ -222,6 +362,18 @@ export function MotivationalSettings() {
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {/* Preview Image */}
+          {prizeImageUrl && (
+            <div className="rounded-lg overflow-hidden mb-3">
+              <img 
+                src={prizeImageUrl} 
+                alt="Preview do prêmio" 
+                className="w-full h-auto object-cover"
+                style={{ maxHeight: "150px" }}
+              />
+            </div>
+          )}
+          
           <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-2">
               <Trophy className="h-5 w-5 text-amber-500" />
