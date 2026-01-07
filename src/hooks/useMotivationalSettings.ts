@@ -6,6 +6,7 @@ export interface MotivationalSettings {
   is_active: boolean;
   prize_title: string;
   prize_description: string | null;
+  prize_image_url: string | null;
   start_date: string | null;
   end_date: string | null;
   display_top_count: number;

@@ -127,7 +127,7 @@ function MotivationalRankingButton() {
           <Sparkles className="h-4 w-4 animate-pulse" />
         </motion.button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <Trophy className="h-6 w-6 text-amber-500" />
@@ -138,8 +138,20 @@ function MotivationalRankingButton() {
           </DialogDescription>
         </DialogHeader>
 
+        {/* Prize Image */}
+        {settings?.prize_image_url && (
+          <div className="rounded-lg overflow-hidden">
+            <img 
+              src={settings.prize_image_url} 
+              alt="Prêmio" 
+              className="w-full h-auto object-cover"
+              style={{ maxHeight: "150px" }}
+            />
+          </div>
+        )}
+
         {/* Prize Banner */}
-        <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-lg p-4 my-2">
+        <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-amber-600 dark:text-amber-400 font-semibold">🎯 Prêmio da Semana</span>
           </div>
@@ -171,9 +183,20 @@ function MotivationalRankingButton() {
         )}
 
         {ranking && ranking.length > 0 && (
-          <div className="space-y-6 mt-2">
-            <RankingTable entries={ranking} type="volume" currentUserId={user?.id} displayTopCount={settings?.display_top_count ?? 5} />
-            <RankingTable entries={ranking} type="amount" currentUserId={user?.id} displayTopCount={settings?.display_top_count ?? 5} />
+          <div className="flex flex-col sm:flex-row gap-4 mt-2">
+            <div className="flex-1">
+              <RankingTable entries={ranking} type="volume" currentUserId={user?.id} displayTopCount={settings?.display_top_count ?? 5} />
+            </div>
+            
+            {/* Vertical divider for desktop */}
+            <div className="hidden sm:block w-px bg-border" />
+            
+            {/* Horizontal divider for mobile */}
+            <div className="sm:hidden h-px bg-border" />
+            
+            <div className="flex-1">
+              <RankingTable entries={ranking} type="amount" currentUserId={user?.id} displayTopCount={settings?.display_top_count ?? 5} />
+            </div>
           </div>
         )}
       </DialogContent>
