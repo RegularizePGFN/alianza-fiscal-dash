@@ -24,8 +24,8 @@ export default function DashboardPage() {
         <div className="space-y-6">
           <DashboardHeader isLoading={loading} />
           
-          {/* Team Daily Result - visible for ALL users */}
-          <TeamDailyResultCard />
+          {/* Team Daily Result - visible only for salespeople (vendedores) */}
+          {!isAdmin && <TeamDailyResultCard />}
 
           {loading ? (
             <LoadingSpinner />
