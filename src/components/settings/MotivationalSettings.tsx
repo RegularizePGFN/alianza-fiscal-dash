@@ -25,6 +25,7 @@ export function MotivationalSettings() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [displayTopCount, setDisplayTopCount] = useState(5);
+  const [rankingType, setRankingType] = useState<'volume' | 'amount' | 'both'>('both');
   const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
@@ -36,6 +37,7 @@ export function MotivationalSettings() {
       setStartDate(settings.start_date || "");
       setEndDate(settings.end_date || "");
       setDisplayTopCount(settings.display_top_count);
+      setRankingType(settings.ranking_type || 'both');
     }
   }, [settings]);
 
@@ -128,6 +130,7 @@ export function MotivationalSettings() {
         start_date: startDate || null,
         end_date: endDate || null,
         display_top_count: displayTopCount,
+        ranking_type: rankingType,
       });
       toast({
         title: "Configurações salvas",
@@ -295,6 +298,28 @@ export function MotivationalSettings() {
               className="dark:bg-gray-700/50"
               rows={3}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="ranking-type">Tipo de Ranking</Label>
+            <Select
+              value={rankingType}
+              onValueChange={(value) => setRankingType(value as 'volume' | 'amount' | 'both')}
+            >
+              <SelectTrigger id="ranking-type" className="dark:bg-gray-700/50">
+                <SelectValue placeholder="Selecione o tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="volume">Apenas Volume de Contratos (1 ganhador)</SelectItem>
+                <SelectItem value="amount">Apenas Faturamento (1 ganhador)</SelectItem>
+                <SelectItem value="both">Ambos (2 ganhadores)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {rankingType === 'volume' && "Ganhador: quem fechar mais contratos na semana"}
+              {rankingType === 'amount' && "Ganhador: quem faturar mais na semana"}
+              {rankingType === 'both' && "2 ganhadores: quem fechar mais contratos + quem faturar mais"}
+            </p>
           </div>
 
           <div className="space-y-2">

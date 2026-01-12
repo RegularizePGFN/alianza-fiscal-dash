@@ -183,20 +183,33 @@ function MotivationalRankingButton() {
         )}
 
         {ranking && ranking.length > 0 && (
-          <div className="flex flex-col sm:flex-row gap-4 mt-2">
-            <div className="flex-1">
-              <RankingTable entries={ranking} type="volume" currentUserId={user?.id} displayTopCount={settings?.display_top_count ?? 5} />
-            </div>
+          <div className={cn(
+            "flex gap-4 mt-2",
+            settings?.ranking_type === 'both' ? "flex-col sm:flex-row" : "flex-col"
+          )}>
+            {/* Volume ranking - show if 'volume' or 'both' */}
+            {(settings?.ranking_type === 'volume' || settings?.ranking_type === 'both') && (
+              <div className="flex-1">
+                <RankingTable entries={ranking} type="volume" currentUserId={user?.id} displayTopCount={settings?.display_top_count ?? 5} />
+              </div>
+            )}
             
-            {/* Vertical divider for desktop */}
-            <div className="hidden sm:block w-px bg-border" />
+            {/* Dividers - only when 'both' */}
+            {settings?.ranking_type === 'both' && (
+              <>
+                {/* Vertical divider for desktop */}
+                <div className="hidden sm:block w-px bg-border" />
+                {/* Horizontal divider for mobile */}
+                <div className="sm:hidden h-px bg-border" />
+              </>
+            )}
             
-            {/* Horizontal divider for mobile */}
-            <div className="sm:hidden h-px bg-border" />
-            
-            <div className="flex-1">
-              <RankingTable entries={ranking} type="amount" currentUserId={user?.id} displayTopCount={settings?.display_top_count ?? 5} />
-            </div>
+            {/* Amount ranking - show if 'amount' or 'both' */}
+            {(settings?.ranking_type === 'amount' || settings?.ranking_type === 'both') && (
+              <div className="flex-1">
+                <RankingTable entries={ranking} type="amount" currentUserId={user?.id} displayTopCount={settings?.display_top_count ?? 5} />
+              </div>
+            )}
           </div>
         )}
       </DialogContent>

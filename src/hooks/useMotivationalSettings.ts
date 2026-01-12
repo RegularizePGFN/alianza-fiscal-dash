@@ -10,6 +10,7 @@ export interface MotivationalSettings {
   start_date: string | null;
   end_date: string | null;
   display_top_count: number;
+  ranking_type: 'volume' | 'amount' | 'both';
   created_at: string;
   updated_at: string;
 }

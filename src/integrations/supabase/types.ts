@@ -132,6 +132,7 @@ export type Database = {
           prize_description: string | null
           prize_image_url: string | null
           prize_title: string
+          ranking_type: string | null
           start_date: string | null
           updated_at: string
         }
@@ -144,6 +145,7 @@ export type Database = {
           prize_description?: string | null
           prize_image_url?: string | null
           prize_title?: string
+          ranking_type?: string | null
           start_date?: string | null
           updated_at?: string
         }
@@ -156,6 +158,7 @@ export type Database = {
           prize_description?: string | null
           prize_image_url?: string | null
           prize_title?: string
+          ranking_type?: string | null
           start_date?: string | null
           updated_at?: string
         }
