@@ -14,6 +14,53 @@ import { useMotivationalRanking, getWeekPeriod, RankingEntry } from "@/hooks/use
 import { cn } from "@/lib/utils";
 import { Loader2, AlertCircle } from "lucide-react";
 
+function FormattedPrizeDescription({ description }: { description: string }) {
+  const lines = description.split('\n').filter(line => line.trim());
+  
+  return (
+    <div className="text-sm space-y-1">
+      {lines.map((line, index) => {
+        const trimmed = line.trim();
+        if (!trimmed) return null;
+        
+        // Header de seção (emoji no início)
+        if (/^[🎁✅🥇⚖️📌🏆💰📊🎯]/.test(trimmed)) {
+          return (
+            <p key={index} className="font-semibold text-foreground mt-3 first:mt-0">
+              {trimmed}
+            </p>
+          );
+        }
+        
+        // Bullet point
+        if (trimmed.startsWith('•') || trimmed.startsWith('-')) {
+          return (
+            <p key={index} className="text-muted-foreground pl-4">
+              {trimmed}
+            </p>
+          );
+        }
+        
+        // Linha de desempate (menor destaque)
+        if (/desempate/i.test(trimmed)) {
+          return (
+            <p key={index} className="text-xs text-muted-foreground/80 mt-2">
+              {trimmed}
+            </p>
+          );
+        }
+        
+        // Linha normal
+        return (
+          <p key={index} className="text-muted-foreground">
+            {trimmed}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 function PositionBadge({ position }: { position: number }) {
   if (position === 1) return <span className="text-2xl">🥇</span>;
   if (position === 2) return <span className="text-2xl">🥈</span>;
@@ -151,13 +198,20 @@ function MotivationalRankingButton() {
         )}
 
         {/* Prize Banner */}
-        <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-amber-600 dark:text-amber-400 font-semibold">🎯 Prêmio da Semana</span>
+        <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-lg p-4 space-y-3">
+          {/* Título do Desafio */}
+          <div className="text-center border-b border-amber-500/20 pb-3">
+            <h3 className="text-lg font-bold text-foreground">
+              🏆 {settings?.prize_title || "MOTIVACIONAL OFICIAL"}
+            </h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              📅 Período: {weekPeriod.start} a {weekPeriod.end}
+            </p>
           </div>
-          <p className="text-lg font-bold">{settings?.prize_title || "Prêmio Motivacional"}</p>
+
+          {/* Descrição formatada */}
           {settings?.prize_description && (
-            <p className="text-sm text-muted-foreground mt-1">{settings.prize_description}</p>
+            <FormattedPrizeDescription description={settings.prize_description} />
           )}
         </div>
 
