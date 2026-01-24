@@ -132,7 +132,10 @@ function RankingTable({
 
 function MotivationalRankingButton() {
   const { data: settings, isLoading } = useMotivationalSettings();
-  const { data: ranking, isLoading: rankingLoading, error: rankingError } = useMotivationalRanking();
+  const { data: ranking, isLoading: rankingLoading, error: rankingError } = useMotivationalRanking(
+    settings?.start_date || undefined,
+    settings?.end_date || undefined
+  );
   const { user } = useAuth();
   const weekPeriod = getWeekPeriod();
 
