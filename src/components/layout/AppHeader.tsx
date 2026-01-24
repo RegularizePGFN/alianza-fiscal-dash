@@ -205,7 +205,11 @@ function MotivationalRankingButton() {
               🏆 {settings?.prize_title || "MOTIVACIONAL OFICIAL"}
             </h3>
             <p className="text-sm text-muted-foreground mt-1">
-              📅 Período: {weekPeriod.start} a {weekPeriod.end}
+              📅 Período: {settings?.start_date 
+                ? new Date(settings.start_date + 'T00:00:00').toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
+                : weekPeriod.start} a {settings?.end_date 
+                ? new Date(settings.end_date + 'T00:00:00').toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
+                : weekPeriod.end}
             </p>
           </div>
 
