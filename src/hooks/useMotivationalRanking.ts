@@ -10,11 +10,14 @@ export interface RankingEntry {
   amount_position: number;
 }
 
-export function useMotivationalRanking() {
+export function useMotivationalRanking(startDate?: string, endDate?: string) {
   return useQuery({
-    queryKey: ["motivational-ranking"],
+    queryKey: ["motivational-ranking", startDate, endDate],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_weekly_ranking");
+      const { data, error } = await supabase.rpc("get_weekly_ranking", {
+        p_start_date: startDate || null,
+        p_end_date: endDate || null,
+      });
       
       if (error) {
         console.error("Error fetching ranking:", error);

@@ -649,17 +649,29 @@ export type Database = {
           total_sales_count: number
         }[]
       }
-      get_weekly_ranking: {
-        Args: never
-        Returns: {
-          amount_position: number
-          contracts_count: number
-          salesperson_id: string
-          salesperson_name: string
-          total_amount: number
-          volume_position: number
-        }[]
-      }
+      get_weekly_ranking:
+        | {
+            Args: never
+            Returns: {
+              amount_position: number
+              contracts_count: number
+              salesperson_id: string
+              salesperson_name: string
+              total_amount: number
+              volume_position: number
+            }[]
+          }
+        | {
+            Args: { p_end_date?: string; p_start_date?: string }
+            Returns: {
+              amount_position: number
+              contracts_count: number
+              salesperson_id: string
+              salesperson_name: string
+              total_amount: number
+              volume_position: number
+            }[]
+          }
       is_felipe_user: { Args: never; Returns: boolean }
     }
     Enums: {
