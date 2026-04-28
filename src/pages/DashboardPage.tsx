@@ -7,6 +7,7 @@ import { SalespeopleCommissionsCard } from "@/components/dashboard/salespeople-c
 import { DailyResultsCard } from "@/components/dashboard/daily-results";
 import { SalespersonWeeklyCard } from "@/components/dashboard/weekly-sales";
 import { DailyResultsToday } from "@/components/dashboard/daily-results-today";
+import { TodayProposalsCard } from "@/components/dashboard/today-proposals";
 import { TeamDailyResultCard } from "@/components/dashboard/TeamDailyResultCard";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useAuth } from "@/contexts/auth";
@@ -36,7 +37,10 @@ export default function DashboardPage() {
               
               {/* Daily Results Cards - positioned between the main cards */}
               <DailyResultsToday />
-              
+
+              {/* Admin-only: detailed list of proposals generated today */}
+              {isAdmin && <TodayProposalsCard />}
+
               <GoalsCommissionsSection summary={summary} salesData={salesData} />
               
               {/* Admin-only commission projections card */}
