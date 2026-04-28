@@ -1,73 +1,64 @@
-## Plano: Card "Propostas Geradas Hoje" (Admin Dashboard)
+## Objetivo
 
-### Objetivo
-Adicionar um novo card no Dashboard, visível **apenas para admins**, listando todas as propostas criadas hoje pela equipe, com colunas detalhadas e ordenação por coluna (com foco em honorários do maior para o menor por padrão).
+Remover o card grande "Propostas Geradas Hoje" do dashboard e transformá-lo em um **popup (Dialog)** que abre ao clicar no card "Propostas da Equipe Hoje" (visível apenas para admin). Dentro do popup, dividir o conteúdo em **dois cards lado a lado**: uma tabela compacta e um painel de gráficos (forecast).
 
-### Posicionamento
-Inserido em `DashboardPage.tsx`, **logo abaixo** do componente `<DailyResultsToday />` (que mostra os 3 KPIs: Propostas da Equipe Hoje, Simulações Hoje, Comissões da Equipe Hoje), em formato horizontal (full-width).
+## O que muda no Dashboard
 
-### Layout do card
+- Remover a renderização atual de `<TodayProposalsCard />` em `DashboardPage.tsx`.
+- Em `daily-results-today/ProposalsCard.tsx`, tornar o card clicável **apenas para admin**:
+  - Adicionar `cursor-pointer`, hover state mais forte e um pequeno ícone indicando "ver detalhes".
+  - Ao clicar, abrir o novo Dialog `TodayProposalsDialog`.
+- Para vendedor (não-admin), o card permanece igual (não clicável).
 
-```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│ Propostas Geradas Hoje                              [28/04/2026] [N propostas] │
-├──────────────────────────────────────────────────────────────────────────────┤
-│ Vendedor │ Cliente / CNPJ │ Valor Original │ Valor c/ Desc. │ Desc. % │ Honorários ▼ │ Hora │
-│ Lucas    │ Empresa X      │ R$ 100.000,00  │ R$ 60.000,00   │ 40%     │ R$ 8.000,00  │ 14:32│
-│ Ana      │ Empresa Y      │ R$  80.000,00  │ R$ 50.000,00   │ 37%     │ R$ 6.000,00  │ 11:05│
-│ ...                                                                          │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+## Novo popup: `TodayProposalsDialog`
 
-Colunas:
-- **Vendedor** (nome do criador da proposta, via join com `profiles`)
-- **Cliente / CNPJ** (`client_name` + `cnpj` em duas linhas)
-- **Valor Original** (`total_debt`) — alinhado à direita
-- **Valor c/ Desconto** (`discounted_value`) — alinhado à direita
-- **Desconto %** (`discount_percentage`)
-- **Honorários** (`fees_value`) — alinhado à direita, **destacado** (cor primária / negrito), ordenação padrão desc
-- **Hora** (HH:mm de `created_at`, com tooltip mostrando data completa)
+Dialog largo (`max-w-6xl`, altura controlada com scroll interno) contendo:
 
-Cabeçalhos clicáveis para alternar ordenação (asc/desc) — padrão: Honorários desc.
+### Card 1 — Tabela compacta (lado esquerdo, ~60%)
+Reaproveita os dados de `useTodayProposals`, com estilo próximo da tabela "Vendedores do Dia":
+- Fonte `text-xs`, padding reduzido (`py-1.5 px-2`), `tabular-nums`.
+- Colunas (sem percentual de desconto):
+  1. Hora (HH:mm)
+  2. Vendedor
+  3. Cliente / CNPJ (CNPJ em linha menor abaixo)
+  4. Valor Original (right-align)
+  5. Valor c/ Desc. (right-align)
+  6. Honorários (right-align, destaque em primary, sort default desc)
+- Cabeçalhos clicáveis para ordenação (mantém lógica atual).
+- `ScrollArea` com altura fixa (~`h-[420px]`).
+- Rodapé compacto com totalizadores: nº de propostas, total original, total honorários.
 
-Rodapé do card com totalizadores: total de propostas, soma de honorários, soma de valor original.
+### Card 2 — Forecast / Gráficos (lado direito, ~40%)
+Foco em ajudar o admin a "cobrar" os vendedores. Conteúdo:
+- **Mini-KPIs no topo**: Total de propostas hoje, Soma de honorários, Ticket médio de honorários.
+- **Gráfico 1 — Propostas por hora** (BarChart com Recharts): eixo X = hora do dia (agrupado por hora cheia), eixo Y = nº de propostas. Mostra quando a equipe está produzindo.
+- **Gráfico 2 — Honorários por vendedor** (BarChart horizontal): vendedor × soma de honorários do dia, ordenado desc. Identifica quem está gerando mais potencial de venda.
 
-### Componentes a criar
+### Cabeçalho do Dialog
+- Título: "Propostas Geradas Hoje — DD/MM/AAAA".
+- Botão **"Exportar Excel"** no canto superior direito que gera um `.xlsx` com todas as propostas do dia (colunas: Data, Hora, Vendedor, Cliente, CNPJ, Valor Original, Valor c/ Desconto, Honorários). Usar `xlsx` (já presente em `excelUtils.ts`/projeto) ou o utilitário existente.
 
-| Arquivo | Função |
-|---------|--------|
-| `src/components/dashboard/today-proposals/TodayProposalsCard.tsx` | Card principal com tabela, ordenação e totalizadores |
-| `src/components/dashboard/today-proposals/useTodayProposals.ts` | Hook que busca propostas do dia (admin) com nomes dos vendedores |
-| `src/components/dashboard/today-proposals/index.ts` | Re-export |
+## Arquivos
 
-### Hook `useTodayProposals`
-- Usa `@tanstack/react-query` (`queryKey: ['today-proposals-admin']`)
-- Query: `proposals` com `created_at >= today 00:00` e `< amanhã 00:00` (timezone America/Sao_Paulo, alinhado com a memória do projeto)
-- Faz lookup em `profiles` para obter `name` por `user_id` (mesmo padrão de `useFetchProposals`)
-- `staleTime: 30s`, `refetchInterval: 60s` (consistente com `TodayDataContext`)
-- Retorna `{ proposals, isLoading }`
+**Criar**
+- `src/components/dashboard/today-proposals/TodayProposalsDialog.tsx` — Dialog com layout em grid 2 colunas.
+- `src/components/dashboard/today-proposals/TodayProposalsTable.tsx` — Tabela compacta extraída/refatorada do `TodayProposalsCard.tsx` atual.
+- `src/components/dashboard/today-proposals/TodayProposalsCharts.tsx` — Mini-KPIs + dois gráficos Recharts.
+- `src/components/dashboard/today-proposals/exportTodayProposals.ts` — Helper para exportar XLSX.
 
-### Integração em `DashboardPage.tsx`
-```tsx
-<DailyResultsToday />
+**Editar**
+- `src/components/dashboard/daily-results-today/ProposalsCard.tsx` — Receber callback `onClick` (ou estado local) para abrir o dialog quando admin; visual de hover/cursor.
+- `src/components/dashboard/daily-results-today/DailyResultsToday.tsx` — Gerenciar o estado de abertura do dialog e renderizá-lo. (Verificar arquivo durante a implementação.)
+- `src/pages/DashboardPage.tsx` — Remover `<TodayProposalsCard />` e o import.
+- `src/components/dashboard/today-proposals/index.ts` — Exportar novos componentes; remover/depreciar export do card antigo.
 
-{isAdmin && <TodayProposalsCard />}   // novo
+**Remover (opcional)**
+- `TodayProposalsCard.tsx` antigo pode ser deletado ou mantido apenas como referência. Plano: **deletar** para evitar código morto.
 
-<GoalsCommissionsSection ... />
-```
+## Detalhes técnicos
 
-### Estados
-- **Loading**: skeleton de tabela (3-5 linhas)
-- **Vazio**: mensagem "Nenhuma proposta gerada hoje ainda"
-- **Erro**: toast + mensagem inline
-
-### Estilo
-Segue padrão SaaS premium do projeto (memória `mem://ui/design-system-standards`): valores monetários alinhados à direita, formatação BRL, dark-mode compatível, uso de componentes `Card`, `Table` e `Badge` do shadcn.
-
-### Detalhes técnicos
-- Filtro de data calculado client-side (início/fim do dia local) e enviado em ISO para o Supabase
-- RLS já permite admin ver todas as propostas (política "Admins podem ver todas as propostas") — sem mudanças no banco
-- Ordenação feita client-side (volume baixo: propostas de um único dia)
-
-### Resultado esperado
-Admins veem, abaixo dos 3 KPIs do dia, um card horizontal com a lista completa das propostas geradas hoje pela equipe, ordenável por qualquer coluna (padrão: honorários desc), permitindo identificar rapidamente quem gerou as propostas mais valiosas do dia.
+- Manter o hook `useTodayProposals` como está (fonte única de dados). O `enabled` continuará `true` quando admin estiver logado e o dialog montado — ou alternar para `enabled` apenas quando o dialog abrir, para economizar fetch (preferir esta abordagem).
+- Gráficos usando `recharts` (já no projeto via `chart.tsx`).
+- Exportação XLSX com nome `propostas-hoje-YYYY-MM-DD.xlsx`.
+- Tabela compacta: `text-xs`, `leading-tight`, células `py-1.5 px-2`, header `sticky top-0 bg-background` dentro do ScrollArea.
+- Dialog responsivo: em telas menores, empilhar os dois cards (`grid-cols-1 lg:grid-cols-5` com `lg:col-span-3` / `lg:col-span-2`).
