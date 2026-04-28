@@ -4,7 +4,7 @@ import { UserRole } from "@/lib/types";
 import { useTodayResults } from "./useTodayResults";
 import { SkeletonCard } from "../ui/SkeletonCard";
 import { KPICard } from "../ui/KPICard";
-import { FileText, DollarSign, TrendingUp } from "lucide-react";
+import { FileText, DollarSign, TrendingUp, MousePointerClick, ArrowUpRight } from "lucide-react";
 import { TodayProposalsDialog } from "../today-proposals";
 
 export function DailyResultsToday() {
@@ -47,10 +47,33 @@ export function DailyResultsToday() {
           <button
             type="button"
             onClick={() => setProposalsOpen(true)}
-            className="text-left rounded-lg cursor-pointer transition-all hover:scale-[1.01] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+            className="group relative text-left rounded-xl cursor-pointer transition-all duration-200
+              ring-1 ring-primary/30 hover:ring-2 hover:ring-primary
+              shadow-sm hover:shadow-lg hover:-translate-y-0.5
+              focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             aria-label="Abrir detalhes das propostas de hoje"
           >
+            {/* "Click me" pill in the top-right corner */}
+            <span
+              className="pointer-events-none absolute -top-2 -right-2 z-10 inline-flex items-center gap-1
+                rounded-full bg-primary px-2 py-0.5 text-[10px] font-medium text-primary-foreground
+                shadow-md ring-2 ring-background
+                animate-pulse group-hover:animate-none"
+            >
+              <MousePointerClick className="h-3 w-3" />
+              Ver detalhes
+            </span>
+
             {proposalsCard}
+
+            {/* Bottom-right hover hint arrow */}
+            <span
+              className="pointer-events-none absolute bottom-2 right-2 inline-flex items-center gap-0.5
+                text-[10px] font-medium text-primary opacity-70 group-hover:opacity-100 transition-opacity"
+            >
+              Abrir
+              <ArrowUpRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </span>
           </button>
         ) : (
           proposalsCard
