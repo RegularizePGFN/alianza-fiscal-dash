@@ -121,13 +121,14 @@ export function TodayProposalsTable({ data }: Props) {
       <ScrollArea className="h-[420px] rounded-md border">
         <table className="w-full table-fixed text-[11px] leading-tight">
           <colgroup>
-            <col className="w-[34px]" />
-            <col className="w-[17%]" />
+            <col className="w-[30px]" />
+            <col className="w-[15%]" />
             <col />
-            <col className="w-[14%]" />
-            <col className="w-[14%]" />
-            <col className="w-[14%]" />
-            <col className="w-[44px]" />
+            <col className="w-[13%]" />
+            <col className="w-[13%]" />
+            <col className="w-[48px]" />
+            <col className="w-[13%]" />
+            <col className="w-[42px]" />
           </colgroup>
           <thead className="sticky top-0 z-10 bg-muted/80 backdrop-blur supports-[backdrop-filter]:bg-muted/60">
             <tr className="border-b">
@@ -145,6 +146,9 @@ export function TodayProposalsTable({ data }: Props) {
                 <SortHeader label="V. c/ Desc." k="discountedValue" sorts={sorts} onSort={handleSort} align="right" />
               </th>
               <th className="px-1.5 py-1.5 text-right font-medium text-muted-foreground">
+                <SortHeader label="% Desc." k="discountPercentage" sorts={sorts} onSort={handleSort} align="right" />
+              </th>
+              <th className="px-1.5 py-1.5 text-right font-medium text-muted-foreground">
                 <SortHeader label="Honor." k="feesValue" sorts={sorts} onSort={handleSort} align="right" />
               </th>
               <th className="px-1.5 py-1.5 text-right font-medium text-muted-foreground">
@@ -155,6 +159,12 @@ export function TodayProposalsTable({ data }: Props) {
           <tbody>
             {sorted.map((p, i) => {
               const created = new Date(p.createdAt);
+              const pct =
+                p.discountPercentage > 0
+                  ? p.discountPercentage
+                  : p.totalDebt > 0
+                  ? ((p.totalDebt - p.discountedValue) / p.totalDebt) * 100
+                  : 0;
               return (
                 <tr key={p.id} className="border-b hover:bg-muted/40 transition-colors">
                   <td className="px-1.5 py-1.5 text-right tabular-nums text-muted-foreground">{i + 1}</td>
@@ -167,6 +177,9 @@ export function TodayProposalsTable({ data }: Props) {
                   </td>
                   <td className="px-1.5 py-1.5 text-right tabular-nums whitespace-nowrap">{fmtCurrency(p.totalDebt)}</td>
                   <td className="px-1.5 py-1.5 text-right tabular-nums whitespace-nowrap">{fmtCurrency(p.discountedValue)}</td>
+                  <td className={`px-1.5 py-1.5 text-right tabular-nums whitespace-nowrap ${pct > 0 ? "text-emerald-600 dark:text-emerald-400 font-medium" : "text-muted-foreground"}`}>
+                    {pct > 0 ? `${pct.toFixed(0)}%` : "—"}
+                  </td>
                   <td className="px-1.5 py-1.5 text-right tabular-nums whitespace-nowrap font-semibold text-primary">
                     {fmtCurrency(p.feesValue)}
                   </td>
