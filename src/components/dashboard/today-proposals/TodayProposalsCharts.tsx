@@ -147,108 +147,131 @@ export function TodayProposalsCharts({ data }: Props) {
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
-        <div className="h-[220px]">
+        <div className={mode === "both" ? "h-[260px]" : "h-[220px]"}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={bySalesperson}
-              layout="vertical"
-              margin={{ top: 4, right: 12, bottom: 0, left: 8 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-              <YAxis
-                type="category"
-                dataKey="name"
-                width={100}
-                tick={{ fontSize: 10 }}
-                stroke="hsl(var(--muted-foreground))"
-              />
-              {mode === "fees" && (
-                <>
-                  <XAxis
-                    type="number"
-                    tick={{ fontSize: 10 }}
-                    stroke="hsl(var(--muted-foreground))"
-                    tickFormatter={(v) => fmtCurrency(Number(v))}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      fontSize: 12,
-                      background: "hsl(var(--popover))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: 6,
-                      color: "hsl(var(--popover-foreground))",
-                    }}
-                    formatter={(v: number) => [fmtCurrency(Number(v)), "Honorários"]}
-                  />
-                  <Bar dataKey="fees" fill={primary} radius={[0, 4, 4, 0]}>
-                    {bySalesperson.map((_, i) => (
-                      <Cell key={i} fill={primary} fillOpacity={1 - i * 0.07} />
-                    ))}
-                  </Bar>
-                </>
-              )}
-
-              {mode === "count" && (
-                <>
-                  <XAxis
-                    type="number"
-                    tick={{ fontSize: 10 }}
-                    stroke="hsl(var(--muted-foreground))"
-                    allowDecimals={false}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      fontSize: 12,
-                      background: "hsl(var(--popover))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: 6,
-                      color: "hsl(var(--popover-foreground))",
-                    }}
-                    formatter={(v: number) => [v, "Propostas"]}
-                  />
-                  <Bar dataKey="count" fill={primary} radius={[0, 4, 4, 0]}>
-                    {bySalesperson.map((_, i) => (
-                      <Cell key={i} fill={primary} fillOpacity={1 - i * 0.07} />
-                    ))}
-                  </Bar>
-                </>
-              )}
-
-              {mode === "both" && (
-                <>
-                  <XAxis
-                    xAxisId="fees"
-                    type="number"
-                    tick={{ fontSize: 9 }}
-                    stroke="hsl(var(--muted-foreground))"
-                    tickFormatter={(v) => fmtCurrency(Number(v))}
-                  />
-                  <XAxis
-                    xAxisId="count"
-                    type="number"
-                    orientation="top"
-                    tick={{ fontSize: 9 }}
-                    stroke="hsl(var(--muted-foreground))"
-                    allowDecimals={false}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      fontSize: 12,
-                      background: "hsl(var(--popover))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: 6,
-                      color: "hsl(var(--popover-foreground))",
-                    }}
-                    formatter={(v: number, name: string) =>
-                      name === "Honorários" ? [fmtCurrency(Number(v)), name] : [v, name]
-                    }
-                  />
-                  <Legend wrapperStyle={{ fontSize: 10 }} />
-                  <Bar xAxisId="fees" dataKey="fees" name="Honorários" fill={primary} radius={[0, 4, 4, 0]} />
-                  <Bar xAxisId="count" dataKey="count" name="Propostas" fill={accent} radius={[0, 4, 4, 0]} />
-                </>
-              )}
-            </BarChart>
+            {mode === "fees" ? (
+              <BarChart
+                data={bySalesperson}
+                layout="vertical"
+                margin={{ top: 4, right: 12, bottom: 0, left: 8 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                <XAxis
+                  type="number"
+                  tick={{ fontSize: 10 }}
+                  stroke="hsl(var(--muted-foreground))"
+                  tickFormatter={(v) => fmtCurrency(Number(v))}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  width={100}
+                  tick={{ fontSize: 10 }}
+                  stroke="hsl(var(--muted-foreground))"
+                />
+                <Tooltip
+                  contentStyle={{
+                    fontSize: 12,
+                    background: "hsl(var(--popover))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: 6,
+                    color: "hsl(var(--popover-foreground))",
+                  }}
+                  formatter={(v: number) => [fmtCurrency(Number(v)), "Honorários"]}
+                />
+                <Bar dataKey="fees" fill={primary} radius={[0, 4, 4, 0]}>
+                  {bySalesperson.map((_, i) => (
+                    <Cell key={i} fill={primary} fillOpacity={1 - i * 0.07} />
+                  ))}
+                </Bar>
+              </BarChart>
+            ) : mode === "count" ? (
+              <BarChart
+                data={bySalesperson}
+                layout="vertical"
+                margin={{ top: 4, right: 12, bottom: 0, left: 8 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                <XAxis
+                  type="number"
+                  tick={{ fontSize: 10 }}
+                  stroke="hsl(var(--muted-foreground))"
+                  allowDecimals={false}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  width={100}
+                  tick={{ fontSize: 10 }}
+                  stroke="hsl(var(--muted-foreground))"
+                />
+                <Tooltip
+                  contentStyle={{
+                    fontSize: 12,
+                    background: "hsl(var(--popover))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: 6,
+                    color: "hsl(var(--popover-foreground))",
+                  }}
+                  formatter={(v: number) => [v, "Propostas"]}
+                />
+                <Bar dataKey="count" fill={primary} radius={[0, 4, 4, 0]}>
+                  {bySalesperson.map((_, i) => (
+                    <Cell key={i} fill={primary} fillOpacity={1 - i * 0.07} />
+                  ))}
+                </Bar>
+              </BarChart>
+            ) : (
+              // mode === "both" — layout vertical com 2 eixos Y, garantindo que TODOS os nomes apareçam
+              <BarChart
+                data={bySalesperson}
+                margin={{ top: 8, right: 8, bottom: 36, left: -8 }}
+                barGap={2}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 9 }}
+                  stroke="hsl(var(--muted-foreground))"
+                  interval={0}
+                  angle={-30}
+                  textAnchor="end"
+                  height={50}
+                />
+                <YAxis
+                  yAxisId="fees"
+                  type="number"
+                  tick={{ fontSize: 9 }}
+                  stroke="hsl(var(--muted-foreground))"
+                  tickFormatter={(v) => fmtCurrency(Number(v))}
+                  width={60}
+                />
+                <YAxis
+                  yAxisId="count"
+                  type="number"
+                  orientation="right"
+                  tick={{ fontSize: 9 }}
+                  stroke="hsl(var(--muted-foreground))"
+                  allowDecimals={false}
+                  width={28}
+                />
+                <Tooltip
+                  contentStyle={{
+                    fontSize: 12,
+                    background: "hsl(var(--popover))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: 6,
+                    color: "hsl(var(--popover-foreground))",
+                  }}
+                  formatter={(v: number, name: string) =>
+                    name === "Honorários" ? [fmtCurrency(Number(v)), name] : [v, name]
+                  }
+                />
+                <Legend wrapperStyle={{ fontSize: 10 }} />
+                <Bar yAxisId="fees" dataKey="fees" name="Honorários" fill={primary} radius={[3, 3, 0, 0]} />
+                <Bar yAxisId="count" dataKey="count" name="Propostas" fill={accent} radius={[3, 3, 0, 0]} />
+              </BarChart>
+            )}
           </ResponsiveContainer>
         </div>
       </div>
