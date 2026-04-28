@@ -92,28 +92,36 @@ export function TodayProposalsTable({ data }: Props) {
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col min-w-0">
       <ScrollArea className="h-[420px] rounded-md border">
-        <table className="w-full text-xs leading-tight">
+        <table className="w-full table-fixed text-[11px] leading-tight">
+          <colgroup>
+            <col className="w-[44px]" />
+            <col className="w-[18%]" />
+            <col />
+            <col className="w-[15%]" />
+            <col className="w-[15%]" />
+            <col className="w-[15%]" />
+          </colgroup>
           <thead className="sticky top-0 z-10 bg-muted/80 backdrop-blur supports-[backdrop-filter]:bg-muted/60">
             <tr className="border-b">
-              <th className="px-2 py-1.5 text-left font-medium text-muted-foreground w-14">
+              <th className="px-1.5 py-1.5 text-left font-medium text-muted-foreground">
                 <SortHeader label="Hora" k="createdAt" cur={sortKey} dir={sortDir} onSort={handleSort} />
               </th>
-              <th className="px-2 py-1.5 text-left font-medium text-muted-foreground">
+              <th className="px-1.5 py-1.5 text-left font-medium text-muted-foreground">
                 <SortHeader label="Vendedor" k="userName" cur={sortKey} dir={sortDir} onSort={handleSort} />
               </th>
-              <th className="px-2 py-1.5 text-left font-medium text-muted-foreground">
+              <th className="px-1.5 py-1.5 text-left font-medium text-muted-foreground">
                 <SortHeader label="Cliente / CNPJ" k="clientName" cur={sortKey} dir={sortDir} onSort={handleSort} />
               </th>
-              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground">
+              <th className="px-1.5 py-1.5 text-right font-medium text-muted-foreground">
                 <SortHeader label="V. Original" k="totalDebt" cur={sortKey} dir={sortDir} onSort={handleSort} align="right" />
               </th>
-              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground">
+              <th className="px-1.5 py-1.5 text-right font-medium text-muted-foreground">
                 <SortHeader label="V. c/ Desc." k="discountedValue" cur={sortKey} dir={sortDir} onSort={handleSort} align="right" />
               </th>
-              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground">
-                <SortHeader label="Honorários" k="feesValue" cur={sortKey} dir={sortDir} onSort={handleSort} align="right" />
+              <th className="px-1.5 py-1.5 text-right font-medium text-muted-foreground">
+                <SortHeader label="Honor." k="feesValue" cur={sortKey} dir={sortDir} onSort={handleSort} align="right" />
               </th>
             </tr>
           </thead>
@@ -122,19 +130,19 @@ export function TodayProposalsTable({ data }: Props) {
               const created = new Date(p.createdAt);
               return (
                 <tr key={p.id} className="border-b hover:bg-muted/40 transition-colors">
-                  <td className="px-2 py-1.5 tabular-nums text-muted-foreground">
+                  <td className="px-1.5 py-1.5 tabular-nums text-muted-foreground">
                     {format(created, "HH:mm", { locale: ptBR })}
                   </td>
-                  <td className="px-2 py-1.5 font-medium truncate max-w-[140px]">{p.userName}</td>
-                  <td className="px-2 py-1.5">
-                    <div className="flex flex-col leading-tight">
-                      <span className="font-medium truncate max-w-[220px]">{p.clientName}</span>
-                      <span className="text-[10px] text-muted-foreground">{formatCnpj(p.cnpj)}</span>
+                  <td className="px-1.5 py-1.5 font-medium truncate" title={p.userName}>{p.userName}</td>
+                  <td className="px-1.5 py-1.5 min-w-0">
+                    <div className="flex flex-col leading-tight min-w-0">
+                      <span className="font-medium truncate" title={p.clientName}>{p.clientName}</span>
+                      <span className="text-[10px] text-muted-foreground truncate">{formatCnpj(p.cnpj)}</span>
                     </div>
                   </td>
-                  <td className="px-2 py-1.5 text-right tabular-nums">{fmtCurrency(p.totalDebt)}</td>
-                  <td className="px-2 py-1.5 text-right tabular-nums">{fmtCurrency(p.discountedValue)}</td>
-                  <td className="px-2 py-1.5 text-right tabular-nums font-semibold text-primary">
+                  <td className="px-1.5 py-1.5 text-right tabular-nums whitespace-nowrap">{fmtCurrency(p.totalDebt)}</td>
+                  <td className="px-1.5 py-1.5 text-right tabular-nums whitespace-nowrap">{fmtCurrency(p.discountedValue)}</td>
+                  <td className="px-1.5 py-1.5 text-right tabular-nums whitespace-nowrap font-semibold text-primary">
                     {fmtCurrency(p.feesValue)}
                   </td>
                 </tr>
