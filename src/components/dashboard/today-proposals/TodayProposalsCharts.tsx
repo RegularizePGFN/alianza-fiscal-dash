@@ -217,14 +217,14 @@ export function TodayProposalsCharts({ data }: Props) {
               {mode === "both" && (
                 <>
                   <XAxis
-                    yAxisId="fees"
+                    xAxisId="fees"
                     type="number"
                     tick={{ fontSize: 9 }}
                     stroke="hsl(var(--muted-foreground))"
                     tickFormatter={(v) => fmtCurrency(Number(v))}
                   />
                   <XAxis
-                    yAxisId="count"
+                    xAxisId="count"
                     type="number"
                     orientation="top"
                     tick={{ fontSize: 9 }}
@@ -244,8 +244,8 @@ export function TodayProposalsCharts({ data }: Props) {
                     }
                   />
                   <Legend wrapperStyle={{ fontSize: 10 }} />
-                  <Bar yAxisId="fees" dataKey="fees" name="Honorários" fill={primary} radius={[0, 4, 4, 0]} />
-                  <Bar yAxisId="count" dataKey="count" name="Propostas" fill={accent} radius={[0, 4, 4, 0]} />
+                  <Bar xAxisId="fees" dataKey="fees" name="Honorários" fill={primary} radius={[0, 4, 4, 0]} />
+                  <Bar xAxisId="count" dataKey="count" name="Propostas" fill={accent} radius={[0, 4, 4, 0]} />
                 </>
               )}
             </BarChart>
