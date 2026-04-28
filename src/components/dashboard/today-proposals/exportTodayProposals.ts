@@ -15,6 +15,12 @@ export function exportTodayProposalsToExcel(proposals: TodayProposal[]) {
 
   const rows = proposals.map((p) => {
     const created = new Date(p.createdAt);
+    const pct =
+      p.discountPercentage > 0
+        ? p.discountPercentage
+        : p.totalDebt > 0
+        ? ((p.totalDebt - p.discountedValue) / p.totalDebt) * 100
+        : 0;
     return {
       Data: format(created, "dd/MM/yyyy"),
       Hora: format(created, "HH:mm"),
@@ -23,6 +29,7 @@ export function exportTodayProposalsToExcel(proposals: TodayProposal[]) {
       CNPJ: formatCnpj(p.cnpj),
       "Valor Original": p.totalDebt,
       "Valor c/ Desconto": p.discountedValue,
+      "% Desconto": Number(pct.toFixed(2)),
       Honorários: p.feesValue,
     };
   });
@@ -30,7 +37,7 @@ export function exportTodayProposalsToExcel(proposals: TodayProposal[]) {
   const ws = utils.json_to_sheet(rows);
   ws["!cols"] = [
     { wch: 12 }, { wch: 8 }, { wch: 24 }, { wch: 32 },
-    { wch: 20 }, { wch: 16 }, { wch: 18 }, { wch: 14 },
+    { wch: 20 }, { wch: 16 }, { wch: 18 }, { wch: 12 }, { wch: 14 },
   ];
 
   const wb = utils.book_new();
