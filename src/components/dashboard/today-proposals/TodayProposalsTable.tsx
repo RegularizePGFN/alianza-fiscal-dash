@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { TodayProposal } from "./useTodayProposals";
 
-type SortKey = "userName" | "clientName" | "totalDebt" | "discountedValue" | "feesValue" | "createdAt";
+type SortKey = "userName" | "clientName" | "totalDebt" | "discountedValue" | "discountPercentage" | "feesValue" | "createdAt";
 type SortDir = "asc" | "desc";
 
 interface SortCriterion {
