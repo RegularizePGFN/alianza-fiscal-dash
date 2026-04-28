@@ -34,11 +34,9 @@ export default function DashboardPage() {
               {/* DailyResultsCard - only visible to admin users */}
               {isAdmin && <DailyResultsCard salesData={salesData} />}
               
-              {/* Daily Results Cards - positioned between the main cards */}
+              {/* Daily Results Cards - positioned between the main cards.
+                  Admin: clicking "Propostas da Equipe Hoje" opens the detail dialog. */}
               <DailyResultsToday />
-
-              {/* Admin-only: detailed list of proposals generated today */}
-              {isAdmin && <TodayProposalsCard />}
 
               <GoalsCommissionsSection summary={summary} salesData={salesData} />
               
