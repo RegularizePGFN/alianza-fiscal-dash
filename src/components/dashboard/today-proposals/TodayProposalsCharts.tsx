@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -8,17 +8,24 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
+  Legend,
 } from "recharts";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { DollarSign, Hash, BarChart3 } from "lucide-react";
 import type { TodayProposal } from "./useTodayProposals";
 
 const fmtCurrency = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+
+type Mode = "fees" | "count" | "both";
 
 interface Props {
   data: TodayProposal[];
 }
 
 export function TodayProposalsCharts({ data }: Props) {
+  const [mode, setMode] = useState<Mode>("fees");
+
   const kpis = useMemo(() => {
     const count = data.length;
     const fees = data.reduce((s, p) => s + p.feesValue, 0);
@@ -39,17 +46,22 @@ export function TodayProposalsCharts({ data }: Props) {
   }, [data]);
 
   const bySalesperson = useMemo(() => {
-    const map = new Map<string, number>();
+    const map = new Map<string, { fees: number; count: number }>();
     data.forEach((p) => {
-      map.set(p.userName, (map.get(p.userName) ?? 0) + p.feesValue);
+      const cur = map.get(p.userName) ?? { fees: 0, count: 0 };
+      cur.fees += p.feesValue;
+      cur.count += 1;
+      map.set(p.userName, cur);
     });
+    const sortKey = mode === "count" ? "count" : "fees";
     return Array.from(map.entries())
-      .map(([name, fees]) => ({ name, fees }))
-      .sort((a, b) => b.fees - a.fees)
+      .map(([name, v]) => ({ name, fees: v.fees, count: v.count }))
+      .sort((a, b) => (b as any)[sortKey] - (a as any)[sortKey])
       .slice(0, 8);
-  }, [data]);
+  }, [data, mode]);
 
-  const barColor = "hsl(var(--primary))";
+  const primary = "hsl(var(--primary))";
+  const accent = "hsl(var(--accent-foreground))";
 
   return (
     <div className="flex flex-col gap-4">
@@ -88,16 +100,54 @@ export function TodayProposalsCharts({ data }: Props) {
                 }}
                 formatter={(v: number) => [v, "Propostas"]}
               />
-              <Bar dataKey="count" fill={barColor} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="count" fill={primary} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* Honorários por vendedor */}
+      {/* Por vendedor */}
       <div className="rounded-md border p-3">
-        <div className="mb-2 text-xs font-medium text-muted-foreground">Honorários por vendedor</div>
-        <div className="h-[200px]">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <div className="text-xs font-medium text-muted-foreground">
+            {mode === "fees" && "Honorários por vendedor"}
+            {mode === "count" && "Propostas por vendedor"}
+            {mode === "both" && "Honorários e propostas por vendedor"}
+          </div>
+          <ToggleGroup
+            type="single"
+            size="sm"
+            value={mode}
+            onValueChange={(v) => v && setMode(v as Mode)}
+            className="gap-0.5"
+          >
+            <ToggleGroupItem
+              value="fees"
+              aria-label="Honorários"
+              title="Honorários"
+              className="h-6 w-7 px-0"
+            >
+              <DollarSign className="h-3 w-3" />
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="count"
+              aria-label="Quantidade"
+              title="Quantidade de propostas"
+              className="h-6 w-7 px-0"
+            >
+              <Hash className="h-3 w-3" />
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="both"
+              aria-label="Ambos"
+              title="Ambos"
+              className="h-6 w-7 px-0"
+            >
+              <BarChart3 className="h-3 w-3" />
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
+        <div className="h-[220px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={bySalesperson}
@@ -105,12 +155,6 @@ export function TodayProposalsCharts({ data }: Props) {
               margin={{ top: 4, right: 12, bottom: 0, left: 8 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-              <XAxis
-                type="number"
-                tick={{ fontSize: 10 }}
-                stroke="hsl(var(--muted-foreground))"
-                tickFormatter={(v) => fmtCurrency(Number(v))}
-              />
               <YAxis
                 type="category"
                 dataKey="name"
@@ -118,21 +162,92 @@ export function TodayProposalsCharts({ data }: Props) {
                 tick={{ fontSize: 10 }}
                 stroke="hsl(var(--muted-foreground))"
               />
-              <Tooltip
-                contentStyle={{
-                  fontSize: 12,
-                  background: "hsl(var(--popover))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: 6,
-                  color: "hsl(var(--popover-foreground))",
-                }}
-                formatter={(v: number) => [fmtCurrency(Number(v)), "Honorários"]}
-              />
-              <Bar dataKey="fees" fill={barColor} radius={[0, 4, 4, 0]}>
-                {bySalesperson.map((_, i) => (
-                  <Cell key={i} fill={barColor} fillOpacity={1 - i * 0.07} />
-                ))}
-              </Bar>
+              {mode === "fees" && (
+                <>
+                  <XAxis
+                    type="number"
+                    tick={{ fontSize: 10 }}
+                    stroke="hsl(var(--muted-foreground))"
+                    tickFormatter={(v) => fmtCurrency(Number(v))}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      fontSize: 12,
+                      background: "hsl(var(--popover))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: 6,
+                      color: "hsl(var(--popover-foreground))",
+                    }}
+                    formatter={(v: number) => [fmtCurrency(Number(v)), "Honorários"]}
+                  />
+                  <Bar dataKey="fees" fill={primary} radius={[0, 4, 4, 0]}>
+                    {bySalesperson.map((_, i) => (
+                      <Cell key={i} fill={primary} fillOpacity={1 - i * 0.07} />
+                    ))}
+                  </Bar>
+                </>
+              )}
+
+              {mode === "count" && (
+                <>
+                  <XAxis
+                    type="number"
+                    tick={{ fontSize: 10 }}
+                    stroke="hsl(var(--muted-foreground))"
+                    allowDecimals={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      fontSize: 12,
+                      background: "hsl(var(--popover))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: 6,
+                      color: "hsl(var(--popover-foreground))",
+                    }}
+                    formatter={(v: number) => [v, "Propostas"]}
+                  />
+                  <Bar dataKey="count" fill={primary} radius={[0, 4, 4, 0]}>
+                    {bySalesperson.map((_, i) => (
+                      <Cell key={i} fill={primary} fillOpacity={1 - i * 0.07} />
+                    ))}
+                  </Bar>
+                </>
+              )}
+
+              {mode === "both" && (
+                <>
+                  <XAxis
+                    xAxisId="fees"
+                    type="number"
+                    tick={{ fontSize: 9 }}
+                    stroke="hsl(var(--muted-foreground))"
+                    tickFormatter={(v) => fmtCurrency(Number(v))}
+                  />
+                  <XAxis
+                    xAxisId="count"
+                    type="number"
+                    orientation="top"
+                    tick={{ fontSize: 9 }}
+                    stroke="hsl(var(--muted-foreground))"
+                    allowDecimals={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      fontSize: 12,
+                      background: "hsl(var(--popover))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: 6,
+                      color: "hsl(var(--popover-foreground))",
+                    }}
+                    formatter={(v: number, name: string) =>
+                      name === "Honorários" ? [fmtCurrency(Number(v)), name] : [v, name]
+                    }
+                  />
+                  <Legend wrapperStyle={{ fontSize: 10 }} />
+                  <Bar xAxisId="fees" dataKey="fees" name="Honorários" fill={primary} radius={[0, 4, 4, 0]} />
+                  <Bar xAxisId="count" dataKey="count" name="Propostas" fill={accent} radius={[0, 4, 4, 0]} />
+                </>
+              )}
             </BarChart>
           </ResponsiveContainer>
         </div>
