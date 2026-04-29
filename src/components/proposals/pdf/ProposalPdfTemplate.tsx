@@ -560,14 +560,20 @@ const SummaryCard: React.FC<{
         <span
           style={{
             position: 'absolute',
-            top: '10px',
-            right: '10px',
+            top: '8px',
+            right: '8px',
             fontSize: '9px',
             fontWeight: 700,
             background: p.text,
-            color: '#fff',
-            padding: '2px 6px',
+            color: '#ffffff',
+            padding: '3px 8px',
             borderRadius: '999px',
+            lineHeight: 1,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxSizing: 'border-box',
+            whiteSpace: 'nowrap',
           }}
         >
           {badge}
