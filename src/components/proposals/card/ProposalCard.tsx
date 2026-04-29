@@ -58,7 +58,7 @@ const ProposalCard = ({ data, companyData }: ProposalCardProps) => {
     });
     
     try {
-      await generateProposalPdf(proposalRef.current, data);
+      await generateProposalPdf(proposalRef.current, data, companyData);
       
       toast({
         title: "Sucesso",
