@@ -1,87 +1,116 @@
-## Diagnóstico do erro 401
+## Diagnóstico
 
-A função atual usa um único secret `BROWSERLESS_URL` esperando que ele já contenha o token embutido (ex: `https://production-sfo.browserless.io?token=ABC`). O log mostra:
+O erro atual não é mais de layout do PDF; é falha na chamada ao Browserless.
 
+Pelos logs recentes da Edge Function:
+
+```text
+Browserless: chamando endpoint https://production-sfo.browserless.io/function/pdf
+Browserless falhou: 404 Not Found
 ```
-Browserless falhou: 401 Invalid API key. Please check your API key and try again.
+
+Isso indica que a função está montando o endpoint errado. A API REST correta do Browserless para PDF é:
+
+```text
+POST https://production-sfo.browserless.io/pdf?token=SEU_TOKEN
 ```
 
-Causas prováveis:
-1. O secret `BROWSERLESS_URL` está sem `?token=...` no final, ou
-2. Tem o token mas a URL base está no domínio antigo (`chrome.browserless.io`), ou
-3. O token está expirado/inválido.
+Mas a função está chamando:
 
-Além disso, o endpoint `/pdf` do Browserless v2 exige o token como **query string** (`?token=...`), não como header. O código atual concatena `/pdf` mas não garante que o `?token=` venha depois corretamente.
+```text
+https://production-sfo.browserless.io/function/pdf
+```
+
+Além disso, os secrets atuais disponíveis são:
+
+```text
+BROWSERLESS_TOKEN
+EVOLUTION_API_KEY
+EVOLUTION_API_URL
+LOVABLE_API_KEY
+```
+
+Ou seja: `BROWSERLESS_TOKEN` existe, mas `BROWSERLESS_URL` não está configurado. A implementação atual ainda depende de `BROWSERLESS_URL`, o que deixa a integração frágil e pode herdar uma URL antiga/malformada.
 
 ## Plano de correção
 
-### 1. Separar URL e token em dois secrets
+### 1. Corrigir a URL do Browserless de forma definitiva
 
-Vou pedir para você adicionar/atualizar:
+Vou alterar `supabase/functions/generate-proposal-pdf/index.ts` para:
 
-- **`BROWSERLESS_URL`** → apenas a URL base, sem token. Ex: `https://production-sfo.browserless.io` (recomendado pela Browserless atual) ou `https://chrome.browserless.io` (legado).
-- **`BROWSERLESS_TOKEN`** → apenas o token (a API key pura, sem `?token=`).
-
-Isso elimina ambiguidade e segue exatamente o padrão pedido (`BROWSERLESS_TOKEN` separado).
-
-### 2. Reescrever `renderPdfWithBrowserless`
+- Usar `BROWSERLESS_TOKEN` como obrigatório.
+- Tratar `BROWSERLESS_URL` como opcional.
+- Se `BROWSERLESS_URL` não existir, usar automaticamente:
 
 ```text
-endpoint = `${BROWSERLESS_URL}/pdf?token=${BROWSERLESS_TOKEN}`
+https://production-sfo.browserless.io
 ```
 
-Ordem correta de query params: token sempre antes de outros. Compatível com Browserless v1 e v2.
+- Normalizar a URL para remover caminhos inválidos, especialmente:
 
-### 3. Manter o método REST `/pdf` (não WebSocket)
+```text
+/function
+/function/pdf
+/pdf
+?token=...
+```
 
-Você pediu "Puppeteer connect via WebSocket", mas dentro de uma **Supabase Edge Function (Deno)** isso é inviável:
-- Puppeteer-core é pacote Node, não roda nativo em Deno edge runtime
-- Edge Functions têm CPU time limit de ~2s wall time inicial; abrir WebSocket + navegar + render gasta muito mais
-- O endpoint REST `/pdf` da Browserless faz **exatamente a mesma coisa** internamente (Puppeteer + `page.pdf()`) e devolve o binário pronto
+- Montar sempre o endpoint final assim:
 
-A API REST é a forma oficial recomendada pela Browserless para integrações server-to-server e respeita 100% as opções do Puppeteer (`printBackground`, `preferCSSPageSize`, `format: A4`, `margin: 0`, `waitUntil: networkidle0`). Resultado idêntico, sem complexidade.
+```text
+${base}/pdf?token=${BROWSERLESS_TOKEN}
+```
 
-Se mais tarde quiser realmente usar Puppeteer via WebSocket, a forma correta é mover para um worker Node externo (Cloudflare Worker, Railway, etc.), o que é uma decisão de infra separada.
+Resultado esperado:
 
-### 4. Melhorar o tratamento de erros
+```text
+https://production-sfo.browserless.io/pdf?token=...
+```
 
-- Validar os dois secrets no boot e retornar mensagem clara (`BROWSERLESS_TOKEN ausente`)
-- Logar tentativa (sem expor token) com `endpoint base`
-- Em caso de 401/403, devolver mensagem amigável: "Token Browserless inválido — verifique BROWSERLESS_TOKEN nos Secrets"
+### 2. Melhorar mensagens de erro para o usuário
 
-### 5. Garantir fidelidade visual (já está bom, ajustes finos)
+Hoje o botão mostra apenas “Falha ao gerar PDF.”, sem explicar o motivo.
 
-O HTML atual já:
-- Usa Inter via Google Fonts
-- Tem largura A4 via `@page { size: A4 }` + `preferCSSPageSize: true`
-- Margens zero (controladas pelo CSS interno `.page`)
-- `printBackground: true`
+Vou ajustar o fluxo para que a mensagem real da Edge Function seja exibida quando fizer sentido, por exemplo:
 
-Vou apenas:
-- Aumentar `waitForTimeout` para `800ms` (garante font swap completo)
-- Adicionar `waitForSelector: 'body'` defensivo
-- Adicionar `<link rel="preconnect">` para Google Fonts
+- Token Browserless inválido.
+- Endpoint Browserless incorreto.
+- Browserless retornou PDF vazio.
+- Timeout ao renderizar.
 
-### 6. Frontend
+Isso facilita manutenção sem expor o token.
 
-`src/lib/pdf/generatePdf.ts` já invoca a função corretamente. **Sem mudanças necessárias** — a interface continua a mesma.
+### 3. Ajustar resposta binária da Edge Function no frontend
 
-### 7. html2canvas como fallback opcional
+Vou revisar `src/lib/pdf/generatePdf.ts` para garantir que a resposta `application/pdf` da Edge Function seja tratada corretamente como `Blob`/`ArrayBuffer` e que respostas JSON de erro não sejam baixadas como PDF inválido.
 
-Mantenho `generateProposalTemplatePng` (PNG via html2canvas) intacto — é usado para a função "PNG" do botão lateral, não para PDF. O método antigo de PDF via html2canvas/jsPDF **já foi removido** anteriormente. Não há nada para limpar.
+### 4. Manter Browserless como motor principal
 
-## Arquivos modificados
+A geração principal continuará sendo:
 
-- **`supabase/functions/generate-proposal-pdf/index.ts`**: ajusta `renderPdfWithBrowserless` para usar `BROWSERLESS_URL` + `BROWSERLESS_TOKEN` separados, melhora tratamento de erro, ajusta tempo de espera de fontes.
+```text
+React app -> Supabase Edge Function -> Browserless Chromium /pdf -> PDF binário -> download
+```
 
-## Secrets necessários
+Não vou transformar `pdf-lib` em solução principal.
 
-Já existe `BROWSERLESS_URL`. Vou pedir o `BROWSERLESS_TOKEN` separadamente após você aprovar o plano. Você só precisa colar a API key pura da Browserless (sem `?token=`).
+`html2canvas` continuará apenas para PNG/uso secundário, não para o PDF principal.
 
-## Resultado esperado
+### 5. Deploy e validação
 
-- PDF vetorial real (texto selecionável, cópia funciona)
-- 1:1 com o preview (mesmo HTML/CSS, mesmo Chromium)
-- Margens corretas, sem brancos extras
-- Download em ~2-4s
-- Erros claros se o token expirar no futuro
+Após aprovação, vou:
+
+- Editar a Edge Function.
+- Ajustar o handler frontend, se necessário.
+- Garantir que `supabase/config.toml` continue com a função habilitada.
+- Deployar/testar a Edge Function usando o secret já existente `BROWSERLESS_TOKEN`.
+- Conferir nos logs que o endpoint chamado é `/pdf`, não `/function/pdf`.
+
+## Arquivos previstos
+
+- `supabase/functions/generate-proposal-pdf/index.ts`
+- `src/lib/pdf/generatePdf.ts` se necessário para melhorar tratamento de erro/binário
+
+## Observação importante
+
+A raiz do erro atual é endpoint incorreto, não falta do token. O secret `BROWSERLESS_TOKEN` já existe; o que precisa ser corrigido agora é a montagem segura da URL para impedir chamadas como `/function/pdf`.
