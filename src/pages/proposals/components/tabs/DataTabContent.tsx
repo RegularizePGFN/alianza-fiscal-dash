@@ -128,13 +128,22 @@ const DataTabContent = ({
           </div>
           <Button
             size="lg"
-            className="ml-auto gap-2 bg-primary hover:bg-primary/90 shadow-md"
-            onClick={onGenerateProposal}
-            disabled={processing || !isClientDataValid}
+            className="ml-auto gap-2 bg-primary hover:bg-primary/90 shadow-md min-w-[200px]"
+            onClick={handleGenerateClick}
+            disabled={processing || isGenerating || !isClientDataValid}
             title={!isClientDataValid ? `Faltam: ${missing.join(', ')}` : undefined}
           >
-            Gerar Proposta
-            <ArrowRight className="h-4 w-4" />
+            {isGenerating ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Gerando proposta...
+              </>
+            ) : (
+              <>
+                Gerar Proposta
+                <ArrowRight className="h-4 w-4" />
+              </>
+            )}
           </Button>
         </div>
       </div>
