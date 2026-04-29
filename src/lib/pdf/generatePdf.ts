@@ -115,8 +115,24 @@ export async function generateProposalPdf(
 ): Promise<void> {
   const showWatermark = data.showWatermark !== 'false';
 
-  // Logo absoluta para o Chromium remoto conseguir baixar
-  const logoUrl = `${window.location.origin}/lovable-uploads/d939ccfc-a061-45e8-97e0-1fa1b82d3df2.png`;
+  // Logo: convertemos para data URL (base64) para que o Chromium remoto
+  // não precise baixar nenhum asset da rede — elimina falhas de carregamento.
+  let logoUrl = `${window.location.origin}/lovable-uploads/logo-alianca-fiscal.png`;
+  try {
+    const logoRes = await fetch(logoUrl);
+    if (logoRes.ok) {
+      const blob = await logoRes.blob();
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(blob);
+      });
+      logoUrl = dataUrl;
+    }
+  } catch (e) {
+    console.warn('Não foi possível embutir a logo, seguindo com URL absoluta', e);
+  }
 
   // Usamos fetch direto (em vez de supabase.functions.invoke) para garantir
   // que a resposta binária application/pdf seja preservada e não interpretada
