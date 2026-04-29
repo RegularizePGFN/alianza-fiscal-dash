@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
 import { ClientInfoSection, FinancialInfoSection } from "@/components/proposals/data-form";
-import { ArrowRight, Sparkles, User, Calculator } from "lucide-react";
+import { ArrowRight, Sparkles, User, Calculator, Loader2 } from "lucide-react";
 import { useCnpjSearch } from "@/components/proposals/data-form/useCnpjSearch";
 
 interface DataTabContentProps {
