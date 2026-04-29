@@ -158,6 +158,7 @@ export const useProposalsStateWithFilter = () => {
     // Methods from other hooks
     saveProposal,
     fetchProposals: refreshProposals,
+    ensureProposalsLoaded,
     deleteProposal,
     
     // CNPJ search method for manual triggering
