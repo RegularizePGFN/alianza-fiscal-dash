@@ -33,6 +33,23 @@ export const useProposalGeneration = ({
   const { toast } = useToast();
 
   const handleGenerateProposal = async (): Promise<void> => {
+    // Guard: campos obrigatórios do cliente
+    const cnpjDigits = (formData.cnpj || '').replace(/\D/g, '');
+    const missing: string[] = [];
+    if (cnpjDigits.length !== 14) missing.push('CNPJ');
+    if (!formData.clientName?.trim()) missing.push('Nome/Razão Social');
+    if (!formData.clientPhone?.trim()) missing.push('Telefone');
+    if (!formData.clientEmail?.trim()) missing.push('Email');
+    if (!formData.businessActivity?.trim()) missing.push('Atividade Principal');
+    if (missing.length > 0) {
+      toast({
+        title: 'Dados do cliente incompletos',
+        description: `Preencha os campos obrigatórios: ${missing.join(', ')}.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setGeneratedProposal(true);
 
     // Ensure fees and other values have proper formatting

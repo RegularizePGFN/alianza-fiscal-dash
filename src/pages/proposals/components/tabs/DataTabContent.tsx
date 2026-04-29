@@ -40,6 +40,16 @@ const DataTabContent = ({
     setProcessingStatus("Dados extraídos com sucesso!");
   }, [setProcessingStatus]);
 
+  // Validação de campos obrigatórios do cliente
+  const cnpjDigits = (formData.cnpj || '').replace(/\D/g, '');
+  const missing: string[] = [];
+  if (cnpjDigits.length !== 14) missing.push('CNPJ');
+  if (!formData.clientName?.trim()) missing.push('Nome/Razão Social');
+  if (!formData.clientPhone?.trim()) missing.push('Telefone');
+  if (!formData.clientEmail?.trim()) missing.push('Email');
+  if (!formData.businessActivity?.trim()) missing.push('Atividade Principal');
+  const isClientDataValid = missing.length === 0;
+
   return (
     <div className="space-y-6">
       {/* Banner */}
@@ -95,14 +105,23 @@ const DataTabContent = ({
       {/* CTA */}
       <div className="sticky bottom-4 z-10">
         <div className="rounded-xl border bg-card shadow-lg p-4 flex items-center justify-between gap-4">
-          <div className="text-sm text-muted-foreground hidden sm:block">
-            Tudo certo? Gere a pré-visualização da proposta para personalizar e baixar.
+          <div className="text-sm hidden sm:block">
+            {isClientDataValid ? (
+              <span className="text-muted-foreground">
+                Tudo certo? Gere a pré-visualização da proposta para personalizar e baixar.
+              </span>
+            ) : (
+              <span className="text-destructive">
+                Preencha os campos obrigatórios: {missing.join(', ')}.
+              </span>
+            )}
           </div>
           <Button
             size="lg"
             className="ml-auto gap-2 bg-primary hover:bg-primary/90 shadow-md"
             onClick={onGenerateProposal}
-            disabled={processing}
+            disabled={processing || !isClientDataValid}
+            title={!isClientDataValid ? `Faltam: ${missing.join(', ')}` : undefined}
           >
             Gerar Proposta
             <ArrowRight className="h-4 w-4" />

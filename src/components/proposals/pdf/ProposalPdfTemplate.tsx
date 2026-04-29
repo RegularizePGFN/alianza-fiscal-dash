@@ -90,6 +90,7 @@ const ProposalPdfTemplate = React.forwardRef<HTMLDivElement, ProposalPdfTemplate
           color: '#0f172a',
           background: '#ffffff',
           position: 'relative',
+          overflow: 'hidden',
         }}
       >
         {/* Marca d'água */}
@@ -560,20 +561,21 @@ const SummaryCard: React.FC<{
         <span
           style={{
             position: 'absolute',
-            top: '8px',
+            top: '7px',
             right: '8px',
             fontSize: '9px',
             fontWeight: 700,
             background: p.text,
             color: '#ffffff',
-            padding: '3px 8px',
+            padding: '0 9px',
             borderRadius: '999px',
-            lineHeight: 1,
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            height: '18px',
+            lineHeight: '18px',
+            display: 'block',
+            textAlign: 'center',
             boxSizing: 'border-box',
             whiteSpace: 'nowrap',
+            fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
           }}
         >
           {badge}

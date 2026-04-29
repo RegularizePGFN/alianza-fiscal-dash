@@ -26,6 +26,7 @@ async function renderTemplateOffscreen({
   host.style.top = '0';
   host.style.width = '794px';
   host.style.background = '#ffffff';
+  host.style.overflow = 'hidden';
   host.style.zIndex = '-1';
   document.body.appendChild(host);
 
@@ -103,14 +104,19 @@ export async function generateProposalPdf(
   });
 
   try {
+    const rect = element.getBoundingClientRect();
+    const captureWidth = Math.ceil(rect.width);
+    const captureHeight = Math.ceil(rect.height);
     const canvas = await html2canvas(element, {
       scale: 3,
       useCORS: true,
       allowTaint: true,
       logging: false,
       backgroundColor: '#ffffff',
-      width: element.scrollWidth,
-      height: element.scrollHeight,
+      width: captureWidth,
+      height: captureHeight,
+      windowWidth: captureWidth,
+      windowHeight: captureHeight,
       imageTimeout: 0,
     });
 
