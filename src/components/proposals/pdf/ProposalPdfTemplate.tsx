@@ -172,7 +172,7 @@ const ProposalPdfTemplate = React.forwardRef<HTMLDivElement, ProposalPdfTemplate
               <div style={{ opacity: 0.8 }}>Emissão</div>
               <div style={{ fontWeight: 600, fontSize: '13px' }}>{issueDate}</div>
               <div style={{ opacity: 0.8, marginTop: '6px' }}>Validade</div>
-              <div style={{ fontWeight: 600, fontSize: '13px' }}>{dueDate}</div>
+              <div style={{ fontWeight: 600, fontSize: '13px' }}>{validityDateLabel}</div>
             </div>
           </div>
 
