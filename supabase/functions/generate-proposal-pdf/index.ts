@@ -296,7 +296,7 @@ function buildProposalHtml(payload: ProposalPayload): string {
 <title>Proposta PGFN</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 <style>
   @page { size: A4; margin: 0; }
   *, *::before, *::after { box-sizing: border-box; }
@@ -312,11 +312,13 @@ function buildProposalHtml(payload: ProposalPayload): string {
 
   .page {
     width: 210mm;
-    min-height: 297mm;
+    height: 297mm;
     margin: 0 auto;
     background: #ffffff;
     position: relative;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
   .watermark {
@@ -331,30 +333,38 @@ function buildProposalHtml(payload: ProposalPayload): string {
   .watermark span {
     font-size: 120px;
     font-weight: 800;
-    color: #0f172a;
-    opacity: 0.035;
+    color: #0b1d3a;
+    opacity: 0.04;
     transform: rotate(-30deg);
     white-space: nowrap;
     letter-spacing: 0.05em;
   }
 
-  .content { position: relative; z-index: 1; }
+  .content {
+    position: relative;
+    z-index: 1;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
 
   .header {
-    background: linear-gradient(135deg, #1e3a8a 0%, #2a54c7 60%, #3567d8 100%);
+    background: linear-gradient(180deg, #0b1d3a 0%, #0a1a35 100%);
     color: #ffffff;
     padding: 10mm 14mm;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1.2mm solid #0c9847;
+    border-bottom: 1.2mm solid #d4c5a0;
+    flex-shrink: 0;
   }
-  .header__brand { display: flex; align-items: center; gap: 12px; }
-  .header__logo { height: 44px; width: auto; object-fit: contain; }
-  .header__eyebrow { font-size: 10px; letter-spacing: 0.18em; opacity: 0.85; font-weight: 500; }
-  .header__title { font-size: 21px; font-weight: 700; margin-top: 2px; letter-spacing: -0.01em; }
+  .header__brand { display: flex; align-items: center; gap: 14px; }
+  .header__logo { height: 48px; width: auto; object-fit: contain; }
+  .header__eyebrow { font-size: 10px; letter-spacing: 0.18em; opacity: 0.85; font-weight: 500; color: #d4c5a0; }
+  .header__title { font-size: 22px; font-weight: 700; margin-top: 2px; letter-spacing: -0.005em; font-family: 'Playfair Display', Georgia, serif; }
   .header__meta { text-align: right; font-size: 10.5px; line-height: 1.5; }
-  .header__meta div.label { opacity: 0.85; }
+  .header__meta div.label { opacity: 0.75; }
   .header__meta div.value { font-weight: 600; font-size: 12px; }
 
   .body { padding: 9mm 14mm 6mm; }
