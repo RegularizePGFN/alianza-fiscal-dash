@@ -99,7 +99,7 @@ export const useSaveProposal = () => {
       // Insert into Supabase
       const { data: savedProposal, error } = await supabase
         .from('proposals')
-        .insert(proposalData)
+        .insert(proposalData as never)
         .select('*, creation_date, validity_date')
         .single();
       
