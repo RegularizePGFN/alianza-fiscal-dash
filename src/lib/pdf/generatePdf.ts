@@ -58,7 +58,10 @@ async function renderTemplateOffscreen({
       });
     }),
   );
-  await new Promise((r) => setTimeout(r, 150));
+  await new Promise((r) => setTimeout(r, 350));
+  await new Promise<void>((res) =>
+    requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => res()))),
+  );
 
   const element = host.firstElementChild as HTMLElement;
   return {
