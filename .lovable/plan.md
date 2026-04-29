@@ -1,56 +1,48 @@
-## Diagnóstico
+## Ajustes finos no PDF
 
-Logs da edge function confirmam que o endpoint correto está sendo chamado:
+### 1. Trocar a logomarca
+
+A logo atual (`/lovable-uploads/d939ccfc-...png`) não está carregando no Chromium remoto. Vou:
+
+- Salvar o novo PNG enviado em `public/lovable-uploads/logo-alianca-fiscal.png`.
+- Atualizar `src/lib/pdf/generatePdf.ts` para enviar essa nova URL absoluta como `logoUrl`.
+- Como camada extra de segurança contra falha de download de imagem dentro do Browserless, vou converter a logo para `data:image/png;base64,...` no frontend antes de enviar para a edge function. Assim o Chromium não precisa baixar nada da rede e a logo nunca falha.
+
+### 2. Cor do cabeçalho como no site
+
+No site da Aliança Fiscal o tema é navy escuro com detalhe dourado/bege. Vou trocar o gradiente azul claro atual por:
+
+- Fundo: navy escuro `#0b1d3a` (com leve gradient para `#0a1a35`).
+- Borda inferior do header: `#d4c5a0` (bege da logo) em vez do verde atual.
+- Título em fonte serifada (Playfair Display) para combinar com o estilo do site.
+
+### 3. Rodapé fixo na borda inferior do PDF
+
+Hoje o rodapé escuro aparece flutuando no meio da folha porque o conteúdo não preenche os 297mm da página A4. Vou corrigir transformando a página em flex column de altura A4 fixa:
 
 ```text
-Browserless: chamando endpoint https://production-sfo.browserless.io/pdf
+.page { height: 297mm; display: flex; flex-direction: column; }
+.content { flex: 1 1 auto; display: flex; flex-direction: column; }
+.body { flex: 1 1 auto; }   /* empurra o footer pra base */
+.footer { flex-shrink: 0; } /* sempre encostado embaixo */
 ```
 
-Sem erros 4xx/5xx. Mas o PDF baixado abre em branco e o painel da Browserless mostra 0 successful requests. Duas causas possíveis:
+Isso garante que o rodapé fique sempre colado na borda inferior do A4, independente de quanto conteúdo a proposta tenha.
 
-1. O `supabase.functions.invoke` no frontend está corrompendo a resposta binária `application/pdf` (interpreta como JSON quando o body chega como string ou quando há conflito de Content-Type), gerando um Blob inválido que o leitor de PDF abre como página em branco.
-2. O painel da Browserless que você está vendo pode ser de outro workspace/região (token está em outra conta), ou a métrica leva alguns minutos para atualizar.
+### 4. Pequenos ajustes visuais consistentes
 
-A causa #1 é a mais provável — explica exatamente "PDF em branco mas sem erro".
-
-## Plano de correção
-
-### 1. Trocar `supabase.functions.invoke` por `fetch` direto no `src/lib/pdf/generatePdf.ts`
-
-Motivos:
-
-- `invoke` tenta inferir o tipo da resposta e pode entregar string/JSON parcial.
-- Com `fetch` controlamos `Accept: application/pdf` e lemos `res.blob()` diretamente, preservando os bytes.
-
-Mudanças:
-
-- Construir URL absoluta `${SUPABASE_URL}/functions/v1/generate-proposal-pdf`.
-- Enviar headers `apikey` + `Authorization: Bearer <session.access_token | anon>`.
-- Validar `res.ok` e `content-type`.
-- Se vier `application/json`, tratar como erro e mostrar `error.message` no toast.
-- Se vier `application/pdf`, ler `await res.blob()` e baixar.
-- Validar `blob.size >= 1000` para detectar PDFs vazios.
-
-### 2. Garantir Content-Length e tipo correto na edge function
-
-`supabase/functions/generate-proposal-pdf/index.ts` já devolve `Content-Type: application/pdf` e `Content-Length`. Vou confirmar e, se necessário, garantir que o `Uint8Array` é entregue como `body` válido (sem wrapping).
-
-### 3. Adicionar log de tamanho na edge function
-
-Logar `pdfBytes.length` antes de responder, para confirmar nos logs do Supabase que o PDF foi gerado corretamente pela Browserless. Isso isola se o problema é geração (Browserless devolveu 0 bytes) ou transporte (frontend corrompendo).
-
-### 4. Confirmar conta Browserless
-
-Você está olhando o painel da conta certa? O token configurado em `BROWSERLESS_TOKEN` é o que aparece na URL do painel atual? Se for outra conta/região, as métricas podem aparecer em outro lugar. Mas isso é validação, não bloqueador — o importante é os logs do Supabase mostrarem que o `/pdf` retornou 200 com bytes.
+- Cor da marca d'água: trocar de `#0f172a` para o navy `#0b1d3a` para combinar com o novo tema.
+- Cor do texto "Especialista responsável" e disclaimer continuam como estão.
 
 ## Arquivos previstos
 
-- `src/lib/pdf/generatePdf.ts` — trocar `invoke` por `fetch` direto, validação de Content-Type, validação de tamanho mínimo, mensagens de erro reais.
-- `supabase/functions/generate-proposal-pdf/index.ts` — adicionar `console.log("PDF size:", pdfBytes.length)` antes do return.
+- `public/lovable-uploads/logo-alianca-fiscal.png` (novo arquivo)
+- `src/lib/pdf/generatePdf.ts` — converter logo para base64 antes de enviar.
+- `supabase/functions/generate-proposal-pdf/index.ts` — header navy, footer fixo na base, layout flex de altura A4.
 
 ## Resultado esperado
 
-- Botão "Baixar PDF" gera arquivo com bytes reais (não vazio).
-- PDF abre com o layout completo da proposta, fiel ao preview.
-- Caso a Browserless devolva erro, a mensagem real aparece no toast em vez de "Falha ao gerar PDF" genérico.
-- Logs do Supabase mostram tamanho do PDF, facilitando diagnóstico futuro.
+- Logo aparece no header sem falhar.
+- Header navy escuro, igual ao site.
+- Rodapé escuro grudado na borda inferior do PDF, não flutuando no meio.
+- Layout fiel ao preview, profissional.
