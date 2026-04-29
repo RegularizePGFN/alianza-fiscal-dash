@@ -181,6 +181,9 @@ export function TodayProposalsTable({ data }: Props) {
                     <div className="flex flex-col leading-tight min-w-0">
                       <span className="font-medium truncate" title={p.clientName}>{p.clientName}</span>
                       <span className="text-[10px] text-muted-foreground truncate">{formatCnpj(p.cnpj)}</span>
+                      {p.clientPhone && (
+                        <span className="text-[10px] text-muted-foreground truncate">{formatPhone(p.clientPhone)}</span>
+                      )}
                     </div>
                   </td>
                   <td className="px-1.5 py-1.5 text-right tabular-nums whitespace-nowrap">{fmtCurrency(p.totalDebt)}</td>
