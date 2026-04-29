@@ -1,116 +1,56 @@
 ## Diagnóstico
 
-O erro atual não é mais de layout do PDF; é falha na chamada ao Browserless.
-
-Pelos logs recentes da Edge Function:
+Logs da edge function confirmam que o endpoint correto está sendo chamado:
 
 ```text
-Browserless: chamando endpoint https://production-sfo.browserless.io/function/pdf
-Browserless falhou: 404 Not Found
+Browserless: chamando endpoint https://production-sfo.browserless.io/pdf
 ```
 
-Isso indica que a função está montando o endpoint errado. A API REST correta do Browserless para PDF é:
+Sem erros 4xx/5xx. Mas o PDF baixado abre em branco e o painel da Browserless mostra 0 successful requests. Duas causas possíveis:
 
-```text
-POST https://production-sfo.browserless.io/pdf?token=SEU_TOKEN
-```
+1. O `supabase.functions.invoke` no frontend está corrompendo a resposta binária `application/pdf` (interpreta como JSON quando o body chega como string ou quando há conflito de Content-Type), gerando um Blob inválido que o leitor de PDF abre como página em branco.
+2. O painel da Browserless que você está vendo pode ser de outro workspace/região (token está em outra conta), ou a métrica leva alguns minutos para atualizar.
 
-Mas a função está chamando:
-
-```text
-https://production-sfo.browserless.io/function/pdf
-```
-
-Além disso, os secrets atuais disponíveis são:
-
-```text
-BROWSERLESS_TOKEN
-EVOLUTION_API_KEY
-EVOLUTION_API_URL
-LOVABLE_API_KEY
-```
-
-Ou seja: `BROWSERLESS_TOKEN` existe, mas `BROWSERLESS_URL` não está configurado. A implementação atual ainda depende de `BROWSERLESS_URL`, o que deixa a integração frágil e pode herdar uma URL antiga/malformada.
+A causa #1 é a mais provável — explica exatamente "PDF em branco mas sem erro".
 
 ## Plano de correção
 
-### 1. Corrigir a URL do Browserless de forma definitiva
+### 1. Trocar `supabase.functions.invoke` por `fetch` direto no `src/lib/pdf/generatePdf.ts`
 
-Vou alterar `supabase/functions/generate-proposal-pdf/index.ts` para:
+Motivos:
 
-- Usar `BROWSERLESS_TOKEN` como obrigatório.
-- Tratar `BROWSERLESS_URL` como opcional.
-- Se `BROWSERLESS_URL` não existir, usar automaticamente:
+- `invoke` tenta inferir o tipo da resposta e pode entregar string/JSON parcial.
+- Com `fetch` controlamos `Accept: application/pdf` e lemos `res.blob()` diretamente, preservando os bytes.
 
-```text
-https://production-sfo.browserless.io
-```
+Mudanças:
 
-- Normalizar a URL para remover caminhos inválidos, especialmente:
+- Construir URL absoluta `${SUPABASE_URL}/functions/v1/generate-proposal-pdf`.
+- Enviar headers `apikey` + `Authorization: Bearer <session.access_token | anon>`.
+- Validar `res.ok` e `content-type`.
+- Se vier `application/json`, tratar como erro e mostrar `error.message` no toast.
+- Se vier `application/pdf`, ler `await res.blob()` e baixar.
+- Validar `blob.size >= 1000` para detectar PDFs vazios.
 
-```text
-/function
-/function/pdf
-/pdf
-?token=...
-```
+### 2. Garantir Content-Length e tipo correto na edge function
 
-- Montar sempre o endpoint final assim:
+`supabase/functions/generate-proposal-pdf/index.ts` já devolve `Content-Type: application/pdf` e `Content-Length`. Vou confirmar e, se necessário, garantir que o `Uint8Array` é entregue como `body` válido (sem wrapping).
 
-```text
-${base}/pdf?token=${BROWSERLESS_TOKEN}
-```
+### 3. Adicionar log de tamanho na edge function
 
-Resultado esperado:
+Logar `pdfBytes.length` antes de responder, para confirmar nos logs do Supabase que o PDF foi gerado corretamente pela Browserless. Isso isola se o problema é geração (Browserless devolveu 0 bytes) ou transporte (frontend corrompendo).
 
-```text
-https://production-sfo.browserless.io/pdf?token=...
-```
+### 4. Confirmar conta Browserless
 
-### 2. Melhorar mensagens de erro para o usuário
-
-Hoje o botão mostra apenas “Falha ao gerar PDF.”, sem explicar o motivo.
-
-Vou ajustar o fluxo para que a mensagem real da Edge Function seja exibida quando fizer sentido, por exemplo:
-
-- Token Browserless inválido.
-- Endpoint Browserless incorreto.
-- Browserless retornou PDF vazio.
-- Timeout ao renderizar.
-
-Isso facilita manutenção sem expor o token.
-
-### 3. Ajustar resposta binária da Edge Function no frontend
-
-Vou revisar `src/lib/pdf/generatePdf.ts` para garantir que a resposta `application/pdf` da Edge Function seja tratada corretamente como `Blob`/`ArrayBuffer` e que respostas JSON de erro não sejam baixadas como PDF inválido.
-
-### 4. Manter Browserless como motor principal
-
-A geração principal continuará sendo:
-
-```text
-React app -> Supabase Edge Function -> Browserless Chromium /pdf -> PDF binário -> download
-```
-
-Não vou transformar `pdf-lib` em solução principal.
-
-`html2canvas` continuará apenas para PNG/uso secundário, não para o PDF principal.
-
-### 5. Deploy e validação
-
-Após aprovação, vou:
-
-- Editar a Edge Function.
-- Ajustar o handler frontend, se necessário.
-- Garantir que `supabase/config.toml` continue com a função habilitada.
-- Deployar/testar a Edge Function usando o secret já existente `BROWSERLESS_TOKEN`.
-- Conferir nos logs que o endpoint chamado é `/pdf`, não `/function/pdf`.
+Você está olhando o painel da conta certa? O token configurado em `BROWSERLESS_TOKEN` é o que aparece na URL do painel atual? Se for outra conta/região, as métricas podem aparecer em outro lugar. Mas isso é validação, não bloqueador — o importante é os logs do Supabase mostrarem que o `/pdf` retornou 200 com bytes.
 
 ## Arquivos previstos
 
-- `supabase/functions/generate-proposal-pdf/index.ts`
-- `src/lib/pdf/generatePdf.ts` se necessário para melhorar tratamento de erro/binário
+- `src/lib/pdf/generatePdf.ts` — trocar `invoke` por `fetch` direto, validação de Content-Type, validação de tamanho mínimo, mensagens de erro reais.
+- `supabase/functions/generate-proposal-pdf/index.ts` — adicionar `console.log("PDF size:", pdfBytes.length)` antes do return.
 
-## Observação importante
+## Resultado esperado
 
-A raiz do erro atual é endpoint incorreto, não falta do token. O secret `BROWSERLESS_TOKEN` já existe; o que precisa ser corrigido agora é a montagem segura da URL para impedir chamadas como `/function/pdf`.
+- Botão "Baixar PDF" gera arquivo com bytes reais (não vazio).
+- PDF abre com o layout completo da proposta, fiel ao preview.
+- Caso a Browserless devolva erro, a mensagem real aparece no toast em vez de "Falha ao gerar PDF" genérico.
+- Logs do Supabase mostram tamanho do PDF, facilitando diagnóstico futuro.

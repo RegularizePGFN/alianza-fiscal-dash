@@ -118,53 +118,55 @@ export async function generateProposalPdf(
   // Logo absoluta para o Chromium remoto conseguir baixar
   const logoUrl = `${window.location.origin}/lovable-uploads/d939ccfc-a061-45e8-97e0-1fa1b82d3df2.png`;
 
-  const { data: result, error } = await supabase.functions.invoke(
-    'generate-proposal-pdf',
+  // Usamos fetch direto (em vez de supabase.functions.invoke) para garantir
+  // que a resposta binária application/pdf seja preservada e não interpretada
+  // como JSON (causa de PDFs em branco).
+  const SUPABASE_URL = 'https://sbxltdbnqixucjoognfj.supabase.co';
+  const SUPABASE_ANON_KEY =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNieGx0ZGJucWl4dWNqb29nbmZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNDQxMDksImV4cCI6MjA2MTcyMDEwOX0.ZsH2LX5JVFk7tCC0gGmjP1ZrVlQJ78nSUlMqxW7L1rw';
+
+  const { data: { session } } = await supabase.auth.getSession();
+
+  const res = await fetch(
+    `${SUPABASE_URL}/functions/v1/generate-proposal-pdf`,
     {
-      body: {
-        data,
-        companyData,
-        showWatermark,
-        logoUrl,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/pdf',
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${session?.access_token || SUPABASE_ANON_KEY}`,
       },
+      body: JSON.stringify({ data, companyData, showWatermark, logoUrl }),
     },
   );
 
-  if (error) {
-    console.error('Erro na edge function generate-proposal-pdf:', error);
-    // Tenta extrair a mensagem real retornada pela edge function (JSON com { error })
-    let detail = '';
+  const contentType = res.headers.get('content-type') || '';
+
+  if (!res.ok || !contentType.includes('application/pdf')) {
+    let detail = `HTTP ${res.status}`;
     try {
-      const ctx: any = (error as any)?.context;
-      if (ctx?.json) detail = ctx.json?.error || '';
-      if (!detail && typeof ctx?.body === 'string') {
-        const parsed = JSON.parse(ctx.body);
-        detail = parsed?.error || '';
+      if (contentType.includes('application/json')) {
+        const j = await res.json();
+        detail = j?.error || JSON.stringify(j);
+      } else {
+        const t = await res.text();
+        if (t) detail = t.slice(0, 300);
       }
     } catch {
       // ignora
     }
-    throw new Error(
-      detail
-        ? `Falha ao gerar PDF: ${detail}`
-        : 'Não foi possível gerar o PDF profissional. Tente novamente em instantes.',
-    );
+    console.error('Falha PDF edge function:', detail);
+    throw new Error(`Falha ao gerar PDF: ${detail}`);
   }
 
-  // supabase.functions.invoke devolve Blob para respostas binárias
-  let blob: Blob;
-  if (result instanceof Blob) {
-    blob = result;
-  } else if (result instanceof ArrayBuffer) {
-    blob = new Blob([result], { type: 'application/pdf' });
-  } else if (typeof result === 'object' && result && 'error' in (result as any)) {
-    throw new Error((result as any).error || 'Falha ao gerar PDF');
-  } else {
-    // fallback defensivo
-    blob = new Blob([result as any], { type: 'application/pdf' });
+  const buf = await res.arrayBuffer();
+  if (!buf || buf.byteLength < 1000) {
+    throw new Error(`PDF retornado vazio ou inválido (${buf?.byteLength || 0} bytes).`);
   }
 
-  triggerDownload(blob, buildFileName(data, 'pdf', companyData));
+  const pdfBlob = new Blob([buf], { type: 'application/pdf' });
+  triggerDownload(pdfBlob, buildFileName(data, 'pdf', companyData));
 }
 
 /**
