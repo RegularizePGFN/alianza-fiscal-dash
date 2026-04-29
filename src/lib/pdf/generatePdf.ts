@@ -108,8 +108,37 @@ export async function generateProposalPdf(
       backgroundColor: '#ffffff',
       width: element.scrollWidth,
       height: element.scrollHeight,
+      imageTimeout: 0,
     });
 
+    const pdfWidthMm = 210;
+    const a4HeightMm = 297;
+    // Calcular altura proporcional em mm para a largura de 210mm
+    const fullHeightMm = (canvas.height * pdfWidthMm) / canvas.width;
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+
+    // Caso 1: cabe em uma página (com tolerância) -> PDF de página única exata
+    const TOLERANCE_MM = 8;
+    if (fullHeightMm <= a4HeightMm + TOLERANCE_MM) {
+      const pageHeight = Math.min(fullHeightMm, a4HeightMm);
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: [pdfWidthMm, pageHeight],
+        compress: true,
+      });
+      pdf.setProperties({
+        title: `Proposta PGFN - ${companyData?.company?.name || data.clientName || data.cnpj || 'Cliente'}`,
+        subject: 'Proposta de Regularização PGFN',
+        author: 'Aliança Fiscal',
+        creator: 'Aliança Fiscal • Sistema de Propostas',
+      });
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidthMm, pageHeight, undefined, 'FAST');
+      pdf.save(buildFileName(data, 'pdf', companyData));
+      return;
+    }
+
+    // Caso 2: paginação real fatiando o canvas em blocos A4
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
     pdf.setProperties({
       title: `Proposta PGFN - ${companyData?.company?.name || data.clientName || data.cnpj || 'Cliente'}`,
@@ -118,22 +147,35 @@ export async function generateProposalPdf(
       creator: 'Aliança Fiscal • Sistema de Propostas',
     });
 
-    const pdfWidth = 210;
-    const pdfHeight = 297;
-    const imgData = canvas.toDataURL('image/jpeg', 0.95);
-    const imgProps = pdf.getImageProperties(imgData);
-    const renderedWidth = pdfWidth;
-    const renderedHeight = (imgProps.height * renderedWidth) / imgProps.width;
-
-    pdf.addImage(imgData, 'JPEG', 0, 0, renderedWidth, renderedHeight, undefined, 'FAST');
-
-    let heightLeft = renderedHeight - pdfHeight;
-    let position = pdfHeight;
-    while (heightLeft > 0) {
-      pdf.addPage();
-      pdf.addImage(imgData, 'JPEG', 0, -position, renderedWidth, renderedHeight, undefined, 'FAST');
-      heightLeft -= pdfHeight;
-      position += pdfHeight;
+    const pageHeightPx = Math.floor((a4HeightMm * canvas.width) / pdfWidthMm);
+    let renderedPx = 0;
+    let pageIndex = 0;
+    while (renderedPx < canvas.height) {
+      const sliceHeight = Math.min(pageHeightPx, canvas.height - renderedPx);
+      const sliceCanvas = document.createElement('canvas');
+      sliceCanvas.width = canvas.width;
+      sliceCanvas.height = sliceHeight;
+      const ctx = sliceCanvas.getContext('2d');
+      if (!ctx) break;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+      ctx.drawImage(
+        canvas,
+        0,
+        renderedPx,
+        canvas.width,
+        sliceHeight,
+        0,
+        0,
+        canvas.width,
+        sliceHeight,
+      );
+      const sliceImg = sliceCanvas.toDataURL('image/jpeg', 0.95);
+      const sliceHeightMm = (sliceHeight * pdfWidthMm) / canvas.width;
+      if (pageIndex > 0) pdf.addPage();
+      pdf.addImage(sliceImg, 'JPEG', 0, 0, pdfWidthMm, sliceHeightMm, undefined, 'FAST');
+      renderedPx += sliceHeight;
+      pageIndex += 1;
     }
 
     pdf.save(buildFileName(data, 'pdf', companyData));
