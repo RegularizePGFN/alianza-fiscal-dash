@@ -644,6 +644,8 @@ serve(async (req) => {
     const html = buildProposalHtml(payload);
     const pdfBytes = await renderPdfWithBrowserless(html);
 
+    console.log(`PDF gerado com sucesso: ${pdfBytes.length} bytes`);
+
     return new Response(pdfBytes, {
       status: 200,
       headers: {
