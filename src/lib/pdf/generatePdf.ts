@@ -1,8 +1,4 @@
-import html2canvas from 'html2canvas';
-import React from 'react';
-import { createRoot } from 'react-dom/client';
 import { ExtractedData, CompanyData } from '../types/proposals';
-import ProposalPdfTemplate from '@/components/proposals/pdf/ProposalPdfTemplate';
 import { supabase } from '@/integrations/supabase/client';
 
 interface RenderOptions {
