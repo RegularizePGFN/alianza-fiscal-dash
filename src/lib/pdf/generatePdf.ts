@@ -1,9 +1,9 @@
 import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { ExtractedData, CompanyData } from '../types/proposals';
 import ProposalPdfTemplate from '@/components/proposals/pdf/ProposalPdfTemplate';
+import { supabase } from '@/integrations/supabase/client';
 
 interface RenderOptions {
   data: Partial<ExtractedData>;
@@ -12,8 +12,7 @@ interface RenderOptions {
 }
 
 /**
- * Renders the dedicated PDF template offscreen and returns the rendered DOM element.
- * Caller is responsible for calling cleanup() to remove it from the document.
+ * Renderiza o template offscreen — usado APENAS para PNG no browser.
  */
 async function renderTemplateOffscreen({
   data,
@@ -39,11 +38,9 @@ async function renderTemplateOffscreen({
         showWatermark,
       }),
     );
-    // Allow layout + image load
     requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
   });
 
-  // Wait for fonts and images
   try {
     await (document as any).fonts?.ready;
   } catch {
@@ -59,9 +56,9 @@ async function renderTemplateOffscreen({
       });
     }),
   );
-  await new Promise((r) => setTimeout(r, 350));
+  await new Promise((r) => setTimeout(r, 300));
   await new Promise<void>((res) =>
-    requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => res()))),
+    requestAnimationFrame(() => requestAnimationFrame(() => res())),
   );
 
   const element = host.firstElementChild as HTMLElement;
@@ -78,7 +75,11 @@ async function renderTemplateOffscreen({
   };
 }
 
-function buildFileName(data: Partial<ExtractedData>, ext: 'pdf' | 'png', companyData?: CompanyData | null): string {
+function buildFileName(
+  data: Partial<ExtractedData>,
+  ext: 'pdf' | 'png',
+  companyData?: CompanyData | null,
+): string {
   const company = (companyData?.company?.name || data.clientName || data.cnpj || 'cliente')
     .toString()
     .replace(/[^\w\s-]/g, '')
@@ -92,8 +93,71 @@ function buildFileName(data: Partial<ExtractedData>, ext: 'pdf' | 'png', company
   return `Proposta_PGFN_${company}_${stamp}.${ext}`;
 }
 
+function triggerDownload(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/**
+ * Gera o PDF profissional via edge function (Chromium headless).
+ * Resultado: PDF nativo, vetorial, fiel ao preview, com fontes reais e CSS real.
+ */
 export async function generateProposalPdf(
   _legacyElement: HTMLElement | null,
+  data: Partial<ExtractedData>,
+  companyData?: CompanyData | null,
+): Promise<void> {
+  const showWatermark = data.showWatermark !== 'false';
+
+  // Logo absoluta para o Chromium remoto conseguir baixar
+  const logoUrl = `${window.location.origin}/lovable-uploads/d939ccfc-a061-45e8-97e0-1fa1b82d3df2.png`;
+
+  const { data: result, error } = await supabase.functions.invoke(
+    'generate-proposal-pdf',
+    {
+      body: {
+        data,
+        companyData,
+        showWatermark,
+        logoUrl,
+      },
+    },
+  );
+
+  if (error) {
+    console.error('Erro na edge function generate-proposal-pdf:', error);
+    throw new Error(
+      'Não foi possível gerar o PDF profissional. Tente novamente em instantes.',
+    );
+  }
+
+  // supabase.functions.invoke devolve Blob para respostas binárias
+  let blob: Blob;
+  if (result instanceof Blob) {
+    blob = result;
+  } else if (result instanceof ArrayBuffer) {
+    blob = new Blob([result], { type: 'application/pdf' });
+  } else if (typeof result === 'object' && result && 'error' in (result as any)) {
+    throw new Error((result as any).error || 'Falha ao gerar PDF');
+  } else {
+    // fallback defensivo
+    blob = new Blob([result as any], { type: 'application/pdf' });
+  }
+
+  triggerDownload(blob, buildFileName(data, 'pdf', companyData));
+}
+
+/**
+ * PNG continua sendo gerado no front-end via html2canvas
+ * (suficiente para imagem de resumo/preview).
+ */
+export async function generateProposalTemplatePng(
   data: Partial<ExtractedData>,
   companyData?: CompanyData | null,
 ): Promise<void> {
@@ -102,96 +166,25 @@ export async function generateProposalPdf(
     companyData,
     showWatermark: data.showWatermark !== 'false',
   });
-
   try {
-    const rect = element.getBoundingClientRect();
-    const captureWidth = Math.ceil(rect.width);
-    const captureHeight = Math.ceil(rect.height);
     const canvas = await html2canvas(element, {
       scale: 3,
       useCORS: true,
       allowTaint: true,
       logging: false,
       backgroundColor: '#ffffff',
-      width: captureWidth,
-      height: captureHeight,
-      windowWidth: captureWidth,
-      windowHeight: captureHeight,
-      imageTimeout: 0,
     });
-
-    const pdfWidthMm = 210;
-    const a4HeightMm = 297;
-    // Calcular altura proporcional em mm para a largura de 210mm
-    const fullHeightMm = (canvas.height * pdfWidthMm) / canvas.width;
-    const imgData = canvas.toDataURL('image/jpeg', 0.95);
-
-    // Caso 1: cabe em uma página (com tolerância) -> PDF de página única exata
-    const TOLERANCE_MM = 8;
-    if (fullHeightMm <= a4HeightMm + TOLERANCE_MM) {
-      const pageHeight = Math.min(fullHeightMm, a4HeightMm);
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: [pdfWidthMm, pageHeight],
-        compress: true,
-      });
-      pdf.setProperties({
-        title: `Proposta PGFN - ${companyData?.company?.name || data.clientName || data.cnpj || 'Cliente'}`,
-        subject: 'Proposta de Regularização PGFN',
-        author: 'Aliança Fiscal',
-        creator: 'Aliança Fiscal • Sistema de Propostas',
-      });
-      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidthMm, pageHeight, undefined, 'FAST');
-      pdf.save(buildFileName(data, 'pdf', companyData));
-      return;
-    }
-
-    // Caso 2: paginação real fatiando o canvas em blocos A4
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
-    pdf.setProperties({
-      title: `Proposta PGFN - ${companyData?.company?.name || data.clientName || data.cnpj || 'Cliente'}`,
-      subject: 'Proposta de Regularização PGFN',
-      author: 'Aliança Fiscal',
-      creator: 'Aliança Fiscal • Sistema de Propostas',
-    });
-
-    const pageHeightPx = Math.floor((a4HeightMm * canvas.width) / pdfWidthMm);
-    let renderedPx = 0;
-    let pageIndex = 0;
-    while (renderedPx < canvas.height) {
-      const sliceHeight = Math.min(pageHeightPx, canvas.height - renderedPx);
-      const sliceCanvas = document.createElement('canvas');
-      sliceCanvas.width = canvas.width;
-      sliceCanvas.height = sliceHeight;
-      const ctx = sliceCanvas.getContext('2d');
-      if (!ctx) break;
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
-      ctx.drawImage(
-        canvas,
-        0,
-        renderedPx,
-        canvas.width,
-        sliceHeight,
-        0,
-        0,
-        canvas.width,
-        sliceHeight,
-      );
-      const sliceImg = sliceCanvas.toDataURL('image/jpeg', 0.95);
-      const sliceHeightMm = (sliceHeight * pdfWidthMm) / canvas.width;
-      if (pageIndex > 0) pdf.addPage();
-      pdf.addImage(sliceImg, 'JPEG', 0, 0, pdfWidthMm, sliceHeightMm, undefined, 'FAST');
-      renderedPx += sliceHeight;
-      pageIndex += 1;
-    }
-
-    pdf.save(buildFileName(data, 'pdf', companyData));
+    const link = document.createElement('a');
+    link.download = buildFileName(data, 'png', companyData);
+    link.href = canvas.toDataURL('image/png', 1.0);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   } finally {
     cleanup();
   }
 }
+
 
 export async function generateProposalTemplatePng(
   data: Partial<ExtractedData>,
