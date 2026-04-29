@@ -367,7 +367,7 @@ function buildProposalHtml(payload: ProposalPayload): string {
   .header__meta div.label { opacity: 0.75; }
   .header__meta div.value { font-weight: 600; font-size: 12px; }
 
-  .body { padding: 9mm 14mm 6mm; }
+  .body { padding: 9mm 14mm 6mm; flex: 1 1 auto; min-height: 0; }
 
   .section { margin-bottom: 7mm; page-break-inside: avoid; break-inside: avoid; }
   .section__title {
