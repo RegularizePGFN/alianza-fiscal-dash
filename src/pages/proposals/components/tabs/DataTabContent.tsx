@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
 import { ClientInfoSection, FinancialInfoSection } from "@/components/proposals/data-form";
-import { ArrowRight, Sparkles, User, Calculator } from "lucide-react";
+import { ArrowRight, Sparkles, User, Calculator, Loader2 } from "lucide-react";
 import { useCnpjSearch } from "@/components/proposals/data-form/useCnpjSearch";
 
 interface DataTabContentProps {
@@ -33,6 +33,16 @@ const DataTabContent = ({
   const finalIsSearching = isSearchingCnpj || hookIsSearching;
   const finalCompanyData = companyData || hookCompanyData;
   const finalHandleSearch = searchCnpj ? () => searchCnpj(formData.cnpj || '') : handleSearchCnpj;
+
+  const [isGenerating, setIsGenerating] = useState(false);
+  const handleGenerateClick = async () => {
+    try {
+      setIsGenerating(true);
+      await onGenerateProposal();
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const calculateEntryInstallmentValue = () => formData.entryValue || '0,00';
 
@@ -118,13 +128,22 @@ const DataTabContent = ({
           </div>
           <Button
             size="lg"
-            className="ml-auto gap-2 bg-primary hover:bg-primary/90 shadow-md"
-            onClick={onGenerateProposal}
-            disabled={processing || !isClientDataValid}
+            className="ml-auto gap-2 bg-primary hover:bg-primary/90 shadow-md min-w-[200px]"
+            onClick={handleGenerateClick}
+            disabled={processing || isGenerating || !isClientDataValid}
             title={!isClientDataValid ? `Faltam: ${missing.join(', ')}` : undefined}
           >
-            Gerar Proposta
-            <ArrowRight className="h-4 w-4" />
+            {isGenerating ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Gerando proposta...
+              </>
+            ) : (
+              <>
+                Gerar Proposta
+                <ArrowRight className="h-4 w-4" />
+              </>
+            )}
           </Button>
         </div>
       </div>

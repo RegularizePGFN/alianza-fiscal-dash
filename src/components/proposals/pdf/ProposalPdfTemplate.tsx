@@ -126,27 +126,27 @@ const ProposalPdfTemplate = React.forwardRef<HTMLDivElement, ProposalPdfTemplate
           {/* HEADER */}
           <div
             style={{
-              background: 'linear-gradient(135deg, #1e3a8a 0%, #2a54c7 60%, #3567d8 100%)',
+              background: 'linear-gradient(135deg, #0b1d3a 0%, #14305c 100%)',
               color: '#ffffff',
               padding: '28px 36px',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              borderBottom: '4px solid #0c9847',
+              borderBottom: '3px solid #d4c5a0',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
               <img
-                src="/lovable-uploads/d939ccfc-a061-45e8-97e0-1fa1b82d3df2.png"
+                src="/lovable-uploads/logo-alianca-fiscal.png"
                 alt="Aliança Fiscal"
                 style={{ height: '44px', width: 'auto', objectFit: 'contain' }}
                 crossOrigin="anonymous"
               />
               <div>
-                <div style={{ fontSize: '11px', letterSpacing: '0.18em', opacity: 0.85, fontWeight: 500 }}>
+                <div style={{ fontSize: '11px', letterSpacing: '0.18em', fontWeight: 500, color: '#d4c5a0' }}>
                   ALIANÇA FISCAL • CONSULTORIA TRIBUTÁRIA
                 </div>
-                <div style={{ fontSize: '22px', fontWeight: 700, marginTop: '2px', letterSpacing: '-0.01em' }}>
+                <div style={{ fontSize: '22px', fontWeight: 600, marginTop: '2px', letterSpacing: '-0.01em', fontFamily: "'Playfair Display', Georgia, serif" }}>
                   Proposta de Regularização PGFN
                 </div>
               </div>
