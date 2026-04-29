@@ -6,6 +6,7 @@ export interface TodayProposal {
   userId: string;
   userName: string;
   clientName: string;
+  clientPhone: string | null;
   cnpj: string | null;
   totalDebt: number;
   discountedValue: number;
@@ -14,26 +15,39 @@ export interface TodayProposal {
   createdAt: string;
 }
 
-export function useTodayProposals(enabled: boolean) {
+interface UseTodayProposalsOptions {
+  enabled: boolean;
+  from?: Date;
+  to?: Date;
+}
+
+export function useTodayProposals(options: UseTodayProposalsOptions | boolean) {
+  // Backward compatibility: support boolean signature
+  const opts: UseTodayProposalsOptions =
+    typeof options === "boolean" ? { enabled: options } : options;
+
+  const today = new Date();
+  const defaultFrom = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const defaultTo = new Date(defaultFrom);
+  defaultTo.setDate(defaultTo.getDate() + 1);
+
+  const from = opts.from ?? defaultFrom;
+  // `to` is exclusive end. If user passes a "day" Date, treat it as inclusive end-of-day.
+  const to = opts.to ?? defaultTo;
+
   return useQuery({
-    queryKey: ["today-proposals-admin"],
-    enabled,
+    queryKey: ["today-proposals-admin", from.toISOString(), to.toISOString()],
+    enabled: opts.enabled,
     staleTime: 30_000,
     refetchInterval: 60_000,
     queryFn: async (): Promise<TodayProposal[]> => {
-      // Compute today's range in local time (server is GMT-3 / America/Sao_Paulo)
-      const now = new Date();
-      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const end = new Date(start);
-      end.setDate(end.getDate() + 1);
-
       const { data, error } = await supabase
         .from("proposals")
         .select(
-          "id, user_id, client_name, cnpj, total_debt, discounted_value, discount_percentage, fees_value, created_at"
+          "id, user_id, client_name, client_phone, cnpj, total_debt, discounted_value, discount_percentage, fees_value, created_at"
         )
-        .gte("created_at", start.toISOString())
-        .lt("created_at", end.toISOString())
+        .gte("created_at", from.toISOString())
+        .lt("created_at", to.toISOString())
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -65,6 +79,7 @@ export function useTodayProposals(enabled: boolean) {
           userId: r.user_id,
           userName: userMap[r.user_id] || "Desconhecido",
           clientName: r.client_name || "Cliente não informado",
+          clientPhone: r.client_phone || null,
           cnpj: r.cnpj,
           totalDebt,
           discountedValue,

@@ -10,13 +10,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Download, FileText, X } from "lucide-react";
-import { format } from "date-fns";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Download, FileText, X, CalendarIcon } from "lucide-react";
+import { format, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import { useTodayProposals } from "./useTodayProposals";
 import { TodayProposalsTable } from "./TodayProposalsTable";
 import { TodayProposalsCharts } from "./TodayProposalsCharts";
 import { exportTodayProposalsToExcel } from "./exportTodayProposals";
+import type { DateRange as RDPRange } from "react-day-picker";
 
 interface Props {
   open: boolean;
@@ -24,9 +28,56 @@ interface Props {
 }
 
 type DiscountFilter = "all" | "with" | "without";
+type DatePreset = "today" | "last7" | "custom";
+
+function startOfDay(d: Date) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+function endOfDayExclusive(d: Date) {
+  const x = startOfDay(d);
+  x.setDate(x.getDate() + 1);
+  return x;
+}
 
 export function TodayProposalsDialog({ open, onOpenChange }: Props) {
-  const { data, isLoading } = useTodayProposals(open);
+  const [preset, setPreset] = useState<DatePreset>("today");
+  const [customRange, setCustomRange] = useState<RDPRange | undefined>(undefined);
+  const [calOpen, setCalOpen] = useState(false);
+
+  const { from, to, rangeLabel } = useMemo(() => {
+    const today = new Date();
+    if (preset === "today") {
+      return {
+        from: startOfDay(today),
+        to: endOfDayExclusive(today),
+        rangeLabel: format(today, "dd/MM/yyyy", { locale: ptBR }),
+      };
+    }
+    if (preset === "last7") {
+      const start = startOfDay(subDays(today, 6));
+      const end = endOfDayExclusive(today);
+      return {
+        from: start,
+        to: end,
+        rangeLabel: `${format(start, "dd/MM", { locale: ptBR })} – ${format(today, "dd/MM/yyyy", { locale: ptBR })}`,
+      };
+    }
+    // custom
+    const cFrom = customRange?.from ?? startOfDay(today);
+    const cTo = customRange?.to ?? cFrom;
+    return {
+      from: startOfDay(cFrom),
+      to: endOfDayExclusive(cTo),
+      rangeLabel:
+        format(cFrom, "dd/MM/yyyy", { locale: ptBR }) === format(cTo, "dd/MM/yyyy", { locale: ptBR })
+          ? format(cFrom, "dd/MM/yyyy", { locale: ptBR })
+          : `${format(cFrom, "dd/MM/yyyy", { locale: ptBR })} – ${format(cTo, "dd/MM/yyyy", { locale: ptBR })}`,
+    };
+  }, [preset, customRange]);
+
+  const { data, isLoading } = useTodayProposals({ enabled: open, from, to });
   const all = data ?? [];
 
   const [seller, setSeller] = useState<string>("all");
@@ -52,7 +103,6 @@ export function TodayProposalsDialog({ open, onOpenChange }: Props) {
     });
   }, [all, seller, discount]);
 
-  const todayLabel = format(new Date(), "dd/MM/yyyy", { locale: ptBR });
   const selectedSellerName =
     seller === "all" ? null : sellers.find((s) => s.id === seller)?.name ?? null;
 
@@ -69,14 +119,14 @@ export function TodayProposalsDialog({ open, onOpenChange }: Props) {
               </div>
               <div>
                 <DialogTitle className="text-base">
-                  Propostas Geradas Hoje
+                  Propostas Geradas
                   {selectedSellerName && (
                     <span className="text-primary"> — {selectedSellerName}</span>
                   )}
                 </DialogTitle>
                 <div className="mt-0.5 flex flex-wrap items-center gap-2">
                   <Badge variant="secondary" className="text-[10px]">
-                    {todayLabel}
+                    {rangeLabel}
                   </Badge>
                   <Badge variant="outline" className="text-[10px]">
                     {proposals.length} {proposals.length === 1 ? "proposta" : "propostas"}
@@ -90,7 +140,7 @@ export function TodayProposalsDialog({ open, onOpenChange }: Props) {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => exportTodayProposalsToExcel(proposals)}
+              onClick={() => exportTodayProposalsToExcel(proposals, { from, to })}
               disabled={isLoading || proposals.length === 0}
               className="gap-2"
             >
@@ -99,9 +149,57 @@ export function TodayProposalsDialog({ open, onOpenChange }: Props) {
             </Button>
           </div>
 
-          {/* Filtros */}
+          {/* Date picker + Filtros */}
           <div className="mt-3 flex flex-wrap items-center gap-2 border-t pt-3">
             <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+              Período:
+            </span>
+            <Select value={preset} onValueChange={(v) => setPreset(v as DatePreset)}>
+              <SelectTrigger className="h-8 w-[180px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="today">Hoje</SelectItem>
+                <SelectItem value="last7">Últimos 7 dias</SelectItem>
+                <SelectItem value="custom">Período personalizado</SelectItem>
+              </SelectContent>
+            </Select>
+            {preset === "custom" && (
+              <Popover open={calOpen} onOpenChange={setCalOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      "h-8 justify-start text-left text-xs font-normal gap-2",
+                      !customRange?.from && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    {customRange?.from
+                      ? customRange.to && customRange.to.getTime() !== customRange.from.getTime()
+                        ? `${format(customRange.from, "dd/MM/yyyy", { locale: ptBR })} – ${format(customRange.to, "dd/MM/yyyy", { locale: ptBR })}`
+                        : format(customRange.from, "dd/MM/yyyy", { locale: ptBR })
+                      : "Escolher datas"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="range"
+                    selected={customRange}
+                    onSelect={(r) => {
+                      setCustomRange(r);
+                      if (r?.from && r?.to) setCalOpen(false);
+                    }}
+                    numberOfMonths={2}
+                    locale={ptBR}
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            )}
+            <span className="text-[10px] uppercase tracking-wide text-muted-foreground ml-2">
               Filtros:
             </span>
             <Select value={seller} onValueChange={setSeller}>

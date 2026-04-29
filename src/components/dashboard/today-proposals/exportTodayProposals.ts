@@ -9,9 +9,34 @@ const formatCnpj = (cnpj: string | null) => {
   return d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
 };
 
-export function exportTodayProposalsToExcel(proposals: TodayProposal[]) {
-  const today = new Date();
-  const dateLabel = format(today, "yyyy-MM-dd");
+const formatPhone = (phone: string | null) => {
+  if (!phone) return "";
+  const d = phone.replace(/\D/g, "");
+  if (d.length === 11) return d.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
+  if (d.length === 10) return d.replace(/^(\d{2})(\d{4})(\d{4})$/, "($1) $2-$3");
+  return phone;
+};
+
+interface ExportRange {
+  from: Date;
+  to: Date; // exclusive end
+}
+
+export function exportTodayProposalsToExcel(
+  proposals: TodayProposal[],
+  range?: ExportRange
+) {
+  // Build filename label from range (if any) or fallback to today
+  let fileLabel: string;
+  if (range) {
+    const startLabel = format(range.from, "yyyy-MM-dd");
+    // `to` is exclusive end-of-day; subtract 1 ms to get the inclusive end date
+    const inclusiveEnd = new Date(range.to.getTime() - 1);
+    const endLabel = format(inclusiveEnd, "yyyy-MM-dd");
+    fileLabel = startLabel === endLabel ? startLabel : `${startLabel}_a_${endLabel}`;
+  } else {
+    fileLabel = format(new Date(), "yyyy-MM-dd");
+  }
 
   const rows = proposals.map((p) => {
     const created = new Date(p.createdAt);
@@ -26,6 +51,7 @@ export function exportTodayProposalsToExcel(proposals: TodayProposal[]) {
       Hora: format(created, "HH:mm"),
       Vendedor: p.userName,
       Cliente: p.clientName,
+      Telefone: formatPhone(p.clientPhone),
       CNPJ: formatCnpj(p.cnpj),
       "Valor Original": p.totalDebt,
       "Valor c/ Desconto": p.discountedValue,
@@ -37,7 +63,7 @@ export function exportTodayProposalsToExcel(proposals: TodayProposal[]) {
   const ws = utils.json_to_sheet(rows);
   ws["!cols"] = [
     { wch: 12 }, { wch: 8 }, { wch: 24 }, { wch: 32 },
-    { wch: 20 }, { wch: 16 }, { wch: 18 }, { wch: 12 }, { wch: 14 },
+    { wch: 18 }, { wch: 20 }, { wch: 16 }, { wch: 18 }, { wch: 12 }, { wch: 14 },
   ];
 
   const wb = utils.book_new();
@@ -50,7 +76,7 @@ export function exportTodayProposalsToExcel(proposals: TodayProposal[]) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `propostas-hoje-${dateLabel}.xlsx`;
+  a.download = `propostas-${fileLabel}.xlsx`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

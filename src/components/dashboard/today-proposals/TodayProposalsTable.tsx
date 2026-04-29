@@ -23,6 +23,14 @@ const formatCnpj = (cnpj: string | null) => {
   return d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
 };
 
+const formatPhone = (phone: string | null) => {
+  if (!phone) return "—";
+  const d = phone.replace(/\D/g, "");
+  if (d.length === 11) return d.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
+  if (d.length === 10) return d.replace(/^(\d{2})(\d{4})(\d{4})$/, "($1) $2-$3");
+  return phone;
+};
+
 const defaultDirFor = (k: SortKey): SortDir =>
   k === "userName" || k === "clientName" ? "asc" : "desc";
 
@@ -173,6 +181,9 @@ export function TodayProposalsTable({ data }: Props) {
                     <div className="flex flex-col leading-tight min-w-0">
                       <span className="font-medium truncate" title={p.clientName}>{p.clientName}</span>
                       <span className="text-[10px] text-muted-foreground truncate">{formatCnpj(p.cnpj)}</span>
+                      {p.clientPhone && (
+                        <span className="text-[10px] text-muted-foreground truncate">{formatPhone(p.clientPhone)}</span>
+                      )}
                     </div>
                   </td>
                   <td className="px-1.5 py-1.5 text-right tabular-nums whitespace-nowrap">{fmtCurrency(p.totalDebt)}</td>

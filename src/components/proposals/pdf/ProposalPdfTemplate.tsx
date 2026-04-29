@@ -44,6 +44,23 @@ const ProposalPdfTemplate = React.forwardRef<HTMLDivElement, ProposalPdfTemplate
     const dueDate = formatDateBR(getLastBusinessDayOfMonth(today));
     const issueDate = formatDateBR(today);
 
+    // Validity date: prefer user-defined value from data.validityDate, fallback = issue + 24h
+    const validityDateLabel = (() => {
+      const v = data.validityDate;
+      if (v) {
+        const brMatch = String(v).match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/);
+        if (brMatch) {
+          const [, dd, mm, yyyy, hh = '23', mi = '59'] = brMatch;
+          return formatDateBR(new Date(Number(yyyy), Number(mm) - 1, Number(dd), Number(hh), Number(mi)));
+        }
+        const iso = new Date(String(v));
+        if (!isNaN(iso.getTime())) return formatDateBR(iso);
+      }
+      const fallback = new Date(today);
+      fallback.setDate(fallback.getDate() + 1);
+      return formatDateBR(fallback);
+    })();
+
     const entryInstallments = parseInt(data.entryInstallments || '1', 10) || 1;
     const installmentsCount = parseInt(data.installments || '0', 10) || 0;
 
@@ -155,7 +172,7 @@ const ProposalPdfTemplate = React.forwardRef<HTMLDivElement, ProposalPdfTemplate
               <div style={{ opacity: 0.8 }}>Emissão</div>
               <div style={{ fontWeight: 600, fontSize: '13px' }}>{issueDate}</div>
               <div style={{ opacity: 0.8, marginTop: '6px' }}>Validade</div>
-              <div style={{ fontWeight: 600, fontSize: '13px' }}>{dueDate}</div>
+              <div style={{ fontWeight: 600, fontSize: '13px' }}>{validityDateLabel}</div>
             </div>
           </div>
 

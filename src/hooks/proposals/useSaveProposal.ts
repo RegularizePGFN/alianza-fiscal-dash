@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ExtractedData, Proposal } from '@/lib/types/proposals';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export const useSaveProposal = () => {
@@ -54,9 +54,26 @@ export const useSaveProposal = () => {
       }
       
       const now = new Date();
-      
+
+      // Parse user-provided validity date (BR formatted) into ISO, if any
+      let validityIso: string | null = null;
+      if (data.validityDate) {
+        const tryFormats = ['dd/MM/yyyy HH:mm', 'dd/MM/yyyy'];
+        for (const fmt of tryFormats) {
+          const parsed = parse(data.validityDate, fmt, new Date());
+          if (!isNaN(parsed.getTime())) {
+            validityIso = parsed.toISOString();
+            break;
+          }
+        }
+        if (!validityIso) {
+          const iso = new Date(data.validityDate);
+          if (!isNaN(iso.getTime())) validityIso = iso.toISOString();
+        }
+      }
+
       // Prepare proposal data
-      const proposalData = {
+      const proposalData: Record<string, unknown> = {
         user_id: user.id,
         cnpj: data.cnpj,
         debt_number: data.debtNumber,
@@ -74,14 +91,15 @@ export const useSaveProposal = () => {
         business_activity: data.businessActivity || '',
         image_url: imageUrl || null,
         status: 'active',
-        creation_date: now.toISOString()
-        // validity_date will be set by the trigger
+        creation_date: now.toISOString(),
+        // If user picked a validity date, use it; otherwise trigger sets default (creation_date + 24h)
+        ...(validityIso ? { validity_date: validityIso } : {}),
       };
       
       // Insert into Supabase
       const { data: savedProposal, error } = await supabase
         .from('proposals')
-        .insert(proposalData)
+        .insert(proposalData as never)
         .select('*, creation_date, validity_date')
         .single();
       

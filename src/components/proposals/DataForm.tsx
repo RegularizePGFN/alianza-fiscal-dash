@@ -10,6 +10,11 @@ import ClientInfoSection from './data-form/ClientInfoSection';
 import { Input } from '@/components/ui/input';
 import { useCnpjSearch } from './data-form/useCnpjSearch';
 import { useAuth } from '@/contexts/auth';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarPicker } from '@/components/ui/calendar';
+import { format, addHours, parse } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 interface DataFormProps {
   formData: Partial<ExtractedData>;
@@ -128,12 +133,59 @@ const DataForm = ({
                 <Calendar className="h-4 w-4 text-af-blue-600 dark:text-af-blue-400" />
                 Data de Validade
               </label>
-              <Input 
-                value={formData.validityDate || 'Calculada automaticamente (24h após criação)'}
-                disabled
-                className="bg-slate-50 dark:bg-gray-800"
-              />
-              <p className="text-xs text-slate-500 dark:text-slate-400">Validade de 24h após criação</p>
+              {(() => {
+                // Parse current validity date for the picker
+                const parseValidity = (): Date => {
+                  const v = formData.validityDate;
+                  if (v) {
+                    // Try formats: "dd/MM/yyyy HH:mm", "dd/MM/yyyy", ISO
+                    const tryFormats = ['dd/MM/yyyy HH:mm', 'dd/MM/yyyy'];
+                    for (const fmt of tryFormats) {
+                      const d = parse(v, fmt, new Date());
+                      if (!isNaN(d.getTime())) return d;
+                    }
+                    const iso = new Date(v);
+                    if (!isNaN(iso.getTime())) return iso;
+                  }
+                  return addHours(new Date(), 24);
+                };
+                const selected = parseValidity();
+                return (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className={cn(
+                          'w-full justify-start text-left font-normal bg-white dark:bg-gray-900',
+                          !formData.validityDate && 'text-muted-foreground'
+                        )}
+                      >
+                        <Calendar className="mr-2 h-4 w-4" />
+                        {format(selected, 'dd/MM/yyyy', { locale: ptBR })}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarPicker
+                        mode="single"
+                        selected={selected}
+                        onSelect={(date) => {
+                          if (!date) return;
+                          const formatted = format(date, 'dd/MM/yyyy HH:mm', { locale: ptBR });
+                          onInputChange({
+                            target: { name: 'validityDate', value: formatted },
+                          } as unknown as React.ChangeEvent<HTMLInputElement>);
+                        }}
+                        disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                        initialFocus
+                        locale={ptBR}
+                        className={cn('p-3 pointer-events-auto')}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                );
+              })()}
+              <p className="text-xs text-slate-500 dark:text-slate-400">Clique para alterar a validade da proposta</p>
             </div>
           </div>
         )}
