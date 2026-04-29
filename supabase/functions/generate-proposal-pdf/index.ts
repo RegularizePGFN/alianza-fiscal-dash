@@ -494,15 +494,18 @@ function buildProposalHtml(payload: ProposalPayload): string {
   .exec__name { font-size: 12.5px; font-weight: 700; color: #0f172a; margin-top: 2px; }
 
   .footer {
-    background: #0f172a;
-    color: #cbd5e1;
+    background: #0b1d3a;
+    color: #d4c5a0;
     padding: 4mm 14mm;
     font-size: 9.5px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     letter-spacing: 0.04em;
+    flex-shrink: 0;
+    border-top: 0.4mm solid #d4c5a0;
   }
+  .footer .footer__right { color: #cbd5e1; }
 </style>
 </head>
 <body>
