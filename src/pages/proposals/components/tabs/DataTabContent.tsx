@@ -34,6 +34,16 @@ const DataTabContent = ({
   const finalCompanyData = companyData || hookCompanyData;
   const finalHandleSearch = searchCnpj ? () => searchCnpj(formData.cnpj || '') : handleSearchCnpj;
 
+  const [isGenerating, setIsGenerating] = useState(false);
+  const handleGenerateClick = async () => {
+    try {
+      setIsGenerating(true);
+      await onGenerateProposal();
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const calculateEntryInstallmentValue = () => formData.entryValue || '0,00';
 
   useEffect(() => {
