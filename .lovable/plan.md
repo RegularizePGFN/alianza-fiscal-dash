@@ -1,125 +1,80 @@
 
-# Modernização da Geração de Propostas
+# Plano — Separar Histórico + Corrigir fidelidade do PNG/PDF
 
-Objetivo: elevar o nível visual e a usabilidade da aba **Propostas** (upload → revisão de dados → proposta final → PDF), sem mexer na integração com o GPT (vision) nem na busca de CNPJ — ambas continuam funcionando exatamente como hoje.
+## Parte 1 — Abas no topo da página de Propostas
 
-## O que muda (visão geral)
+Hoje a tela `/propostas` carrega tudo junto na aba "Upload": o gerador (upload + IA) **e** o dashboard de propostas + histórico (cards, filtro, tabela). Isso pesa e confunde.
 
-1. Novo fluxo em **stepper** de 3 passos com progresso visual claro.
-2. Tela de **upload** repaginada (drag & drop premium, preview lado a lado, status da IA com etapas).
-3. Tela de **dados extraídos** com layout em duas colunas, badges de validação, busca de CNPJ inline e cartão da empresa elegante.
-4. Tela de **proposta** com pré-visualização tipo "documento", painel lateral de opções (observações, executivo, vendedor, cores) e botão flutuante de download.
-5. **PDF redesenhado**: layout A4 profissional, tipografia consistente, cabeçalho com logo + faixa de marca, blocos com hierarquia clara, tabela de parcelas, rodapé com dados do executivo/vendedor, marca d’água sutil e paginação.
+### O que muda
 
-## Telas
+Adicionar **duas abas principais** no topo da página (acima do stepper atual), no estilo "tabs premium":
 
-### Passo 1 — Upload (substitui `UploadTabContent`)
-- Stepper no topo (1 Upload • 2 Dados • 3 Proposta) com estado ativo/concluído.
-- Card grande com **drag & drop**, suporte a colar (Ctrl+V) e clique. Microcopy melhor, ícone animado.
-- Após o envio: preview da imagem à esquerda, painel à direita com **etapas da IA** (enviando → analisando → extraindo → validando), barra de progresso e mensagens dinâmicas.
-- Histórico e summary cards continuam abaixo, mas com cards mais limpos e tipografia consistente.
-
-### Passo 2 — Dados Extraídos (substitui `DataTabContent`)
-- Layout em duas colunas: à esquerda **Dados do Cliente / CNPJ** (com botão "Buscar CNPJ" inline), à direita **Dados Financeiros** (valor total, desconto, entrada, parcelas, honorários).
-- Cada campo com label, helper, máscara e badge "Extraído por IA" quando vier do GPT, "Editado" quando alterado.
-- Painel lateral mostra o cartão da empresa (`CompanyData`) assim que o CNPJ é resolvido.
-- Botões "Voltar" e "Gerar Proposta" fixos no rodapé.
-
-### Passo 3 — Proposta (substitui `ProposalTabContent`)
-- Layout em duas colunas no desktop:
-  - **Esquerda (≈70%)**: pré-visualização do documento (espelha o PDF final).
-  - **Direita (≈30%)**: painel de opções em accordion — Observações, Dados do Executivo, Vendedor, Aparência (cor primária, mostrar/ocultar honorários parcelados, mostrar marca d'água).
-- Barra superior com ações: **Editar dados**, **Baixar PDF**, **Baixar PNG**, **Nova proposta**.
-- Edição inline (clicar num campo na pré-visualização abre popover de edição) — opcional, mantém também o modo "Editar dados" atual.
-
-## PDF redesenhado (`src/lib/pdf/generatePdf.ts` + novo template React)
-
-Em vez de capturar o card da tela com `html2canvas`, vamos renderizar um **template dedicado para PDF** (`ProposalPdfTemplate.tsx`) com largura fixa A4, tipografia e espaçamento pensados para impressão, e então gerar o PDF.
-
-Estrutura do template:
-```
-┌─────────────────────────────────────────────────┐
-│  [LOGO]   Aliança Fiscal                         │ ← faixa azul
-│           Proposta de Regularização • PGFN       │
-│                          Nº 0001 • 29/04/2026    │
-├─────────────────────────────────────────────────┤
-│  DADOS DO CONTRIBUINTE                           │
-│  Razão Social ............ CNPJ ...........      │
-│  Endereço .............................          │
-│  Atividade principal ...........                 │
-├─────────────────────────────────────────────────┤
-│  RESUMO DA NEGOCIAÇÃO                            │
-│  ┌──────────┬──────────┬──────────┐              │
-│  │ Consol.  │ c/ Desc. │ Economia │              │
-│  │ R$ X     │ R$ Y     │ R$ Z     │              │
-│  └──────────┴──────────┴──────────┘              │
-│  Desconto aplicado: 60%                          │
-├─────────────────────────────────────────────────┤
-│  OPÇÕES DE PAGAMENTO                             │
-│  À Vista: R$ Y                                   │
-│  Parcelado: entrada Nx + 60x de R$ ...           │
-│  Tabela de vencimentos (resumida)                │
-├─────────────────────────────────────────────────┤
-│  HONORÁRIOS                                      │
-│  À vista: R$ ...   |   Parcelado: ...x de R$ ... │
-├─────────────────────────────────────────────────┤
-│  OBSERVAÇÕES (se houver)                         │
-├─────────────────────────────────────────────────┤
-│  Especialista: Nome • email • telefone           │
-│  Validade da proposta: até DD/MM/AAAA            │
-└─────────────────────────────────────────────────┘
-   Marca d'água sutil "Aliança Fiscal" no fundo
-   Rodapé com paginação "1/2"
+```text
+[ ✨ Gerar Proposta ]   [ 📚 Histórico de Propostas ]
 ```
 
-Decisões técnicas do PDF:
-- Continua usando `html2canvas` + `jsPDF` (já no projeto), mas sobre o **template dedicado** renderizado fora da tela em 794px (A4 @96dpi), `scale: 3` para nitidez.
-- Tipografia: Inter (já carregada) + tabular-nums em valores monetários.
-- Paleta consistente com a marca (af-blue + af-green) e contraste ajustado para impressão.
-- Quebra de página inteligente: cada bloco com `page-break-inside: avoid`.
-- Nome do arquivo: `Proposta_PGFN_<RazaoSocial>_<DDMMAAAA>.pdf`.
+- **Gerar Proposta** (default ao entrar): mostra apenas o stepper (Upload → Dados → Proposta). O dashboard administrativo e o histórico **somem** daqui.
+- **Histórico de Propostas**: só carrega quando o usuário clica. Contém:
+  - O `ProposalsDashboard` (cards de propostas geradas hoje, por vendedor, etc. — visível só para admin)
+  - Os `ProposalsSummaryCards` (resumo do período)
+  - O `ProposalsDateFilter`
+  - A tabela `ProposalHistory`
 
-## Mantém-se inalterado
+### Lazy loading (performance)
 
-- Integração com GPT/Vision (`analyzeImageWithAI`, edge function `analyze-image`).
-- Busca de CNPJ (`fetchCnpjData`).
-- Persistência no Supabase (`useSaveProposal`, `useFetchProposals`).
-- Tipos `ExtractedData`, `Proposal`, `CompanyData`.
-- Histórico, summary cards, filtros de data e dashboard de propostas.
+- O hook `useFetchProposalsWithFilter` hoje dispara `fetchProposals` no mount via `useEffect`. Vamos torná-lo **sob demanda**: só busca quando a aba "Histórico" é montada pela primeira vez (ou quando o filtro muda dentro dela).
+- O `ProposalsDashboard` será montado dentro da aba Histórico, então também só carrega quando clicado (já dispara várias queries pesadas).
+- O botão "Atualizar" do header passa a ser contextual: só aparece (ou só age) quando estamos na aba Histórico.
 
-## Arquivos afetados
+### Arquivos afetados
 
-Novos:
-- `src/pages/proposals/components/ProposalsStepper.tsx`
-- `src/components/proposals/upload/UploadDropzone.tsx` (redesign do FileUpload)
-- `src/components/proposals/upload/AIProcessingPanel.tsx`
-- `src/components/proposals/data-form/DataReviewLayout.tsx`
-- `src/components/proposals/data-form/CompanyCard.tsx`
-- `src/components/proposals/preview/ProposalPreviewLayout.tsx`
-- `src/components/proposals/preview/OptionsSidebar.tsx`
-- `src/components/proposals/pdf/ProposalPdfTemplate.tsx` (template dedicado para PDF)
-- `src/components/proposals/pdf/sections/*` (Header, Negotiation, Payment, Fees, Footer)
+- `src/pages/proposals/ProposalsContainer.tsx` — adicionar estado `mainTab: 'generate' | 'history'`, renderizar a barra de abas e condicionalmente cada bloco.
+- `src/pages/proposals/components/tabs/UploadTabContent.tsx` — remover o bloco "Histórico" (cards + filtro + tabela). A aba Upload do stepper passa a ter só o `AIImageProcessor`.
+- `src/hooks/proposals/useProposalsStateWithFilter.tsx` — remover o `useEffect` automático de fetch no mount; expor a função para a aba Histórico chamar.
+- Criar `src/pages/proposals/components/HistoryTabContent.tsx` agrupando dashboard + cards + filtro + tabela (movido do UploadTabContent).
+- Criar `src/pages/proposals/components/MainTabsBar.tsx` com o visual das abas (botões grandes com ícone, badge de contagem opcional).
 
-Editados:
-- `src/pages/proposals/ProposalsContainer.tsx` (stepper + layout)
-- `src/pages/proposals/components/ProposalsTabs.tsx` (vira stepper, mantém estado)
-- `src/pages/proposals/components/tabs/UploadTabContent.tsx`
-- `src/pages/proposals/components/tabs/DataTabContent.tsx`
-- `src/pages/proposals/components/tabs/ProposalTabContent.tsx`
-- `src/lib/pdf/generatePdf.ts` (renderiza o novo template em vez do card da tela)
-- `src/lib/pdf/generateSimplifiedPng.ts` (alinhar visual ao novo template)
+## Parte 2 — Preview ≠ PNG/PDF (corrigir bugs visuais)
 
-Não editados (preservados): `src/lib/services/vision/*`, `src/lib/api.ts`, hooks de salvar/buscar propostas, schema do Supabase.
+### Diagnóstico dos prints
 
-## Responsividade
-- Stepper colapsa em ícones no mobile.
-- Passo 2 e 3 viram coluna única < md.
-- Pré-visualização da proposta abre em modal full-screen no mobile.
+Comparando o **print 2** (preview no app — perfeito) com o **print 1 (PDF)** e **print 3 (PNG)**:
 
-## Pontos a confirmar antes de implementar
-1. Quer manter os **dois downloads** (PDF e PNG) ou só PDF?
-2. Quer um **número sequencial de proposta** no cabeçalho do PDF (ex.: "Nº 0001") ou prefere apenas data?
-3. Pode usar a marca d'água sutil "Aliança Fiscal" no fundo do PDF?
-4. Mantemos a edição via "modo editar" atual + adicionamos edição inline na preview, ou substituímos pelo inline?
+1. **Badge "50% off" desalinhado no PNG/PDF** — no preview o badge fica colado no canto superior direito do card "Economia"; no PNG aparece deslocado para baixo. Causa: o badge usa `position: absolute` dentro do `SummaryCard`, mas o card pai não tem `position: relative` declarado explicitamente (ou tem padding diferente). Quando o `html2canvas` captura, a referência muda.
+2. **Preview no app aparece "bugado" no PDF (print 1)** — o thumbnail do leitor de PDF mostra o conteúdo cortado/comprimido. Isso é o `html2canvas` capturando uma altura maior que A4 e o `jsPDF` paginando errado: o template renderiza com altura natural maior que 297mm e o algoritmo atual (`addImage` em loop com offset negativo) gera uma segunda página em branco / corte estranho.
+3. **PNG mais fiel que PDF** — confirma que o template em si está OK; o problema é no pipeline de PDF (paginação) e em pequenos ajustes inline de CSS que o html2canvas interpreta diferente.
 
-Posso seguir com defaults sensatos (PDF + PNG, sem número sequencial por enquanto, marca d'água ativada por opção, manter os dois modos de edição) caso prefira não responder agora.
+### Correções no `ProposalPdfTemplate.tsx`
+
+- Tornar o componente `SummaryCard` 100% determinístico: usar wrapper com `position: relative`, `overflow: hidden`, e o badge com top/right fixos em px (não %). Garantir `display: 'inline-flex'` no badge com `lineHeight: 1` para evitar drift vertical do html2canvas.
+- Forçar `box-sizing: border-box` em todos os blocos via wrapper raiz (`<div style={{ boxSizing: 'border-box', ... }}>` + um pequeno reset inline aplicado nos filhos críticos).
+- Remover `gradient` em `linear-gradient(180deg, #f0f5fd 0%, #ffffff 100%)` no card "Parcelado" — em alguns navegadores o html2canvas renderiza gradient com banda visível; substituir por cor sólida `#f0f5fd` (visualmente idêntico no print).
+- Ajustar a altura do template para se aproximar de uma página A4 cheia, evitando "pular" para a 2ª página em branco. Hoje o conteúdo costuma ficar entre 297mm e ~310mm — o suficiente para criar página fantasma.
+
+### Correções no `src/lib/pdf/generatePdf.ts`
+
+- **Estratégia de uma página única quando o conteúdo cabe**: medir `element.scrollHeight` em px, converter para mm (`px * 25.4 / (96 * scale)`) e:
+  - Se `<= 297mm + tolerância (8mm)`: gerar PDF de **uma página só**, com `pdf.addImage(..., 0, 0, 210, alturaReal)` e ajustando a altura do PDF via `jsPDF.format = [210, alturaReal]` (PDF custom de uma página com proporção exata). Isso garante que o PDF fica idêntico ao PNG.
+  - Se for maior: paginar corretamente fatiando o canvas em blocos de altura A4 (criar canvas intermediário por página em vez do truque de offset negativo, que está causando o "bugado").
+- Aumentar o tempo de espera pós-render para 300ms e aguardar `requestAnimationFrame` 3x (evita capturar antes do gradient/fontes).
+- Usar `imageTimeout: 0` e garantir que o logo `/lovable-uploads/...png` esteja com `crossOrigin="anonymous"` (já está) e pré-carregado via `new Image()` antes do `html2canvas`.
+
+### Resultado esperado
+
+- PDF passa a ser **pixel-idêntico ao PNG** (mesmo template, mesma captura, só muda o container de saída).
+- Badge "50% off" alinhado corretamente no canto.
+- Sem páginas em branco / cortes estranhos no PDF.
+
+## Detalhes técnicos resumidos
+
+- Tipo novo: `type MainProposalTab = 'generate' | 'history'` em `ProposalsContainer`.
+- Lazy mount: `{mainTab === 'history' && <HistoryTabContent ... />}` — quando desmonta, `useEffect` cleanup do hook cancela queries em voo.
+- Para o lazy do hook: parametrizar `useProposalsStateWithFilter` com um flag `enabled: boolean` (similar ao React Query), default `false`; só dispara `fetchProposals` quando `enabled === true`.
+- PDF de página única: usar `new jsPDF({ unit: 'mm', format: [210, computedHeightMm] })` quando aplicável.
+
+## Não muda
+
+- Integração com GPT/Vision (`AIImageProcessor`, edge function `analyze-image`).
+- Lógica de extração CNPJ.
+- Stepper Upload → Dados → Proposta dentro da aba "Gerar Proposta".
+- Sidebar de opções (marca d'água, observações, executivo).
