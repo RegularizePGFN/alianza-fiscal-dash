@@ -41,6 +41,8 @@ export interface ExtractedData {
   executiveName?: string; // Name of the executive
   executiveEmail?: string; // Email of the executive
   executivePhone?: string; // Phone of the executive (optional)
+  // PDF appearance
+  showWatermark?: string; // "true" (default) or "false" - watermark on PDF
 }
 
 export interface Proposal {
