@@ -49,10 +49,18 @@ export const useProposalsStateWithFilter = () => {
   const [companyData, setCompanyData] = useState<CompanyData | null>(null);
   const [processingStatus, setProcessingStatus] = useState<string>("");
   const [lastSearchedCnpj, setLastSearchedCnpj] = useState<string>("");
+  const hasFetchedRef = useRef(false);
   
   // Fetch proposals só sob demanda (chamado pela aba Histórico ao montar / filtros)
   useEffect(() => {
-    if (!hasFetchedRef) return;
+    if (!hasFetchedRef.current) return;
+    fetchProposals(filterType, filterType === 'custom' ? customDateRange : undefined);
+  }, [fetchProposals, filterType, customDateRange]);
+
+  // Disparado pela aba Histórico ao montar
+  const ensureProposalsLoaded = useCallback(() => {
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
     fetchProposals(filterType, filterType === 'custom' ? customDateRange : undefined);
   }, [fetchProposals, filterType, customDateRange]);
   
