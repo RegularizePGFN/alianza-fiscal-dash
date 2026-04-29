@@ -1,48 +1,51 @@
-## Ajustes finos no PDF
+## Parte 1 — Validade editável na proposta
 
-### 1. Trocar a logomarca
+Hoje a validade é calculada automaticamente (24h após criação, via trigger no banco) e o campo na DataForm está `disabled`. Vamos torná-la editável e refletir essa data na prévia e no PDF final.
 
-A logo atual (`/lovable-uploads/d939ccfc-...png`) não está carregando no Chromium remoto. Vou:
+**Fluxo:**
+1. **DataForm** (`src/components/proposals/DataForm.tsx`): substituir o `<Input disabled>` da Data de Validade por um date picker (Popover + Calendar shadcn). Valor inicial = `formData.validityDate` ou `creationDate + 24h`. Ao mudar, atualiza `formData.validityDate` no formato ISO/yyyy-MM-dd.
+2. **Prévia** (`MetadataSection.tsx` + `ProposalHeader.tsx` que mostra "Emissão/Validade"): já recebem `validityDate` via `data` — passarão a refletir o valor escolhido automaticamente. Adicionar também um botão de edição inline (ícone calendário) no cabeçalho da prévia que abre o mesmo date picker e atualiza o estado da proposta.
+3. **Persistência** (`useSaveProposal.ts`): incluir `validity_date` no payload do `insert/update` quando o usuário definir manualmente, sobrescrevendo o cálculo do trigger. O trigger continua para o caso default.
+4. **PDF** (`supabase/functions/generate-proposal-pdf/index.ts` + `ProposalPdfTemplate.tsx`): o template já consome `validityDate` de `data` — basta garantir que o valor escolhido seja propagado no payload enviado ao Browserless. Sem mudanças visuais no PDF.
 
-- Salvar o novo PNG enviado em `public/lovable-uploads/logo-alianca-fiscal.png`.
-- Atualizar `src/lib/pdf/generatePdf.ts` para enviar essa nova URL absoluta como `logoUrl`.
-- Como camada extra de segurança contra falha de download de imagem dentro do Browserless, vou converter a logo para `data:image/png;base64,...` no frontend antes de enviar para a edge function. Assim o Chromium não precisa baixar nada da rede e a logo nunca falha.
+## Parte 2 — Diálogo "Propostas Geradas" com seletor de data/intervalo
 
-### 2. Cor do cabeçalho como no site
+**Arquivos:** `useTodayProposals.ts`, `TodayProposalsDialog.tsx`, `TodayProposalsTable.tsx`, `exportTodayProposals.ts`.
 
-No site da Aliança Fiscal o tema é navy escuro com detalhe dourado/bege. Vou trocar o gradiente azul claro atual por:
+1. **Renomear título** de "Propostas Geradas Hoje" → **"Propostas Geradas"**.
+2. **Hook `useTodayProposals`**: aceitar `{ from: Date; to: Date }` como parâmetro (default = hoje 00:00 → hoje 24:00). Usar essas datas no `gte`/`lt` do query do Supabase. Incluir `client_phone` no `select` e no tipo `TodayProposal`.
+3. **Dialog**: adicionar um seletor de data com 3 modos (igual ao `ProposalsDateFilter` já existente):
+   - "Hoje" (padrão)
+   - "Últimos 7 dias"
+   - "Período personalizado" (Popover com Calendar `mode="range"`)
+   
+   O badge atual com `todayLabel` passa a mostrar o range selecionado (ex.: "01/04 – 29/04"). A lista, gráficos e exportação respeitam o range escolhido (já usam `proposals` derivado do hook).
+4. **Tabela**: adicionar coluna "Telefone" (formato `(XX) XXXXX-XXXX`), opcional/colapsada em telas pequenas.
+5. **Exportação Excel** (`exportTodayProposals.ts`):
+   - Adicionar coluna **"Telefone"** entre Cliente e CNPJ.
+   - Nome do arquivo passa a refletir o range: `propostas-{yyyy-MM-dd}_a_{yyyy-MM-dd}.xlsx` (ou `propostas-{data}.xlsx` para um único dia).
+   - Garantir que a exportação use o array `proposals` já filtrado pelo range + filtros atuais (vendedor/desconto).
 
-- Fundo: navy escuro `#0b1d3a` (com leve gradient para `#0a1a35`).
-- Borda inferior do header: `#d4c5a0` (bege da logo) em vez do verde atual.
-- Título em fonte serifada (Playfair Display) para combinar com o estilo do site.
+## Detalhes técnicos
 
-### 3. Rodapé fixo na borda inferior do PDF
+- O telefone do cliente **já é salvo** na coluna `proposals.client_phone` (confirmado em `useSaveProposal.ts` e na busca de CNPJ). Sem migrações necessárias.
+- A coluna `validity_date` já existe na tabela `proposals` e o trigger `set_proposal_validity_date` define o default. Como o trigger usa `BEFORE INSERT` e atribui sempre `creation_date + 24h`, ele **sobrescreve** valor enviado pelo cliente. Precisamos ajustar o trigger para só preencher quando `validity_date IS NULL` — vai ser uma migration mínima:
+  ```sql
+  CREATE OR REPLACE FUNCTION public.set_proposal_validity_date()
+  RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+  BEGIN
+    IF NEW.validity_date IS NULL THEN
+      NEW.validity_date := NEW.creation_date + interval '24 hours';
+    END IF;
+    RETURN NEW;
+  END;
+  $$;
+  ```
+- Date picker: usar `Calendar` do shadcn com `className="p-3 pointer-events-auto"` dentro de Popover (padrão do projeto, ver `ProposalsDateFilter.tsx`).
+- Sem alterações no design do PDF — mantemos o layout aprovado.
 
-Hoje o rodapé escuro aparece flutuando no meio da folha porque o conteúdo não preenche os 297mm da página A4. Vou corrigir transformando a página em flex column de altura A4 fixa:
+## Resumo de arquivos
 
-```text
-.page { height: 297mm; display: flex; flex-direction: column; }
-.content { flex: 1 1 auto; display: flex; flex-direction: column; }
-.body { flex: 1 1 auto; }   /* empurra o footer pra base */
-.footer { flex-shrink: 0; } /* sempre encostado embaixo */
-```
-
-Isso garante que o rodapé fique sempre colado na borda inferior do A4, independente de quanto conteúdo a proposta tenha.
-
-### 4. Pequenos ajustes visuais consistentes
-
-- Cor da marca d'água: trocar de `#0f172a` para o navy `#0b1d3a` para combinar com o novo tema.
-- Cor do texto "Especialista responsável" e disclaimer continuam como estão.
-
-## Arquivos previstos
-
-- `public/lovable-uploads/logo-alianca-fiscal.png` (novo arquivo)
-- `src/lib/pdf/generatePdf.ts` — converter logo para base64 antes de enviar.
-- `supabase/functions/generate-proposal-pdf/index.ts` — header navy, footer fixo na base, layout flex de altura A4.
-
-## Resultado esperado
-
-- Logo aparece no header sem falhar.
-- Header navy escuro, igual ao site.
-- Rodapé escuro grudado na borda inferior do PDF, não flutuando no meio.
-- Layout fiel ao preview, profissional.
+- Editar: `src/components/proposals/DataForm.tsx`, `src/components/proposals/card/sections/MetadataSection.tsx` (ou ProposalHeader, conforme onde aparece "Emissão/Validade"), `src/hooks/proposals/useSaveProposal.ts`, `src/components/dashboard/today-proposals/{useTodayProposals.ts,TodayProposalsDialog.tsx,TodayProposalsTable.tsx,exportTodayProposals.ts}`.
+- Migration: ajuste do trigger `set_proposal_validity_date`.
+- Sem mudanças no PDF/edge function.
