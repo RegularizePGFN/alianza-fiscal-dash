@@ -132,8 +132,22 @@ export async function generateProposalPdf(
 
   if (error) {
     console.error('Erro na edge function generate-proposal-pdf:', error);
+    // Tenta extrair a mensagem real retornada pela edge function (JSON com { error })
+    let detail = '';
+    try {
+      const ctx: any = (error as any)?.context;
+      if (ctx?.json) detail = ctx.json?.error || '';
+      if (!detail && typeof ctx?.body === 'string') {
+        const parsed = JSON.parse(ctx.body);
+        detail = parsed?.error || '';
+      }
+    } catch {
+      // ignora
+    }
     throw new Error(
-      'Não foi possível gerar o PDF profissional. Tente novamente em instantes.',
+      detail
+        ? `Falha ao gerar PDF: ${detail}`
+        : 'Não foi possível gerar o PDF profissional. Tente novamente em instantes.',
     );
   }
 

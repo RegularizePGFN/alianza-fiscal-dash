@@ -542,26 +542,36 @@ function buildProposalHtml(payload: ProposalPayload): string {
 // BROWSERLESS RENDER
 // ============================================================
 
+const DEFAULT_BROWSERLESS_BASE = "https://production-sfo.browserless.io";
+
 async function renderPdfWithBrowserless(html: string): Promise<Uint8Array> {
-  if (!BROWSERLESS_URL_RAW) {
-    throw new Error(
-      "BROWSERLESS_URL não configurado. Adicione a URL base do Browserless nos Secrets (ex: https://production-sfo.browserless.io).",
-    );
-  }
   if (!BROWSERLESS_TOKEN) {
     throw new Error(
       "BROWSERLESS_TOKEN não configurado. Adicione sua API key da Browserless nos Secrets do projeto.",
     );
   }
 
-  // Normaliza URL base: remove trailing slash, remove qualquer ?token= já existente
-  // e extrai o caminho /pdf se o usuário passou a URL completa.
-  let base = BROWSERLESS_URL_RAW.trim();
-  // Remove qualquer query string acidental (caso o usuário tenha colado URL com ?token=)
+  // Normaliza URL base. Se o secret BROWSERLESS_URL não existir, usa o endpoint
+  // padrão da Browserless (production-sfo). Também limpa caminhos inválidos
+  // herdados de versões antigas (ex: /function/pdf, /chrome/pdf, /pdf).
+  let base = (BROWSERLESS_URL_RAW || DEFAULT_BROWSERLESS_BASE).trim();
   base = base.split("?")[0];
-  // Remove trailing /pdf se já vier no secret, vamos sempre re-adicionar
-  base = base.replace(/\/+pdf\/?$/i, "");
-  base = base.replace(/\/+$/, "");
+  // Remove sufixos inválidos repetidamente até chegar só na origem.
+  // Ordem importa: remove /pdf primeiro (com ou sem prefixo), depois /function, /chrome, /chromium.
+  for (let i = 0; i < 5; i++) {
+    const before = base;
+    base = base.replace(/\/+pdf\/?$/i, "");
+    base = base.replace(/\/+function\/?$/i, "");
+    base = base.replace(/\/+chrome\/?$/i, "");
+    base = base.replace(/\/+chromium\/?$/i, "");
+    base = base.replace(/\/+$/, "");
+    if (before === base) break;
+  }
+
+  // Se por qualquer motivo a base ficou vazia ou inválida, usa o default.
+  if (!/^https?:\/\//i.test(base)) {
+    base = DEFAULT_BROWSERLESS_BASE;
+  }
 
   const endpoint = `${base}/pdf?token=${encodeURIComponent(BROWSERLESS_TOKEN)}`;
 
