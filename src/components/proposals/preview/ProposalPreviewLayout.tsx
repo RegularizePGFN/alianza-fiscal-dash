@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { ExtractedData, CompanyData } from '@/lib/types/proposals';
 import ProposalPdfTemplate from '@/components/proposals/pdf/ProposalPdfTemplate';
 import { Button } from '@/components/ui/button';
-import { Download, FileImage, RotateCcw, Edit2, Eye } from 'lucide-react';
-import { generateProposalPdf, generateProposalTemplatePng } from '@/lib/pdf/generatePdf';
+import { Download, RotateCcw, Edit2, Eye } from 'lucide-react';
+import { generateProposalPdf } from '@/lib/pdf/generatePdf';
 import { useToast } from '@/hooks/use-toast';
 import OptionsSidebar from './OptionsSidebar';
 import { cn } from '@/lib/utils';
@@ -26,7 +26,7 @@ const ProposalPreviewLayout: React.FC<ProposalPreviewLayoutProps> = ({
   isEditing,
 }) => {
   const { toast } = useToast();
-  const [downloading, setDownloading] = useState<'pdf' | 'png' | null>(null);
+  const [downloading, setDownloading] = useState<'pdf' | null>(null);
 
   const handleDownloadPdf = async () => {
     try {
@@ -37,20 +37,6 @@ const ProposalPreviewLayout: React.FC<ProposalPreviewLayoutProps> = ({
     } catch (e) {
       console.error(e);
       toast({ title: 'Erro', description: 'Falha ao gerar PDF.', variant: 'destructive' });
-    } finally {
-      setDownloading(null);
-    }
-  };
-
-  const handleDownloadPng = async () => {
-    try {
-      setDownloading('png');
-      toast({ title: 'Gerando imagem', description: 'Aguarde...' });
-      await generateProposalTemplatePng(formData, companyData);
-      toast({ title: 'Imagem gerada!', description: 'Download iniciado.' });
-    } catch (e) {
-      console.error(e);
-      toast({ title: 'Erro', description: 'Falha ao gerar imagem.', variant: 'destructive' });
     } finally {
       setDownloading(null);
     }
@@ -71,16 +57,6 @@ const ProposalPreviewLayout: React.FC<ProposalPreviewLayoutProps> = ({
           </Button>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDownloadPng}
-            disabled={!!downloading}
-            className="gap-2"
-          >
-            <FileImage className="h-4 w-4" />
-            {downloading === 'png' ? 'Gerando...' : 'PNG'}
-          </Button>
           <Button
             size="sm"
             onClick={handleDownloadPdf}
