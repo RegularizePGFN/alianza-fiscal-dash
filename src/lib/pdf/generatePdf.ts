@@ -111,35 +111,3 @@ export async function generateProposalPdf(
   const pdfBlob = new Blob([buf], { type: 'application/pdf' });
   triggerDownload(pdfBlob, buildFileName(data, 'pdf', companyData));
 }
-
-/**
- * PNG continua sendo gerado no front-end via html2canvas
- * (suficiente para imagem de resumo/preview).
- */
-export async function generateProposalTemplatePng(
-  data: Partial<ExtractedData>,
-  companyData?: CompanyData | null,
-): Promise<void> {
-  const { element, cleanup } = await renderTemplateOffscreen({
-    data,
-    companyData,
-    showWatermark: data.showWatermark !== 'false',
-  });
-  try {
-    const canvas = await html2canvas(element, {
-      scale: 3,
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-      backgroundColor: '#ffffff',
-    });
-    const link = document.createElement('a');
-    link.download = buildFileName(data, 'png', companyData);
-    link.href = canvas.toDataURL('image/png', 1.0);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  } finally {
-    cleanup();
-  }
-}
