@@ -543,7 +543,7 @@ function buildProposalHtml(payload: ProposalPayload): string {
 
       <footer class="footer">
         <span>Aliança Fiscal • Consultoria Tributária</span>
-        <span>Documento gerado em ${escapeHtml(issueDate)}</span>
+        <span class="footer__right">Documento gerado em ${escapeHtml(issueDate)}</span>
       </footer>
     </div>
   </div>
