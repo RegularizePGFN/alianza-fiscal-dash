@@ -10,7 +10,8 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const BROWSERLESS_URL = Deno.env.get("BROWSERLESS_URL");
+const BROWSERLESS_URL_RAW = Deno.env.get("BROWSERLESS_URL");
+const BROWSERLESS_TOKEN = Deno.env.get("BROWSERLESS_TOKEN");
 
 // ============================================================
 // HTML TEMPLATE
@@ -542,15 +543,27 @@ function buildProposalHtml(payload: ProposalPayload): string {
 // ============================================================
 
 async function renderPdfWithBrowserless(html: string): Promise<Uint8Array> {
-  if (!BROWSERLESS_URL) {
-    throw new Error("BROWSERLESS_URL não configurado no servidor");
+  if (!BROWSERLESS_URL_RAW) {
+    throw new Error(
+      "BROWSERLESS_URL não configurado. Adicione a URL base do Browserless nos Secrets (ex: https://production-sfo.browserless.io).",
+    );
+  }
+  if (!BROWSERLESS_TOKEN) {
+    throw new Error(
+      "BROWSERLESS_TOKEN não configurado. Adicione sua API key da Browserless nos Secrets do projeto.",
+    );
   }
 
-  // BROWSERLESS_URL é a URL completa (ex: https://chrome.browserless.io ou self-hosted)
-  // Endpoint padrão Browserless v2: /pdf?token=...
-  const endpoint = BROWSERLESS_URL.includes("/pdf")
-    ? BROWSERLESS_URL
-    : `${BROWSERLESS_URL.replace(/\/+$/, "")}/pdf`;
+  // Normaliza URL base: remove trailing slash, remove qualquer ?token= já existente
+  // e extrai o caminho /pdf se o usuário passou a URL completa.
+  let base = BROWSERLESS_URL_RAW.trim();
+  // Remove qualquer query string acidental (caso o usuário tenha colado URL com ?token=)
+  base = base.split("?")[0];
+  // Remove trailing /pdf se já vier no secret, vamos sempre re-adicionar
+  base = base.replace(/\/+pdf\/?$/i, "");
+  base = base.replace(/\/+$/, "");
+
+  const endpoint = `${base}/pdf?token=${encodeURIComponent(BROWSERLESS_TOKEN)}`;
 
   const body = {
     html,
@@ -564,8 +577,10 @@ async function renderPdfWithBrowserless(html: string): Promise<Uint8Array> {
       waitUntil: "networkidle0",
       timeout: 30000,
     },
-    waitForTimeout: 400,
+    waitForTimeout: 800,
   };
+
+  console.log("Browserless: chamando endpoint", base + "/pdf");
 
   const res = await fetch(endpoint, {
     method: "POST",
@@ -578,6 +593,11 @@ async function renderPdfWithBrowserless(html: string): Promise<Uint8Array> {
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
+    if (res.status === 401 || res.status === 403) {
+      throw new Error(
+        `Browserless rejeitou o token (${res.status}). Verifique BROWSERLESS_TOKEN nos Secrets — deve ser apenas a API key, sem "?token=".`,
+      );
+    }
     throw new Error(`Browserless falhou: ${res.status} ${text.slice(0, 300)}`);
   }
 
