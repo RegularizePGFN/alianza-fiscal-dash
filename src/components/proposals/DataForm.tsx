@@ -10,6 +10,11 @@ import ClientInfoSection from './data-form/ClientInfoSection';
 import { Input } from '@/components/ui/input';
 import { useCnpjSearch } from './data-form/useCnpjSearch';
 import { useAuth } from '@/contexts/auth';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarPicker } from '@/components/ui/calendar';
+import { format, addHours, parse } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 interface DataFormProps {
   formData: Partial<ExtractedData>;
