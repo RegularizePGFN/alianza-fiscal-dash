@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ExtractedData, Proposal } from '@/lib/types/proposals';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export const useSaveProposal = () => {
