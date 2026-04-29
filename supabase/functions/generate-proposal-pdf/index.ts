@@ -10,7 +10,8 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const BROWSERLESS_URL = Deno.env.get("BROWSERLESS_URL");
+const BROWSERLESS_URL_RAW = Deno.env.get("BROWSERLESS_URL");
+const BROWSERLESS_TOKEN = Deno.env.get("BROWSERLESS_TOKEN");
 
 // ============================================================
 // HTML TEMPLATE
