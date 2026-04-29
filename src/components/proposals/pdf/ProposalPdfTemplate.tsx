@@ -251,7 +251,7 @@ const ProposalPdfTemplate = React.forwardRef<HTMLDivElement, ProposalPdfTemplate
                     border: '1px solid #c1d7f7',
                     borderRadius: '10px',
                     padding: '16px',
-                    background: 'linear-gradient(180deg, #f0f5fd 0%, #ffffff 100%)',
+                    background: '#f0f5fd',
                   }}
                 >
                   <div style={{ fontSize: '11px', color: '#274697', fontWeight: 600, letterSpacing: '0.05em' }}>
