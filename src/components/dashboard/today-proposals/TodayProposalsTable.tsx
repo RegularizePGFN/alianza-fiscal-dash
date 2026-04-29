@@ -23,6 +23,14 @@ const formatCnpj = (cnpj: string | null) => {
   return d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
 };
 
+const formatPhone = (phone: string | null) => {
+  if (!phone) return "—";
+  const d = phone.replace(/\D/g, "");
+  if (d.length === 11) return d.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
+  if (d.length === 10) return d.replace(/^(\d{2})(\d{4})(\d{4})$/, "($1) $2-$3");
+  return phone;
+};
+
 const defaultDirFor = (k: SortKey): SortDir =>
   k === "userName" || k === "clientName" ? "asc" : "desc";
 
