@@ -91,6 +91,25 @@ function buildProposalHtml(payload: ProposalPayload): string {
   const issueDate = formatDateBR(today);
   const dueDate = formatDateBR(getLastBusinessDayOfMonth(today));
 
+  // Validity date: prefer user-defined value from data.validityDate, fallback = issue + 24h
+  const parseValidity = (): Date => {
+    const v = data.validityDate;
+    if (v) {
+      // Try BR formats first: "dd/MM/yyyy HH:mm" or "dd/MM/yyyy"
+      const brMatch = String(v).match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/);
+      if (brMatch) {
+        const [, dd, mm, yyyy, hh = "23", mi = "59"] = brMatch;
+        return new Date(Number(yyyy), Number(mm) - 1, Number(dd), Number(hh), Number(mi));
+      }
+      const iso = new Date(String(v));
+      if (!isNaN(iso.getTime())) return iso;
+    }
+    const fallback = new Date(today);
+    fallback.setDate(fallback.getDate() + 1);
+    return fallback;
+  };
+  const validityDate = formatDateBR(parseValidity());
+
   const hasDiscount = (() => {
     if (!data.totalDebt || !data.discountedValue) return false;
     try {
