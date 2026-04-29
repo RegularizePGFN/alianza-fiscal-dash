@@ -1,10 +1,9 @@
-
 import React, { useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExtractedData, CompanyData } from "@/lib/types/proposals";
 import { ClientInfoSection, FinancialInfoSection } from "@/components/proposals/data-form";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Sparkles, User, Calculator } from "lucide-react";
 import { useCnpjSearch } from "@/components/proposals/data-form/useCnpjSearch";
 
 interface DataTabContentProps {
@@ -26,45 +25,45 @@ const DataTabContent = ({
   setProcessingStatus,
   companyData,
   searchCnpj,
-  isSearchingCnpj = false
+  isSearchingCnpj = false,
 }: DataTabContentProps) => {
-  // Use the CNPJ search hook for manual search functionality
-  const {
-    isSearchingCnpj: hookIsSearching,
-    companyData: hookCompanyData,
-    handleSearchCnpj
-  } = useCnpjSearch({ 
-    formData, 
-    onInputChange,
-    setProcessingStatus
-  });
+  const { isSearchingCnpj: hookIsSearching, companyData: hookCompanyData, handleSearchCnpj } =
+    useCnpjSearch({ formData, onInputChange, setProcessingStatus });
 
-  // Use props if available, otherwise use hook values
   const finalIsSearching = isSearchingCnpj || hookIsSearching;
   const finalCompanyData = companyData || hookCompanyData;
   const finalHandleSearch = searchCnpj ? () => searchCnpj(formData.cnpj || '') : handleSearchCnpj;
 
-  // Calculate entry installment value
-  const calculateEntryInstallmentValue = () => {
-    if (formData.entryValue && formData.entryInstallments) {
-      try {
-        // Entry value is already per installment, so just return it
-        return formData.entryValue;
-      } catch (error) {
-        console.error("Erro ao calcular o valor da parcela de entrada:", error);
-      }
-    }
-    return "0,00";
-  };
-  
+  const calculateEntryInstallmentValue = () => formData.entryValue || '0,00';
+
   useEffect(() => {
     setProcessingStatus("Dados extraídos com sucesso!");
   }, [setProcessingStatus]);
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardContent className="pt-6">
+      {/* Banner */}
+      <div className="rounded-xl border border-success/20 bg-gradient-to-r from-success/10 via-success/5 to-transparent p-4 flex items-start gap-3">
+        <div className="h-9 w-9 rounded-lg bg-success/15 text-success flex items-center justify-center shrink-0">
+          <Sparkles className="h-4 w-4" />
+        </div>
+        <div>
+          <h3 className="font-semibold text-sm">Dados extraídos pela IA</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Revise as informações abaixo. Você pode editar qualquer campo antes de gerar a proposta.
+          </p>
+        </div>
+      </div>
+
+      {/* Cliente */}
+      <Card className="border-border shadow-sm">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+              <User className="h-4 w-4" />
+            </div>
+            <h2 className="text-base font-semibold">Dados do Cliente</h2>
+          </div>
           <ClientInfoSection
             formData={formData}
             onInputChange={onInputChange}
@@ -72,26 +71,44 @@ const DataTabContent = ({
             handleSearchCnpj={finalHandleSearch}
             companyData={finalCompanyData}
           />
-          
+        </CardContent>
+      </Card>
+
+      {/* Financeiro */}
+      <Card className="border-border shadow-sm">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+              <Calculator className="h-4 w-4" />
+            </div>
+            <h2 className="text-base font-semibold">Dados Financeiros</h2>
+          </div>
           <FinancialInfoSection
             formData={formData}
             onInputChange={onInputChange}
             disabled={false}
             entryInstallmentValue={calculateEntryInstallmentValue()}
           />
-          
-          <div className="flex justify-end mt-6">
-            <Button 
-              className="flex items-center gap-2"
-              onClick={onGenerateProposal} 
-              disabled={processing}
-            >
-              Gerar Proposta
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
         </CardContent>
       </Card>
+
+      {/* CTA */}
+      <div className="sticky bottom-4 z-10">
+        <div className="rounded-xl border bg-card shadow-lg p-4 flex items-center justify-between gap-4">
+          <div className="text-sm text-muted-foreground hidden sm:block">
+            Tudo certo? Gere a pré-visualização da proposta para personalizar e baixar.
+          </div>
+          <Button
+            size="lg"
+            className="ml-auto gap-2 bg-primary hover:bg-primary/90 shadow-md"
+            onClick={onGenerateProposal}
+            disabled={processing}
+          >
+            Gerar Proposta
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };

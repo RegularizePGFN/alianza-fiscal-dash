@@ -1,5 +1,5 @@
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { ExtractedData, Proposal, CompanyData } from "@/lib/types/proposals";
 import { ChangeEvent } from "react";
 import { DateFilterType, DateRange } from "@/components/proposals/ProposalsDateFilter";
@@ -7,6 +7,7 @@ import { DateFilterType, DateRange } from "@/components/proposals/ProposalsDateF
 import UploadTabContent from "./tabs/UploadTabContent";
 import DataTabContent from "./tabs/DataTabContent";
 import ProposalTabContent from "./tabs/ProposalTabContent";
+import ProposalsStepper, { ProposalStep } from "./ProposalsStepper";
 
 interface ProposalsTabsProps {
   activeTab: string;
@@ -64,46 +65,19 @@ const ProposalsTabs = ({
     onInputChange(e);
   };
 
+  const canGoToData = !!formData.cnpj || generatedProposal;
+  const canGoToProposal = !!formData.cnpj || generatedProposal;
+
   return (
-    <Tabs 
-      value={activeTab} 
-      onValueChange={setActiveTab} 
-      className="w-full"
-    >
-      <TabsList className="grid w-full grid-cols-3 mb-6 bg-af-blue-50 rounded-lg shadow-sm overflow-hidden">
-        <TabsTrigger 
-          value="upload" 
-          className={
-            activeTab === "upload"
-              ? "bg-af-blue-600 text-white font-semibold shadow"
-              : ""
-          }
-        >
-          Upload de Imagem
-        </TabsTrigger>
-        <TabsTrigger 
-          value="data" 
-          disabled={!formData.cnpj && !generatedProposal}
-          className={
-            activeTab === "data"
-              ? "bg-af-blue-600 text-white font-semibold shadow"
-              : ""
-          }
-        >
-          Dados Extraídos
-        </TabsTrigger>
-        <TabsTrigger 
-          value="proposal" 
-          disabled={!formData.cnpj && !generatedProposal}
-          className={
-            activeTab === "proposal"
-              ? "bg-af-blue-600 text-white font-semibold shadow"
-              : ""
-          }
-        >
-          Proposta
-        </TabsTrigger>
-      </TabsList>
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <div className="mb-6">
+        <ProposalsStepper
+          activeStep={activeTab as ProposalStep}
+          onStepChange={(s) => setActiveTab(s)}
+          canGoToData={canGoToData}
+          canGoToProposal={canGoToProposal}
+        />
+      </div>
       
       <TabsContent value="upload" className="space-y-6 animate-fade-in">
         <UploadTabContent
