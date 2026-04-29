@@ -50,8 +50,9 @@ export const useProposalsStateWithFilter = () => {
   const [processingStatus, setProcessingStatus] = useState<string>("");
   const [lastSearchedCnpj, setLastSearchedCnpj] = useState<string>("");
   
-  // Fetch proposals when component mounts or filter changes
+  // Fetch proposals só sob demanda (chamado pela aba Histórico ao montar / filtros)
   useEffect(() => {
+    if (!hasFetchedRef) return;
     fetchProposals(filterType, filterType === 'custom' ? customDateRange : undefined);
   }, [fetchProposals, filterType, customDateRange]);
   
