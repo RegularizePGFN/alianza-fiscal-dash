@@ -547,7 +547,7 @@ function buildProposalHtml(payload: ProposalPayload): string {
           <div class="label">Emissão</div>
           <div class="value">${escapeHtml(issueDate)}</div>
           <div class="label" style="margin-top:4px;">Validade</div>
-          <div class="value">${escapeHtml(dueDate)}</div>
+          <div class="value">${escapeHtml(validityDate)}</div>
         </div>
       </header>
 
