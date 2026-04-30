@@ -66,29 +66,37 @@ export const useFetchProposalsWithFilter = () => {
       const dateRange = getDateRangeFromFilter(filterType, customRange);
       const isAdmin = user.role === UserRole.ADMIN;
       
-      // Limit results for performance - especially for long date ranges
-      const RESULT_LIMIT = 1000;
-      
-      // Query based on user role and date range
-      let query = supabase.from('proposals').select('*');
-      
-      // Only filter by user_id if not an admin
-      if (!isAdmin) {
-        query = query.eq('user_id', user.id);
+      // Paginate to bypass Supabase's 1000-row default limit
+      const PAGE_SIZE = 1000;
+      let data: any[] = [];
+      let offset = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        let query = supabase.from('proposals').select('*');
+
+        if (!isAdmin) {
+          query = query.eq('user_id', user.id);
+        }
+
+        query = query
+          .gte('created_at', dateRange.from.toISOString())
+          .lte('created_at', dateRange.to.toISOString())
+          .order('created_at', { ascending: false })
+          .range(offset, offset + PAGE_SIZE - 1);
+
+        const { data: batch, error } = await query;
+
+        if (error) {
+          throw new Error(error.message);
+        }
+
+        const rows = batch || [];
+        data = data.concat(rows);
+        hasMore = rows.length === PAGE_SIZE;
+        offset += PAGE_SIZE;
       }
-      
-      // Add date filtering with performance optimizations
-      query = query
-        .gte('created_at', dateRange.from.toISOString())
-        .lte('created_at', dateRange.to.toISOString())
-        .order('created_at', { ascending: false })
-        .limit(RESULT_LIMIT);
-      
-      const { data, error } = await query;
-      
-      if (error) {
-        throw new Error(error.message);
-      }
+
       
       // Fetch all users for mapping names to proposals (especially for admins)
       const { data: usersData, error: usersError } = await supabase
@@ -152,14 +160,6 @@ export const useFetchProposalsWithFilter = () => {
       
       setProposals(formattedProposals);
       
-      // Show warning if result limit was reached
-      if (formattedProposals.length === RESULT_LIMIT) {
-        toast({
-          title: "Muitos resultados encontrados",
-          description: `Mostrando apenas os ${RESULT_LIMIT} resultados mais recentes. Use um período menor para ver todos os dados.`,
-          variant: "default",
-        });
-      }
     } catch (error: any) {
       console.error('Error fetching proposals:', error);
       toast({
