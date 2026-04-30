@@ -160,14 +160,6 @@ export const useFetchProposalsWithFilter = () => {
       
       setProposals(formattedProposals);
       
-      // Show warning if result limit was reached
-      if (formattedProposals.length === RESULT_LIMIT) {
-        toast({
-          title: "Muitos resultados encontrados",
-          description: `Mostrando apenas os ${RESULT_LIMIT} resultados mais recentes. Use um período menor para ver todos os dados.`,
-          variant: "default",
-        });
-      }
     } catch (error: any) {
       console.error('Error fetching proposals:', error);
       toast({
