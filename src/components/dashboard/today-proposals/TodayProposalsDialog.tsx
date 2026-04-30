@@ -256,12 +256,14 @@ export function TodayProposalsDialog({ open, onOpenChange }: Props) {
             </div>
           </div>
         ) : (
-          <div className="grid gap-4 lg:grid-cols-5 items-stretch min-h-0 mt-2 flex-1 overflow-y-auto">
-            <div className="lg:col-span-3 flex flex-col min-h-0 h-full">
-              <TodayProposalsTable data={proposals} />
-            </div>
-            <div className="lg:col-span-2 min-h-0">
-              <TodayProposalsCharts data={proposals} />
+          <div className="flex-1 min-h-0 overflow-y-auto mt-2">
+            <div className="grid gap-4 lg:grid-cols-5 items-stretch">
+              <div className="lg:col-span-3 flex flex-col min-h-0">
+                <TodayProposalsTable data={proposals} />
+              </div>
+              <div className="lg:col-span-2">
+                <TodayProposalsCharts data={proposals} />
+              </div>
             </div>
           </div>
         )}
