@@ -243,7 +243,7 @@ export function TodayProposalsDialog({ open, onOpenChange }: Props) {
         </DialogHeader>
 
         {isLoading ? (
-          <div className="grid gap-4 lg:grid-cols-5">
+          <div className="grid gap-4 lg:grid-cols-5 flex-1 min-h-0">
             <div className="lg:col-span-3 space-y-2">
               {[...Array(8)].map((_, i) => (
                 <Skeleton key={i} className="h-8 w-full" />
@@ -256,11 +256,11 @@ export function TodayProposalsDialog({ open, onOpenChange }: Props) {
             </div>
           </div>
         ) : (
-          <div className="grid gap-4 lg:grid-cols-5 items-stretch">
-            <div className="lg:col-span-3 flex">
+          <div className="grid gap-4 lg:grid-cols-5 items-stretch flex-1 min-h-0 mt-2">
+            <div className="lg:col-span-3 flex min-h-0">
               <TodayProposalsTable data={proposals} />
             </div>
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 min-h-0 overflow-y-auto">
               <TodayProposalsCharts data={proposals} />
             </div>
           </div>
