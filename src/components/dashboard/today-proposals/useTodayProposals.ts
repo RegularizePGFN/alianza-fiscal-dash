@@ -41,18 +41,31 @@ export function useTodayProposals(options: UseTodayProposalsOptions | boolean) {
     staleTime: 30_000,
     refetchInterval: 60_000,
     queryFn: async (): Promise<TodayProposal[]> => {
-      const { data, error } = await supabase
-        .from("proposals")
-        .select(
-          "id, user_id, client_name, client_phone, cnpj, total_debt, discounted_value, discount_percentage, fees_value, created_at"
-        )
-        .gte("created_at", from.toISOString())
-        .lt("created_at", to.toISOString())
-        .order("created_at", { ascending: false });
+      // Paginate to bypass Supabase's 1000-row default limit
+      const PAGE_SIZE = 1000;
+      let rows: any[] = [];
+      let offset = 0;
+      let hasMore = true;
 
-      if (error) throw error;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from("proposals")
+          .select(
+            "id, user_id, client_name, client_phone, cnpj, total_debt, discounted_value, discount_percentage, fees_value, created_at"
+          )
+          .gte("created_at", from.toISOString())
+          .lt("created_at", to.toISOString())
+          .order("created_at", { ascending: false })
+          .range(offset, offset + PAGE_SIZE - 1);
 
-      const rows = data || [];
+        if (error) throw error;
+
+        const batch = data || [];
+        rows = rows.concat(batch);
+        hasMore = batch.length === PAGE_SIZE;
+        offset += PAGE_SIZE;
+      }
+
       const userIds = Array.from(new Set(rows.map((r) => r.user_id).filter(Boolean)));
 
       let userMap: Record<string, string> = {};
