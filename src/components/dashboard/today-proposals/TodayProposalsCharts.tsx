@@ -162,7 +162,7 @@ export function TodayProposalsCharts({ data }: Props) {
                   type="number"
                   tick={{ fontSize: 10 }}
                   stroke="hsl(var(--muted-foreground))"
-                  tickFormatter={(v) => fmtCurrency(Number(v))}
+                  tickFormatter={(v) => fmtCurrencyShort(Number(v))}
                 />
                 <YAxis
                   type="category"
@@ -245,7 +245,7 @@ export function TodayProposalsCharts({ data }: Props) {
                   type="number"
                   tick={{ fontSize: 9 }}
                   stroke="hsl(var(--muted-foreground))"
-                  tickFormatter={(v) => fmtCurrency(Number(v))}
+                  tickFormatter={(v) => fmtCurrencyShort(Number(v))}
                   width={60}
                 />
                 <YAxis
