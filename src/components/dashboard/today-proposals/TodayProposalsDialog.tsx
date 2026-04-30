@@ -256,8 +256,8 @@ export function TodayProposalsDialog({ open, onOpenChange }: Props) {
             </div>
           </div>
         ) : (
-          <div className="grid gap-4 lg:grid-cols-5">
-            <div className="lg:col-span-3">
+          <div className="grid gap-4 lg:grid-cols-5 items-stretch">
+            <div className="lg:col-span-3 flex">
               <TodayProposalsTable data={proposals} />
             </div>
             <div className="lg:col-span-2">

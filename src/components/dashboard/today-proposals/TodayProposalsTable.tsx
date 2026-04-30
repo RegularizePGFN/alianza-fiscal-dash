@@ -125,8 +125,8 @@ export function TodayProposalsTable({ data }: Props) {
   }
 
   return (
-    <div className="flex flex-col min-w-0">
-      <ScrollArea className="h-[420px] rounded-md border">
+    <div className="flex flex-col min-w-0 w-full h-full">
+      <ScrollArea className="flex-1 min-h-[420px] rounded-md border">
         <table className="w-full table-fixed text-[11px] leading-tight">
           <colgroup>
             <col className="w-[30px]" />
