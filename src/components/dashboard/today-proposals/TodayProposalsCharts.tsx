@@ -15,6 +15,8 @@ import { DollarSign, Hash, BarChart3 } from "lucide-react";
 import type { TodayProposal } from "./useTodayProposals";
 
 const fmtCurrency = (v: number) =>
+  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const fmtCurrencyShort = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 
 type Mode = "fees" | "count" | "both";
