@@ -83,7 +83,7 @@ const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
 export function TodayProposalsTable({ data }: Props) {
   const [sorts, setSorts] = useState<SortCriterion[]>([{ key: "feesValue", dir: "desc" }]);
   const [search, setSearch] = useState("");
-  const [pageSize, setPageSize] = useState<number>(20);
+  const [pageSize, setPageSize] = useState<number>(10);
   const [page, setPage] = useState(1);
 
   const handleSort = (k: SortKey, e: React.MouseEvent) => {
