@@ -1,51 +1,113 @@
-## Parte 1 — Validade editável na proposta
 
-Hoje a validade é calculada automaticamente (24h após criação, via trigger no banco) e o campo na DataForm está `disabled`. Vamos torná-la editável e refletir essa data na prévia e no PDF final.
+# Inteligência Comercial — nova tela de análise profunda
 
-**Fluxo:**
-1. **DataForm** (`src/components/proposals/DataForm.tsx`): substituir o `<Input disabled>` da Data de Validade por um date picker (Popover + Calendar shadcn). Valor inicial = `formData.validityDate` ou `creationDate + 24h`. Ao mudar, atualiza `formData.validityDate` no formato ISO/yyyy-MM-dd.
-2. **Prévia** (`MetadataSection.tsx` + `ProposalHeader.tsx` que mostra "Emissão/Validade"): já recebem `validityDate` via `data` — passarão a refletir o valor escolhido automaticamente. Adicionar também um botão de edição inline (ícone calendário) no cabeçalho da prévia que abre o mesmo date picker e atualiza o estado da proposta.
-3. **Persistência** (`useSaveProposal.ts`): incluir `validity_date` no payload do `insert/update` quando o usuário definir manualmente, sobrescrevendo o cálculo do trigger. O trigger continua para o caso default.
-4. **PDF** (`supabase/functions/generate-proposal-pdf/index.ts` + `ProposalPdfTemplate.tsx`): o template já consome `validityDate` de `data` — basta garantir que o valor escolhido seja propagado no payload enviado ao Browserless. Sem mudanças visuais no PDF.
+Menu lateral em **Comercial** (apenas admins), rota `/inteligencia-comercial`. Foco em responder as perguntas que hoje o sistema não responde, cruzando `proposals` × `sales` via CNPJ.
 
-## Parte 2 — Diálogo "Propostas Geradas" com seletor de data/intervalo
+## Diagnóstico do que já existe
 
-**Arquivos:** `useTodayProposals.ts`, `TodayProposalsDialog.tsx`, `TodayProposalsTable.tsx`, `exportTodayProposals.ts`.
+- **Dashboard**: KPIs do dia, ranking, vendas por vendedor, propostas geradas hoje.
+- **Relatórios**: volume por período, por método de pagamento, top vendedores, comissões.
+- **Propostas**: histórico bruto e cards de resumo.
+- **O que não existe** (lacuna que essa tela vai preencher):
+  - Funil real **proposta → venda** (taxa de conversão por vendedor).
+  - Tempo médio entre criar proposta e fechar venda (mesmo CNPJ).
+  - Distribuição "vendeu no mesmo dia × dias depois".
+  - Heatmap de horário/dia da semana de geração de proposta e de fechamento.
+  - Análise de eficiência: quantas propostas o vendedor precisa criar para fechar 1 venda; valor médio de proposta vs valor médio fechado.
+  - Propostas em aberto ("quentes" — sem venda ainda) com aging.
 
-1. **Renomear título** de "Propostas Geradas Hoje" → **"Propostas Geradas"**.
-2. **Hook `useTodayProposals`**: aceitar `{ from: Date; to: Date }` como parâmetro (default = hoje 00:00 → hoje 24:00). Usar essas datas no `gte`/`lt` do query do Supabase. Incluir `client_phone` no `select` e no tipo `TodayProposal`.
-3. **Dialog**: adicionar um seletor de data com 3 modos (igual ao `ProposalsDateFilter` já existente):
-   - "Hoje" (padrão)
-   - "Últimos 7 dias"
-   - "Período personalizado" (Popover com Calendar `mode="range"`)
-   
-   O badge atual com `todayLabel` passa a mostrar o range selecionado (ex.: "01/04 – 29/04"). A lista, gráficos e exportação respeitam o range escolhido (já usam `proposals` derivado do hook).
-4. **Tabela**: adicionar coluna "Telefone" (formato `(XX) XXXXX-XXXX`), opcional/colapsada em telas pequenas.
-5. **Exportação Excel** (`exportTodayProposals.ts`):
-   - Adicionar coluna **"Telefone"** entre Cliente e CNPJ.
-   - Nome do arquivo passa a refletir o range: `propostas-{yyyy-MM-dd}_a_{yyyy-MM-dd}.xlsx` (ou `propostas-{data}.xlsx` para um único dia).
-   - Garantir que a exportação use o array `proposals` já filtrado pelo range + filtros atuais (vendedor/desconto).
+## Validação técnica (já confirmado no banco)
 
-## Detalhes técnicos
+- `sales.client_document` e `proposals.cnpj` permitem cruzamento. **3.206 vendas / 9.286 propostas / 984 matches** hoje (~31%). Documento vem com pontuação variável → normalizar com `regexp_replace('\D','','g')` antes do join.
+- Match será feito por **CNPJ normalizado + mesmo vendedor** (`sales.salesperson_id = proposals.user_id`) para evitar atribuir venda de outro vendedor à proposta.
+- Quando há mais de uma proposta para o mesmo CNPJ antes da venda, considerar a **proposta mais recente anterior à venda** como a "convertida".
 
-- O telefone do cliente **já é salvo** na coluna `proposals.client_phone` (confirmado em `useSaveProposal.ts` e na busca de CNPJ). Sem migrações necessárias.
-- A coluna `validity_date` já existe na tabela `proposals` e o trigger `set_proposal_validity_date` define o default. Como o trigger usa `BEFORE INSERT` e atribui sempre `creation_date + 24h`, ele **sobrescreve** valor enviado pelo cliente. Precisamos ajustar o trigger para só preencher quando `validity_date IS NULL` — vai ser uma migration mínima:
-  ```sql
-  CREATE OR REPLACE FUNCTION public.set_proposal_validity_date()
-  RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-  BEGIN
-    IF NEW.validity_date IS NULL THEN
-      NEW.validity_date := NEW.creation_date + interval '24 hours';
-    END IF;
-    RETURN NEW;
-  END;
-  $$;
-  ```
-- Date picker: usar `Calendar` do shadcn com `className="p-3 pointer-events-auto"` dentro de Popover (padrão do projeto, ver `ProposalsDateFilter.tsx`).
-- Sem alterações no design do PDF — mantemos o layout aprovado.
+## Estrutura da tela
 
-## Resumo de arquivos
+Layout em abas para não poluir, todas filtradas por **período** (mês atual padrão) e **vendedor** (todos / específico).
 
-- Editar: `src/components/proposals/DataForm.tsx`, `src/components/proposals/card/sections/MetadataSection.tsx` (ou ProposalHeader, conforme onde aparece "Emissão/Validade"), `src/hooks/proposals/useSaveProposal.ts`, `src/components/dashboard/today-proposals/{useTodayProposals.ts,TodayProposalsDialog.tsx,TodayProposalsTable.tsx,exportTodayProposals.ts}`.
-- Migration: ajuste do trigger `set_proposal_validity_date`.
-- Sem mudanças no PDF/edge function.
+```text
+┌─ Filtros: período • vendedor • método de pagamento ──────────────┐
+├─ KPIs topo ──────────────────────────────────────────────────────┤
+│  Propostas criadas │ Vendas fechadas │ Taxa conversão │ Tempo    │
+│  no período        │ no período      │ (CNPJ match)   │ médio    │
+├─ Abas ───────────────────────────────────────────────────────────┤
+│ [Funil] [Tempo de Conversão] [Padrões] [Vendedores] [Em Aberto]  │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### Aba 1 — Funil Proposta → Venda
+- Gráfico de funil: Propostas criadas → Propostas com venda → Valor proposto → Valor fechado.
+- Card "Eficiência da negociação": valor médio fechado / valor médio proposto (mostra desconto real praticado).
+
+### Aba 2 — Tempo de Conversão
+- **Distribuição** (gráfico de barras): vendas fechadas em `0 dias` (mesmo dia) / `1 dia` / `2-3` / `4-7` / `8-15` / `16-30` / `>30`.
+- KPIs: tempo médio, mediana, p90.
+- Tabela com vendas convertidas mostrando: vendedor, cliente, CNPJ, data proposta, data venda, dias decorridos, valor proposto, valor vendido, % desconto realizado.
+
+### Aba 3 — Padrões (horário / dia da semana)
+- **Heatmap** dia da semana × hora — duas visões selecionáveis: criação de propostas e fechamento de vendas.
+- Gráfico de barras: vendas por hora do dia, vendas por dia da semana.
+- Insight automático: "Seu time fecha 62% das vendas entre 14h-17h" (texto gerado a partir dos dados).
+
+### Aba 4 — Análise por Vendedor
+Tabela rica e ordenável, uma linha por vendedor:
+
+| Vendedor | Propostas | Vendas | Conv. % | Tempo médio | Ticket prop. | Ticket venda | Desc. médio | Valor total |
+|----------|-----------|--------|---------|-------------|--------------|--------------|-------------|-------------|
+
+- Coluna "Perfil" classifica: **Caçador** (alta conversão mesmo dia), **Cultivador** (converte em dias), **Volume** (muitas propostas, conversão baixa), **Atenção** (poucas propostas, sem vendas).
+- Mini gráfico inline por vendedor mostrando distribuição de tempo de conversão.
+
+### Aba 5 — Propostas em Aberto (oportunidades quentes)
+- Lista propostas **sem venda correspondente ainda**, ordenadas por aging.
+- Filtros: aging (0-3d / 4-7d / 8-15d / >15d), valor, vendedor.
+- Coluna de ação: link para WhatsApp do cliente (tel já existe em `proposals.client_phone`).
+- Destaque visual para propostas com >7 dias e alto valor — são as que o gestor precisa cobrar.
+
+## Implementação técnica
+
+### Backend (RPC SECURITY DEFINER)
+Seguindo o padrão do projeto (memória `reporting-aggregation-rpc`), criar funções no Postgres para evitar limite de 1000 linhas e processar o cruzamento server-side:
+
+1. **`get_proposal_to_sale_conversion(p_start date, p_end date, p_user_id uuid default null)`** — retorna por venda no período: salesperson_id, salesperson_name, cnpj, sale_id, sale_date, sale_amount, matched_proposal_id, proposal_created_at, days_to_convert, proposal_value, fees_value. Faz `LEFT JOIN LATERAL` na proposta mais recente do mesmo CNPJ + mesmo vendedor com `created_at <= sale_date`.
+
+2. **`get_commercial_intel_summary(p_start, p_end, p_user_id)`** — KPIs agregados (total propostas, total vendas, taxa conversão, tempo médio/mediana, ticket médio).
+
+3. **`get_open_proposals(p_start, p_end, p_user_id)`** — propostas sem venda correspondente, com aging em dias.
+
+4. **`get_hourly_patterns(p_start, p_end, p_user_id)`** — agregação por `EXTRACT(dow)` × `EXTRACT(hour)` para propostas e vendas (timezone America/Sao_Paulo, conforme memória do projeto).
+
+Apenas admins podem chamar — checagem via `get_current_user_role() = 'admin'` dentro da função.
+
+### Frontend
+- Rota: `/inteligencia-comercial` em `src/App.tsx`.
+- Página: `src/pages/CommercialIntelPage.tsx`.
+- Componentes em `src/components/commercial-intel/`:
+  - `CommercialIntelContainer.tsx` (filtros + abas)
+  - `IntelKpiCards.tsx`
+  - `tabs/ConversionFunnelTab.tsx`
+  - `tabs/ConversionTimeTab.tsx`
+  - `tabs/PatternsTab.tsx` (heatmap usando `recharts` ou grid Tailwind)
+  - `tabs/SalespersonAnalysisTab.tsx`
+  - `tabs/OpenProposalsTab.tsx`
+- Hooks: `useCommercialIntel.ts` (React Query, `staleTime: 60_000`).
+- Sidebar (`src/components/layout/AppSidebar.tsx`): adicionar item **"Inteligência Comercial"** dentro do grupo **Comercial**, com ícone `Brain` ou `LineChart` do lucide-react, condicionado a `isAdmin`.
+
+### Padrões visuais
+- Reaproveitar Card/Tabs/Table do shadcn já em uso.
+- Skeleton loaders e count-up nos KPIs (memória `design-system-standards`).
+- Valores monetários alinhados à direita.
+- Tema dark premium consistente com o resto.
+
+## Por que isso é útil
+
+- **Para você (dono)**: vê quem realmente converte, não só quem vende muito; identifica vendedores que geram propostas sem fechar; mede desconto real praticado.
+- **Para gestores**: lista de oportunidades quentes (Aba 5) vira ferramenta diária de cobrança; padrões de horário ajudam a planejar escala.
+- **Para o vendedor (futuro)**: base para metas de conversão, não só de volume.
+
+## Fora de escopo desta entrega
+
+- Edição/CRUD nesta tela (é só leitura/análise).
+- Exportação Excel/PDF — pode ser próximo passo se quiser.
+- Visão para vendedor (só admin nesta primeira versão, conforme pedido).
