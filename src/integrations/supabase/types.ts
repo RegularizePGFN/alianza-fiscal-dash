@@ -631,7 +631,93 @@ export type Database = {
           details: string
         }[]
       }
+      get_commercial_intel_summary: {
+        Args: { p_end: string; p_start: string; p_user_id?: string }
+        Returns: {
+          avg_days_to_convert: number
+          conversion_rate: number
+          matched_sales: number
+          matched_sales_value: number
+          median_days_to_convert: number
+          same_day_count: number
+          total_proposals: number
+          total_proposals_value: number
+          total_sales: number
+          total_sales_value: number
+        }[]
+      }
+      get_conversion_time_buckets: {
+        Args: { p_end: string; p_start: string; p_user_id?: string }
+        Returns: {
+          bucket: string
+          bucket_order: number
+          count: number
+          total_value: number
+        }[]
+      }
       get_current_user_role: { Args: never; Returns: string }
+      get_hourly_patterns: {
+        Args: { p_end: string; p_start: string; p_user_id?: string }
+        Returns: {
+          count: number
+          dow: number
+          hour: number
+          source: string
+          total_value: number
+        }[]
+      }
+      get_open_proposals: {
+        Args: { p_end: string; p_start: string; p_user_id?: string }
+        Returns: {
+          aging_days: number
+          client_name: string
+          client_phone: string
+          cnpj: string
+          created_at: string
+          discounted_value: number
+          fees_value: number
+          proposal_id: string
+          salesperson_id: string
+          salesperson_name: string
+          total_debt: number
+        }[]
+      }
+      get_proposal_to_sale_conversion: {
+        Args: { p_end: string; p_start: string; p_user_id?: string }
+        Returns: {
+          client_name: string
+          cnpj_normalized: string
+          days_to_convert: number
+          payment_method: string
+          proposal_created_at: string
+          proposal_discounted_value: number
+          proposal_fees_value: number
+          proposal_id: string
+          proposal_total_debt: number
+          sale_amount: number
+          sale_date: string
+          sale_id: string
+          salesperson_id: string
+          salesperson_name: string
+        }[]
+      }
+      get_salesperson_intel: {
+        Args: { p_end: string; p_start: string }
+        Returns: {
+          avg_days_to_convert: number
+          avg_discount_pct: number
+          avg_proposal_value: number
+          avg_sale_value: number
+          conversion_rate: number
+          matched_sales_count: number
+          proposals_count: number
+          proposals_value: number
+          sales_count: number
+          sales_value: number
+          salesperson_id: string
+          salesperson_name: string
+        }[]
+      }
       get_team_daily_sales: {
         Args: { sale_date_param: string }
         Returns: {
