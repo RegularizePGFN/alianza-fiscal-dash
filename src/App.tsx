@@ -18,6 +18,7 @@ import FinanceiroPage from "./pages/FinanceiroPage";
 import NotFound from "./pages/NotFound";
 import CalculatorPage from "./pages/CalculatorPage";
 import MeuHistoricoPage from "./pages/MeuHistoricoPage";
+import CommercialIntelPage from "./pages/CommercialIntelPage";
 
 const App = () => (
   <TooltipProvider>
@@ -35,6 +36,7 @@ const App = () => (
       <Route path="/financeiro" element={<FinanceiroPage />} />
       <Route path="/calculadora" element={<CalculatorPage />} />
       <Route path="/meu-historico" element={<MeuHistoricoPage />} />
+      <Route path="/inteligencia-comercial" element={<CommercialIntelPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
     <Toaster />
