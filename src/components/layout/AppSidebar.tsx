@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { UserRole } from "@/lib/types";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { BarChart3, Home, Menu, ShoppingCart, Users, LogOut, ChevronLeft, Settings, FileText, User, DollarSign, History, Calculator, TrendingUp, UserCog, Monitor } from "lucide-react";
+import { BarChart3, Home, Menu, ShoppingCart, Users, LogOut, ChevronLeft, Settings, FileText, User, DollarSign, History, Calculator, TrendingUp, UserCog, Monitor, Brain } from "lucide-react";
 interface SidebarLinkProps {
   to: string;
   icon: React.ReactNode;
@@ -105,6 +105,7 @@ export function AppSidebar() {
           <SidebarLink to="/dashboard" icon={<Home size={18} />} label="Dashboard" expanded={expanded} active={location.pathname === "/dashboard"} />
           <SidebarLink to="/vendas" icon={<ShoppingCart size={18} />} label="Vendas" expanded={expanded} active={location.pathname === "/vendas"} />
           <SidebarLink to="/propostas" icon={<FileText size={18} />} label="Propostas" expanded={expanded} active={location.pathname === "/propostas"} isBeta={true} />
+          {isAdmin && <SidebarLink to="/inteligencia-comercial" icon={<Brain size={18} />} label="Inteligência Comercial" expanded={expanded} active={location.pathname === "/inteligencia-comercial"} isBeta={true} />}
           {isSalesperson && <SidebarLink to="/meu-historico" icon={<History size={18} />} label="Meu Histórico" expanded={expanded} active={location.pathname === "/meu-historico"} />}
         </SidebarGroup>
         
