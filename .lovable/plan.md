@@ -1,113 +1,104 @@
+## Controle de Equipamentos da Empresa
 
-# Inteligência Comercial — nova tela de análise profunda
+Novo módulo administrativo para cadastrar e gerenciar os equipamentos da empresa (notebooks, celulares, monitores, etc.) e atribuí-los a colaboradores.
 
-Menu lateral em **Comercial** (apenas admins), rota `/inteligencia-comercial`. Foco em responder as perguntas que hoje o sistema não responde, cruzando `proposals` × `sales` via CNPJ.
+### Onde fica
+- Novo item no menu lateral, **grupo "Administrativo"**, visível **apenas para admins**, com ícone `Laptop` e label **"Equipamentos"**.
+- Rota: `/equipamentos`.
 
-## Diagnóstico do que já existe
+### O que dá pra fazer
 
-- **Dashboard**: KPIs do dia, ranking, vendas por vendedor, propostas geradas hoje.
-- **Relatórios**: volume por período, por método de pagamento, top vendedores, comissões.
-- **Propostas**: histórico bruto e cards de resumo.
-- **O que não existe** (lacuna que essa tela vai preencher):
-  - Funil real **proposta → venda** (taxa de conversão por vendedor).
-  - Tempo médio entre criar proposta e fechar venda (mesmo CNPJ).
-  - Distribuição "vendeu no mesmo dia × dias depois".
-  - Heatmap de horário/dia da semana de geração de proposta e de fechamento.
-  - Análise de eficiência: quantas propostas o vendedor precisa criar para fechar 1 venda; valor médio de proposta vs valor médio fechado.
-  - Propostas em aberto ("quentes" — sem venda ainda) com aging.
+**1. Cadastro de equipamentos**
+Cada equipamento tem:
+- Nome / identificação (ex.: "Notebook Dell Inspiron 15")
+- Tipo (Notebook, Celular, Monitor, Headset, Tablet, Outros) — selecionável
+- Marca e modelo
+- Número de série / IMEI (opcional)
+- Tag / patrimônio interno (opcional, gerada automaticamente se vazia: EQ-0001, EQ-0002…)
+- Data de aquisição
+- Valor de aquisição (opcional)
+- Condição (Novo, Bom, Regular, Danificado)
+- Status (Disponível, Em uso, Em manutenção, Aposentado) — calculado automaticamente conforme atribuições ativas, mas com override manual para manutenção/aposentado
+- Observações (texto livre)
 
-## Validação técnica (já confirmado no banco)
+**2. Atribuições (histórico)**
+Cada equipamento mantém um histórico de quem usou:
+- Colaborador atribuído (dropdown com usuários do sistema)
+- Data de entrega
+- Data de devolução (opcional — fica em branco enquanto está com a pessoa)
+- Condição na entrega / na devolução (opcional)
+- Observações da atribuição
 
-- `sales.client_document` e `proposals.cnpj` permitem cruzamento. **3.206 vendas / 9.286 propostas / 984 matches** hoje (~31%). Documento vem com pontuação variável → normalizar com `regexp_replace('\D','','g')` antes do join.
-- Match será feito por **CNPJ normalizado + mesmo vendedor** (`sales.salesperson_id = proposals.user_id`) para evitar atribuir venda de outro vendedor à proposta.
-- Quando há mais de uma proposta para o mesmo CNPJ antes da venda, considerar a **proposta mais recente anterior à venda** como a "convertida".
+Um equipamento só pode ter **uma atribuição ativa** (sem data de devolução) por vez. Ao atribuir a outra pessoa enquanto há uma ativa, o sistema sugere encerrar a anterior automaticamente.
 
-## Estrutura da tela
+**3. Tela principal (lista)**
+- Cards de KPI no topo: Total de equipamentos, Em uso, Disponíveis, Em manutenção
+- Filtros: busca por nome/serial/tag, filtro por tipo, por status, por colaborador
+- Tabela com: Tag, Nome, Tipo, Status (badge colorido), Em uso por (nome do colaborador atual ou "—"), Desde (data da atribuição ativa), Ações
+- Botão "Novo Equipamento" no header
 
-Layout em abas para não poluir, todas filtradas por **período** (mês atual padrão) e **vendedor** (todos / específico).
+**4. Detalhe do equipamento (dialog)**
+- Aba "Informações" — todos os dados cadastrais (editáveis)
+- Aba "Atribuições" — histórico completo em timeline, com botão "Nova atribuição" e "Registrar devolução" para a ativa
 
-```text
-┌─ Filtros: período • vendedor • método de pagamento ──────────────┐
-├─ KPIs topo ──────────────────────────────────────────────────────┤
-│  Propostas criadas │ Vendas fechadas │ Taxa conversão │ Tempo    │
-│  no período        │ no período      │ (CNPJ match)   │ médio    │
-├─ Abas ───────────────────────────────────────────────────────────┤
-│ [Funil] [Tempo de Conversão] [Padrões] [Vendedores] [Em Aberto]  │
-└──────────────────────────────────────────────────────────────────┘
+### Detalhes técnicos
+
+**Migration (nova) — duas tabelas + RLS admin-only:**
+
+```sql
+create table public.equipment (
+  id uuid primary key default gen_random_uuid(),
+  tag text unique not null,             -- EQ-0001 (gerado por trigger se vazio)
+  name text not null,
+  type text not null,                   -- notebook|celular|monitor|headset|tablet|outros
+  brand text, model text,
+  serial_number text, imei text,
+  acquisition_date date,
+  acquisition_value numeric,
+  condition text default 'bom',         -- novo|bom|regular|danificado
+  status text default 'disponivel',     -- disponivel|em_uso|manutencao|aposentado
+  notes text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table public.equipment_assignments (
+  id uuid primary key default gen_random_uuid(),
+  equipment_id uuid not null references equipment(id) on delete cascade,
+  user_id uuid not null,                -- profile do colaborador
+  user_name text not null,              -- snapshot
+  assigned_at date not null default current_date,
+  returned_at date,                     -- null = ativa
+  condition_on_assign text,
+  condition_on_return text,
+  notes text,
+  created_at timestamptz default now()
+);
+
+create index on equipment_assignments(equipment_id, returned_at);
 ```
 
-### Aba 1 — Funil Proposta → Venda
-- Gráfico de funil: Propostas criadas → Propostas com venda → Valor proposto → Valor fechado.
-- Card "Eficiência da negociação": valor médio fechado / valor médio proposto (mostra desconto real praticado).
+- **RLS:** ambas as tabelas com policy `ALL` restrita a `get_current_user_role() = 'admin'`.
+- **Trigger** `set_equipment_tag`: gera `EQ-XXXX` sequencial se `tag` vier vazia.
+- **Trigger** `sync_equipment_status`: ao inserir atribuição ativa → status `em_uso`; ao encerrar última ativa → `disponivel` (respeita override `manutencao`/`aposentado`).
+- **Trigger** `updated_at` reusando `update_updated_at_column()`.
 
-### Aba 2 — Tempo de Conversão
-- **Distribuição** (gráfico de barras): vendas fechadas em `0 dias` (mesmo dia) / `1 dia` / `2-3` / `4-7` / `8-15` / `16-30` / `>30`.
-- KPIs: tempo médio, mediana, p90.
-- Tabela com vendas convertidas mostrando: vendedor, cliente, CNPJ, data proposta, data venda, dias decorridos, valor proposto, valor vendido, % desconto realizado.
+**Frontend:**
+- `src/pages/EquipmentPage.tsx` — guard de admin (igual ao `UsersPage`)
+- `src/components/equipment/`
+  - `EquipmentContainer.tsx` (KPIs + filtros + tabela)
+  - `EquipmentKpiCards.tsx`
+  - `EquipmentFilters.tsx`
+  - `EquipmentTable.tsx`
+  - `EquipmentFormModal.tsx` (criar/editar)
+  - `EquipmentDetailDialog.tsx` (abas Informações + Atribuições)
+  - `AssignmentForm.tsx` / `AssignmentTimeline.tsx`
+- `src/hooks/useEquipment.ts` — React Query: `useEquipmentList`, `useEquipmentDetail`, `useSaveEquipment`, `useDeleteEquipment`, `useAssignments`, `useCreateAssignment`, `useReturnAssignment`
+- `src/App.tsx` — rota `/equipamentos`
+- `src/components/layout/AppSidebar.tsx` — link novo no grupo Administrativo (ícone `Laptop`, admin-only)
 
-### Aba 3 — Padrões (horário / dia da semana)
-- **Heatmap** dia da semana × hora — duas visões selecionáveis: criação de propostas e fechamento de vendas.
-- Gráfico de barras: vendas por hora do dia, vendas por dia da semana.
-- Insight automático: "Seu time fecha 62% das vendas entre 14h-17h" (texto gerado a partir dos dados).
-
-### Aba 4 — Análise por Vendedor
-Tabela rica e ordenável, uma linha por vendedor:
-
-| Vendedor | Propostas | Vendas | Conv. % | Tempo médio | Ticket prop. | Ticket venda | Desc. médio | Valor total |
-|----------|-----------|--------|---------|-------------|--------------|--------------|-------------|-------------|
-
-- Coluna "Perfil" classifica: **Caçador** (alta conversão mesmo dia), **Cultivador** (converte em dias), **Volume** (muitas propostas, conversão baixa), **Atenção** (poucas propostas, sem vendas).
-- Mini gráfico inline por vendedor mostrando distribuição de tempo de conversão.
-
-### Aba 5 — Propostas em Aberto (oportunidades quentes)
-- Lista propostas **sem venda correspondente ainda**, ordenadas por aging.
-- Filtros: aging (0-3d / 4-7d / 8-15d / >15d), valor, vendedor.
-- Coluna de ação: link para WhatsApp do cliente (tel já existe em `proposals.client_phone`).
-- Destaque visual para propostas com >7 dias e alto valor — são as que o gestor precisa cobrar.
-
-## Implementação técnica
-
-### Backend (RPC SECURITY DEFINER)
-Seguindo o padrão do projeto (memória `reporting-aggregation-rpc`), criar funções no Postgres para evitar limite de 1000 linhas e processar o cruzamento server-side:
-
-1. **`get_proposal_to_sale_conversion(p_start date, p_end date, p_user_id uuid default null)`** — retorna por venda no período: salesperson_id, salesperson_name, cnpj, sale_id, sale_date, sale_amount, matched_proposal_id, proposal_created_at, days_to_convert, proposal_value, fees_value. Faz `LEFT JOIN LATERAL` na proposta mais recente do mesmo CNPJ + mesmo vendedor com `created_at <= sale_date`.
-
-2. **`get_commercial_intel_summary(p_start, p_end, p_user_id)`** — KPIs agregados (total propostas, total vendas, taxa conversão, tempo médio/mediana, ticket médio).
-
-3. **`get_open_proposals(p_start, p_end, p_user_id)`** — propostas sem venda correspondente, com aging em dias.
-
-4. **`get_hourly_patterns(p_start, p_end, p_user_id)`** — agregação por `EXTRACT(dow)` × `EXTRACT(hour)` para propostas e vendas (timezone America/Sao_Paulo, conforme memória do projeto).
-
-Apenas admins podem chamar — checagem via `get_current_user_role() = 'admin'` dentro da função.
-
-### Frontend
-- Rota: `/inteligencia-comercial` em `src/App.tsx`.
-- Página: `src/pages/CommercialIntelPage.tsx`.
-- Componentes em `src/components/commercial-intel/`:
-  - `CommercialIntelContainer.tsx` (filtros + abas)
-  - `IntelKpiCards.tsx`
-  - `tabs/ConversionFunnelTab.tsx`
-  - `tabs/ConversionTimeTab.tsx`
-  - `tabs/PatternsTab.tsx` (heatmap usando `recharts` ou grid Tailwind)
-  - `tabs/SalespersonAnalysisTab.tsx`
-  - `tabs/OpenProposalsTab.tsx`
-- Hooks: `useCommercialIntel.ts` (React Query, `staleTime: 60_000`).
-- Sidebar (`src/components/layout/AppSidebar.tsx`): adicionar item **"Inteligência Comercial"** dentro do grupo **Comercial**, com ícone `Brain` ou `LineChart` do lucide-react, condicionado a `isAdmin`.
-
-### Padrões visuais
-- Reaproveitar Card/Tabs/Table do shadcn já em uso.
-- Skeleton loaders e count-up nos KPIs (memória `design-system-standards`).
-- Valores monetários alinhados à direita.
-- Tema dark premium consistente com o resto.
-
-## Por que isso é útil
-
-- **Para você (dono)**: vê quem realmente converte, não só quem vende muito; identifica vendedores que geram propostas sem fechar; mede desconto real praticado.
-- **Para gestores**: lista de oportunidades quentes (Aba 5) vira ferramenta diária de cobrança; padrões de horário ajudam a planejar escala.
-- **Para o vendedor (futuro)**: base para metas de conversão, não só de volume.
-
-## Fora de escopo desta entrega
-
-- Edição/CRUD nesta tela (é só leitura/análise).
-- Exportação Excel/PDF — pode ser próximo passo se quiser.
-- Visão para vendedor (só admin nesta primeira versão, conforme pedido).
+### O que NÃO entra nesta primeira versão
+- Upload de foto / nota fiscal do equipamento (pode vir depois)
+- Cálculo de depreciação contábil
+- Alertas automáticos de manutenção preventiva
+- Exportação CSV/PDF (fácil de adicionar depois se precisar)
