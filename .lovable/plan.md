@@ -1,62 +1,70 @@
-## Controle de Equipamentos da Empresa
+## Inventário — Controle de equipamentos da empresa
 
-Novo módulo administrativo para cadastrar e gerenciar os equipamentos da empresa (notebooks, celulares, monitores, etc.) e atribuí-los a colaboradores.
+Módulo administrativo simples e prático para saber **com quem está o quê** na empresa.
 
 ### Onde fica
-- Novo item no menu lateral, **grupo "Administrativo"**, visível **apenas para admins**, com ícone `Laptop` e label **"Equipamentos"**.
-- Rota: `/equipamentos`.
+- Menu lateral, grupo **Administrativo**, item **"Inventário"** (ícone `Package`), visível só para admins.
+- Rota: `/inventario`.
 
-### O que dá pra fazer
+### Tela única (sem abas)
 
-**1. Cadastro de equipamentos**
-Cada equipamento tem:
-- Nome / identificação (ex.: "Notebook Dell Inspiron 15")
-- Tipo (Notebook, Celular, Monitor, Headset, Tablet, Outros) — selecionável
-- Marca e modelo
-- Número de série / IMEI (opcional)
-- Tag / patrimônio interno (opcional, gerada automaticamente se vazia: EQ-0001, EQ-0002…)
-- Data de aquisição
-- Valor de aquisição (opcional)
-- Condição (Novo, Bom, Regular, Danificado)
-- Status (Disponível, Em uso, Em manutenção, Aposentado) — calculado automaticamente conforme atribuições ativas, mas com override manual para manutenção/aposentado
-- Observações (texto livre)
+**Topo — 4 KPIs compactos:**
+Total de itens · Em uso · Disponíveis · Em manutenção
 
-**2. Atribuições (histórico)**
-Cada equipamento mantém um histórico de quem usou:
-- Colaborador atribuído (dropdown com usuários do sistema)
-- Data de entrega
-- Data de devolução (opcional — fica em branco enquanto está com a pessoa)
-- Condição na entrega / na devolução (opcional)
-- Observações da atribuição
+**Barra de ações:**
+- Busca (nome, tag, serial, colaborador)
+- Filtro por tipo · Filtro por status
+- Botão **"+ Novo item"**
 
-Um equipamento só pode ter **uma atribuição ativa** (sem data de devolução) por vez. Ao atribuir a outra pessoa enquanto há uma ativa, o sistema sugere encerrar a anterior automaticamente.
+**Tabela:**
+| Tag | Item | Tipo | Status (badge) | Com quem | Desde | Ações |
 
-**3. Tela principal (lista)**
-- Cards de KPI no topo: Total de equipamentos, Em uso, Disponíveis, Em manutenção
-- Filtros: busca por nome/serial/tag, filtro por tipo, por status, por colaborador
-- Tabela com: Tag, Nome, Tipo, Status (badge colorido), Em uso por (nome do colaborador atual ou "—"), Desde (data da atribuição ativa), Ações
-- Botão "Novo Equipamento" no header
+- "Com quem" mostra nome do colaborador ou "—"
+- Ações: **Atribuir / Devolver** (botão contextual conforme status), **Editar**, **Excluir**
 
-**4. Detalhe do equipamento (dialog)**
-- Aba "Informações" — todos os dados cadastrais (editáveis)
-- Aba "Atribuições" — histórico completo em timeline, com botão "Nova atribuição" e "Registrar devolução" para a ativa
+### Modais (2 só, prático)
+
+**1. Modal "Novo / Editar item"** — campos enxutos:
+- Nome *
+- Tipo: Notebook · Celular · Monitor · Headset · Tablet · Outros *
+- Marca / Modelo
+- Nº de série / IMEI
+- Tag (auto-gerada `EQ-0001` se vazia)
+- Data de aquisição · Valor (opcional)
+- Condição: Novo · Bom · Regular · Danificado
+- Status manual: Disponível · Manutenção · Aposentado (não escolhe "Em uso" — vira automático ao atribuir)
+- Observações
+
+**2. Modal "Atribuir / Devolver"**
+- Se disponível → form para **atribuir**: colaborador (select dos usuários), data de entrega (hoje), observação
+- Se em uso → form para **devolver**: data de devolução (hoje), condição na devolução, observação
+- Embaixo do form: lista compacta do **histórico de quem usou** esse item (colaborador, período, condição) — somente leitura
+
+Sem timeline elaborada nem aba separada — tudo no mesmo modal.
+
+### Regras
+
+- Só admin vê e mexe.
+- Um item só tem **uma atribuição ativa** por vez.
+- Status sincroniza automático: ao atribuir → `em_uso`; ao devolver → `disponivel`. Se admin marcou `manutencao` ou `aposentado`, esses estados têm prioridade e não são sobrescritos.
+- Tag única, gerada sequencialmente se não informada.
 
 ### Detalhes técnicos
 
-**Migration (nova) — duas tabelas + RLS admin-only:**
+**Migration — duas tabelas + RLS admin-only:**
 
 ```sql
 create table public.equipment (
   id uuid primary key default gen_random_uuid(),
-  tag text unique not null,             -- EQ-0001 (gerado por trigger se vazio)
+  tag text unique not null,           -- auto EQ-0001 via trigger
   name text not null,
-  type text not null,                   -- notebook|celular|monitor|headset|tablet|outros
+  type text not null default 'outros',
   brand text, model text,
   serial_number text, imei text,
   acquisition_date date,
   acquisition_value numeric,
-  condition text default 'bom',         -- novo|bom|regular|danificado
-  status text default 'disponivel',     -- disponivel|em_uso|manutencao|aposentado
+  condition text not null default 'bom',
+  status text not null default 'disponivel',
   notes text,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
@@ -65,40 +73,34 @@ create table public.equipment (
 create table public.equipment_assignments (
   id uuid primary key default gen_random_uuid(),
   equipment_id uuid not null references equipment(id) on delete cascade,
-  user_id uuid not null,                -- profile do colaborador
-  user_name text not null,              -- snapshot
+  user_id uuid not null,
+  user_name text not null,            -- snapshot
   assigned_at date not null default current_date,
-  returned_at date,                     -- null = ativa
+  returned_at date,                   -- null = ativa
   condition_on_assign text,
   condition_on_return text,
   notes text,
   created_at timestamptz default now()
 );
-
-create index on equipment_assignments(equipment_id, returned_at);
 ```
 
-- **RLS:** ambas as tabelas com policy `ALL` restrita a `get_current_user_role() = 'admin'`.
-- **Trigger** `set_equipment_tag`: gera `EQ-XXXX` sequencial se `tag` vier vazia.
-- **Trigger** `sync_equipment_status`: ao inserir atribuição ativa → status `em_uso`; ao encerrar última ativa → `disponivel` (respeita override `manutencao`/`aposentado`).
-- **Trigger** `updated_at` reusando `update_updated_at_column()`.
+- RLS `ALL` em ambas restrita a `get_current_user_role() = 'admin'`.
+- Trigger `set_equipment_tag` (gera `EQ-0001` se vazio).
+- Trigger `sync_equipment_status` em `equipment_assignments` (insert/update/delete) — respeita override `manutencao`/`aposentado`.
+- Trigger `updated_at` reusando `update_updated_at_column()`.
 
 **Frontend:**
-- `src/pages/EquipmentPage.tsx` — guard de admin (igual ao `UsersPage`)
-- `src/components/equipment/`
-  - `EquipmentContainer.tsx` (KPIs + filtros + tabela)
-  - `EquipmentKpiCards.tsx`
-  - `EquipmentFilters.tsx`
-  - `EquipmentTable.tsx`
-  - `EquipmentFormModal.tsx` (criar/editar)
-  - `EquipmentDetailDialog.tsx` (abas Informações + Atribuições)
-  - `AssignmentForm.tsx` / `AssignmentTimeline.tsx`
-- `src/hooks/useEquipment.ts` — React Query: `useEquipmentList`, `useEquipmentDetail`, `useSaveEquipment`, `useDeleteEquipment`, `useAssignments`, `useCreateAssignment`, `useReturnAssignment`
-- `src/App.tsx` — rota `/equipamentos`
-- `src/components/layout/AppSidebar.tsx` — link novo no grupo Administrativo (ícone `Laptop`, admin-only)
+- `src/pages/InventoryPage.tsx` (guard de admin)
+- `src/components/inventory/`
+  - `InventoryContainer.tsx` (KPIs + filtros + tabela)
+  - `InventoryKpiCards.tsx`
+  - `InventoryFilters.tsx`
+  - `InventoryTable.tsx`
+  - `EquipmentFormModal.tsx`
+  - `AssignmentModal.tsx` (atribuir/devolver + histórico)
+- `src/hooks/useInventory.ts` (React Query: list, save, delete, assign, return, history)
+- `src/App.tsx` — rota `/inventario`
+- `src/components/layout/AppSidebar.tsx` — link no grupo Administrativo (ícone `Package`, admin-only)
 
-### O que NÃO entra nesta primeira versão
-- Upload de foto / nota fiscal do equipamento (pode vir depois)
-- Cálculo de depreciação contábil
-- Alertas automáticos de manutenção preventiva
-- Exportação CSV/PDF (fácil de adicionar depois se precisar)
+### Fora do escopo desta v1
+Upload de foto/nota fiscal, depreciação, alertas de manutenção, exportação CSV/PDF.
