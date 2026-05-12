@@ -92,6 +92,107 @@ export type Database = {
         }
         Relationships: []
       }
+      equipment: {
+        Row: {
+          acquisition_date: string | null
+          acquisition_value: number | null
+          brand: string | null
+          condition: string
+          created_at: string
+          id: string
+          imei: string | null
+          model: string | null
+          name: string
+          notes: string | null
+          serial_number: string | null
+          status: string
+          tag: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          acquisition_date?: string | null
+          acquisition_value?: number | null
+          brand?: string | null
+          condition?: string
+          created_at?: string
+          id?: string
+          imei?: string | null
+          model?: string | null
+          name: string
+          notes?: string | null
+          serial_number?: string | null
+          status?: string
+          tag: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          acquisition_date?: string | null
+          acquisition_value?: number | null
+          brand?: string | null
+          condition?: string
+          created_at?: string
+          id?: string
+          imei?: string | null
+          model?: string | null
+          name?: string
+          notes?: string | null
+          serial_number?: string | null
+          status?: string
+          tag?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      equipment_assignments: {
+        Row: {
+          assigned_at: string
+          condition_on_assign: string | null
+          condition_on_return: string | null
+          created_at: string
+          equipment_id: string
+          id: string
+          notes: string | null
+          returned_at: string | null
+          user_id: string
+          user_name: string
+        }
+        Insert: {
+          assigned_at?: string
+          condition_on_assign?: string | null
+          condition_on_return?: string | null
+          created_at?: string
+          equipment_id: string
+          id?: string
+          notes?: string | null
+          returned_at?: string | null
+          user_id: string
+          user_name: string
+        }
+        Update: {
+          assigned_at?: string
+          condition_on_assign?: string | null
+          condition_on_return?: string | null
+          created_at?: string
+          equipment_id?: string
+          id?: string
+          notes?: string | null
+          returned_at?: string | null
+          user_id?: string
+          user_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_assignments_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       monthly_goals: {
         Row: {
           created_at: string
