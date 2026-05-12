@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { UserRole } from "@/lib/types";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { BarChart3, Home, Menu, ShoppingCart, Users, LogOut, ChevronLeft, Settings, FileText, User, DollarSign, History, Calculator, TrendingUp, UserCog, Monitor, Brain } from "lucide-react";
+import { BarChart3, Home, Menu, ShoppingCart, Users, LogOut, ChevronLeft, Settings, FileText, User, DollarSign, History, Calculator, TrendingUp, UserCog, Monitor, Brain, Package } from "lucide-react";
 interface SidebarLinkProps {
   to: string;
   icon: React.ReactNode;
@@ -114,6 +114,7 @@ export function AppSidebar() {
             <SidebarLink to="/usuarios" icon={<Users size={18} />} label="Usuários" expanded={expanded} active={location.pathname === "/usuarios"} />
             <SidebarLink to="/relatorios" icon={<BarChart3 size={18} />} label="Relatórios" expanded={expanded} active={location.pathname === "/relatorios"} />
             <SidebarLink to="/comissoes" icon={<DollarSign size={18} />} label="Comissões" expanded={expanded} active={location.pathname === "/comissoes"} />
+            <SidebarLink to="/inventario" icon={<Package size={18} />} label="Inventário" expanded={expanded} active={location.pathname === "/inventario"} />
             {hasFinanceAccess && <SidebarLink to="/financeiro" icon={<Calculator size={18} />} label="Financeiro" expanded={expanded} active={location.pathname === "/financeiro"} />}
             <SidebarLink to="/configuracoes" icon={<Settings size={18} />} label="Configurações" expanded={expanded} active={location.pathname === "/configuracoes"} />
           </SidebarGroup>}
