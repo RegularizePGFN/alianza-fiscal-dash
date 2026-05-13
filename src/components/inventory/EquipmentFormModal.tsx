@@ -36,6 +36,7 @@ export function EquipmentFormModal({ open, onClose, item }: Props) {
         type: "notebook",
         condition: "bom",
         status: "disponivel",
+        photos: [],
       });
     }
   }, [open, item]);
