@@ -37,7 +37,7 @@ export function InventoryContainer() {
       if (status !== "all" && i.status !== status) return false;
       if (!q) return true;
       return [
-        i.tag, i.name, i.brand, i.model, i.serial_number, i.imei,
+        i.tag, i.name, i.brand, i.model,
         i.current_assignment?.user_name,
       ].some((v) => v && v.toLowerCase().includes(q));
     });

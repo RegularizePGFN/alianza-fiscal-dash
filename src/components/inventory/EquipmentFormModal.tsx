@@ -11,6 +11,7 @@ import {
   EQUIPMENT_CONDITIONS,
   useSaveEquipment,
 } from "@/hooks/useInventory";
+import { EquipmentPhotosField } from "./EquipmentPhotosField";
 
 interface Props {
   open: boolean;
@@ -35,6 +36,7 @@ export function EquipmentFormModal({ open, onClose, item }: Props) {
         type: "notebook",
         condition: "bom",
         status: "disponivel",
+        photos: [],
       });
     }
   }, [open, item]);
@@ -86,14 +88,6 @@ export function EquipmentFormModal({ open, onClose, item }: Props) {
             <Input value={form.model || ""} onChange={(e) => set("model", e.target.value)} />
           </div>
           <div>
-            <Label>Nº de série</Label>
-            <Input value={form.serial_number || ""} onChange={(e) => set("serial_number", e.target.value)} />
-          </div>
-          <div>
-            <Label>IMEI</Label>
-            <Input value={form.imei || ""} onChange={(e) => set("imei", e.target.value)} />
-          </div>
-          <div>
             <Label>Data de aquisição</Label>
             <Input type="date" value={form.acquisition_date || ""} onChange={(e) => set("acquisition_date", e.target.value)} />
           </div>
@@ -126,6 +120,12 @@ export function EquipmentFormModal({ open, onClose, item }: Props) {
           <div className="md:col-span-2">
             <Label>Observações</Label>
             <Textarea value={form.notes || ""} onChange={(e) => set("notes", e.target.value)} rows={2} />
+          </div>
+          <div className="md:col-span-2">
+            <EquipmentPhotosField
+              value={form.photos || []}
+              onChange={(urls) => set("photos", urls)}
+            />
           </div>
         </div>
         <DialogFooter>

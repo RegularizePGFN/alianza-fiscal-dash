@@ -100,11 +100,10 @@ export type Database = {
           condition: string
           created_at: string
           id: string
-          imei: string | null
           model: string | null
           name: string
           notes: string | null
-          serial_number: string | null
+          photos: string[]
           status: string
           tag: string
           type: string
@@ -117,11 +116,10 @@ export type Database = {
           condition?: string
           created_at?: string
           id?: string
-          imei?: string | null
           model?: string | null
           name: string
           notes?: string | null
-          serial_number?: string | null
+          photos?: string[]
           status?: string
           tag: string
           type?: string
@@ -134,11 +132,10 @@ export type Database = {
           condition?: string
           created_at?: string
           id?: string
-          imei?: string | null
           model?: string | null
           name?: string
           notes?: string | null
-          serial_number?: string | null
+          photos?: string[]
           status?: string
           tag?: string
           type?: string
