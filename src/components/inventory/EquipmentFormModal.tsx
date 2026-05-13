@@ -121,6 +121,12 @@ export function EquipmentFormModal({ open, onClose, item }: Props) {
             <Label>Observações</Label>
             <Textarea value={form.notes || ""} onChange={(e) => set("notes", e.target.value)} rows={2} />
           </div>
+          <div className="md:col-span-2">
+            <EquipmentPhotosField
+              value={form.photos || []}
+              onChange={(urls) => set("photos", urls)}
+            />
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
