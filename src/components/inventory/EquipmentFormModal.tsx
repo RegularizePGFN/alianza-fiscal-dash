@@ -11,6 +11,7 @@ import {
   EQUIPMENT_CONDITIONS,
   useSaveEquipment,
 } from "@/hooks/useInventory";
+import { EquipmentPhotosField } from "./EquipmentPhotosField";
 
 interface Props {
   open: boolean;
