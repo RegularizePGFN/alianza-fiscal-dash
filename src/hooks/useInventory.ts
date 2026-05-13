@@ -9,8 +9,7 @@ export type Equipment = {
   type: string;
   brand: string | null;
   model: string | null;
-  serial_number: string | null;
-  imei: string | null;
+  photos: string[];
   acquisition_date: string | null;
   acquisition_value: number | null;
   condition: string;
