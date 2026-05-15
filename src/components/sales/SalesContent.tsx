@@ -6,6 +6,7 @@ import { PaginatedSalesTable } from "./PaginatedSalesTable";
 import { SalesFilter } from "./SalesFilter";
 import { SalesActions } from "./SalesActions";
 import { exportSalesToExcel } from "@/lib/excelUtils";
+import { SalesReportDialog } from "./sales-report";
 
 interface SalesContentProps {
   loading: boolean;
