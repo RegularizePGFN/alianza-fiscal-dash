@@ -1,5 +1,5 @@
 
-import { Plus, Upload, Download } from "lucide-react";
+import { Plus, Upload, Download, BarChart3 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ImportButton } from "./filters/ImportButton";
@@ -9,13 +9,15 @@ interface SalesActionsProps {
   onAddSale: () => void;
   onImport?: (file: File) => void;
   onExport?: () => void;
+  onOpenReport?: () => void;
 }
 
 export function SalesActions({ 
   isAdmin, 
   onAddSale, 
   onImport,
-  onExport
+  onExport,
+  onOpenReport,
 }: SalesActionsProps) {
   return (
     <motion.div 
@@ -38,7 +40,21 @@ export function SalesActions({
           Nova Venda
         </Button>
       </motion.div>
-      
+
+      {onOpenReport && (
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          <Button
+            onClick={onOpenReport}
+            variant="outline"
+            size="sm"
+            className="border-border/40 hover:border-border bg-background/50 backdrop-blur-sm hover:bg-background"
+          >
+            <BarChart3 className="mr-2 h-4 w-4" />
+            Relatório
+          </Button>
+        </motion.div>
+      )}
+
       {isAdmin && onImport && (
         <motion.div
           whileHover={{ scale: 1.02 }}

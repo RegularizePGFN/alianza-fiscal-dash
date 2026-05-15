@@ -6,6 +6,7 @@ import { PaginatedSalesTable } from "./PaginatedSalesTable";
 import { SalesFilter } from "./SalesFilter";
 import { SalesActions } from "./SalesActions";
 import { exportSalesToExcel } from "@/lib/excelUtils";
+import { SalesReportDialog } from "./sales-report";
 
 interface SalesContentProps {
   loading: boolean;
@@ -30,7 +31,8 @@ export function SalesContent({
 }: SalesContentProps) {
   const [filteredSales, setFilteredSales] = useState<Sale[]>(sales);
   const [searchTerm, setSearchTerm] = useState<string>("");
-  
+  const [reportOpen, setReportOpen] = useState(false);
+
   // When sales prop changes, update filteredSales
   useEffect(() => {
     if (sales && searchTerm === "") {
@@ -84,6 +86,7 @@ export function SalesContent({
                   onAddSale={onAddSale} 
                   onImport={onImport}
                   onExport={handleExport}
+                  onOpenReport={() => setReportOpen(true)}
                 />
               </div>
             </motion.div>
@@ -122,6 +125,8 @@ export function SalesContent({
           />
         )}
       </motion.div>
+
+      <SalesReportDialog open={reportOpen} onOpenChange={setReportOpen} />
     </div>
   );
 }
