@@ -86,6 +86,7 @@ export function SalesContent({
                   onAddSale={onAddSale} 
                   onImport={onImport}
                   onExport={handleExport}
+                  onOpenReport={() => setReportOpen(true)}
                 />
               </div>
             </motion.div>
