@@ -40,7 +40,21 @@ export function SalesActions({
           Nova Venda
         </Button>
       </motion.div>
-      
+
+      {onOpenReport && (
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          <Button
+            onClick={onOpenReport}
+            variant="outline"
+            size="sm"
+            className="border-border/40 hover:border-border bg-background/50 backdrop-blur-sm hover:bg-background"
+          >
+            <BarChart3 className="mr-2 h-4 w-4" />
+            Relatório
+          </Button>
+        </motion.div>
+      )}
+
       {isAdmin && onImport && (
         <motion.div
           whileHover={{ scale: 1.02 }}
