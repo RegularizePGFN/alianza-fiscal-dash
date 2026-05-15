@@ -125,6 +125,8 @@ export function SalesContent({
           />
         )}
       </motion.div>
+
+      <SalesReportDialog open={reportOpen} onOpenChange={setReportOpen} />
     </div>
   );
 }
