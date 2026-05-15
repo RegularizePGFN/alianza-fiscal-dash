@@ -1,5 +1,5 @@
 
-import { Plus, Upload, Download } from "lucide-react";
+import { Plus, Upload, Download, BarChart3 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ImportButton } from "./filters/ImportButton";
@@ -9,13 +9,15 @@ interface SalesActionsProps {
   onAddSale: () => void;
   onImport?: (file: File) => void;
   onExport?: () => void;
+  onOpenReport?: () => void;
 }
 
 export function SalesActions({ 
   isAdmin, 
   onAddSale, 
   onImport,
-  onExport
+  onExport,
+  onOpenReport,
 }: SalesActionsProps) {
   return (
     <motion.div 
