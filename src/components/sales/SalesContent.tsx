@@ -31,7 +31,8 @@ export function SalesContent({
 }: SalesContentProps) {
   const [filteredSales, setFilteredSales] = useState<Sale[]>(sales);
   const [searchTerm, setSearchTerm] = useState<string>("");
-  
+  const [reportOpen, setReportOpen] = useState(false);
+
   // When sales prop changes, update filteredSales
   useEffect(() => {
     if (sales && searchTerm === "") {
