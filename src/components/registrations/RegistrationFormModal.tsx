@@ -59,13 +59,13 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
 
   const handleSave = async () => {
-    if (!form.client_name?.trim()) return;
-    if (!form.cnpj?.trim() && !form.cpf?.trim()) return;
+    if (!form.cnpj?.trim()) return;
 
     const payload: any = {
       ...form,
+      client_name: form.client_name?.trim() || null,
       client_phone: form.client_phone?.trim() || null,
-      cnpj: form.cnpj?.trim() || null,
+      cnpj: form.cnpj?.trim(),
       cpf: form.cpf?.trim() || null,
       notes: form.notes?.trim() || null,
     };
@@ -86,11 +86,24 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
         </DialogHeader>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="md:col-span-2">
-            <Label>Nome do cliente *</Label>
+            <Label>CNPJ *</Label>
             <Input
-              value={form.client_name || ""}
-              onChange={(e) => set("client_name", e.target.value)}
-              placeholder="Razão social ou nome"
+              value={form.cnpj || ""}
+              onChange={(e) => set("cnpj", e.target.value)}
+              placeholder="00.000.000/0000-00"
+            />
+          </div>
+          <div>
+            <Label>
+              CPF{" "}
+              <span className="ml-1 text-[10px] uppercase tracking-wide text-primary font-semibold">
+                recomendado
+              </span>
+            </Label>
+            <Input
+              value={form.cpf || ""}
+              onChange={(e) => set("cpf", e.target.value)}
+              placeholder="000.000.000-00"
             />
           </div>
           <div>
@@ -99,6 +112,14 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
               value={form.client_phone || ""}
               onChange={(e) => set("client_phone", e.target.value)}
               placeholder="5511999999999"
+            />
+          </div>
+          <div className="md:col-span-2">
+            <Label>Nome do cliente</Label>
+            <Input
+              value={form.client_name || ""}
+              onChange={(e) => set("client_name", e.target.value)}
+              placeholder="Razão social ou nome (opcional)"
             />
           </div>
           <div>
@@ -115,22 +136,6 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-          <div>
-            <Label>CNPJ</Label>
-            <Input
-              value={form.cnpj || ""}
-              onChange={(e) => set("cnpj", e.target.value)}
-              placeholder="00.000.000/0000-00"
-            />
-          </div>
-          <div>
-            <Label>CPF</Label>
-            <Input
-              value={form.cpf || ""}
-              onChange={(e) => set("cpf", e.target.value)}
-              placeholder="000.000.000-00"
-            />
           </div>
           {isAdminish && item && (
             <div className="md:col-span-2">
@@ -159,7 +164,7 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
             />
           </div>
           <div className="md:col-span-2 text-xs text-muted-foreground">
-            Informe pelo menos um documento (CNPJ ou CPF).
+            O CNPJ é obrigatório. O CPF é recomendado para agilizar o atendimento.
           </div>
         </div>
         <DialogFooter>
@@ -168,11 +173,7 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
           </Button>
           <Button
             onClick={handleSave}
-            disabled={
-              save.isPending ||
-              !form.client_name?.trim() ||
-              (!form.cnpj?.trim() && !form.cpf?.trim())
-            }
+            disabled={save.isPending || !form.cnpj?.trim()}
           >
             {save.isPending ? "Salvando..." : "Salvar"}
           </Button>
