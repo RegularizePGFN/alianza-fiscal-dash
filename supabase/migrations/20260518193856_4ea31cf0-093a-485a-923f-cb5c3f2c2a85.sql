@@ -1,0 +1,1 @@
+ALTER TABLE public.client_registrations ALTER COLUMN client_name DROP NOT NULL;
