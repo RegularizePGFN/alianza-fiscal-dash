@@ -130,10 +130,10 @@ export function RegistrationDetailDrawer({
             variant="outline"
             className="w-full"
             onClick={() => onGenerateSimulation(item)}
-            disabled={!attachments.length}
+            disabled={!attachments.length || item.status !== "realizado"}
           >
             <Wand2 className="w-4 h-4 mr-2" />
-            Gerar simulação a partir do print
+            Gerar proposta a partir do print
           </Button>
 
           {/* Timeline */}

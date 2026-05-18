@@ -12,6 +12,7 @@ import {
   ClientRegistration,
   useDeleteRegistration,
   useRegistrations,
+  useRegistrationsWithAttachments,
 } from "@/hooks/useRegistrations";
 import {
   AlertDialog,
@@ -48,6 +49,7 @@ export function RegistrationsContainer() {
     to: periodTo,
   });
   const del = useDeleteRegistration();
+  const { data: attachmentsSet = new Set<string>() } = useRegistrationsWithAttachments();
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
@@ -120,6 +122,7 @@ export function RegistrationsContainer() {
             canManage={canManage}
             isAdmin={isAdmin}
             currentUserId={user?.id}
+            attachmentsSet={attachmentsSet}
             onOpen={(r) => {
               setDetail(r);
               setDetailOpen(true);
