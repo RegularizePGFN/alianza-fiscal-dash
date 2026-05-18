@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { RefreshCcw, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProposalsHeader from "./components/ProposalsHeader";
@@ -7,10 +8,15 @@ import MainTabsBar, { MainProposalTab } from "./components/MainTabsBar";
 import HistoryTabContent from "./components/HistoryTabContent";
 import { useProposalsStateWithFilter } from "@/hooks/proposals/useProposalsStateWithFilter";
 import { useProposalHandlers } from "@/hooks/proposals";
+import { supabase } from "@/integrations/supabase/client";
+import { analyzeImageWithAI } from "@/lib/services/vision";
+import { toast } from "sonner";
 
 const ProposalsContainer = () => {
   const proposalsState = useProposalsStateWithFilter();
   const [mainTab, setMainTab] = useState<MainProposalTab>("generate");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const handoffDone = useRef<string | null>(null);
 
   const handlers = useProposalHandlers({
     formData: proposalsState.formData,
@@ -27,6 +33,72 @@ const ProposalsContainer = () => {
     deleteProposal: proposalsState.deleteProposal,
     user: proposalsState.user,
   });
+
+  // Cadastro → Simulação handoff: fetch first attachment + prefill client, run AI
+  useEffect(() => {
+    const cadastroId = searchParams.get("cadastroId");
+    if (!cadastroId || handoffDone.current === cadastroId) return;
+    handoffDone.current = cadastroId;
+
+    (async () => {
+      try {
+        const [{ data: reg }, { data: atts }] = await Promise.all([
+          supabase.from("client_registrations").select("*").eq("id", cadastroId).maybeSingle(),
+          supabase
+            .from("client_registration_attachments")
+            .select("*")
+            .eq("registration_id", cadastroId)
+            .order("uploaded_at", { ascending: true }),
+        ]);
+        if (!reg) {
+          toast.error("Cadastro não encontrado");
+          return;
+        }
+        proposalsState.setFormData((prev: any) => ({
+          ...prev,
+          cnpj: reg.cnpj || prev.cnpj || "",
+          clientName: reg.client_name || prev.clientName || "",
+          clientPhone: reg.client_phone || prev.clientPhone || "",
+        }));
+
+        const first = (atts || [])[0];
+        if (!first) {
+          toast.info("Cadastro sem prints. Faça o upload manual.");
+          proposalsState.setActiveTab("upload");
+          setSearchParams({}, { replace: true });
+          return;
+        }
+
+        proposalsState.setActiveTab("data");
+        proposalsState.setProcessing(true);
+        proposalsState.setProgressPercent(0);
+
+        const res = await fetch(first.file_url);
+        const blob = await res.blob();
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = () => resolve(r.result as string);
+          r.onerror = reject;
+          r.readAsDataURL(blob);
+        });
+
+        const extracted = await analyzeImageWithAI(
+          base64,
+          proposalsState.setProgressPercent,
+          proposalsState.setProcessingStatus
+        );
+        handlers.handleProcessComplete(extracted, base64);
+        toast.success("Simulação carregada do cadastro");
+      } catch (e: any) {
+        console.error(e);
+        toast.error(e.message || "Erro ao carregar simulação do cadastro");
+      } finally {
+        proposalsState.setProcessing(false);
+        setSearchParams({}, { replace: true });
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   // Quando o usuário clica em "Nova Proposta" no histórico, voltar para a aba gerar
   const handleNewProposal = () => {
