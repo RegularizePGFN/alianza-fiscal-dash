@@ -12,6 +12,7 @@ import {
   ClientRegistration,
   useDeleteRegistration,
   useRegistrations,
+  useRegistrationsWithAttachments,
 } from "@/hooks/useRegistrations";
 import {
   AlertDialog,
