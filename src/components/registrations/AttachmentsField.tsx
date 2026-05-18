@@ -1,14 +1,15 @@
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Upload, X, Loader2 } from "lucide-react";
+import { Upload, X, Loader2, Clipboard } from "lucide-react";
 import {
   RegistrationAttachment,
   useAddAttachment,
   useDeleteAttachment,
 } from "@/hooks/useRegistrations";
 import { useAuth } from "@/contexts/auth";
+import { usePasteImage } from "@/hooks/usePasteImage";
 
 interface Props {
   registrationId: string;
@@ -23,37 +24,60 @@ export function AttachmentsField({ registrationId, items, canManage }: Props) {
   const add = useAddAttachment();
   const del = useDeleteAttachment();
 
-  const handleFiles = async (files: FileList | null) => {
-    if (!files || !files.length || !user) return;
-    setUploading(true);
-    try {
-      for (const file of Array.from(files)) {
-        const ext = file.name.split(".").pop();
-        const path = `${registrationId}/${crypto.randomUUID()}.${ext}`;
-        const { error } = await supabase.storage
-          .from("cadastro-prints")
-          .upload(path, file, { contentType: file.type });
-        if (error) throw error;
-        const { data } = supabase.storage.from("cadastro-prints").getPublicUrl(path);
-        await add.mutateAsync({
-          registration_id: registrationId,
-          file_url: data.publicUrl,
-          uploaded_by: user.id,
-          uploaded_by_name: user.name,
-        });
+  const uploadFiles = useCallback(
+    async (files: File[]) => {
+      if (!files.length || !user) return;
+      setUploading(true);
+      try {
+        for (const file of files) {
+          const ext = (file.name.split(".").pop() || "png").toLowerCase();
+          const path = `${registrationId}/${crypto.randomUUID()}.${ext}`;
+          const { error } = await supabase.storage
+            .from("cadastro-prints")
+            .upload(path, file, { contentType: file.type || "image/png" });
+          if (error) throw error;
+          const { data } = supabase.storage.from("cadastro-prints").getPublicUrl(path);
+          await add.mutateAsync({
+            registration_id: registrationId,
+            file_url: data.publicUrl,
+            uploaded_by: user.id,
+            uploaded_by_name: user.name,
+          });
+        }
+        toast.success("Print(s) anexado(s)");
+      } catch (e: any) {
+        toast.error(e.message || "Erro ao enviar");
+      } finally {
+        setUploading(false);
+        if (inputRef.current) inputRef.current.value = "";
       }
-      toast.success("Print(s) anexado(s)");
-    } catch (e: any) {
-      toast.error(e.message || "Erro ao enviar");
-    } finally {
-      setUploading(false);
-      if (inputRef.current) inputRef.current.value = "";
-    }
+    },
+    [registrationId, user, add]
+  );
+
+  const handleFiles = (files: FileList | null) => {
+    if (files) uploadFiles(Array.from(files));
   };
+
+  const onPasteImage = useCallback(
+    (file: File) => {
+      uploadFiles([file]);
+    },
+    [uploadFiles]
+  );
+
+  usePasteImage(onPasteImage, canManage);
 
   return (
     <div>
-      <Label>Prints da simulação PGFN</Label>
+      <Label className="flex items-center gap-2">
+        Prints da simulação PGFN
+        {canManage && (
+          <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
+            <Clipboard className="w-3 h-3" /> Ctrl+V para colar
+          </span>
+        )}
+      </Label>
       <div className="mt-2 flex flex-wrap gap-2">
         {items.map((a) => (
           <div
