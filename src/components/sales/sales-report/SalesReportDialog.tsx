@@ -9,7 +9,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Download, BarChart3, X, CalendarIcon } from "lucide-react";
-import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
+import { format, subDays, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth";
@@ -25,7 +25,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
-type DatePreset = "today" | "last7" | "last30" | "thisMonth" | "custom";
+type DatePreset = "today" | "last7" | "last30" | "thisMonth" | "thisYear" | "all" | "custom";
 
 function startOfDay(d: Date) {
   const x = new Date(d);
@@ -67,6 +67,17 @@ export function SalesReportDialog({ open, onOpenChange }: Props) {
       const end = endOfDayExclusive(endOfMonth(today));
       return { from: start, to: end,
         rangeLabel: `${format(start, "dd/MM", { locale: ptBR })} – ${format(endOfMonth(today), "dd/MM/yyyy", { locale: ptBR })}` };
+    }
+    if (preset === "thisYear") {
+      const start = startOfDay(startOfYear(today));
+      const end = endOfDayExclusive(endOfYear(today));
+      return { from: start, to: end,
+        rangeLabel: `${format(start, "dd/MM/yyyy", { locale: ptBR })} – ${format(endOfYear(today), "dd/MM/yyyy", { locale: ptBR })}` };
+    }
+    if (preset === "all") {
+      const start = startOfDay(new Date(2000, 0, 1));
+      const end = endOfDayExclusive(today);
+      return { from: start, to: end, rangeLabel: "Todo o período" };
     }
     const cFrom = customRange?.from ?? startOfDay(today);
     const cTo = customRange?.to ?? cFrom;
@@ -164,6 +175,8 @@ export function SalesReportDialog({ open, onOpenChange }: Props) {
                 <SelectItem value="last7">Últimos 7 dias</SelectItem>
                 <SelectItem value="last30">Últimos 30 dias</SelectItem>
                 <SelectItem value="thisMonth">Mês atual</SelectItem>
+                <SelectItem value="thisYear">Ano atual</SelectItem>
+                <SelectItem value="all">Todo o período</SelectItem>
                 <SelectItem value="custom">Período personalizado</SelectItem>
               </SelectContent>
             </Select>
