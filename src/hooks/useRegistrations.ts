@@ -110,6 +110,30 @@ export function useRegistrations(opts: ListOptions = {}) {
   });
 }
 
+export function useRegistrationsWithAttachments() {
+  return useQuery({
+    queryKey: ["registrations-with-attachments"],
+    queryFn: async (): Promise<Set<string>> => {
+      const PAGE_SIZE = 1000;
+      let rows: any[] = [];
+      let offset = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from("client_registration_attachments")
+          .select("registration_id")
+          .range(offset, offset + PAGE_SIZE - 1);
+        if (error) throw error;
+        const batch = data || [];
+        rows = rows.concat(batch);
+        hasMore = batch.length === PAGE_SIZE;
+        offset += PAGE_SIZE;
+      }
+      return new Set(rows.map((r) => r.registration_id));
+    },
+  });
+}
+
 export function useRegistrationAttachments(registrationId: string | null) {
   return useQuery({
     queryKey: ["registration-attachments", registrationId],
