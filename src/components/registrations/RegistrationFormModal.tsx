@@ -164,7 +164,7 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
             />
           </div>
           <div className="md:col-span-2 text-xs text-muted-foreground">
-            Informe pelo menos um documento (CNPJ ou CPF).
+            O CNPJ é obrigatório. O CPF é recomendado para agilizar o atendimento.
           </div>
         </div>
         <DialogFooter>
@@ -173,11 +173,7 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
           </Button>
           <Button
             onClick={handleSave}
-            disabled={
-              save.isPending ||
-              !form.client_name?.trim() ||
-              (!form.cnpj?.trim() && !form.cpf?.trim())
-            }
+            disabled={save.isPending || !form.cnpj?.trim()}
           >
             {save.isPending ? "Salvando..." : "Salvar"}
           </Button>
