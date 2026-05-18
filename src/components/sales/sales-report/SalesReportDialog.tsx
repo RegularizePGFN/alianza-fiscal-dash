@@ -175,6 +175,8 @@ export function SalesReportDialog({ open, onOpenChange }: Props) {
                 <SelectItem value="last7">Últimos 7 dias</SelectItem>
                 <SelectItem value="last30">Últimos 30 dias</SelectItem>
                 <SelectItem value="thisMonth">Mês atual</SelectItem>
+                <SelectItem value="thisYear">Ano atual</SelectItem>
+                <SelectItem value="all">Todo o período</SelectItem>
                 <SelectItem value="custom">Período personalizado</SelectItem>
               </SelectContent>
             </Select>
