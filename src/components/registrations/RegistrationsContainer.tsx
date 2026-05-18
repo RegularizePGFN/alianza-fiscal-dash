@@ -49,6 +49,7 @@ export function RegistrationsContainer() {
     to: periodTo,
   });
   const del = useDeleteRegistration();
+  const { data: attachmentsSet = new Set<string>() } = useRegistrationsWithAttachments();
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
