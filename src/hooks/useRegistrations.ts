@@ -169,15 +169,22 @@ export function useRegistrationEvents(registrationId: string | null) {
 export function useSaveRegistration() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: Partial<ClientRegistration> & { id?: string }) => {
+    mutationFn: async (
+      payload: Partial<ClientRegistration> & { id?: string }
+    ): Promise<{ id: string }> => {
       const { id, ...data } = payload;
       if (id) {
         const { error } = await supabase.from("client_registrations").update(data).eq("id", id);
         if (error) throw error;
-      } else {
-        const { error } = await supabase.from("client_registrations").insert(data as any);
-        if (error) throw error;
+        return { id };
       }
+      const { data: inserted, error } = await supabase
+        .from("client_registrations")
+        .insert(data as any)
+        .select("id")
+        .single();
+      if (error) throw error;
+      return { id: inserted.id };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["registrations"] });
