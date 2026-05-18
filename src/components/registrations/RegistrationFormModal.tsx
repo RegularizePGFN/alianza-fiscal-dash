@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -21,10 +21,17 @@ import {
   ClientRegistration,
   REGISTRATION_REASONS,
   REGISTRATION_STATUSES,
+  useAddAttachment,
+  useRegistrationAttachments,
   useSaveRegistration,
 } from "@/hooks/useRegistrations";
 import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
+import { AttachmentsField } from "./AttachmentsField";
+import { usePasteImage } from "@/hooks/usePasteImage";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Clipboard, Upload, X, Loader2 } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -35,10 +42,18 @@ interface Props {
 export function RegistrationFormModal({ open, onClose, item }: Props) {
   const { user } = useAuth();
   const save = useSaveRegistration();
+  const add = useAddAttachment();
   const [form, setForm] = useState<any>({});
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [uploadingPending, setUploadingPending] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const isAdminish =
     user?.role === UserRole.ADMIN || user?.role === UserRole.BACKOFFICE;
+
+  const { data: existingAttachments = [] } = useRegistrationAttachments(
+    item?.id ?? null
+  );
 
   useEffect(() => {
     if (open) {
@@ -53,10 +68,52 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
           notes: "",
         }
       );
+      setPendingFiles([]);
     }
   }, [open, item]);
 
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
+
+  const queueFiles = useCallback((files: File[]) => {
+    if (!files.length) return;
+    setPendingFiles((prev) => [...prev, ...files]);
+    toast.success(`${files.length} print(s) na fila`);
+  }, []);
+
+  // Paste handler — only when creating new (no item). When editing, AttachmentsField handles paste.
+  usePasteImage(
+    useCallback((file: File) => queueFiles([file]), [queueFiles]),
+    open && !item
+  );
+
+  const uploadPendingFor = async (registrationId: string) => {
+    if (!pendingFiles.length || !user) return;
+    setUploadingPending(true);
+    try {
+      for (const file of pendingFiles) {
+        const ext = (file.name.split(".").pop() || "png").toLowerCase();
+        const path = `${registrationId}/${crypto.randomUUID()}.${ext}`;
+        const { error } = await supabase.storage
+          .from("cadastro-prints")
+          .upload(path, file, { contentType: file.type || "image/png" });
+        if (error) throw error;
+        const { data } = supabase.storage
+          .from("cadastro-prints")
+          .getPublicUrl(path);
+        await add.mutateAsync({
+          registration_id: registrationId,
+          file_url: data.publicUrl,
+          uploaded_by: user.id,
+          uploaded_by_name: user.name,
+        });
+      }
+      toast.success("Prints anexados ao cadastro");
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao enviar prints");
+    } finally {
+      setUploadingPending(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!form.cnpj?.trim() || !form.client_phone?.trim()) return;
@@ -74,13 +131,21 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
       payload.salesperson_id = user?.id;
       payload.salesperson_name = user?.name;
     }
-    await save.mutateAsync(payload);
+    const result = await save.mutateAsync(payload);
+    if (pendingFiles.length && result?.id) {
+      await uploadPendingFor(result.id);
+    }
     onClose();
+  };
+
+  const handleFilesInput = (files: FileList | null) => {
+    if (files) queueFiles(Array.from(files));
+    if (inputRef.current) inputRef.current.value = "";
   };
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{item ? "Editar cadastro" : "Novo cadastro"}</DialogTitle>
         </DialogHeader>
@@ -163,6 +228,73 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
               placeholder="Algo importante para o backoffice"
             />
           </div>
+
+          {/* Anexos */}
+          <div className="md:col-span-2 pt-2 border-t">
+            {item ? (
+              <AttachmentsField
+                registrationId={item.id}
+                items={existingAttachments}
+                canManage={true}
+              />
+            ) : (
+              <div>
+                <Label className="flex items-center gap-2">
+                  Prints da simulação PGFN
+                  <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
+                    <Clipboard className="w-3 h-3" /> Ctrl+V para colar
+                  </span>
+                </Label>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {pendingFiles.map((f, idx) => {
+                    const url = URL.createObjectURL(f);
+                    return (
+                      <div
+                        key={idx}
+                        className="relative w-24 h-24 rounded-md overflow-hidden border bg-muted group"
+                      >
+                        <img
+                          src={url}
+                          alt={`Pendente ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setPendingFiles((prev) => prev.filter((_, i) => i !== idx))
+                          }
+                          className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition"
+                          aria-label="Remover"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    onClick={() => inputRef.current?.click()}
+                    className="w-24 h-24 border-2 border-dashed rounded-md flex flex-col items-center justify-center text-muted-foreground hover:bg-accent hover:text-accent-foreground transition"
+                  >
+                    <Upload className="w-5 h-5" />
+                    <span className="text-[10px] mt-1">Adicionar</span>
+                  </button>
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-2">
+                  Os prints serão enviados ao salvar o cadastro.
+                </p>
+                <input
+                  ref={inputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => handleFilesInput(e.target.files)}
+                />
+              </div>
+            )}
+          </div>
+
           <div className="md:col-span-2 text-xs text-muted-foreground">
             CNPJ e telefone são obrigatórios. O CPF é recomendado para agilizar o atendimento.
           </div>
@@ -173,9 +305,20 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
           </Button>
           <Button
             onClick={handleSave}
-            disabled={save.isPending || !form.cnpj?.trim() || !form.client_phone?.trim()}
+            disabled={
+              save.isPending ||
+              uploadingPending ||
+              !form.cnpj?.trim() ||
+              !form.client_phone?.trim()
+            }
           >
-            {save.isPending ? "Salvando..." : "Salvar"}
+            {save.isPending || uploadingPending ? (
+              <span className="inline-flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" /> Salvando...
+              </span>
+            ) : (
+              "Salvar"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

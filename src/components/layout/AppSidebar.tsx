@@ -80,6 +80,7 @@ export function AppSidebar() {
   };
   const isAdmin = user?.role === UserRole.ADMIN;
   const isSalesperson = user?.role === UserRole.SALESPERSON;
+  const isBackoffice = user?.role === UserRole.BACKOFFICE;
   const hasFinanceAccess = user?.email === 'felipe.souza@socialcriativo.com';
   return <div className={cn("bg-sidebar h-screen flex flex-col border-r border-sidebar-border transition-all duration-200", expanded ? "w-60" : "w-16")}>
       {/* Header */}
@@ -100,30 +101,41 @@ export function AppSidebar() {
       
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-6">
-        {/* Comercial Group */}
-        <SidebarGroup title="Comercial" expanded={expanded}>
-          <SidebarLink to="/dashboard" icon={<Home size={18} />} label="Dashboard" expanded={expanded} active={location.pathname === "/dashboard"} />
-          <SidebarLink to="/vendas" icon={<ShoppingCart size={18} />} label="Vendas" expanded={expanded} active={location.pathname === "/vendas"} />
-          <SidebarLink to="/propostas" icon={<FileText size={18} />} label="Propostas" expanded={expanded} active={location.pathname === "/propostas"} isBeta={true} />
-          <SidebarLink to="/cadastros" icon={<ClipboardList size={18} />} label="Cadastros" expanded={expanded} active={location.pathname === "/cadastros"} />
-          {isAdmin && <SidebarLink to="/inteligencia-comercial" icon={<Brain size={18} />} label="Inteligência Comercial" expanded={expanded} active={location.pathname === "/inteligencia-comercial"} isBeta={true} />}
-          {isSalesperson && <SidebarLink to="/meu-historico" icon={<History size={18} />} label="Meu Histórico" expanded={expanded} active={location.pathname === "/meu-historico"} />}
-        </SidebarGroup>
-        
-        {/* Administrativo Group - Only for admins */}
-        {isAdmin && <SidebarGroup title="Administrativo" expanded={expanded}>
-            <SidebarLink to="/usuarios" icon={<Users size={18} />} label="Usuários" expanded={expanded} active={location.pathname === "/usuarios"} />
-            <SidebarLink to="/relatorios" icon={<BarChart3 size={18} />} label="Relatórios" expanded={expanded} active={location.pathname === "/relatorios"} />
-            <SidebarLink to="/comissoes" icon={<DollarSign size={18} />} label="Comissões" expanded={expanded} active={location.pathname === "/comissoes"} />
-            <SidebarLink to="/inventario" icon={<Package size={18} />} label="Inventário" expanded={expanded} active={location.pathname === "/inventario"} />
-            {hasFinanceAccess && <SidebarLink to="/financeiro" icon={<Calculator size={18} />} label="Financeiro" expanded={expanded} active={location.pathname === "/financeiro"} />}
-            <SidebarLink to="/configuracoes" icon={<Settings size={18} />} label="Configurações" expanded={expanded} active={location.pathname === "/configuracoes"} />
-          </SidebarGroup>}
-        
-        {/* Finance for non-admin with access */}
-        {!isAdmin && hasFinanceAccess && <SidebarGroup title="Financeiro" expanded={expanded}>
-            <SidebarLink to="/financeiro" icon={<Calculator size={18} />} label="Financeiro" expanded={expanded} active={location.pathname === "/financeiro"} />
-          </SidebarGroup>}
+        {isBackoffice ? (
+          <SidebarGroup title="Operação" expanded={expanded}>
+            <SidebarLink to="/cadastros" icon={<ClipboardList size={18} />} label="Cadastros" expanded={expanded} active={location.pathname === "/cadastros"} />
+            <SidebarLink to="/propostas" icon={<FileText size={18} />} label="Propostas" expanded={expanded} active={location.pathname === "/propostas"} />
+            <SidebarLink to="/vendas" icon={<ShoppingCart size={18} />} label="Vendas" expanded={expanded} active={location.pathname === "/vendas"} />
+            <SidebarLink to="/dashboard" icon={<Home size={18} />} label="Dashboard" expanded={expanded} active={location.pathname === "/dashboard"} />
+          </SidebarGroup>
+        ) : (
+          <>
+            {/* Comercial Group */}
+            <SidebarGroup title="Comercial" expanded={expanded}>
+              <SidebarLink to="/dashboard" icon={<Home size={18} />} label="Dashboard" expanded={expanded} active={location.pathname === "/dashboard"} />
+              <SidebarLink to="/vendas" icon={<ShoppingCart size={18} />} label="Vendas" expanded={expanded} active={location.pathname === "/vendas"} />
+              <SidebarLink to="/propostas" icon={<FileText size={18} />} label="Propostas" expanded={expanded} active={location.pathname === "/propostas"} isBeta={true} />
+              <SidebarLink to="/cadastros" icon={<ClipboardList size={18} />} label="Cadastros" expanded={expanded} active={location.pathname === "/cadastros"} />
+              {isAdmin && <SidebarLink to="/inteligencia-comercial" icon={<Brain size={18} />} label="Inteligência Comercial" expanded={expanded} active={location.pathname === "/inteligencia-comercial"} isBeta={true} />}
+              {isSalesperson && <SidebarLink to="/meu-historico" icon={<History size={18} />} label="Meu Histórico" expanded={expanded} active={location.pathname === "/meu-historico"} />}
+            </SidebarGroup>
+            
+            {/* Administrativo Group - Only for admins */}
+            {isAdmin && <SidebarGroup title="Administrativo" expanded={expanded}>
+                <SidebarLink to="/usuarios" icon={<Users size={18} />} label="Usuários" expanded={expanded} active={location.pathname === "/usuarios"} />
+                <SidebarLink to="/relatorios" icon={<BarChart3 size={18} />} label="Relatórios" expanded={expanded} active={location.pathname === "/relatorios"} />
+                <SidebarLink to="/comissoes" icon={<DollarSign size={18} />} label="Comissões" expanded={expanded} active={location.pathname === "/comissoes"} />
+                <SidebarLink to="/inventario" icon={<Package size={18} />} label="Inventário" expanded={expanded} active={location.pathname === "/inventario"} />
+                {hasFinanceAccess && <SidebarLink to="/financeiro" icon={<Calculator size={18} />} label="Financeiro" expanded={expanded} active={location.pathname === "/financeiro"} />}
+                <SidebarLink to="/configuracoes" icon={<Settings size={18} />} label="Configurações" expanded={expanded} active={location.pathname === "/configuracoes"} />
+              </SidebarGroup>}
+            
+            {/* Finance for non-admin with access */}
+            {!isAdmin && hasFinanceAccess && <SidebarGroup title="Financeiro" expanded={expanded}>
+                <SidebarLink to="/financeiro" icon={<Calculator size={18} />} label="Financeiro" expanded={expanded} active={location.pathname === "/financeiro"} />
+              </SidebarGroup>}
+          </>
+        )}
       </nav>
       
       {/* Footer */}
