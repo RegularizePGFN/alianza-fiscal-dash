@@ -14,6 +14,136 @@ export type Database = {
   }
   public: {
     Tables: {
+      client_registration_attachments: {
+        Row: {
+          file_url: string
+          id: string
+          registration_id: string
+          uploaded_at: string
+          uploaded_by: string
+          uploaded_by_name: string | null
+        }
+        Insert: {
+          file_url: string
+          id?: string
+          registration_id: string
+          uploaded_at?: string
+          uploaded_by: string
+          uploaded_by_name?: string | null
+        }
+        Update: {
+          file_url?: string
+          id?: string
+          registration_id?: string
+          uploaded_at?: string
+          uploaded_by?: string
+          uploaded_by_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_registration_attachments_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "client_registrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_registration_events: {
+        Row: {
+          changed_by: string
+          changed_by_name: string | null
+          created_at: string
+          from_status: string | null
+          id: string
+          note: string | null
+          registration_id: string
+          to_status: string
+        }
+        Insert: {
+          changed_by: string
+          changed_by_name?: string | null
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          note?: string | null
+          registration_id: string
+          to_status: string
+        }
+        Update: {
+          changed_by?: string
+          changed_by_name?: string | null
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          note?: string | null
+          registration_id?: string
+          to_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_registration_events_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "client_registrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_registrations: {
+        Row: {
+          backoffice_id: string | null
+          backoffice_name: string | null
+          client_name: string
+          client_phone: string | null
+          cnpj: string | null
+          completed_at: string | null
+          cpf: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          reason: string
+          salesperson_id: string
+          salesperson_name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          backoffice_id?: string | null
+          backoffice_name?: string | null
+          client_name: string
+          client_phone?: string | null
+          cnpj?: string | null
+          completed_at?: string | null
+          cpf?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          reason?: string
+          salesperson_id: string
+          salesperson_name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          backoffice_id?: string | null
+          backoffice_name?: string | null
+          client_name?: string
+          client_phone?: string | null
+          cnpj?: string | null
+          completed_at?: string | null
+          cpf?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          reason?: string
+          salesperson_id?: string
+          salesperson_name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       company_costs: {
         Row: {
           amount: number
@@ -797,6 +927,20 @@ export type Database = {
           sale_id: string
           salesperson_id: string
           salesperson_name: string
+        }[]
+      }
+      get_registrations_summary: {
+        Args: { p_end: string; p_start: string }
+        Returns: {
+          aguardando_count: number
+          avg_completion_hours: number
+          by_backoffice: Json
+          by_day: Json
+          by_reason: Json
+          cancelado_count: number
+          pendente_count: number
+          realizado_count: number
+          total_count: number
         }[]
       }
       get_salesperson_intel: {
