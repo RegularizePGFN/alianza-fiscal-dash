@@ -164,7 +164,7 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
             />
           </div>
           <div className="md:col-span-2 text-xs text-muted-foreground">
-            O CNPJ é obrigatório. O CPF é recomendado para agilizar o atendimento.
+            CNPJ e telefone são obrigatórios. O CPF é recomendado para agilizar o atendimento.
           </div>
         </div>
         <DialogFooter>
@@ -173,7 +173,7 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
           </Button>
           <Button
             onClick={handleSave}
-            disabled={save.isPending || !form.cnpj?.trim()}
+            disabled={save.isPending || !form.cnpj?.trim() || !form.client_phone?.trim()}
           >
             {save.isPending ? "Salvando..." : "Salvar"}
           </Button>
