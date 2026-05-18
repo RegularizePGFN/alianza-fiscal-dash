@@ -68,6 +68,17 @@ export function SalesReportDialog({ open, onOpenChange }: Props) {
       return { from: start, to: end,
         rangeLabel: `${format(start, "dd/MM", { locale: ptBR })} – ${format(endOfMonth(today), "dd/MM/yyyy", { locale: ptBR })}` };
     }
+    if (preset === "thisYear") {
+      const start = startOfDay(startOfYear(today));
+      const end = endOfDayExclusive(endOfYear(today));
+      return { from: start, to: end,
+        rangeLabel: `${format(start, "dd/MM/yyyy", { locale: ptBR })} – ${format(endOfYear(today), "dd/MM/yyyy", { locale: ptBR })}` };
+    }
+    if (preset === "all") {
+      const start = startOfDay(new Date(2000, 0, 1));
+      const end = endOfDayExclusive(today);
+      return { from: start, to: end, rangeLabel: "Todo o período" };
+    }
     const cFrom = customRange?.from ?? startOfDay(today);
     const cTo = customRange?.to ?? cFrom;
     return {
