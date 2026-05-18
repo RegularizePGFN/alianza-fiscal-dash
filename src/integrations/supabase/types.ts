@@ -94,7 +94,7 @@ export type Database = {
         Row: {
           backoffice_id: string | null
           backoffice_name: string | null
-          client_name: string
+          client_name: string | null
           client_phone: string | null
           cnpj: string | null
           completed_at: string | null
@@ -111,7 +111,7 @@ export type Database = {
         Insert: {
           backoffice_id?: string | null
           backoffice_name?: string | null
-          client_name: string
+          client_name?: string | null
           client_phone?: string | null
           cnpj?: string | null
           completed_at?: string | null
@@ -128,7 +128,7 @@ export type Database = {
         Update: {
           backoffice_id?: string | null
           backoffice_name?: string | null
-          client_name?: string
+          client_name?: string | null
           client_phone?: string | null
           cnpj?: string | null
           completed_at?: string | null
