@@ -253,6 +253,7 @@ export function useDeleteAttachment() {
     },
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ["registration-attachments", vars.registration_id] });
+      qc.invalidateQueries({ queryKey: ["registrations-with-attachments"] });
     },
     onError: (e: any) => toast.error(e.message || "Erro ao remover print"),
   });
