@@ -107,7 +107,7 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
             />
           </div>
           <div>
-            <Label>Telefone</Label>
+            <Label>Telefone *</Label>
             <Input
               value={form.client_phone || ""}
               onChange={(e) => set("client_phone", e.target.value)}
