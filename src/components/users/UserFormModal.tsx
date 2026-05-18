@@ -253,6 +253,7 @@ export function UserFormModal({
                 <SelectContent>
                   <SelectItem value={UserRole.ADMIN}>Administrador</SelectItem>
                   <SelectItem value={UserRole.SALESPERSON}>Vendedor</SelectItem>
+                  <SelectItem value={UserRole.BACKOFFICE}>Backoffice</SelectItem>
                 </SelectContent>
               </Select>
             </div>
