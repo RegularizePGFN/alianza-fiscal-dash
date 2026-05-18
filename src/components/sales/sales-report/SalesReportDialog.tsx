@@ -25,7 +25,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
-type DatePreset = "today" | "last7" | "last30" | "thisMonth" | "custom";
+type DatePreset = "today" | "last7" | "last30" | "thisMonth" | "thisYear" | "all" | "custom";
 
 function startOfDay(d: Date) {
   const x = new Date(d);
