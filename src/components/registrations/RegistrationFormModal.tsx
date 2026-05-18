@@ -86,11 +86,24 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
         </DialogHeader>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="md:col-span-2">
-            <Label>Nome do cliente *</Label>
+            <Label>CNPJ *</Label>
             <Input
-              value={form.client_name || ""}
-              onChange={(e) => set("client_name", e.target.value)}
-              placeholder="Razão social ou nome"
+              value={form.cnpj || ""}
+              onChange={(e) => set("cnpj", e.target.value)}
+              placeholder="00.000.000/0000-00"
+            />
+          </div>
+          <div>
+            <Label>
+              CPF{" "}
+              <span className="ml-1 text-[10px] uppercase tracking-wide text-primary font-semibold">
+                recomendado
+              </span>
+            </Label>
+            <Input
+              value={form.cpf || ""}
+              onChange={(e) => set("cpf", e.target.value)}
+              placeholder="000.000.000-00"
             />
           </div>
           <div>
@@ -99,6 +112,14 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
               value={form.client_phone || ""}
               onChange={(e) => set("client_phone", e.target.value)}
               placeholder="5511999999999"
+            />
+          </div>
+          <div className="md:col-span-2">
+            <Label>Nome do cliente</Label>
+            <Input
+              value={form.client_name || ""}
+              onChange={(e) => set("client_name", e.target.value)}
+              placeholder="Razão social ou nome (opcional)"
             />
           </div>
           <div>
@@ -115,22 +136,6 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-          <div>
-            <Label>CNPJ</Label>
-            <Input
-              value={form.cnpj || ""}
-              onChange={(e) => set("cnpj", e.target.value)}
-              placeholder="00.000.000/0000-00"
-            />
-          </div>
-          <div>
-            <Label>CPF</Label>
-            <Input
-              value={form.cpf || ""}
-              onChange={(e) => set("cpf", e.target.value)}
-              placeholder="000.000.000-00"
-            />
           </div>
           {isAdminish && item && (
             <div className="md:col-span-2">
