@@ -3,6 +3,7 @@
 export enum UserRole {
   ADMIN = 'admin',
   SALESPERSON = 'vendedor',
+  BACKOFFICE = 'backoffice',
 }
 
 // User interface
