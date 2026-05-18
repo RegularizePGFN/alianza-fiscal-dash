@@ -122,6 +122,7 @@ export function RegistrationsContainer() {
             canManage={canManage}
             isAdmin={isAdmin}
             currentUserId={user?.id}
+            attachmentsSet={attachmentsSet}
             onOpen={(r) => {
               setDetail(r);
               setDetailOpen(true);
