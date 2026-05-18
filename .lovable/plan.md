@@ -1,137 +1,122 @@
-# Módulo Cadastros (Regularize)
+## Objetivo
 
-Substitui a planilha do Google Sheets por um módulo nativo, com histórico, prints da simulação PGFN, métricas de tempo de atendimento e atalho direto para gerar a proposta a partir do print.
+1. Permitir colar (Ctrl+V) imagens nos campos de print.
+2. Criar perfil **Backoffice** com acesso operacional restrito.
+3. Garantir visibilidade correta: Admin/Backoffice veem tudo; Vendedor só o próprio.
 
-## Quem usa e o que vê
+---
 
-- **Vendedor**: cria cadastros para seus clientes, vê e edita apenas os seus, acompanha situação.
-- **Backoffice / Admin**: vê todos os cadastros, atende (marca como Realizado/Pendente/Cancelado), anexa o print da simulação PGFN e adiciona observações.
-- **Admin**: tudo acima + acesso aos dashboards e exportação.
+## 1. Ctrl+V de imagens
 
-> Hoje só existem os papéis `admin`, `gestor` e `vendedor`. Vou adicionar o papel **`backoffice`** (não vê preço/comissão, só o módulo Cadastros + perfil). Se preferir que o backoffice continue sendo apenas usuários admin, me diga.
+Aplicar suporte a colar imagens da área de transferência em três locais:
 
-## Localização no sistema
+- **`AttachmentsField`** (modal de detalhe do cadastro) — adiciona à lista de prints existente.
+- **`RegistrationFormModal`** (criar/editar cadastro) — novo bloco "Prints" que armazena arquivos em memória e faz upload junto ao salvar (hoje o modal não tem upload; vai ganhar um anexador idêntico ao do detalhe, criando o registro e depois subindo).
+- **`AIImageProcessor`** (Propostas → Upload) — colar dispara o mesmo fluxo do "selecionar arquivo".
 
-- Sidebar → grupo **Comercial**, logo abaixo de *Propostas*: **Cadastros** (ícone `ClipboardList`).
-- Rota: `/cadastros`.
-- Visível para todos os papéis logados.
+Implementação compartilhada:
+- Novo hook `usePasteImage(onImage: (file: File) => void)` que escuta `paste` no `window` quando o componente está montado/visível, filtra `clipboardData.items` por `type.startsWith("image/")` e converte com `item.getAsFile()`.
+- Indicador visual sutil ("Ctrl+V para colar") na área de upload.
+- Toast de confirmação ao colar.
 
-## Tela principal
+---
 
-Lista em formato de tabela (estilo Vendas/Propostas) + KPIs no topo:
+## 2. Perfil Backoffice
 
-**KPIs**
-- Cadastros do mês
-- Aguardando atendimento
-- Realizados hoje
-- Tempo médio de atendimento (criação → realizado)
+A role `backoffice` já existe no enum `UserRole` e no `UserFormModal`. Falta consolidar o que ela vê/faz.
 
-**Filtros**
-- Período (hoje, 7d, 30d, mês, custom)
-- Situação (Aguardando, Pendente, Realizado, Cancelado)
-- Motivo
-- Vendedor (admin/backoffice)
-- Backoffice responsável (admin)
-- Busca por nome/CNPJ/CPF/telefone
+**Sidebar (`AppSidebar.tsx`)** — para `role === 'backoffice'`:
+- Mostrar: Dashboard (já existe, com visão de todos), Vendas (leitura), Propostas (leitura + editar status/prints), Cadastros (tudo), Perfil.
+- Esconder: Inteligência Comercial, Usuários, Relatórios, Comissões, Inventário, Financeiro, Configurações, Meu Histórico.
 
-**Colunas da tabela**
-Vendedor • Telefone • CNPJ • CPF • Motivo • Situação (chip colorido) • Backoffice • Criado em • Atendido em • Observação • Ações.
+**Guards de rota** — proteger páginas administrativas com checagem de role, redirecionando backoffice para `/cadastros` se acessar rota não permitida.
 
-**Ações por linha**
-- Editar
-- Anexar prints (backoffice/admin)
-- **Gerar Simulação** → abre `/propostas` já na aba *Dados* com o primeiro print carregado e os campos cliente (CNPJ, nome, telefone) pré-preenchidos a partir do cadastro
-- Ver histórico (timeline de mudanças de situação)
-- Excluir (admin)
+**Cadastros**:
+- Já é permitido pelas RLS atuais (`backoffice` em `client_registrations` e `client_registration_attachments`).
+- No `RegistrationsContainer`, garantir que o filtro "ver todos" se aplique para backoffice (hoje só admin).
+- Botões de excluir cadastro: continuar restrito a admin (conforme decisão anterior).
 
-## Formulário de cadastro
+**Propostas (somente leitura + status/prints)**:
+- Nova policy SELECT em `proposals` para `backoffice` ver tudo.
+- Nova policy UPDATE em `proposals` restrita a `backoffice`, mas apenas em colunas `status` e `image_url` — implementado via trigger `BEFORE UPDATE` que aborta se backoffice tentar alterar qualquer outra coluna (Postgres não permite RLS por coluna em UPDATE de forma simples).
+- Sem INSERT/DELETE para backoffice.
+- Frontend: na lista/detalhe de propostas, desabilitar edição de campos do cliente quando `user.role === 'backoffice'`, mantendo habilitados apenas troca de status e upload de print.
 
-Criação (vendedor):
-- Nome do cliente
-- Telefone (com máscara BR)
-- CNPJ e/ou CPF (pelo menos um obrigatório)
-- Motivo: *Fazer cadastro*, *Alterar cadastro*, *Receita Federal*, *Cancelar acesso* (editável depois nas Configurações)
-- Observação (texto livre)
+**Vendas (somente leitura)**:
+- Nova policy SELECT em `sales` para `backoffice`.
+- Sem INSERT/UPDATE/DELETE.
+- Frontend: ocultar botões de criar/editar/excluir.
 
-Atendimento (backoffice):
-- Mudar situação (Aguardando → Pendente/Realizado/Cancelado)
-- Upload de prints (múltiplos) — bucket `cadastro-prints`
-- Observação interna
+---
 
-Quando situação vira **Realizado**, grava `completed_at` e `completed_by` automaticamente.
+## 3. Visibilidade dos cadastros
 
-## Integração com Propostas (Gerar Simulação)
-
-Botão "Gerar Simulação" na linha do cadastro:
-1. Pega o primeiro print anexado (ou abre seletor se houver vários).
-2. Navega para `/propostas?cadastroId=<id>`.
-3. A página de Propostas detecta o param, baixa a imagem do storage, joga direto no `useImageProcessor` (mesmo fluxo do upload manual) e pula a etapa de drag-and-drop.
-4. Cliente (CNPJ/nome/telefone) já vai pré-preenchido.
-
-## Dashboards (aba "Análise" dentro de Cadastros)
-
-- Cadastros por dia (linha)
-- Distribuição por Motivo (pizza)
-- Distribuição por Situação (barras)
-- Ranking de backoffice (volume atendido + tempo médio)
-- Tempo médio de atendimento por vendedor
-- Funil: Criados → Em atendimento → Realizados → Cancelados
-
-Exportação para Excel com paginação em lote (mesmo padrão do Relatório de Vendas, sem o limite de 1000).
-
-## Histórico / auditoria
-
-Tabela `cadastro_events` registra cada mudança de situação (quem, quando, de/para, observação). Exibido em timeline no modal de detalhe.
+Já correto no banco (`Salesperson view own registrations` + `Backoffice/Admin manage all`). Auditar:
+- `useRegistrations` não força filtro extra por `salesperson_id` — a RLS é quem decide. OK.
+- Container/Table: chips de filtro "Meus / Todos" só aparecem para admin/backoffice.
 
 ---
 
 ## Detalhes técnicos
 
-**Tabelas novas**
-- `client_registrations`: `id`, `salesperson_id`, `salesperson_name`, `client_name`, `client_phone`, `cnpj`, `cpf`, `reason` (enum: `fazer_cadastro` | `alterar_cadastro` | `receita_federal` | `cancelar_acesso`), `status` (enum: `aguardando` | `pendente` | `realizado` | `cancelado`), `notes`, `backoffice_id`, `backoffice_name`, `completed_at`, `created_at`, `updated_at`.
-- `client_registration_attachments`: `id`, `registration_id`, `file_url`, `uploaded_by`, `uploaded_at`.
-- `client_registration_events`: `id`, `registration_id`, `from_status`, `to_status`, `changed_by`, `changed_by_name`, `note`, `created_at`.
+### Migration (proposals)
 
-**RLS**
-- Vendedor: SELECT/INSERT/UPDATE apenas onde `salesperson_id = auth.uid()` e enquanto status = `aguardando`.
-- Backoffice/Admin: ALL.
-- Anexos e eventos seguem o acesso do cadastro pai.
+```sql
+-- SELECT para backoffice
+CREATE POLICY "Backoffice can view all proposals"
+ON public.proposals FOR SELECT
+USING (get_current_user_role() = 'backoffice');
 
-**Storage**
-- Novo bucket público `cadastro-prints` (mesmo padrão de `equipment-photos`), policies: leitura pública, upload/delete para backoffice/admin e para o vendedor dono enquanto o cadastro estiver `aguardando`.
+-- UPDATE para backoffice (limitado via trigger)
+CREATE POLICY "Backoffice can update proposals"
+ON public.proposals FOR UPDATE
+USING (get_current_user_role() = 'backoffice');
 
-**Papel `backoffice`**
-- Adicionar à coluna `role` em `profiles` (texto livre hoje, sem CHECK).
-- Atualizar `UserRole` enum no frontend (`src/lib/types.ts`) e o UserFormModal.
-- `AppSidebar`: backoffice vê só *Cadastros* + *Perfil* (e Dashboard se fizer sentido).
+CREATE OR REPLACE FUNCTION public.restrict_backoffice_proposal_update()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF get_current_user_role() = 'backoffice' THEN
+    IF NEW.client_name IS DISTINCT FROM OLD.client_name
+       OR NEW.cnpj IS DISTINCT FROM OLD.cnpj
+       OR NEW.client_phone IS DISTINCT FROM OLD.client_phone
+       OR NEW.client_email IS DISTINCT FROM OLD.client_email
+       OR NEW.total_debt IS DISTINCT FROM OLD.total_debt
+       OR NEW.debt_number IS DISTINCT FROM OLD.debt_number
+       OR NEW.discounted_value IS DISTINCT FROM OLD.discounted_value
+       OR NEW.discount_percentage IS DISTINCT FROM OLD.discount_percentage
+       OR NEW.entry_value IS DISTINCT FROM OLD.entry_value
+       OR NEW.installments IS DISTINCT FROM OLD.installments
+       OR NEW.installment_value IS DISTINCT FROM OLD.installment_value
+       OR NEW.fees_value IS DISTINCT FROM OLD.fees_value
+       OR NEW.business_activity IS DISTINCT FROM OLD.business_activity
+       OR NEW.user_id IS DISTINCT FROM OLD.user_id THEN
+      RAISE EXCEPTION 'Backoffice pode alterar apenas status e print da proposta';
+    END IF;
+  END IF;
+  RETURN NEW;
+END $$;
 
-**RPC para métricas**
-- `get_registrations_summary(p_start, p_end)` SECURITY DEFINER, devolvendo totais, tempo médio, breakdown por motivo/status/backoffice — bypass do limite de 1000 (padrão já usado no projeto).
-
-**Frontend (estrutura)**
+CREATE TRIGGER restrict_backoffice_proposal_update_trg
+BEFORE UPDATE ON public.proposals
+FOR EACH ROW EXECUTE FUNCTION public.restrict_backoffice_proposal_update();
 ```
-src/pages/RegistrationsPage.tsx
-src/components/registrations/
-  RegistrationsContainer.tsx
-  RegistrationsKpiCards.tsx
-  RegistrationsFilters.tsx
-  RegistrationsTable.tsx
-  RegistrationFormModal.tsx
-  RegistrationDetailDrawer.tsx   (anexos + timeline + ações)
-  AttachmentsField.tsx
-  RegistrationsCharts.tsx
-  exportRegistrations.ts
-src/hooks/useRegistrations.ts
-src/hooks/useRegistrationMetrics.ts
+
+### Migration (sales)
+
+```sql
+CREATE POLICY "Backoffice can view all sales"
+ON public.sales FOR SELECT
+USING (get_current_user_role() = 'backoffice');
 ```
 
-Em Propostas: pequeno hook que lê `searchParams.get("cadastroId")`, baixa o anexo via Supabase Storage e injeta no fluxo de processamento existente.
+### Arquivos a alterar
 
----
-
-## Perguntas rápidas antes de implementar
-
-1. **Papel backoffice**: crio um papel novo `backoffice`, ou o backoffice continua sendo usuário `admin`?
-2. **Lista de motivos**: confirmo *Fazer cadastro / Alterar cadastro / Receita Federal / Cancelar acesso* — quer mais algum?
-3. **Vendedor pode editar depois de criado?** Sugiro permitir editar/excluir apenas enquanto status = `aguardando`. Ok?
-4. **Backoffice escolhe quem atende ou é automático** (quem marcar Realizado vira o responsável)? Sugiro automático.
+- `src/hooks/usePasteImage.ts` (novo)
+- `src/components/registrations/AttachmentsField.tsx`
+- `src/components/registrations/RegistrationFormModal.tsx`
+- `src/components/proposals/AIImageProcessor.tsx`
+- `src/components/layout/AppSidebar.tsx`
+- `src/components/registrations/RegistrationsContainer.tsx` (chips "Meus/Todos" + isAdmin || isBackoffice)
+- Guards nas páginas administrativas (criar `RoleGuard` simples ou checar em cada page)
+- Propostas: desabilitar campos para backoffice no formulário de edição
+- Vendas: ocultar ações para backoffice
