@@ -59,7 +59,7 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
 
   const handleSave = async () => {
-    if (!form.cnpj?.trim()) return;
+    if (!form.cnpj?.trim() || !form.client_phone?.trim()) return;
 
     const payload: any = {
       ...form,
