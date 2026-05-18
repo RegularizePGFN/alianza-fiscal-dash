@@ -59,7 +59,7 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
 
   const handleSave = async () => {
-    if (!form.cnpj?.trim()) return;
+    if (!form.cnpj?.trim() || !form.client_phone?.trim()) return;
 
     const payload: any = {
       ...form,
@@ -107,7 +107,7 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
             />
           </div>
           <div>
-            <Label>Telefone</Label>
+            <Label>Telefone *</Label>
             <Input
               value={form.client_phone || ""}
               onChange={(e) => set("client_phone", e.target.value)}
@@ -164,7 +164,7 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
             />
           </div>
           <div className="md:col-span-2 text-xs text-muted-foreground">
-            O CNPJ é obrigatório. O CPF é recomendado para agilizar o atendimento.
+            CNPJ e telefone são obrigatórios. O CPF é recomendado para agilizar o atendimento.
           </div>
         </div>
         <DialogFooter>
@@ -173,7 +173,7 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
           </Button>
           <Button
             onClick={handleSave}
-            disabled={save.isPending || !form.cnpj?.trim()}
+            disabled={save.isPending || !form.cnpj?.trim() || !form.client_phone?.trim()}
           >
             {save.isPending ? "Salvando..." : "Salvar"}
           </Button>
