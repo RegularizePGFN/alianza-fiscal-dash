@@ -23,6 +23,15 @@ export const useFormHandlers = ({
 }: UseFormHandlersProps) => {
   const { toast } = useToast();
   const [debouncedCnpj, setDebouncedCnpj] = useState<string>("");
+
+  // Auto-trigger CNPJ lookup sempre que o cnpj do formData mudar (inclui handoff do cadastro)
+  useEffect(() => {
+    const digits = (formData.cnpj || "").replace(/\D/g, "");
+    if (digits.length === 14) {
+      setDebouncedCnpj(formData.cnpj as string);
+    }
+  }, [formData.cnpj]);
+
   
   // Handle CNPJ change with debounce
   useEffect(() => {
