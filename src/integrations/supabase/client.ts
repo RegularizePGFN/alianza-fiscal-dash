@@ -10,7 +10,9 @@ const getAccessToken = async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('No authentication session');
 
-  if (session.expires_at && session.expires_at * 1000 <= Date.now() + 60_000) {
+  const { error: userError } = await supabase.auth.getUser();
+
+  if (userError || (session.expires_at && session.expires_at * 1000 <= Date.now() + 60_000)) {
     const { data, error } = await supabase.auth.refreshSession();
     if (error || !data.session) throw new Error('Authentication session expired');
     return data.session.access_token;
