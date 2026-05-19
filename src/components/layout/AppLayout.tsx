@@ -4,6 +4,7 @@ import { AppSidebar } from "./AppSidebar";
 import { AppHeader } from "./AppHeader";
 import { useAuth } from "@/contexts/auth";
 import { Navigate } from "react-router-dom";
+import { useRegistrationsRealtimeSound } from "@/hooks/useRegistrationsRealtimeSound";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -13,6 +14,7 @@ interface AppLayoutProps {
 export function AppLayout({ children, requireAuth = true }: AppLayoutProps) {
   const { isAuthenticated, isLoading } = useAuth();
   const [errorDetected, setErrorDetected] = useState<string | null>(null);
+  useRegistrationsRealtimeSound();
 
   /* ╭──────────────────────────────────────────────────────────╮
      │ Desfaz "pointer‑events:none" que o listener de atalhos    │
