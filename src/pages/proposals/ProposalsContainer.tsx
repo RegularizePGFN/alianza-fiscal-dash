@@ -42,6 +42,9 @@ const ProposalsContainer = () => {
 
     (async () => {
       try {
+        // Sempre começa no Passo 1 (Upload) para o usuário ver o print + progresso
+        proposalsState.setActiveTab("upload");
+
         const [{ data: reg }, { data: atts }] = await Promise.all([
           supabase.from("client_registrations").select("*").eq("id", cadastroId).maybeSingle(),
           supabase
@@ -54,22 +57,24 @@ const ProposalsContainer = () => {
           toast.error("Cadastro não encontrado");
           return;
         }
+
+        // Pré-preenche os dados do cliente vindos do cadastro
         proposalsState.setFormData((prev: any) => ({
           ...prev,
           cnpj: reg.cnpj || prev.cnpj || "",
           clientName: reg.client_name || prev.clientName || "",
           clientPhone: reg.client_phone || prev.clientPhone || "",
+          clientEmail: (reg as any).client_email || prev.clientEmail || "",
         }));
 
         const first = (atts || [])[0];
         if (!first) {
           toast.info("Cadastro sem prints. Faça o upload manual.");
-          proposalsState.setActiveTab("upload");
           setSearchParams({}, { replace: true });
           return;
         }
 
-        proposalsState.setActiveTab("data");
+        // Baixa o print e já mostra como preview no Passo 1 enquanto a IA processa
         proposalsState.setProcessing(true);
         proposalsState.setProgressPercent(0);
 
@@ -82,12 +87,28 @@ const ProposalsContainer = () => {
           r.readAsDataURL(blob);
         });
 
+        // Mostra o print já no preview do Passo 1
+        proposalsState.setImagePreview(base64);
+
         const extracted = await analyzeImageWithAI(
           base64,
           proposalsState.setProgressPercent,
           proposalsState.setProcessingStatus
         );
+
+        // handleProcessComplete faz o merge dos dados extraídos e avança para Passo 2
         handlers.handleProcessComplete(extracted, base64);
+
+        // Garante que o CNPJ e dados do cliente do cadastro prevaleçam
+        // (o print normalmente não contém CNPJ)
+        proposalsState.setFormData((prev: any) => ({
+          ...prev,
+          cnpj: reg.cnpj || prev.cnpj || "",
+          clientName: reg.client_name || prev.clientName || "",
+          clientPhone: reg.client_phone || prev.clientPhone || "",
+          clientEmail: (reg as any).client_email || prev.clientEmail || "",
+        }));
+
         toast.success("Simulação carregada do cadastro");
       } catch (e: any) {
         console.error(e);
