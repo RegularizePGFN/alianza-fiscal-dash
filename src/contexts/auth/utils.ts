@@ -28,6 +28,12 @@ export const mapUserRole = (role?: string, email?: string): UserRole => {
       console.log("Role is explicitly vendedor/salesperson, returning SALESPERSON");
       return UserRole.SALESPERSON;
     }
+
+    // Check for backoffice role
+    if (lowerRole === 'backoffice') {
+      console.log("Role is explicitly backoffice, returning BACKOFFICE");
+      return UserRole.BACKOFFICE;
+    }
   }
   
   // Second priority: Check if email is in admin list (only if no explicit role is set)
