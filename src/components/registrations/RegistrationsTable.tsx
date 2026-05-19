@@ -88,6 +88,7 @@ export function RegistrationsTable({
               <TableHead>Backoffice</TableHead>
               <TableHead>Criado em</TableHead>
               <TableHead>Atendido em</TableHead>
+              <TableHead>Tempo de cadastro</TableHead>
               <TableHead className="w-[60px]" />
               <TableHead className="w-[170px]">Gerar proposta</TableHead>
             </TableRow>
