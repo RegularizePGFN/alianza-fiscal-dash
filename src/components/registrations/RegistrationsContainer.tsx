@@ -55,6 +55,8 @@ export function RegistrationsContainer() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [reason, setReason] = useState("all");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<ClientRegistration | null>(null);
