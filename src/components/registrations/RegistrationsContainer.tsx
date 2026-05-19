@@ -58,6 +58,10 @@ export function RegistrationsContainer() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
+  useEffect(() => {
+    setPage(1);
+  }, [search, status, reason, periodFrom, periodTo]);
+
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<ClientRegistration | null>(null);
 
