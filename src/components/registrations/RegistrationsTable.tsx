@@ -45,6 +45,18 @@ interface Props {
 
 const fmt = (d?: string | null) => (d ? format(new Date(d), "dd/MM/yy HH:mm") : "—");
 
+const fmtDuration = (start?: string | null, end?: string | null) => {
+  if (!start || !end) return "—";
+  const diffMs = new Date(end).getTime() - new Date(start).getTime();
+  if (isNaN(diffMs) || diffMs < 0) return "—";
+  const totalMin = Math.floor(diffMs / 60000);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  if (h <= 0) return `${m}min`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}min`;
+};
+
 export function RegistrationsTable({
   items,
   loading,
