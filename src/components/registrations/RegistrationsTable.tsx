@@ -45,6 +45,18 @@ interface Props {
 
 const fmt = (d?: string | null) => (d ? format(new Date(d), "dd/MM/yy HH:mm") : "—");
 
+const fmtDuration = (start?: string | null, end?: string | null) => {
+  if (!start || !end) return "—";
+  const diffMs = new Date(end).getTime() - new Date(start).getTime();
+  if (isNaN(diffMs) || diffMs < 0) return "—";
+  const totalMin = Math.floor(diffMs / 60000);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  if (h <= 0) return `${m}min`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}min`;
+};
+
 export function RegistrationsTable({
   items,
   loading,
@@ -88,6 +100,7 @@ export function RegistrationsTable({
               <TableHead>Backoffice</TableHead>
               <TableHead>Criado em</TableHead>
               <TableHead>Atendido em</TableHead>
+              <TableHead>Tempo de cadastro</TableHead>
               <TableHead className="w-[60px]" />
               <TableHead className="w-[170px]">Gerar proposta</TableHead>
             </TableRow>
@@ -130,6 +143,7 @@ export function RegistrationsTable({
                   <TableCell>{r.backoffice_name || "—"}</TableCell>
                   <TableCell className="whitespace-nowrap text-xs">{fmt(r.created_at)}</TableCell>
                   <TableCell className="whitespace-nowrap text-xs">{fmt(r.completed_at)}</TableCell>
+                  <TableCell className="whitespace-nowrap text-xs">{fmtDuration(r.created_at, r.completed_at)}</TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -166,10 +180,14 @@ export function RegistrationsTable({
                         <span tabIndex={0}>
                           <Button
                             size="sm"
-                            variant="secondary"
+                            variant={canGenerate ? "default" : "secondary"}
                             disabled={!canGenerate}
                             onClick={() => onGenerateSimulation(r)}
-                            className="h-8"
+                            className={
+                              canGenerate
+                                ? "h-8 bg-orange-500 hover:bg-orange-600 text-white border-0 shadow-sm"
+                                : "h-8"
+                            }
                           >
                             <Wand2 className="w-3.5 h-3.5 mr-1.5" />
                             Gerar proposta
