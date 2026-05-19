@@ -180,10 +180,14 @@ export function RegistrationsTable({
                         <span tabIndex={0}>
                           <Button
                             size="sm"
-                            variant="secondary"
+                            variant={canGenerate ? "default" : "secondary"}
                             disabled={!canGenerate}
                             onClick={() => onGenerateSimulation(r)}
-                            className="h-8"
+                            className={
+                              canGenerate
+                                ? "h-8 bg-orange-500 hover:bg-orange-600 text-white border-0 shadow-sm"
+                                : "h-8"
+                            }
                           >
                             <Wand2 className="w-3.5 h-3.5 mr-1.5" />
                             Gerar proposta
