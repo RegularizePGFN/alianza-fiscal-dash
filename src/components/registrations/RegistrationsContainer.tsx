@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { RegistrationsKpiCards } from "./RegistrationsKpiCards";
@@ -7,6 +7,7 @@ import { RegistrationsTable } from "./RegistrationsTable";
 import { RegistrationFormModal } from "./RegistrationFormModal";
 import { RegistrationDetailDrawer } from "./RegistrationDetailDrawer";
 import { RegistrationsCharts } from "./RegistrationsCharts";
+import { DataPagination } from "@/components/ui/data-pagination";
 import { exportRegistrationsToExcel } from "./exportRegistrations";
 import {
   ClientRegistration,
@@ -54,6 +55,12 @@ export function RegistrationsContainer() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [reason, setReason] = useState("all");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, status, reason, periodFrom, periodTo]);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<ClientRegistration | null>(null);
@@ -73,6 +80,13 @@ export function RegistrationsContainer() {
         .some((v) => v && v.toLowerCase().includes(q));
     });
   }, [items, search, status, reason]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const paginatedItems = useMemo(() => {
+    const start = (safePage - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, safePage, pageSize]);
 
   const handleGenerateSimulation = (r: ClientRegistration) => {
     navigate(`/propostas?cadastroId=${r.id}`);
@@ -115,9 +129,9 @@ export function RegistrationsContainer() {
           <TabsTrigger value="list">Lista</TabsTrigger>
           <TabsTrigger value="charts">Análise</TabsTrigger>
         </TabsList>
-        <TabsContent value="list" className="pt-4">
+        <TabsContent value="list" className="pt-4 space-y-4">
           <RegistrationsTable
-            items={filtered}
+            items={paginatedItems}
             loading={isLoading}
             canManage={canManage}
             isAdmin={isAdmin}
@@ -134,6 +148,19 @@ export function RegistrationsContainer() {
             onGenerateSimulation={handleGenerateSimulation}
             onDelete={(r) => setToDelete(r)}
           />
+          {filtered.length > 0 && (
+            <DataPagination
+              currentPage={safePage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={filtered.length}
+              onPageChange={setPage}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setPage(1);
+              }}
+            />
+          )}
         </TabsContent>
         <TabsContent value="charts" className="pt-4">
           <RegistrationsCharts items={filtered} />
