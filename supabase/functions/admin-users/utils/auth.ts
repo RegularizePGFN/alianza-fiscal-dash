@@ -15,17 +15,17 @@ export async function validateAdminUser(authHeader: string | null) {
     { global: { headers: { Authorization: authHeader } } }
   );
 
-  // Validate the JWT and get claims
-  const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
-  
-  if (claimsError || !claimsData?.claims) {
-    console.error('Authentication error:', claimsError);
+  // Validate the JWT by calling the auth server
+  const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+
+  if (userError || !userData?.user) {
+    console.error('Authentication error:', userError);
     throw new Error('Invalid authentication token');
   }
 
-  const userId = claimsData.claims.sub;
-  const userEmail = claimsData.claims.email as string;
-  
+  const userId = userData.user.id;
+  const userEmail = userData.user.email as string;
+
   console.log('Authenticated user:', userEmail);
 
   // Check if user is admin - first check the admin emails list
