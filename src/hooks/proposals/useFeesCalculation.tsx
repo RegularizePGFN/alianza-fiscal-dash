@@ -7,10 +7,12 @@ interface UseFeesCalculationProps {
   setFormData: (data: Partial<ExtractedData> | ((prev: Partial<ExtractedData>) => Partial<ExtractedData>)) => void;
 }
 
+const MIN_FEES = 179.90;
+
 export const useFeesCalculation = ({ formData, setFormData }: UseFeesCalculationProps) => {
-  // Calculate fees when total debt or discounted value changes
+  // Recalcula honorários sempre que dívida ou desconto mudarem (cobre caso sem desconto)
   useEffect(() => {
-    if (formData.totalDebt && formData.discountedValue) {
+    if (formData.totalDebt) {
       calculateFees();
     }
   }, [formData.totalDebt, formData.discountedValue]);
@@ -41,40 +43,45 @@ export const useFeesCalculation = ({ formData, setFormData }: UseFeesCalculation
     }
   }, [formData.feesTotalInstallmentValue, formData.feesInstallments]);
 
-  // Function to calculate upfront fees (20% of savings)
+  // Sugestão automática de honorários:
+  // - Com desconto (V < D): 30% × (D − V), piso R$ 179,90
+  // - Sem desconto: 15% × D, piso R$ 179,90
   const calculateFees = () => {
     try {
-      if (!formData.totalDebt || !formData.discountedValue) return;
-      
-      // Convert string values to numbers
+      if (!formData.totalDebt) return;
+
       const totalDebt = parseFloat(formData.totalDebt.replace(/\./g, '').replace(',', '.'));
-      const discountedValue = parseFloat(formData.discountedValue.replace(/\./g, '').replace(',', '.'));
-      
-      if (isNaN(totalDebt) || isNaN(discountedValue)) {
-        return;
+      if (isNaN(totalDebt) || totalDebt <= 0) return;
+
+      const discountedRaw = formData.discountedValue
+        ? parseFloat(formData.discountedValue.replace(/\./g, '').replace(',', '.'))
+        : NaN;
+
+      const hasDiscount = !isNaN(discountedRaw) && discountedRaw > 0 && discountedRaw < totalDebt;
+
+      let feesValue: number;
+      if (hasDiscount) {
+        const savings = totalDebt - discountedRaw;
+        feesValue = savings * 0.3;
+      } else {
+        feesValue = totalDebt * 0.15;
       }
-      
-      // Calculate 20% of savings
-      const savingsAmount = totalDebt - discountedValue;
-      const feesValue = savingsAmount * 0.2;
-      
-      // Format the result with Brazilian currency format
+
+      if (feesValue < MIN_FEES) feesValue = MIN_FEES;
+
       const formattedFees = feesValue.toLocaleString('pt-BR', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       });
-      
-      // Update formData
+
       setFormData(prev => ({
         ...prev,
         feesValue: formattedFees,
       }));
-      
-      // If installment fees are enabled, also calculate the installment total
+
       if (formData.showFeesInstallments === 'true') {
         calculateInstallmentFeesTotal();
       }
-      
     } catch (error) {
       console.error('Error calculating fees:', error);
     }
