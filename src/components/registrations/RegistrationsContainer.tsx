@@ -125,9 +125,9 @@ export function RegistrationsContainer() {
           <TabsTrigger value="list">Lista</TabsTrigger>
           <TabsTrigger value="charts">Análise</TabsTrigger>
         </TabsList>
-        <TabsContent value="list" className="pt-4">
+        <TabsContent value="list" className="pt-4 space-y-4">
           <RegistrationsTable
-            items={filtered}
+            items={paginatedItems}
             loading={isLoading}
             canManage={canManage}
             isAdmin={isAdmin}
@@ -144,6 +144,19 @@ export function RegistrationsContainer() {
             onGenerateSimulation={handleGenerateSimulation}
             onDelete={(r) => setToDelete(r)}
           />
+          {filtered.length > 0 && (
+            <DataPagination
+              currentPage={safePage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={filtered.length}
+              onPageChange={setPage}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setPage(1);
+              }}
+            />
+          )}
         </TabsContent>
         <TabsContent value="charts" className="pt-4">
           <RegistrationsCharts items={filtered} />
