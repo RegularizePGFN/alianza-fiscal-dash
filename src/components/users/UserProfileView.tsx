@@ -51,6 +51,8 @@ export function UserProfileView({ user, onBack }: UserProfileViewProps) {
     switch (role) {
       case 'admin':
         return 'Administrador';
+      case 'backoffice':
+        return 'Backoffice';
       case 'vendedor':
         return 'Especialista Tributário';
       default:
