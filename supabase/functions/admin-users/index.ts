@@ -62,13 +62,23 @@ serve(async (req) => {
 
   } catch (error: any) {
     console.error('Admin users function error:', error);
+
+    const message = error.message || 'Internal server error';
+    const status = message.includes('authorization') || message.includes('authentication')
+      ? 401
+      : message.includes('permissions')
+        ? 403
+        : message.includes('Endpoint not found')
+          ? 404
+          : 500;
+
     return new Response(
       JSON.stringify({ 
         data: null, 
-        error: { message: error.message || 'Internal server error' }
+        error: { message }
       }),
       {
-        status: error.message?.includes('permissions') ? 403 : 500,
+        status,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );

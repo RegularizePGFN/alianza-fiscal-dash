@@ -6,6 +6,35 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://sbxltdbnqixucjoognfj.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNieGx0ZGJucWl4dWNqb29nbmZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNDQxMDksImV4cCI6MjA2MTcyMDEwOX0.ZsH2LX5JVFk7tCC0gGmjP1ZrVlQJ78nSUlMqxW7L1rw";
 
+const getAccessToken = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('No authentication session');
+
+  const { error: userError } = await supabase.auth.getUser();
+
+  if (userError || (session.expires_at && session.expires_at * 1000 <= Date.now() + 60_000)) {
+    const { data, error } = await supabase.auth.refreshSession();
+    if (error || !data.session) throw new Error('Authentication session expired');
+    return data.session.access_token;
+  }
+
+  return session.access_token;
+};
+
+const requestAdminAPI = async (path = '', init: RequestInit = {}) => {
+  const accessToken = await getAccessToken();
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-users${path}`, {
+    ...init,
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      ...init.headers,
+    },
+  });
+
+  return await response.json();
+};
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
@@ -23,79 +52,34 @@ export const supabase = createClient<Database>(
 // Secure admin API that calls edge functions instead of exposing service role key
 export const adminAPI = {
   async listUsers() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) throw new Error('No authentication session');
-
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-users`, {
+    return await requestAdminAPI('', {
       method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json',
-      },
     });
-
-    return await response.json();
   },
 
   async createUser(userData: { email: string; password: string; name: string; role: string }) {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) throw new Error('No authentication session');
-
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-users`, {
+    return await requestAdminAPI('', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify(userData),
     });
-
-    return await response.json();
   },
 
   async updateUserById(userId: string, userData: any) {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) throw new Error('No authentication session');
-
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-users/${userId}`, {
+    return await requestAdminAPI(`/${userId}`, {
       method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify(userData),
     });
-
-    return await response.json();
   },
 
   async deleteUser(userId: string) {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) throw new Error('No authentication session');
-
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-users/${userId}`, {
+    return await requestAdminAPI(`/${userId}`, {
       method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json',
-      },
     });
-
-    return await response.json();
   },
 
   async getUserById(userId: string) {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) throw new Error('No authentication session');
-
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-users/${userId}`, {
+    return await requestAdminAPI(`/${userId}`, {
       method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json',
-      },
     });
-
-    return await response.json();
   }
 };

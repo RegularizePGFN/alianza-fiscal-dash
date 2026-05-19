@@ -34,18 +34,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
     
     try {
+      const { data: { user: verifiedUser }, error: authError } = await supabase.auth.getUser();
+
+      if (authError || !verifiedUser) {
+        console.error("Invalid stored session, clearing local auth state:", authError);
+        await supabase.auth.signOut({ scope: 'local' });
+        setAuthState({
+          isAuthenticated: false,
+          user: null,
+          isLoading: false,
+        });
+        return;
+      }
+
       // Get user profile data from profiles table if available
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('name, email, role')
-        .eq('id', session.user.id)
+        .eq('id', verifiedUser.id)
         .single();
       
       if (profileError && profileError.code !== 'PGRST116') {
         console.error("Error fetching user profile:", profileError);
       }
       
-      const email = profileData?.email || session.user.email || '';
+      const email = profileData?.email || verifiedUser.email || '';
       
       // Log the retrieved role for debugging
       console.log("Profile data retrieved:", profileData);
@@ -53,8 +66,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       // Create user object from session and profile data
       const authUser: User = {
-        id: session.user.id,
-        name: profileData?.name || session.user.email?.split('@')[0] || 'Usuário',
+        id: verifiedUser.id,
+        name: profileData?.name || verifiedUser.email?.split('@')[0] || 'Usuário',
         email: email,
         role: mapUserRole(profileData?.role, email),
       };

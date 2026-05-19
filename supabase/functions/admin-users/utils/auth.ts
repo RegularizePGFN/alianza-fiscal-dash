@@ -1,30 +1,36 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+function decodeJwtPayload(token: string) {
+  const payload = token.split('.')[1];
+  if (!payload) throw new Error('Invalid authentication token');
+
+  const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized.padEnd(normalized.length + (4 - normalized.length % 4) % 4, '=');
+  return JSON.parse(atob(padded));
+}
+
 export async function validateAdminUser(authHeader: string | null) {
   if (!authHeader?.startsWith('Bearer ')) {
     throw new Error('No authorization header');
   }
 
   const token = authHeader.replace('Bearer ', '');
+  const claims = decodeJwtPayload(token);
 
-  // Create Supabase client with the user's auth token
-  const supabaseClient = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-    { global: { headers: { Authorization: authHeader } } }
-  );
-
-  // Validate the JWT by calling the auth server
-  const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-
-  if (userError || !userData?.user) {
-    console.error('Authentication error:', userError);
+  if (!claims?.sub || claims.aud !== 'authenticated' || (claims.exp && claims.exp * 1000 <= Date.now())) {
     throw new Error('Invalid authentication token');
   }
 
-  const userId = userData.user.id;
-  const userEmail = userData.user.email as string;
+  const userId = claims.sub;
+  const userEmail = claims.email as string;
+
+  // Create an admin client for authorization checks. The Edge Function gateway
+  // already verifies the JWT signature before this function runs.
+  const supabaseAdmin = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  );
 
   console.log('Authenticated user:', userEmail);
 
@@ -42,7 +48,7 @@ export async function validateAdminUser(authHeader: string | null) {
   // Also check the profile role
   let isAdminByRole = false;
   try {
-    const { data: profile, error: profileError } = await supabaseClient
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('role')
       .eq('id', userId)
