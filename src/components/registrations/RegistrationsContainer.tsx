@@ -77,6 +77,13 @@ export function RegistrationsContainer() {
     });
   }, [items, search, status, reason]);
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const paginatedItems = useMemo(() => {
+    const start = (safePage - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, safePage, pageSize]);
+
   const handleGenerateSimulation = (r: ClientRegistration) => {
     navigate(`/propostas?cadastroId=${r.id}`);
   };
