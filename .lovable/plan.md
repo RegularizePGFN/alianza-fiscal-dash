@@ -1,54 +1,34 @@
-## Efeitos sonoros e notificações para cadastros
+## Problema
 
-Sim, é totalmente possível. Já existe infraestrutura parecida no sistema (som global `sale-notification.mp3` + toast para vendas via Realtime), vamos seguir o mesmo padrão para cadastros.
+A Priscilla está no banco com `role = 'backoffice'`, mas o sistema não reconhece esse papel em vários lugares:
 
-### O que vai acontecer
+1. **Mapeamento de role ignora "backoffice"** — `src/contexts/auth/utils.ts` (`mapUserRole`) só reconhece `admin` e `vendedor`; qualquer outro valor cai no default `SALESPERSON`. Por isso ela aparece como "Vendedor" na tabela de Usuários e o sidebar dela mostra o menu de vendedora (Dashboard, Vendas, Propostas, Cadastros, Meu Histórico).
+2. **Badge da tabela de Usuários** (`UsersTable.tsx`) não tem variante para Backoffice.
+3. **Perfil mostra "Especialista Tributário"** — `src/pages/ProfilePage.tsx` linha 205 e `src/components/users/UserProfileView.tsx` linha 55 retornam essa string fixa para qualquer role que não seja admin.
+4. **Menu do backoffice tem itens demais** — `AppSidebar.tsx` (linhas 104-110) já tem um branch específico para backoffice, mas mostra Cadastros, Propostas, Vendas e Dashboard. Precisa ficar só Propostas e Cadastros.
+5. **Landing page** — `src/pages/Index.tsx` redireciona todo logado para `/dashboard`. Para backoffice deve ir para `/cadastros`.
 
-**1. Vendedor cria um novo cadastro**
-- Todos os usuários **backoffice** (e admin) logados ouvem um som de "novo cadastro" e veem um toast: *"Novo cadastro de {vendedor}: {cliente}"*.
-- Clicando no toast → abre a tela de Cadastros já filtrada.
+## Mudanças
 
-**2. Backoffice marca o cadastro como "Realizado"**
-- O **vendedor que pediu** o cadastro:
-  - Ouve um som de "cadastro pronto" (se estiver com a aba aberta).
-  - Recebe um toast: *"Seu cadastro de {cliente} foi concluído"*.
-  - Recebe uma **notificação persistente** no sininho (popover de notificações), que fica lá até ele marcar como lida.
+**1. `src/contexts/auth/utils.ts`** — adicionar reconhecimento de `backoffice` no `mapUserRole` retornando `UserRole.BACKOFFICE`.
 
-**3. Backoffice marca como "Pendente" ou "Cancelado"** (bônus, mesma mecânica)
-- Vendedor recebe notificação no sininho explicando a situação + motivo (campo notes), sem som intrusivo (apenas toast discreto).
+**2. `src/components/users/UsersTable.tsx`** — adicionar `UserRole.BACKOFFICE` no `roleConfig` com label "Backoffice" e variante distinta (ex.: `secondary`).
 
-### Sons
+**3. `src/components/users/UserProfileView.tsx`** — adicionar case `'backoffice' → 'Backoffice'` em `getRoleLabel`.
 
-Dois arquivos novos em `public/`:
-- `registration-created.mp3` — toque curto e neutro (para backoffice).
-- `registration-done.mp3` — toque curto e positivo (para vendedor).
+**4. `src/pages/ProfilePage.tsx`** (linha ~205) — trocar o ternário fixo por um mapeamento que cubra admin / backoffice / vendedor:
+- admin → "Administrador"
+- backoffice → "Backoffice"
+- vendedor → "Especialista Tributário"
 
-Posso gerar via ElevenLabs SFX, ou você prefere subir arquivos próprios?
+**5. `src/components/layout/AppSidebar.tsx`** (linhas 104-110) — no branch `isBackoffice`, remover Dashboard e Vendas, deixando apenas:
+- Cadastros
+- Propostas
 
-### Onde toca o som
+**6. `src/pages/Index.tsx`** — após login, se `role === BACKOFFICE`, redirecionar para `/cadastros`; caso contrário, manter `/dashboard`.
 
-- Player global montado no `AppLayout` (igual ao de vendas), escutando Realtime de `client_registrations`.
-- Respeita a aba ativa: se a aba estiver em background, ainda toca (igual hoje em vendas).
-- Volume baixo padrão; possível adicionar toggle "silenciar sons" no perfil futuramente (fora do escopo agora, salvo se você pedir).
+## Observações
 
-### Detalhes técnicos
-
-- **Realtime**: habilitar replicação realtime em `public.client_registrations` (INSERT e UPDATE de `status`).
-- **Hook novo**: `useRegistrationsRealtimeSound` montado no `AppLayout`, com lógica:
-  - INSERT → se `user.role ∈ {admin, backoffice}` e `salesperson_id ≠ user.id` → som de criação + toast.
-  - UPDATE com `status` mudando para `realizado|pendente|cancelado` → se `user.id === row.salesperson_id` → som (só em "realizado") + toast + inserir linha em `notifications`.
-- **Notificações persistentes**: já existe tabela `notifications` e popover (`NotificationsPopover`). Vamos só inserir um registro novo quando o status muda — feito via **trigger no banco** (`AFTER UPDATE`), assim funciona mesmo se o vendedor estiver offline.
-- **RLS**: política de INSERT em `notifications` para o trigger (SECURITY DEFINER) — sem mudar policies do usuário.
-
-### Arquivos afetados
-
-- Novo: `src/hooks/useRegistrationsRealtimeSound.ts`
-- Novo: `public/registration-created.mp3`, `public/registration-done.mp3`
-- Edit: `src/components/layout/AppLayout.tsx` (montar o hook)
-- Migration: habilitar realtime em `client_registrations` + trigger `notify_salesperson_on_registration_status_change`.
-
-### Perguntas rápidas antes de implementar
-
-1. Os sons: **gero via ElevenLabs** ou você vai subir os MP3?
-2. Quando o status vira **Pendente** ou **Cancelado**, deve tocar som também ou só notificação silenciosa? (sugiro só notificação)
-3. Backoffice deve ouvir som também quando **outro** backoffice cria/atualiza, ou só quando vendedor cria? (sugiro: som só no INSERT por vendedor)
+- Não vou criar route guard server-side neste momento (escopo pedido é apenas esconder do menu). Se quiser bloquear acesso direto via URL depois, é só avisar.
+- Nenhuma migração de banco necessária — `role = 'backoffice'` da Priscilla já está correto.
+- O hook `useUsers` já lê o campo `role` do profile e passa para `mapUserRole`; depois do fix do passo 1, ela aparecerá automaticamente como Backoffice em todos os lugares.

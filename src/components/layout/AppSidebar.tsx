@@ -103,10 +103,8 @@ export function AppSidebar() {
       <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-6">
         {isBackoffice ? (
           <SidebarGroup title="Operação" expanded={expanded}>
-            <SidebarLink to="/cadastros" icon={<ClipboardList size={18} />} label="Cadastros" expanded={expanded} active={location.pathname === "/cadastros"} />
             <SidebarLink to="/propostas" icon={<FileText size={18} />} label="Propostas" expanded={expanded} active={location.pathname === "/propostas"} />
-            <SidebarLink to="/vendas" icon={<ShoppingCart size={18} />} label="Vendas" expanded={expanded} active={location.pathname === "/vendas"} />
-            <SidebarLink to="/dashboard" icon={<Home size={18} />} label="Dashboard" expanded={expanded} active={location.pathname === "/dashboard"} />
+            <SidebarLink to="/cadastros" icon={<ClipboardList size={18} />} label="Cadastros" expanded={expanded} active={location.pathname === "/cadastros"} />
           </SidebarGroup>
         ) : (
           <>

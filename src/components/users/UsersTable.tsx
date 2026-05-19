@@ -34,6 +34,7 @@ export function UsersTable({ users, isLoading, error, onRetry, onEditUser, onDel
     const roleConfig = {
       [UserRole.ADMIN]: { label: 'Admin', variant: 'destructive' as const },
       [UserRole.SALESPERSON]: { label: 'Vendedor', variant: 'default' as const },
+      [UserRole.BACKOFFICE]: { label: 'Backoffice', variant: 'secondary' as const },
     };
 
     const config = roleConfig[role] || { label: 'Unknown', variant: 'secondary' as const };
