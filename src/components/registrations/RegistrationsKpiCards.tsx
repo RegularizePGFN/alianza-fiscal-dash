@@ -7,17 +7,24 @@ interface Props {
   items: ClientRegistration[];
 }
 
+function formatAvgMinutes(totalMinutes: number) {
+  const h = Math.floor(totalMinutes / 60);
+  const m = Math.round(totalMinutes % 60);
+  if (h === 0) return `${m}min`;
+  return m === 0 ? `${h}h` : `${h}h ${m}min`;
+}
+
 export function RegistrationsKpiCards({ items }: Props) {
-  const { total, aguardando, realizadosHoje, avgHours } = useMemo(() => {
+  const { total, aguardando, realizadosHoje, avgMinutes } = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
     let totalCompleted = 0;
-    let sumHours = 0;
+    let sumMinutes = 0;
     items.forEach((r) => {
       if (r.completed_at) {
-        const diff =
+        const diffMin =
           (new Date(r.completed_at).getTime() - new Date(r.created_at).getTime()) /
-          (1000 * 60 * 60);
-        sumHours += diff;
+          (1000 * 60);
+        sumMinutes += diffMin;
         totalCompleted++;
       }
     });
@@ -27,7 +34,7 @@ export function RegistrationsKpiCards({ items }: Props) {
       realizadosHoje: items.filter(
         (r) => r.status === "realizado" && r.completed_at?.slice(0, 10) === today
       ).length,
-      avgHours: totalCompleted ? sumHours / totalCompleted : 0,
+      avgMinutes: totalCompleted ? sumMinutes / totalCompleted : 0,
     };
   }, [items]);
 
@@ -36,8 +43,8 @@ export function RegistrationsKpiCards({ items }: Props) {
     { label: "Aguardando", value: aguardando, icon: Clock, color: "text-amber-500" },
     { label: "Realizados hoje", value: realizadosHoje, icon: CheckCircle2, color: "text-emerald-500" },
     {
-      label: "Tempo médio de atendimento",
-      value: avgHours >= 24 ? `${(avgHours / 24).toFixed(1)} d` : `${avgHours.toFixed(1)} h`,
+      label: "Tempo médio de cadastro",
+      value: formatAvgMinutes(avgMinutes),
       icon: Timer,
       color: "text-violet-500",
     },
