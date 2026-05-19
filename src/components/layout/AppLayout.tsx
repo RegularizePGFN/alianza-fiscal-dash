@@ -4,6 +4,7 @@ import { AppSidebar } from "./AppSidebar";
 import { AppHeader } from "./AppHeader";
 import { useAuth } from "@/contexts/auth";
 import { Navigate } from "react-router-dom";
+import { useRegistrationsRealtimeSound } from "@/hooks/useRegistrationsRealtimeSound";
 
 interface AppLayoutProps {
   children: ReactNode;
