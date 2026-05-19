@@ -14,6 +14,7 @@ interface AppLayoutProps {
 export function AppLayout({ children, requireAuth = true }: AppLayoutProps) {
   const { isAuthenticated, isLoading } = useAuth();
   const [errorDetected, setErrorDetected] = useState<string | null>(null);
+  useRegistrationsRealtimeSound();
 
   /* ╭──────────────────────────────────────────────────────────╮
      │ Desfaz "pointer‑events:none" que o listener de atalhos    │
