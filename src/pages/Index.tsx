@@ -1,8 +1,9 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
+import { UserRole } from "@/lib/types";
 
 const Index = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
     return (
@@ -13,6 +14,9 @@ const Index = () => {
   }
 
   if (isAuthenticated) {
+    if (user?.role === UserRole.BACKOFFICE) {
+      return <Navigate to="/cadastros" replace />;
+    }
     return <Navigate to="/dashboard" replace />;
   }
 
