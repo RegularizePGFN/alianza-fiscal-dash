@@ -202,7 +202,13 @@ const ProfilePage = () => {
                       Função
                     </label>
                     <Input 
-                      value={user?.role === "admin" ? "Administrador" : "Especialista Tributário"} 
+                      value={
+                        user?.role === "admin"
+                          ? "Administrador"
+                          : user?.role === "backoffice"
+                          ? "Backoffice"
+                          : "Especialista Tributário"
+                      } 
                       disabled 
                       className="bg-muted/50"
                     />
