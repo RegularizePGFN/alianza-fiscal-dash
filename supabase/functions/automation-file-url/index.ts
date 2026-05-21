@@ -5,9 +5,13 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, content-type, apikey, x-client-info",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Expose-Headers": "content-disposition",
 };
 
-const BodySchema = z.object({ file_id: z.string().uuid() });
+const BodySchema = z.object({
+  file_id: z.string().uuid(),
+  mode: z.enum(["url", "download"]).optional().default("url"),
+});
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -77,6 +81,26 @@ Deno.serve(async (req) => {
   if (!isAdminLike && reg?.salesperson_id !== userId) {
     return new Response(JSON.stringify({ error: "forbidden" }), {
       status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  if (parsed.data.mode === "download") {
+    const { data: fileBlob, error: dErr } = await admin.storage
+      .from("cadastro-automatico-pdfs")
+      .download(file.file_path);
+
+    if (dErr || !fileBlob) {
+      return new Response(JSON.stringify({ error: dErr?.message ?? "failed" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response(fileBlob, {
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/octet-stream",
+        "Content-Disposition": `inline; filename="${encodeURIComponent(file.file_name)}"`,
+      },
     });
   }
 
