@@ -35,12 +35,25 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  // Atomic claim: pega até 50 pending, marca como processing e retorna
+  // Marcar cadastros sem CPF ou CNPJ como dados_incompletos (não vão pra fila)
+  await supabase
+    .from("client_registrations")
+    .update({
+      automation_status: "dados_incompletos",
+      automation_finished_at: new Date().toISOString(),
+    })
+    .eq("automation_status", "pending")
+    .eq("status", "aguardando")
+    .or("cpf.is.null,cnpj.is.null");
+
+  // Atomic claim: pega até 50 pending com CPF e CNPJ, marca como processing
   const { data: pending, error: selErr } = await supabase
     .from("client_registrations")
     .select("id, cpf, cnpj, client_name, client_phone, reason, salesperson_id, salesperson_name, created_at, automation_attempts")
     .eq("automation_status", "pending")
     .eq("status", "aguardando")
+    .not("cpf", "is", null)
+    .not("cnpj", "is", null)
     .order("created_at", { ascending: true })
     .limit(50);
   if (selErr) {
