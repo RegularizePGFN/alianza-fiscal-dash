@@ -8,7 +8,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, AlertTriangle, Clock, Loader2, FileText, Download, ExternalLink, RotateCw } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Clock, Loader2, FileText, Download, ExternalLink, RotateCw, CheckCheck, FileWarning } from "lucide-react";
 import { ClientRegistration, AutomationStatus } from "@/hooks/useRegistrations";
 import { useAutomationFiles, useAutomationRetry, getAutomationFileUrl } from "@/hooks/useAutomation";
 import { toast } from "sonner";
@@ -37,6 +37,16 @@ const STATUS_META: Record<AutomationStatus, { label: string; cls: string; Icon: 
     label: "Erro",
     cls: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30",
     Icon: AlertTriangle,
+  },
+  completed: {
+    label: "Concluído",
+    cls: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+    Icon: CheckCheck,
+  },
+  dados_incompletos: {
+    label: "Dados incompletos",
+    cls: "bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/30",
+    Icon: FileWarning,
   },
 };
 
