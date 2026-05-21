@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, AlertTriangle, Clock, Loader2, FileText, Download, ExternalLink, RotateCw, CheckCheck, FileWarning } from "lucide-react";
 import { ClientRegistration, AutomationStatus } from "@/hooks/useRegistrations";
-import { useAutomationFiles, useAutomationRetry, getAutomationFileUrl } from "@/hooks/useAutomation";
+import { useAutomationFiles, useAutomationRetry, getAutomationFileBlob } from "@/hooks/useAutomation";
 import { toast } from "sonner";
 
 interface Props {
@@ -65,27 +65,36 @@ export function AutomationStatusBadge({ registration }: Props) {
   const filesQ = useAutomationFiles(open && status === "success" ? registration.id : null);
   const retry = useAutomationRetry();
 
-  const handleDownload = async (fileId: string) => {
+  const handleDownload = async (fileId: string, fileName: string) => {
     try {
-      const { url, file_name } = await getAutomationFileUrl(fileId);
+      const { blob, file_name } = await getAutomationFileBlob(fileId, fileName);
+      const objectUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url;
+      a.href = objectUrl;
       a.download = file_name;
-      a.target = "_blank";
-      a.rel = "noopener";
       document.body.appendChild(a);
       a.click();
       a.remove();
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
     } catch (e: any) {
       toast.error(e.message || "Erro ao baixar");
     }
   };
 
-  const handleView = async (fileId: string) => {
+  const handleView = async (fileId: string, fileName: string) => {
+    const viewer = window.open("", "_blank");
     try {
-      const { url } = await getAutomationFileUrl(fileId);
-      window.open(url, "_blank", "noopener");
+      const { blob } = await getAutomationFileBlob(fileId, fileName);
+      const objectUrl = URL.createObjectURL(blob);
+      if (viewer) {
+        viewer.opener = null;
+        viewer.location.href = objectUrl;
+      } else {
+        window.open(objectUrl, "_blank", "noopener");
+      }
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
     } catch (e: any) {
+      viewer?.close();
       toast.error(e.message || "Erro ao abrir");
     }
   };
@@ -136,10 +145,10 @@ export function AutomationStatusBadge({ registration }: Props) {
                     <span className="text-sm flex-1 truncate" title={f.file_name}>
                       {f.file_name}
                     </span>
-                    <Button size="sm" variant="ghost" onClick={() => handleView(f.id)}>
+                    <Button size="sm" variant="ghost" onClick={() => handleView(f.id, f.file_name)}>
                       <ExternalLink className="w-3.5 h-3.5 mr-1" /> Ver
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => handleDownload(f.id)}>
+                    <Button size="sm" variant="outline" onClick={() => handleDownload(f.id, f.file_name)}>
                       <Download className="w-3.5 h-3.5 mr-1" /> Baixar
                     </Button>
                   </div>
