@@ -66,6 +66,7 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
           mother_name: "",
           reason: "fazer_cadastro",
           status: "aguardando",
+          processing_mode: "automatico",
           notes: "",
         }
       );
