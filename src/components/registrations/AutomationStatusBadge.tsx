@@ -82,19 +82,22 @@ export function AutomationStatusBadge({ registration }: Props) {
   };
 
   const handleView = async (fileId: string, fileName: string) => {
-    const viewer = window.open("", "_blank");
     try {
       const { blob } = await getAutomationFileBlob(fileId, fileName);
       const objectUrl = URL.createObjectURL(blob);
-      if (viewer) {
-        viewer.opener = null;
-        viewer.location.href = objectUrl;
-      } else {
-        window.open(objectUrl, "_blank", "noopener");
+      const win = window.open(objectUrl, "_blank", "noopener,noreferrer");
+      if (!win) {
+        // Popup bloqueado — força download como fallback
+        const a = document.createElement("a");
+        a.href = objectUrl;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
       }
       setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
     } catch (e: any) {
-      viewer?.close();
       toast.error(e.message || "Erro ao abrir");
     }
   };
