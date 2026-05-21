@@ -117,8 +117,49 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
     }
   };
 
+  const onlyDigits = (s: string) => (s ?? "").replace(/\D/g, "");
+  const isValidCPF = (raw: string) => {
+    const c = onlyDigits(raw);
+    if (c.length !== 11 || /^(\d)\1+$/.test(c)) return false;
+    let s = 0;
+    for (let i = 0; i < 9; i++) s += parseInt(c[i]) * (10 - i);
+    let d = 11 - (s % 11); if (d >= 10) d = 0;
+    if (d !== parseInt(c[9])) return false;
+    s = 0;
+    for (let i = 0; i < 10; i++) s += parseInt(c[i]) * (11 - i);
+    d = 11 - (s % 11); if (d >= 10) d = 0;
+    return d === parseInt(c[10]);
+  };
+  const isValidCNPJ = (raw: string) => {
+    const c = onlyDigits(raw);
+    if (c.length !== 14 || /^(\d)\1+$/.test(c)) return false;
+    const calc = (len: number) => {
+      const w = len === 12 ? [5,4,3,2,9,8,7,6,5,4,3,2] : [6,5,4,3,2,9,8,7,6,5,4,3,2];
+      let s = 0;
+      for (let i = 0; i < len; i++) s += parseInt(c[i]) * w[i];
+      const r = s % 11;
+      return r < 2 ? 0 : 11 - r;
+    };
+    return calc(12) === parseInt(c[12]) && calc(13) === parseInt(c[13]);
+  };
+
   const handleSave = async () => {
     if (!form.cnpj?.trim() || !form.client_phone?.trim()) return;
+
+    const cnpjDigits = onlyDigits(form.cnpj);
+    if (cnpjDigits.length !== 14 || !isValidCNPJ(cnpjDigits)) {
+      toast.error("CNPJ inválido. Verifique os 14 dígitos.");
+      return;
+    }
+    const cpfRaw = form.cpf?.trim();
+    if (cpfRaw) {
+      const cpfDigits = onlyDigits(cpfRaw);
+      if (cpfDigits.length !== 11 || !isValidCPF(cpfDigits)) {
+        toast.error("CPF inválido. Verifique os 11 dígitos.");
+        return;
+      }
+    }
+
 
     const payload: any = {
       ...form,
