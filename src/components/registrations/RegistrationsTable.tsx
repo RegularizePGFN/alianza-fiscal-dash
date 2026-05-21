@@ -29,6 +29,7 @@ import {
 import { MoreHorizontal, Eye, Wand2, Trash2, Edit3 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
+import { AutomationStatusBadge } from "./AutomationStatusBadge";
 
 interface Props {
   items: ClientRegistration[];
