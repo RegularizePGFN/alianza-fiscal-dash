@@ -1,0 +1,1 @@
+ALTER TABLE public.client_registrations ADD COLUMN IF NOT EXISTS mother_name text;
