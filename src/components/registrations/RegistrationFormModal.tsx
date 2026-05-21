@@ -116,14 +116,14 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
   };
 
   const handleSave = async () => {
-    if (!form.cnpj?.trim() || !form.client_phone?.trim()) return;
+    if (!form.cnpj?.trim() || !form.cpf?.trim() || !form.client_phone?.trim()) return;
 
     const payload: any = {
       ...form,
       client_name: form.client_name?.trim() || null,
       client_phone: form.client_phone?.trim() || null,
       cnpj: form.cnpj?.trim(),
-      cpf: form.cpf?.trim() || null,
+      cpf: form.cpf?.trim(),
       notes: form.notes?.trim() || null,
     };
 
@@ -159,12 +159,7 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
             />
           </div>
           <div>
-            <Label>
-              CPF{" "}
-              <span className="ml-1 text-[10px] uppercase tracking-wide text-primary font-semibold">
-                recomendado
-              </span>
-            </Label>
+            <Label>CPF *</Label>
             <Input
               value={form.cpf || ""}
               onChange={(e) => set("cpf", e.target.value)}
@@ -296,7 +291,7 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
           </div>
 
           <div className="md:col-span-2 text-xs text-muted-foreground">
-            CNPJ e telefone são obrigatórios. O CPF é recomendado para agilizar o atendimento.
+            CNPJ, CPF e telefone são obrigatórios.
           </div>
         </div>
         <DialogFooter>
@@ -309,6 +304,7 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
               save.isPending ||
               uploadingPending ||
               !form.cnpj?.trim() ||
+              !form.cpf?.trim() ||
               !form.client_phone?.trim()
             }
           >
