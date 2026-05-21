@@ -1,0 +1,208 @@
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { CheckCircle2, AlertTriangle, Clock, Loader2, FileText, Download, ExternalLink, RotateCw } from "lucide-react";
+import { ClientRegistration, AutomationStatus } from "@/hooks/useRegistrations";
+import { useAutomationFiles, useAutomationRetry, getAutomationFileUrl } from "@/hooks/useAutomation";
+import { toast } from "sonner";
+
+interface Props {
+  registration: ClientRegistration;
+}
+
+const STATUS_META: Record<AutomationStatus, { label: string; cls: string; Icon: any }> = {
+  pending: {
+    label: "Na fila",
+    cls: "bg-muted text-muted-foreground border-border",
+    Icon: Clock,
+  },
+  processing: {
+    label: "Processando…",
+    cls: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30 animate-pulse",
+    Icon: Loader2,
+  },
+  success: {
+    label: "Sucesso",
+    cls: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
+    Icon: CheckCircle2,
+  },
+  error: {
+    label: "Erro",
+    cls: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30",
+    Icon: AlertTriangle,
+  },
+};
+
+export function AutomationStatusBadge({ registration }: Props) {
+  const [open, setOpen] = useState(false);
+  const status = registration.automation_status;
+  const meta = STATUS_META[status] ?? STATUS_META.pending;
+  const Icon = meta.Icon;
+  const clickable = status === "success" || status === "error" || status === "processing";
+
+  const filesQ = useAutomationFiles(open && status === "success" ? registration.id : null);
+  const retry = useAutomationRetry();
+
+  const handleDownload = async (fileId: string) => {
+    try {
+      const { url, file_name } = await getAutomationFileUrl(fileId);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = file_name;
+      a.target = "_blank";
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao baixar");
+    }
+  };
+
+  const handleView = async (fileId: string) => {
+    try {
+      const { url } = await getAutomationFileUrl(fileId);
+      window.open(url, "_blank", "noopener");
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao abrir");
+    }
+  };
+
+  return (
+    <>
+      <button
+        type="button"
+        disabled={!clickable}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (clickable) setOpen(true);
+        }}
+        className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md border ${meta.cls} ${
+          clickable ? "cursor-pointer hover:opacity-80" : "cursor-default"
+        }`}
+      >
+        <Icon className={`w-3 h-3 ${status === "processing" ? "animate-spin" : ""}`} />
+        {meta.label}
+      </button>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent onClick={(e) => e.stopPropagation()} className="max-w-lg">
+          {status === "success" && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                  Cadastro concluído com sucesso
+                </DialogTitle>
+                <DialogDescription>
+                  {registration.client_name || registration.cnpj || registration.cpf} — PDFs gerados pela automação:
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-2 max-h-[50vh] overflow-auto">
+                {filesQ.isLoading && <div className="text-sm text-muted-foreground">Carregando…</div>}
+                {filesQ.data && filesQ.data.length === 0 && (
+                  <div className="text-sm text-muted-foreground py-4 text-center">
+                    Nenhum PDF foi anexado pela automação.
+                  </div>
+                )}
+                {filesQ.data?.map((f) => (
+                  <div
+                    key={f.id}
+                    className="flex items-center gap-2 p-2 border rounded-md bg-muted/30"
+                  >
+                    <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <span className="text-sm flex-1 truncate" title={f.file_name}>
+                      {f.file_name}
+                    </span>
+                    <Button size="sm" variant="ghost" onClick={() => handleView(f.id)}>
+                      <ExternalLink className="w-3.5 h-3.5 mr-1" /> Ver
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => handleDownload(f.id)}>
+                      <Download className="w-3.5 h-3.5 mr-1" /> Baixar
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {status === "error" && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-rose-500" />
+                  Erro na automação
+                </DialogTitle>
+                <DialogDescription>
+                  {registration.client_name || registration.cnpj || registration.cpf}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="rounded-md border border-rose-500/30 bg-rose-500/5 p-3 text-sm whitespace-pre-wrap">
+                {registration.automation_error || "Sem descrição do erro."}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Tentativas: {registration.automation_attempts}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setOpen(false)}>Fechar</Button>
+                <Button
+                  onClick={async () => {
+                    await retry.mutateAsync(registration.id);
+                    setOpen(false);
+                  }}
+                  disabled={retry.isPending}
+                >
+                  <RotateCw className="w-3.5 h-3.5 mr-1.5" />
+                  {retry.isPending ? "Reenviando…" : "Tentar novamente"}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+
+          {status === "processing" && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+                  Em processamento
+                </DialogTitle>
+                <DialogDescription>
+                  A automação pegou esse cadastro e está processando. Se ficar travado, use "Forçar reenviar".
+                </DialogDescription>
+              </DialogHeader>
+              <div className="text-xs text-muted-foreground">
+                Iniciado em:{" "}
+                {registration.automation_started_at
+                  ? new Date(registration.automation_started_at).toLocaleString("pt-BR")
+                  : "—"}
+                <br />
+                Tentativas: {registration.automation_attempts}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setOpen(false)}>Fechar</Button>
+                <Button
+                  variant="secondary"
+                  onClick={async () => {
+                    await retry.mutateAsync(registration.id);
+                    setOpen(false);
+                  }}
+                  disabled={retry.isPending}
+                >
+                  <RotateCw className="w-3.5 h-3.5 mr-1.5" />
+                  Forçar reenviar
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}

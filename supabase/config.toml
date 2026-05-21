@@ -60,3 +60,15 @@ verify_jwt = false
 
 [functions.generate-proposal-pdf]
 verify_jwt = false
+
+[functions.automation-queue]
+verify_jwt = false
+
+[functions.automation-result]
+verify_jwt = false
+
+[functions.automation-retry]
+verify_jwt = false
+
+[functions.automation-file-url]
+verify_jwt = false

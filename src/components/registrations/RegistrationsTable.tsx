@@ -29,6 +29,7 @@ import {
 import { MoreHorizontal, Eye, Wand2, Trash2, Edit3 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
+import { AutomationStatusBadge } from "./AutomationStatusBadge";
 
 interface Props {
   items: ClientRegistration[];
@@ -98,6 +99,7 @@ export function RegistrationsTable({
               <TableHead>Motivo</TableHead>
               <TableHead>Situação</TableHead>
               <TableHead>Backoffice</TableHead>
+              <TableHead>Automação</TableHead>
               <TableHead>Criado em</TableHead>
               <TableHead>Atendido em</TableHead>
               <TableHead>Tempo de cadastro</TableHead>
@@ -141,6 +143,9 @@ export function RegistrationsTable({
                     </span>
                   </TableCell>
                   <TableCell>{r.backoffice_name || "—"}</TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <AutomationStatusBadge registration={r} />
+                  </TableCell>
                   <TableCell className="whitespace-nowrap text-xs">{fmt(r.created_at)}</TableCell>
                   <TableCell className="whitespace-nowrap text-xs">{fmt(r.completed_at)}</TableCell>
                   <TableCell className="whitespace-nowrap text-xs">{fmtDuration(r.created_at, r.completed_at)}</TableCell>
