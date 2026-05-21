@@ -142,7 +142,13 @@ export function RegistrationsTable({
                       {statusLabel(r.status)}
                     </span>
                   </TableCell>
-                  <TableCell>{r.backoffice_name || "—"}</TableCell>
+                  <TableCell>
+                    {r.backoffice_name
+                      ? r.backoffice_name
+                      : r.processing_mode === "automatico"
+                      ? <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30">AUTOMAÇÃO</span>
+                      : "—"}
+                  </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <AutomationStatusBadge registration={r} />
                   </TableCell>
