@@ -125,7 +125,7 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
       client_name: form.client_name?.trim() || null,
       client_phone: form.client_phone?.trim() || null,
       cnpj: form.cnpj?.trim(),
-      cpf: form.cpf?.trim(),
+      cpf: form.cpf?.trim() || null,
       mother_name: form.mother_name?.trim() || null,
       processing_mode: form.processing_mode === "manual" ? "manual" : "automatico",
       notes: form.notes?.trim() || null,
