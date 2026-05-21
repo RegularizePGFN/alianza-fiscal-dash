@@ -68,6 +68,7 @@ Deno.serve(async (req) => {
     .select("id, cpf, cnpj, client_name, client_phone, mother_name, reason, salesperson_id, salesperson_name, created_at, automation_attempts")
     .eq("automation_status", "pending")
     .eq("status", "aguardando")
+    .eq("processing_mode", "automatico")
     .order("created_at", { ascending: true })
     .limit(200);
   if (candErr) {
