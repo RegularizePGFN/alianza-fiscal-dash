@@ -15,6 +15,7 @@ export interface ClientRegistration {
   client_phone: string | null;
   cnpj: string | null;
   cpf: string | null;
+  mother_name: string | null;
   reason: RegistrationReason;
   status: RegistrationStatus;
   notes: string | null;
