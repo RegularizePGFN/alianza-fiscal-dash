@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
   // Pega todos pending aguardando pra classificar
   const { data: candidates, error: candErr } = await supabase
     .from("client_registrations")
-    .select("id, cpf, cnpj, client_name, client_phone, reason, salesperson_id, salesperson_name, created_at, automation_attempts")
+    .select("id, cpf, cnpj, client_name, client_phone, mother_name, reason, salesperson_id, salesperson_name, created_at, automation_attempts")
     .eq("automation_status", "pending")
     .eq("status", "aguardando")
     .order("created_at", { ascending: true })
