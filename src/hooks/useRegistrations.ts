@@ -5,6 +5,8 @@ import { toast } from "sonner";
 export type RegistrationStatus = "aguardando" | "pendente" | "realizado" | "cancelado";
 export type RegistrationReason = "fazer_cadastro" | "alterar_cadastro" | "receita_federal" | "cancelar_acesso";
 
+export type AutomationStatus = "pending" | "processing" | "success" | "error";
+
 export interface ClientRegistration {
   id: string;
   salesperson_id: string;
@@ -21,6 +23,11 @@ export interface ClientRegistration {
   completed_at: string | null;
   created_at: string;
   updated_at: string;
+  automation_status: AutomationStatus;
+  automation_started_at: string | null;
+  automation_finished_at: string | null;
+  automation_error: string | null;
+  automation_attempts: number;
 }
 
 export interface RegistrationAttachment {
