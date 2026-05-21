@@ -82,12 +82,19 @@ export function AutomationStatusBadge({ registration }: Props) {
   };
 
   const handleView = async (fileId: string) => {
+    const viewer = window.open("", "_blank");
     try {
       const { blob } = await getAutomationFileBlob(fileId);
       const objectUrl = URL.createObjectURL(blob);
-      window.open(objectUrl, "_blank", "noopener");
+      if (viewer) {
+        viewer.opener = null;
+        viewer.location.href = objectUrl;
+      } else {
+        window.open(objectUrl, "_blank", "noopener");
+      }
       setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
     } catch (e: any) {
+      viewer?.close();
       toast.error(e.message || "Erro ao abrir");
     }
   };
