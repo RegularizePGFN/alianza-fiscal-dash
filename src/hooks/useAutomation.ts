@@ -30,12 +30,18 @@ export function useAutomationRetry() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (registration_id: string) => {
-      const { data, error } = await supabase.functions.invoke("automation-retry", {
-        body: { registration_id },
-      });
+      // Update direto na tabela — RLS permite admin/backoffice/gestor e o próprio vendedor dono.
+      const { error } = await supabase
+        .from("client_registrations")
+        .update({
+          automation_status: "pending",
+          automation_started_at: null,
+          automation_finished_at: null,
+          automation_error: null,
+        })
+        .eq("id", registration_id);
       if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
-      return data;
+      return { ok: true };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["registrations"] });
