@@ -35,33 +35,70 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  // Marcar cadastros sem CPF ou CNPJ como dados_incompletos (não vão pra fila)
-  await supabase
-    .from("client_registrations")
-    .update({
-      automation_status: "dados_incompletos",
-      automation_finished_at: new Date().toISOString(),
-    })
-    .eq("automation_status", "pending")
-    .eq("status", "aguardando")
-    .or("cpf.is.null,cnpj.is.null");
+  // Validadores
+  const onlyDigits = (s: string | null) => (s ?? "").replace(/\D/g, "");
+  const isValidCPF = (raw: string | null) => {
+    const c = onlyDigits(raw);
+    if (c.length !== 11 || /^(\d)\1+$/.test(c)) return false;
+    let s = 0;
+    for (let i = 0; i < 9; i++) s += parseInt(c[i]) * (10 - i);
+    let d = 11 - (s % 11); if (d >= 10) d = 0;
+    if (d !== parseInt(c[9])) return false;
+    s = 0;
+    for (let i = 0; i < 10; i++) s += parseInt(c[i]) * (11 - i);
+    d = 11 - (s % 11); if (d >= 10) d = 0;
+    return d === parseInt(c[10]);
+  };
+  const isValidCNPJ = (raw: string | null) => {
+    const c = onlyDigits(raw);
+    if (c.length !== 14 || /^(\d)\1+$/.test(c)) return false;
+    const calc = (len: number) => {
+      const w = len === 12 ? [5,4,3,2,9,8,7,6,5,4,3,2] : [6,5,4,3,2,9,8,7,6,5,4,3,2];
+      let s = 0;
+      for (let i = 0; i < len; i++) s += parseInt(c[i]) * w[i];
+      const r = s % 11;
+      return r < 2 ? 0 : 11 - r;
+    };
+    return calc(12) === parseInt(c[12]) && calc(13) === parseInt(c[13]);
+  };
 
-  // Atomic claim: pega até 50 pending com CPF e CNPJ, marca como processing
-  const { data: pending, error: selErr } = await supabase
+  // Pega todos pending aguardando pra classificar
+  const { data: candidates, error: candErr } = await supabase
     .from("client_registrations")
     .select("id, cpf, cnpj, client_name, client_phone, reason, salesperson_id, salesperson_name, created_at, automation_attempts")
     .eq("automation_status", "pending")
     .eq("status", "aguardando")
-    .not("cpf", "is", null)
-    .not("cnpj", "is", null)
     .order("created_at", { ascending: true })
-    .limit(50);
-  if (selErr) {
-    return new Response(JSON.stringify({ error: selErr.message }), {
+    .limit(200);
+  if (candErr) {
+    return new Response(JSON.stringify({ error: candErr.message }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-  const items = pending ?? [];
+
+  const incompletos: string[] = [];
+  const invalidos: string[] = [];
+  const validos: any[] = [];
+  for (const r of (candidates ?? [])) {
+    if (!r.cpf || !r.cnpj) { incompletos.push(r.id); continue; }
+    if (!isValidCPF(r.cpf) || !isValidCNPJ(r.cnpj)) { invalidos.push(r.id); continue; }
+    validos.push(r);
+  }
+
+  if (incompletos.length) {
+    await supabase.from("client_registrations").update({
+      automation_status: "dados_incompletos",
+      automation_finished_at: new Date().toISOString(),
+    }).in("id", incompletos);
+  }
+  if (invalidos.length) {
+    await supabase.from("client_registrations").update({
+      automation_status: "dados_invalidos",
+      automation_finished_at: new Date().toISOString(),
+    }).in("id", invalidos);
+  }
+
+  const items = validos.slice(0, 50);
   if (items.length === 0) {
     return new Response(JSON.stringify({ items: [] }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
