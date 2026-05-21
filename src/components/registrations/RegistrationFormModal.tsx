@@ -116,14 +116,14 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
   };
 
   const handleSave = async () => {
-    if (!form.cnpj?.trim() || !form.client_phone?.trim()) return;
+    if (!form.cnpj?.trim() || !form.cpf?.trim() || !form.client_phone?.trim()) return;
 
     const payload: any = {
       ...form,
       client_name: form.client_name?.trim() || null,
       client_phone: form.client_phone?.trim() || null,
       cnpj: form.cnpj?.trim(),
-      cpf: form.cpf?.trim() || null,
+      cpf: form.cpf?.trim(),
       notes: form.notes?.trim() || null,
     };
 
