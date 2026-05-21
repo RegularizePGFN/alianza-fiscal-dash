@@ -63,6 +63,7 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
           client_phone: "",
           cnpj: "",
           cpf: "",
+          mother_name: "",
           reason: "fazer_cadastro",
           status: "aguardando",
           notes: "",
