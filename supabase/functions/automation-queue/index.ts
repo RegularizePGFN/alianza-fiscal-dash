@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
     .from("client_registrations")
     .select("id, cpf, cnpj, client_name, client_phone, reason, salesperson_id, salesperson_name, created_at, automation_attempts")
     .eq("automation_status", "pending")
-    .neq("status", "cancelado")
+    .eq("status", "aguardando")
     .order("created_at", { ascending: true })
     .limit(50);
   if (selErr) {
