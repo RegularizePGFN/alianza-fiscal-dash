@@ -163,7 +163,7 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
             />
           </div>
           <div>
-            <Label>CPF *</Label>
+            <Label>CPF</Label>
             <Input
               value={form.cpf || ""}
               onChange={(e) => set("cpf", e.target.value)}
