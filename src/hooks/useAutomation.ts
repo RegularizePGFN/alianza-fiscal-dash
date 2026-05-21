@@ -54,12 +54,11 @@ export async function getAutomationFileUrl(file_id: string): Promise<{ url: stri
   return data as { url: string; file_name: string };
 }
 
-export async function getAutomationFileBlob(file_id: string): Promise<{ blob: Blob; file_name: string }> {
-  const urlData = await getAutomationFileUrl(file_id);
+export async function getAutomationFileBlob(file_id: string, file_name: string): Promise<{ blob: Blob; file_name: string }> {
   const { data, error } = await supabase.functions.invoke("automation-file-url", {
     body: { file_id, mode: "download" },
   });
   if (error) throw error;
   if (!(data instanceof Blob)) throw new Error("Arquivo inválido retornado pela automação");
-  return { blob: new Blob([data], { type: "application/pdf" }), file_name: urlData.file_name };
+  return { blob: new Blob([data], { type: "application/pdf" }), file_name };
 }
