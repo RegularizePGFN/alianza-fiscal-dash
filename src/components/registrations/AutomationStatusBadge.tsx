@@ -48,6 +48,11 @@ const STATUS_META: Record<AutomationStatus, { label: string; cls: string; Icon: 
     cls: "bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/30",
     Icon: FileWarning,
   },
+  dados_invalidos: {
+    label: "Dados inválidos",
+    cls: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30",
+    Icon: FileWarning,
+  },
 };
 
 export function AutomationStatusBadge({ registration }: Props) {
