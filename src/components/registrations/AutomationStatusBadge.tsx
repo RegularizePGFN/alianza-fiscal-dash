@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, AlertTriangle, Clock, Loader2, FileText, Download, ExternalLink, RotateCw, CheckCheck, FileWarning } from "lucide-react";
 import { ClientRegistration, AutomationStatus } from "@/hooks/useRegistrations";
-import { useAutomationFiles, useAutomationRetry, getAutomationFileUrl } from "@/hooks/useAutomation";
+import { useAutomationFiles, useAutomationRetry, getAutomationFileBlob } from "@/hooks/useAutomation";
 import { toast } from "sonner";
 
 interface Props {
@@ -67,15 +67,15 @@ export function AutomationStatusBadge({ registration }: Props) {
 
   const handleDownload = async (fileId: string) => {
     try {
-      const { url, file_name } = await getAutomationFileUrl(fileId);
+      const { blob, file_name } = await getAutomationFileBlob(fileId);
+      const objectUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url;
+      a.href = objectUrl;
       a.download = file_name;
-      a.target = "_blank";
-      a.rel = "noopener";
       document.body.appendChild(a);
       a.click();
       a.remove();
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
     } catch (e: any) {
       toast.error(e.message || "Erro ao baixar");
     }
@@ -83,8 +83,10 @@ export function AutomationStatusBadge({ registration }: Props) {
 
   const handleView = async (fileId: string) => {
     try {
-      const { url } = await getAutomationFileUrl(fileId);
-      window.open(url, "_blank", "noopener");
+      const { blob } = await getAutomationFileBlob(fileId);
+      const objectUrl = URL.createObjectURL(blob);
+      window.open(objectUrl, "_blank", "noopener");
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
     } catch (e: any) {
       toast.error(e.message || "Erro ao abrir");
     }
