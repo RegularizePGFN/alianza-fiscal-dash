@@ -55,7 +55,7 @@ export async function getAutomationFileUrl(file_id: string): Promise<{ url: stri
 }
 
 export async function getAutomationFileBlob(file_id: string): Promise<{ blob: Blob; file_name: string }> {
-  const { data: urlData } = await getAutomationFileUrl(file_id);
+  const urlData = await getAutomationFileUrl(file_id);
   const { data, error } = await supabase.functions.invoke("automation-file-url", {
     body: { file_id, mode: "download" },
   });
