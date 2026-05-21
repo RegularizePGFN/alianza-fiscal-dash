@@ -327,7 +327,7 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
           </div>
 
           <div className="md:col-span-2 text-xs text-muted-foreground">
-            CNPJ, CPF e telefone são obrigatórios.
+            CNPJ e telefone são obrigatórios. Sem CPF o cadastro fica como "dados incompletos" e não entra no fluxo automático.
           </div>
         </div>
         <DialogFooter>
@@ -340,7 +340,6 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
               save.isPending ||
               uploadingPending ||
               !form.cnpj?.trim() ||
-              !form.cpf?.trim() ||
               !form.client_phone?.trim()
             }
           >
