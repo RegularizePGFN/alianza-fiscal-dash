@@ -140,6 +140,7 @@ export type Database = {
           id: string
           mother_name: string | null
           notes: string | null
+          processing_mode: string
           reason: string
           salesperson_id: string
           salesperson_name: string
@@ -163,6 +164,7 @@ export type Database = {
           id?: string
           mother_name?: string | null
           notes?: string | null
+          processing_mode?: string
           reason?: string
           salesperson_id: string
           salesperson_name: string
@@ -186,6 +188,7 @@ export type Database = {
           id?: string
           mother_name?: string | null
           notes?: string | null
+          processing_mode?: string
           reason?: string
           salesperson_id?: string
           salesperson_name?: string
