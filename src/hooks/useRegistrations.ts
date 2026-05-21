@@ -16,6 +16,7 @@ export interface ClientRegistration {
   cnpj: string | null;
   cpf: string | null;
   mother_name: string | null;
+  processing_mode: "automatico" | "manual";
   reason: RegistrationReason;
   status: RegistrationStatus;
   notes: string | null;

@@ -66,6 +66,7 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
           mother_name: "",
           reason: "fazer_cadastro",
           status: "aguardando",
+          processing_mode: "automatico",
           notes: "",
         }
       );
@@ -126,6 +127,7 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
       cnpj: form.cnpj?.trim(),
       cpf: form.cpf?.trim(),
       mother_name: form.mother_name?.trim() || null,
+      processing_mode: form.processing_mode === "manual" ? "manual" : "automatico",
       notes: form.notes?.trim() || null,
     };
 
@@ -192,6 +194,30 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
               placeholder="Nome completo da mãe"
             />
           </div>
+          <div className="md:col-span-2">
+            <Label>Modo de processamento *</Label>
+            <div className="flex gap-4 mt-2">
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 accent-primary"
+                  checked={(form.processing_mode ?? "automatico") === "automatico"}
+                  onChange={() => set("processing_mode", "automatico")}
+                />
+                <span className="font-medium">AUTOMÁTICO</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 accent-primary"
+                  checked={form.processing_mode === "manual"}
+                  onChange={() => set("processing_mode", "manual")}
+                />
+                <span className="font-medium">MANUAL</span>
+              </label>
+            </div>
+          </div>
+
           <div>
             <Label>Motivo *</Label>
             <Select value={form.reason} onValueChange={(v) => set("reason", v)}>

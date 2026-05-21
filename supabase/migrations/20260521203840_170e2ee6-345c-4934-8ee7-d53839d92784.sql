@@ -1,0 +1,1 @@
+ALTER TABLE public.client_registrations ADD COLUMN IF NOT EXISTS processing_mode text NOT NULL DEFAULT 'automatico';
