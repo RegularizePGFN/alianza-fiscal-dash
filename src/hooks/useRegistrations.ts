@@ -92,6 +92,7 @@ interface ListOptions {
 export function useRegistrations(opts: ListOptions = {}) {
   return useQuery({
     queryKey: ["registrations", opts.from, opts.to],
+    refetchInterval: 10000,
     queryFn: async (): Promise<ClientRegistration[]> => {
       const PAGE_SIZE = 1000;
       let rows: any[] = [];
