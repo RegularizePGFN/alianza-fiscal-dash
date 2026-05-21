@@ -118,7 +118,7 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
   };
 
   const handleSave = async () => {
-    if (!form.cnpj?.trim() || !form.cpf?.trim() || !form.client_phone?.trim()) return;
+    if (!form.cnpj?.trim() || !form.client_phone?.trim()) return;
 
     const payload: any = {
       ...form,

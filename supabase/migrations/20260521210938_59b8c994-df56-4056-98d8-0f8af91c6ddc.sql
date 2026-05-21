@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.require_cpf_on_registration() CASCADE;
