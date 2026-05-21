@@ -184,6 +184,14 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
               placeholder="Razão social ou nome (opcional)"
             />
           </div>
+          <div className="md:col-span-2">
+            <Label>Nome da mãe (opcional)</Label>
+            <Input
+              value={form.mother_name || ""}
+              onChange={(e) => set("mother_name", e.target.value)}
+              placeholder="Nome completo da mãe"
+            />
+          </div>
           <div>
             <Label>Motivo *</Label>
             <Select value={form.reason} onValueChange={(v) => set("reason", v)}>
