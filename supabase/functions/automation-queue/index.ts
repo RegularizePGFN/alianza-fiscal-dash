@@ -142,6 +142,7 @@ Deno.serve(async (req) => {
     cnpj: i.cnpj,
     client_name: i.client_name,
     client_phone: i.client_phone,
+    mother_name: i.mother_name ?? null,
     reason: i.reason,
     salesperson: {
       id: i.salesperson_id,
