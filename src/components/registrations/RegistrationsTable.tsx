@@ -143,6 +143,9 @@ export function RegistrationsTable({
                     </span>
                   </TableCell>
                   <TableCell>{r.backoffice_name || "—"}</TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <AutomationStatusBadge registration={r} />
+                  </TableCell>
                   <TableCell className="whitespace-nowrap text-xs">{fmt(r.created_at)}</TableCell>
                   <TableCell className="whitespace-nowrap text-xs">{fmt(r.completed_at)}</TableCell>
                   <TableCell className="whitespace-nowrap text-xs">{fmtDuration(r.created_at, r.completed_at)}</TableCell>
