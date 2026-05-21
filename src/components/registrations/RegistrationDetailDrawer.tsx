@@ -84,7 +84,13 @@ export function RegistrationDetailDrawer({
                   : "—"
               }
             />
-            <Info label="Backoffice" value={item.backoffice_name || "—"} />
+            <Info
+              label="Backoffice"
+              value={
+                item.backoffice_name ||
+                (item.processing_mode === "automatico" ? "AUTOMAÇÃO" : "—")
+              }
+            />
           </div>
 
           {item.notes && (
