@@ -99,6 +99,7 @@ export function RegistrationsTable({
               <TableHead>Motivo</TableHead>
               <TableHead>Situação</TableHead>
               <TableHead>Backoffice</TableHead>
+              <TableHead>Automação</TableHead>
               <TableHead>Criado em</TableHead>
               <TableHead>Atendido em</TableHead>
               <TableHead>Tempo de cadastro</TableHead>
