@@ -65,9 +65,9 @@ export function AutomationStatusBadge({ registration }: Props) {
   const filesQ = useAutomationFiles(open && status === "success" ? registration.id : null);
   const retry = useAutomationRetry();
 
-  const handleDownload = async (fileId: string) => {
+  const handleDownload = async (fileId: string, fileName: string) => {
     try {
-      const { blob, file_name } = await getAutomationFileBlob(fileId);
+      const { blob, file_name } = await getAutomationFileBlob(fileId, fileName);
       const objectUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = objectUrl;
@@ -81,10 +81,10 @@ export function AutomationStatusBadge({ registration }: Props) {
     }
   };
 
-  const handleView = async (fileId: string) => {
+  const handleView = async (fileId: string, fileName: string) => {
     const viewer = window.open("", "_blank");
     try {
-      const { blob } = await getAutomationFileBlob(fileId);
+      const { blob } = await getAutomationFileBlob(fileId, fileName);
       const objectUrl = URL.createObjectURL(blob);
       if (viewer) {
         viewer.opener = null;
@@ -145,10 +145,10 @@ export function AutomationStatusBadge({ registration }: Props) {
                     <span className="text-sm flex-1 truncate" title={f.file_name}>
                       {f.file_name}
                     </span>
-                    <Button size="sm" variant="ghost" onClick={() => handleView(f.id)}>
+                    <Button size="sm" variant="ghost" onClick={() => handleView(f.id, f.file_name)}>
                       <ExternalLink className="w-3.5 h-3.5 mr-1" /> Ver
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => handleDownload(f.id)}>
+                    <Button size="sm" variant="outline" onClick={() => handleDownload(f.id, f.file_name)}>
                       <Download className="w-3.5 h-3.5 mr-1" /> Baixar
                     </Button>
                   </div>
