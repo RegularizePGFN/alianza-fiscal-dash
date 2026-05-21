@@ -77,21 +77,17 @@ Deno.serve(async (req) => {
     });
   }
 
-  const incompletos: string[] = [];
   const invalidos: string[] = [];
   const validos: any[] = [];
   for (const r of (candidates ?? [])) {
-    if (!r.cpf || !r.cnpj) { incompletos.push(r.id); continue; }
-    if (!isValidCPF(r.cpf) || !isValidCNPJ(r.cnpj)) { invalidos.push(r.id); continue; }
+    // CPF agora é obrigatório no cadastro; aqui só validamos formato
+    if (!r.cpf || !r.cnpj || !isValidCPF(r.cpf) || !isValidCNPJ(r.cnpj)) {
+      invalidos.push(r.id);
+      continue;
+    }
     validos.push(r);
   }
 
-  if (incompletos.length) {
-    await supabase.from("client_registrations").update({
-      automation_status: "dados_incompletos",
-      automation_finished_at: new Date().toISOString(),
-    }).in("id", incompletos);
-  }
   if (invalidos.length) {
     await supabase.from("client_registrations").update({
       automation_status: "dados_invalidos",
