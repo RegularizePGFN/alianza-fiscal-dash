@@ -49,6 +49,38 @@ export type Database = {
           },
         ]
       }
+      client_registration_automation_files: {
+        Row: {
+          file_name: string
+          file_path: string
+          id: string
+          registration_id: string
+          uploaded_at: string
+        }
+        Insert: {
+          file_name: string
+          file_path: string
+          id?: string
+          registration_id: string
+          uploaded_at?: string
+        }
+        Update: {
+          file_name?: string
+          file_path?: string
+          id?: string
+          registration_id?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_registration_automation_files_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "client_registrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_registration_events: {
         Row: {
           changed_by: string
@@ -92,6 +124,11 @@ export type Database = {
       }
       client_registrations: {
         Row: {
+          automation_attempts: number
+          automation_error: string | null
+          automation_finished_at: string | null
+          automation_started_at: string | null
+          automation_status: string
           backoffice_id: string | null
           backoffice_name: string | null
           client_name: string | null
@@ -109,6 +146,11 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          automation_attempts?: number
+          automation_error?: string | null
+          automation_finished_at?: string | null
+          automation_started_at?: string | null
+          automation_status?: string
           backoffice_id?: string | null
           backoffice_name?: string | null
           client_name?: string | null
@@ -126,6 +168,11 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          automation_attempts?: number
+          automation_error?: string | null
+          automation_finished_at?: string | null
+          automation_started_at?: string | null
+          automation_status?: string
           backoffice_id?: string | null
           backoffice_name?: string | null
           client_name?: string | null
