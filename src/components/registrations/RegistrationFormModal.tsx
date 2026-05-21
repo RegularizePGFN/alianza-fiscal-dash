@@ -159,12 +159,7 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
             />
           </div>
           <div>
-            <Label>
-              CPF{" "}
-              <span className="ml-1 text-[10px] uppercase tracking-wide text-primary font-semibold">
-                recomendado
-              </span>
-            </Label>
+            <Label>CPF *</Label>
             <Input
               value={form.cpf || ""}
               onChange={(e) => set("cpf", e.target.value)}
