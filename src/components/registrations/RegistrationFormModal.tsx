@@ -185,6 +185,21 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
       payload.backoffice_id = null;
       payload.backoffice_name = null;
       payload.completed_at = null;
+    } else {
+      // Admin/backoffice editando: se estava travado por dados ruins e agora
+      // tem CPF+CNPJ válidos, recolocar na fila da automação
+      const wasBlocked =
+        item.automation_status === "dados_incompletos" ||
+        item.automation_status === "dados_invalidos" ||
+        item.automation_status === "error";
+      if (wasBlocked && payload.processing_mode === "automatico" && !payload.backoffice_id) {
+        payload.status = "aguardando";
+        payload.automation_status = "pending";
+        payload.automation_started_at = null;
+        payload.automation_finished_at = null;
+        payload.automation_error = null;
+        payload.completed_at = null;
+      }
     }
     const result = await save.mutateAsync(payload);
     if (pendingFiles.length && result?.id) {
