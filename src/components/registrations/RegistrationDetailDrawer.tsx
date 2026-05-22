@@ -94,7 +94,7 @@ export function RegistrationDetailDrawer({
             <Info
               label="Automação"
               value={
-                item.processing_mode === "automatico"
+                item.processing_mode === "automatico" && !item.backoffice_name
                   ? item.automation_status === "pending"
                     ? "Na fila"
                     : item.automation_status === "processing"

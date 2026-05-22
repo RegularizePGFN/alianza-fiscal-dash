@@ -149,7 +149,7 @@ export function RegistrationsTable({
                       : "—"}
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
-                    {r.processing_mode === "automatico" ? (
+                    {r.processing_mode === "automatico" && !r.backoffice_name ? (
                       <AutomationStatusBadge registration={r} />
                     ) : (
                       <span className="text-xs text-muted-foreground">—</span>
