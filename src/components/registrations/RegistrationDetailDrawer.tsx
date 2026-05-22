@@ -91,6 +91,28 @@ export function RegistrationDetailDrawer({
                 (item.processing_mode === "automatico" ? "AUTOMAÇÃO" : "—")
               }
             />
+            <Info
+              label="Automação"
+              value={
+                item.processing_mode === "automatico"
+                  ? item.automation_status === "pending"
+                    ? "Na fila"
+                    : item.automation_status === "processing"
+                    ? "Processando…"
+                    : item.automation_status === "success"
+                    ? "Sucesso"
+                    : item.automation_status === "error"
+                    ? "Erro"
+                    : item.automation_status === "completed"
+                    ? "Concluído"
+                    : item.automation_status === "dados_incompletos"
+                    ? "Dados incompletos"
+                    : item.automation_status === "dados_invalidos"
+                    ? "Dados inválidos"
+                    : "—"
+                  : "—"
+              }
+            />
           </div>
 
           {item.notes && (
