@@ -110,8 +110,7 @@ export function RegistrationsTable({
           <TableBody>
             {items.map((r) => {
               const canEdit =
-                canManage ||
-                (r.salesperson_id === currentUserId && r.status === "aguardando");
+                canManage || r.salesperson_id === currentUserId;
               const canDelete = isAdmin;
               const hasAttachment = attachmentsSet.has(r.id);
               const canGenerate = r.status === "realizado" && hasAttachment;
