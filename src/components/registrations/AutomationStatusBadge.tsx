@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, AlertTriangle, Clock, Loader2, FileText, Download, ExternalLink, RotateCw, CheckCheck, FileWarning } from "lucide-react";
 import { ClientRegistration, AutomationStatus } from "@/hooks/useRegistrations";
-import { useAutomationFiles, useAutomationRetry, getAutomationFileBlob } from "@/hooks/useAutomation";
+import { useAutomationFiles, useAutomationRetry, getAutomationFileBlob, getAutomationFileUrl } from "@/hooks/useAutomation";
 import { toast } from "sonner";
 
 interface Props {
