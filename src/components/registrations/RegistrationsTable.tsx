@@ -149,7 +149,11 @@ export function RegistrationsTable({
                       : "—"}
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
-                    <AutomationStatusBadge registration={r} />
+                    {r.processing_mode === "automatico" ? (
+                      <AutomationStatusBadge registration={r} />
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-xs">{fmt(r.created_at)}</TableCell>
                   <TableCell className="whitespace-nowrap text-xs">{fmt(r.completed_at)}</TableCell>
