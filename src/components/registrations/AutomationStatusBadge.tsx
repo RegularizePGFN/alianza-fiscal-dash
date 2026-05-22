@@ -227,7 +227,7 @@ export function AutomationStatusBadge({ registration }: Props) {
           onClick={(e) => e.stopPropagation()}
           className="max-w-5xl w-[95vw] h-[90vh] p-0 flex flex-col gap-0"
         >
-          <DialogHeader className="px-4 py-2 border-b flex-row items-center justify-between space-y-0">
+          <DialogHeader className="px-4 py-2 pr-12 border-b flex-row items-center justify-between space-y-0">
             <DialogTitle className="text-sm font-medium truncate">{viewer?.name}</DialogTitle>
             <div className="flex items-center gap-2">
               {viewer && (
