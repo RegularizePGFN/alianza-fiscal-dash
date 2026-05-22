@@ -57,6 +57,7 @@ const STATUS_META: Record<AutomationStatus, { label: string; cls: string; Icon: 
 
 export function AutomationStatusBadge({ registration }: Props) {
   const [open, setOpen] = useState(false);
+  const [viewer, setViewer] = useState<{ url: string; name: string } | null>(null);
   const status = registration.automation_status;
   const meta = STATUS_META[status] ?? STATUS_META.pending;
   const Icon = meta.Icon;
