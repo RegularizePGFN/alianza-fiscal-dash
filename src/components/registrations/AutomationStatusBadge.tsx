@@ -81,22 +81,19 @@ export function AutomationStatusBadge({ registration }: Props) {
     }
   };
 
-  const handleView = async (fileId: string, fileName: string) => {
+  const handleView = async (fileId: string, _fileName: string) => {
     try {
-      const { blob } = await getAutomationFileBlob(fileId, fileName);
-      const objectUrl = URL.createObjectURL(blob);
-      const win = window.open(objectUrl, "_blank", "noopener,noreferrer");
+      const { url } = await getAutomationFileUrl(fileId);
+      const win = window.open(url, "_blank", "noopener,noreferrer");
       if (!win) {
-        // Popup bloqueado — força download como fallback
         const a = document.createElement("a");
-        a.href = objectUrl;
+        a.href = url;
         a.target = "_blank";
         a.rel = "noopener noreferrer";
         document.body.appendChild(a);
         a.click();
         a.remove();
       }
-      setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
     } catch (e: any) {
       toast.error(e.message || "Erro ao abrir");
     }
