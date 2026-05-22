@@ -219,6 +219,35 @@ export function AutomationStatusBadge({ registration }: Props) {
           )}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!viewer} onOpenChange={(o) => !o && setViewer(null)}>
+        <DialogContent
+          onClick={(e) => e.stopPropagation()}
+          className="max-w-5xl w-[95vw] h-[90vh] p-0 flex flex-col gap-0"
+        >
+          <DialogHeader className="px-4 py-2 border-b flex-row items-center justify-between space-y-0">
+            <DialogTitle className="text-sm font-medium truncate">{viewer?.name}</DialogTitle>
+            <div className="flex items-center gap-2">
+              {viewer && (
+                <Button size="sm" variant="outline" asChild>
+                  <a href={viewer.url} download={viewer.name}>
+                    <Download className="w-3.5 h-3.5 mr-1" /> Baixar
+                  </a>
+                </Button>
+              )}
+            </div>
+          </DialogHeader>
+          <div className="flex-1 bg-muted/30">
+            {viewer && (
+              <iframe
+                src={viewer.url}
+                title={viewer.name}
+                className="w-full h-full border-0"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
