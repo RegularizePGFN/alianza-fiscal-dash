@@ -59,6 +59,7 @@ export function PdfCanvasViewer({ data, fileName }: PdfCanvasViewerProps) {
           container.appendChild(pageWrap);
 
           await page.render({
+            canvas,
             canvasContext: context,
             viewport,
             transform: pixelRatio !== 1 ? [pixelRatio, 0, 0, pixelRatio, 0, 0] : undefined,
