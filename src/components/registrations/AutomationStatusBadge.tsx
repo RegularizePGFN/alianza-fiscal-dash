@@ -8,10 +8,11 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, AlertTriangle, Clock, Loader2, FileText, Download, ExternalLink, RotateCw, CheckCheck, FileWarning } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Clock, Loader2, FileText, Download, Eye, RotateCw, CheckCheck, FileWarning } from "lucide-react";
 import { ClientRegistration, AutomationStatus } from "@/hooks/useRegistrations";
-import { useAutomationFiles, useAutomationRetry, getAutomationFileBlob, getAutomationFileUrl } from "@/hooks/useAutomation";
+import { useAutomationFiles, useAutomationRetry, getAutomationFileBlob } from "@/hooks/useAutomation";
 import { toast } from "sonner";
+import { PdfCanvasViewer } from "./PdfCanvasViewer";
 
 interface Props {
   registration: ClientRegistration;
@@ -57,7 +58,7 @@ const STATUS_META: Record<AutomationStatus, { label: string; cls: string; Icon: 
 
 export function AutomationStatusBadge({ registration }: Props) {
   const [open, setOpen] = useState(false);
-  const [viewer, setViewer] = useState<{ url: string; name: string } | null>(null);
+  const [viewer, setViewer] = useState<{ data: Uint8Array; name: string; fileId: string } | null>(null);
   const status = registration.automation_status;
   const meta = STATUS_META[status] ?? STATUS_META.pending;
   const Icon = meta.Icon;
@@ -84,8 +85,9 @@ export function AutomationStatusBadge({ registration }: Props) {
 
   const handleView = async (fileId: string, fileName: string) => {
     try {
-      const { url } = await getAutomationFileUrl(fileId);
-      setViewer({ url, name: fileName });
+      const { blob, file_name } = await getAutomationFileBlob(fileId, fileName);
+      const data = new Uint8Array(await blob.arrayBuffer());
+      setViewer({ data, name: file_name, fileId });
     } catch (e: any) {
       toast.error(e.message || "Erro ao abrir");
     }
@@ -138,7 +140,7 @@ export function AutomationStatusBadge({ registration }: Props) {
                       {f.file_name}
                     </span>
                     <Button size="sm" variant="ghost" onClick={() => handleView(f.id, f.file_name)}>
-                      <ExternalLink className="w-3.5 h-3.5 mr-1" /> Ver
+                      <Eye className="w-3.5 h-3.5 mr-1" /> Ver
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => handleDownload(f.id, f.file_name)}>
                       <Download className="w-3.5 h-3.5 mr-1" /> Baixar
@@ -229,22 +231,14 @@ export function AutomationStatusBadge({ registration }: Props) {
             <DialogTitle className="text-sm font-medium truncate">{viewer?.name}</DialogTitle>
             <div className="flex items-center gap-2">
               {viewer && (
-                <Button size="sm" variant="outline" asChild>
-                  <a href={viewer.url} download={viewer.name}>
-                    <Download className="w-3.5 h-3.5 mr-1" /> Baixar
-                  </a>
+                <Button size="sm" variant="outline" onClick={() => handleDownload(viewer.fileId, viewer.name)}>
+                  <Download className="w-3.5 h-3.5 mr-1" /> Baixar
                 </Button>
               )}
             </div>
           </DialogHeader>
-          <div className="flex-1 bg-muted/30">
-            {viewer && (
-              <iframe
-                src={viewer.url}
-                title={viewer.name}
-                className="w-full h-full border-0"
-              />
-            )}
+          <div className="min-h-0 flex-1">
+            {viewer && <PdfCanvasViewer data={viewer.data} fileName={viewer.name} />}
           </div>
         </DialogContent>
       </Dialog>
