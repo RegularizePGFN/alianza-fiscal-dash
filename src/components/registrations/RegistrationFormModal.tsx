@@ -175,6 +175,16 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
     if (!item) {
       payload.salesperson_id = user?.id;
       payload.salesperson_name = user?.name;
+    } else if (!isAdminish) {
+      // Vendedor editando o próprio cadastro: volta pra fila
+      payload.status = "aguardando";
+      payload.automation_status = "pending";
+      payload.automation_started_at = null;
+      payload.automation_finished_at = null;
+      payload.automation_error = null;
+      payload.backoffice_id = null;
+      payload.backoffice_name = null;
+      payload.completed_at = null;
     }
     const result = await save.mutateAsync(payload);
     if (pendingFiles.length && result?.id) {
