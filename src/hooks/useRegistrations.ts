@@ -104,7 +104,7 @@ export function useRegistrations(opts: ListOptions = {}) {
         let q = supabase
           .from("client_registrations")
           .select("*")
-          .order("created_at", { ascending: false })
+          .order("updated_at", { ascending: false })
           .range(offset, offset + PAGE_SIZE - 1);
         if (opts.from) q = q.gte("created_at", `${opts.from}T00:00:00`);
         if (opts.to) q = q.lte("created_at", `${opts.to}T23:59:59`);
