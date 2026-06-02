@@ -79,11 +79,34 @@ export function RegistrationsContainer() {
     return items.filter((r) => {
       if (status !== "all" && r.status !== status) return false;
       if (reason !== "all" && r.reason !== reason) return false;
+      if (automation !== "all" && r.automation_status !== automation) return false;
       if (!q) return true;
       return [r.client_name, r.cnpj, r.cpf, r.client_phone, r.salesperson_name]
         .some((v) => v && v.toLowerCase().includes(q));
     });
-  }, [items, search, status, reason]);
+  }, [items, search, status, reason, automation]);
+
+  const processingItems = useMemo(
+    () => items.filter((r) => r.automation_status === "processing"),
+    [items]
+  );
+
+  const handleForceResend = async () => {
+    if (!processingItems.length) {
+      toast.info("Nenhum cadastro em processamento");
+      return;
+    }
+    const confirmed = window.confirm(
+      `Reenviar ${processingItems.length} cadastro(s) em processamento para a fila?`
+    );
+    if (!confirmed) return;
+    try {
+      await Promise.all(processingItems.map((r) => retry.mutateAsync(r.id)));
+      toast.success(`${processingItems.length} cadastro(s) reenviado(s)`);
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao reenviar");
+    }
+  };
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, totalPages);
