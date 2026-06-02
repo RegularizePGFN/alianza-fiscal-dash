@@ -66,6 +66,19 @@ export const REGISTRATION_STATUSES: { value: RegistrationStatus; label: string }
   { value: "cancelado", label: "Cancelado" },
 ];
 
+export const AUTOMATION_STATUSES: { value: AutomationStatus; label: string }[] = [
+  { value: "pending", label: "Na fila" },
+  { value: "processing", label: "Processando" },
+  { value: "success", label: "Sucesso" },
+  { value: "completed", label: "Concluído" },
+  { value: "error", label: "Erro" },
+  { value: "dados_incompletos", label: "Dados incompletos" },
+  { value: "dados_invalidos", label: "Dados inválidos" },
+];
+
+export const automationStatusLabel = (s: string) =>
+  AUTOMATION_STATUSES.find((x) => x.value === s)?.label || s;
+
 export const reasonLabel = (r: string) =>
   REGISTRATION_REASONS.find((x) => x.value === r)?.label || r;
 export const statusLabel = (s: string) =>
