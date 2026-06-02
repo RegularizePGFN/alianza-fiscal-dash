@@ -21,7 +21,18 @@ export function useAutomationFiles(registrationId: string | null) {
         .eq("registration_id", registrationId!)
         .order("uploaded_at", { ascending: true });
       if (error) throw error;
-      return (data || []) as AutomationFile[];
+      // Dedupe by file_path (fallback file_name), mantendo o mais recente
+      const map = new Map<string, AutomationFile>();
+      for (const f of (data || []) as AutomationFile[]) {
+        const key = f.file_path || f.file_name;
+        const prev = map.get(key);
+        if (!prev || new Date(f.uploaded_at) >= new Date(prev.uploaded_at)) {
+          map.set(key, f);
+        }
+      }
+      return Array.from(map.values()).sort(
+        (a, b) => new Date(a.uploaded_at).getTime() - new Date(b.uploaded_at).getTime()
+      );
     },
   });
 }
