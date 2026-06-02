@@ -7,8 +7,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Download, Search } from "lucide-react";
+import { Plus, Download, Search, RotateCw } from "lucide-react";
 import {
+  AUTOMATION_STATUSES,
   REGISTRATION_REASONS,
   REGISTRATION_STATUSES,
 } from "@/hooks/useRegistrations";
@@ -20,11 +21,16 @@ interface Props {
   onStatus: (v: string) => void;
   reason: string;
   onReason: (v: string) => void;
+  automation: string;
+  onAutomation: (v: string) => void;
   periodFrom: string;
   periodTo: string;
   onPeriodChange: (from: string, to: string) => void;
   onNew: () => void;
   onExport: () => void;
+  onForceResend: () => void;
+  forceResendDisabled?: boolean;
+  forceResendCount?: number;
   canManage: boolean;
 }
 
@@ -35,11 +41,16 @@ export function RegistrationsFilters({
   onStatus,
   reason,
   onReason,
+  automation,
+  onAutomation,
   periodFrom,
   periodTo,
   onPeriodChange,
   onNew,
   onExport,
+  onForceResend,
+  forceResendDisabled,
+  forceResendCount = 0,
   canManage,
 }: Props) {
   return (
@@ -97,6 +108,32 @@ export function RegistrationsFilters({
           </SelectContent>
         </Select>
       </div>
+      <div className="w-[180px]">
+        <Select value={automation} onValueChange={onAutomation}>
+          <SelectTrigger>
+            <SelectValue placeholder="Automação" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas automações</SelectItem>
+            {AUTOMATION_STATUSES.map((a) => (
+              <SelectItem key={a.value} value={a.value}>
+                {a.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      {canManage && (
+        <Button
+          variant="outline"
+          onClick={onForceResend}
+          disabled={forceResendDisabled}
+          title="Reenvia todos os cadastros em Processando para a fila"
+        >
+          <RotateCw className="w-4 h-4 mr-2" />
+          Forçar reenvio{forceResendCount > 0 ? ` (${forceResendCount})` : ""}
+        </Button>
+      )}
       <Button variant="outline" onClick={onExport}>
         <Download className="w-4 h-4 mr-2" /> Exportar
       </Button>

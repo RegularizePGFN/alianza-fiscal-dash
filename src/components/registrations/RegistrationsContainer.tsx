@@ -15,6 +15,8 @@ import {
   useRegistrations,
   useRegistrationsWithAttachments,
 } from "@/hooks/useRegistrations";
+import { useAutomationRetry } from "@/hooks/useAutomation";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,16 +53,18 @@ export function RegistrationsContainer() {
   });
   const del = useDeleteRegistration();
   const { data: attachmentsSet = new Set<string>() } = useRegistrationsWithAttachments();
+  const retry = useAutomationRetry();
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [reason, setReason] = useState("all");
+  const [automation, setAutomation] = useState("all");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     setPage(1);
-  }, [search, status, reason, periodFrom, periodTo]);
+  }, [search, status, reason, automation, periodFrom, periodTo]);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<ClientRegistration | null>(null);
@@ -75,11 +79,34 @@ export function RegistrationsContainer() {
     return items.filter((r) => {
       if (status !== "all" && r.status !== status) return false;
       if (reason !== "all" && r.reason !== reason) return false;
+      if (automation !== "all" && r.automation_status !== automation) return false;
       if (!q) return true;
       return [r.client_name, r.cnpj, r.cpf, r.client_phone, r.salesperson_name]
         .some((v) => v && v.toLowerCase().includes(q));
     });
-  }, [items, search, status, reason]);
+  }, [items, search, status, reason, automation]);
+
+  const processingItems = useMemo(
+    () => items.filter((r) => r.automation_status === "processing"),
+    [items]
+  );
+
+  const handleForceResend = async () => {
+    if (!processingItems.length) {
+      toast.info("Nenhum cadastro em processamento");
+      return;
+    }
+    const confirmed = window.confirm(
+      `Reenviar ${processingItems.length} cadastro(s) em processamento para a fila?`
+    );
+    if (!confirmed) return;
+    try {
+      await Promise.all(processingItems.map((r) => retry.mutateAsync(r.id)));
+      toast.success(`${processingItems.length} cadastro(s) reenviado(s)`);
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao reenviar");
+    }
+  };
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, totalPages);
@@ -110,6 +137,8 @@ export function RegistrationsContainer() {
         onStatus={setStatus}
         reason={reason}
         onReason={setReason}
+        automation={automation}
+        onAutomation={setAutomation}
         periodFrom={periodFrom}
         periodTo={periodTo}
         onPeriodChange={(f, t) => {
@@ -121,6 +150,9 @@ export function RegistrationsContainer() {
           setFormOpen(true);
         }}
         onExport={() => exportRegistrationsToExcel(filtered)}
+        onForceResend={handleForceResend}
+        forceResendDisabled={retry.isPending || processingItems.length === 0}
+        forceResendCount={processingItems.length}
         canManage={canManage}
       />
 
