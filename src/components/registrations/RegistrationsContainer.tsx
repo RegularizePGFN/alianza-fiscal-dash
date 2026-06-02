@@ -137,6 +137,8 @@ export function RegistrationsContainer() {
         onStatus={setStatus}
         reason={reason}
         onReason={setReason}
+        automation={automation}
+        onAutomation={setAutomation}
         periodFrom={periodFrom}
         periodTo={periodTo}
         onPeriodChange={(f, t) => {
@@ -148,6 +150,9 @@ export function RegistrationsContainer() {
           setFormOpen(true);
         }}
         onExport={() => exportRegistrationsToExcel(filtered)}
+        onForceResend={handleForceResend}
+        forceResendDisabled={retry.isPending || processingItems.length === 0}
+        forceResendCount={processingItems.length}
         canManage={canManage}
       />
 
