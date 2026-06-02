@@ -53,16 +53,18 @@ export function RegistrationsContainer() {
   });
   const del = useDeleteRegistration();
   const { data: attachmentsSet = new Set<string>() } = useRegistrationsWithAttachments();
+  const retry = useAutomationRetry();
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [reason, setReason] = useState("all");
+  const [automation, setAutomation] = useState("all");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     setPage(1);
-  }, [search, status, reason, periodFrom, periodTo]);
+  }, [search, status, reason, automation, periodFrom, periodTo]);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<ClientRegistration | null>(null);
