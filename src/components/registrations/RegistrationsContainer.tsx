@@ -77,9 +77,13 @@ export function RegistrationsContainer() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return items.filter((r) => {
+      const isAutomation = r.processing_mode === "automatico" && !r.backoffice_name;
       if (status !== "all" && r.status !== status) return false;
       if (reason !== "all" && r.reason !== reason) return false;
-      if (automation !== "all" && r.automation_status !== automation) return false;
+      if (automation !== "all") {
+        if (!isAutomation) return false;
+        if (r.automation_status !== automation) return false;
+      }
       if (!q) return true;
       return [r.client_name, r.cnpj, r.cpf, r.client_phone, r.salesperson_name]
         .some((v) => v && v.toLowerCase().includes(q));
@@ -87,7 +91,13 @@ export function RegistrationsContainer() {
   }, [items, search, status, reason, automation]);
 
   const processingItems = useMemo(
-    () => items.filter((r) => r.automation_status === "processing"),
+    () =>
+      items.filter(
+        (r) =>
+          r.processing_mode === "automatico" &&
+          !r.backoffice_name &&
+          r.automation_status === "processing"
+      ),
     [items]
   );
 
