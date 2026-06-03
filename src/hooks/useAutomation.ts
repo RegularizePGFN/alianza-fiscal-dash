@@ -21,10 +21,10 @@ export function useAutomationFiles(registrationId: string | null) {
         .eq("registration_id", registrationId!)
         .order("uploaded_at", { ascending: true });
       if (error) throw error;
-      // Dedupe by file_path (fallback file_name), mantendo o mais recente
+      // Dedupe por file_name (mesmo PDF reenviado gera paths diferentes), mantendo o mais recente
       const map = new Map<string, AutomationFile>();
       for (const f of (data || []) as AutomationFile[]) {
-        const key = f.file_path || f.file_name;
+        const key = (f.file_name || f.file_path).trim().toLowerCase();
         const prev = map.get(key);
         if (!prev || new Date(f.uploaded_at) >= new Date(prev.uploaded_at)) {
           map.set(key, f);
