@@ -113,12 +113,12 @@ export function AutomationStatusBadge({ registration }: Props) {
           e.stopPropagation();
           if (clickable) setOpen(true);
         }}
-        className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md border ${meta.cls} ${
-          clickable ? "cursor-pointer hover:opacity-80" : "cursor-default"
-        }`}
+        className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md border ${
+          motherError ? MOTHER_NAME_ERROR_CLS : meta.cls
+        } ${clickable ? "cursor-pointer hover:opacity-80" : "cursor-default"}`}
       >
         <Icon className={`w-3 h-3 ${status === "processing" ? "animate-spin" : ""}`} />
-        {meta.label}
+        {motherError || meta.label}
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
