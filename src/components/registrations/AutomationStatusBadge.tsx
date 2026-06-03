@@ -56,10 +56,21 @@ const STATUS_META: Record<AutomationStatus, { label: string; cls: string; Icon: 
   },
 };
 
+const MOTHER_NAME_ERROR_CLS = "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30";
+
+function getMotherNameError(registration: ClientRegistration) {
+  const err = (registration.automation_error || "").toUpperCase();
+  if (err.includes("NOME DA MAE ERRADO") || err.includes("NOME MAE ERRADO")) {
+    return "NOME MAE ERRADO";
+  }
+  return null;
+}
+
 export function AutomationStatusBadge({ registration }: Props) {
   const [open, setOpen] = useState(false);
   const [viewer, setViewer] = useState<{ data: Uint8Array; name: string; fileId: string } | null>(null);
   const status = registration.automation_status;
+  const motherError = getMotherNameError(registration);
   const meta = STATUS_META[status] ?? STATUS_META.pending;
   const Icon = meta.Icon;
   const clickable = status === "success" || status === "error" || status === "processing";
