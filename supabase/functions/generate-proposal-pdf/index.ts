@@ -606,19 +606,35 @@ function buildAliancaHtml(payload: ProposalPayload): string {
   };
   const validityDate = formatDateBR(parseValidity());
 
+  const parseNum = (v?: string) => {
+    if (!v) return 0;
+    const n = parseFloat(
+      String(v).replace(/\./g, "").replace(",", ".").replace(/[^\d.-]/g, ""),
+    );
+    return isNaN(n) ? 0 : n;
+  };
+  const formatBR = (n: number) =>
+    n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
   const hasDiscount = (() => {
     if (!data.totalDebt || !data.discountedValue) return false;
-    try {
-      const td = parseFloat(String(data.totalDebt).replace(/\./g, "").replace(",", "."));
-      const dv = parseFloat(String(data.discountedValue).replace(/\./g, "").replace(",", "."));
-      return td > dv && data.discountPercentage !== "0" && data.discountPercentage !== "0,00";
-    } catch {
-      return false;
-    }
+    const td = parseNum(data.totalDebt);
+    const dv = parseNum(data.discountedValue);
+    return td > dv && data.discountPercentage !== "0" && data.discountPercentage !== "0,00";
   })();
 
   const economy = calculateEconomy(data.totalDebt, data.discountedValue);
   const installmentsCount = parseInt(String(data.installments || "0"), 10) || 0;
+  const entryInstallments = parseInt(String(data.entryInstallments || "1"), 10) || 1;
+  const entryValueNum = parseNum(data.entryValue);
+  const hasEntry = entryValueNum > 0;
+  const totalInstallmentsCount = (hasEntry ? entryInstallments : 0) + installmentsCount;
+  const entryInstallmentValueLabel = !hasEntry
+    ? "0,00"
+    : entryInstallments <= 1
+      ? (data.entryValue || "0,00")
+      : formatBR(entryValueNum / entryInstallments);
+
   const discountPctNum = Math.round(
     parseFloat(String(data.discountPercentage || "0").replace(",", ".")) || 0,
   );
@@ -626,10 +642,10 @@ function buildAliancaHtml(payload: ProposalPayload): string {
   const addMonthsLocal = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth() + n, 1);
   const due1 = getLastBusinessDayOfMonth(today);
   const due2 = getLastBusinessDayOfMonth(addMonthsLocal(today, 1));
-  const month3 = addMonthsLocal(today, 2);
   const month1Name = MONTHS_PT[today.getMonth()];
   const month2Name = MONTHS_PT[addMonthsLocal(today, 1).getMonth()];
-  const monthFromShort = `${MONTHS_SHORT_PT[month3.getMonth()]}/${String(month3.getFullYear()).slice(-2)}`;
+  const tailMonth = addMonthsLocal(today, hasEntry ? 3 : 2);
+  const tailShort = `${MONTHS_SHORT_PT[tailMonth.getMonth()]}/${String(tailMonth.getFullYear()).slice(-2)}`;
   const todayShort = `${String(today.getDate()).padStart(2, "0")}/${String(today.getMonth() + 1).padStart(2, "0")}`;
 
   const clientName = String(companyData?.company?.name || data.clientName || "").toUpperCase();
@@ -638,6 +654,7 @@ function buildAliancaHtml(payload: ProposalPayload): string {
   const totalDebtLabel = fmtMoney(data.totalDebt);
   const discountedLabel = fmtMoney(data.discountedValue);
   const feesValueLabel = fmtMoney(data.feesValue);
+  const entryValueLabel = fmtMoney(data.entryValue);
 
   const addressLine = (() => {
     const a = companyData?.address;
@@ -667,6 +684,10 @@ function buildAliancaHtml(payload: ProposalPayload): string {
   const chipBg = hasDiscount ? "#22c55e" : "#3b82f6";
   const chipText = hasDiscount ? `−${discountPctNum}%` : "SEM JUROS";
 
+  const heroBreakdown = hasEntry
+    ? `${entryInstallments > 1 ? `entrada ${entryInstallments}x de R$ ${entryInstallmentValueLabel}` : `entrada de R$ ${entryInstallmentValueLabel}`} + ${installmentsCount}x de R$ ${data.installmentValue || "0,00"}`
+    : `${installmentsCount}x de R$ ${data.installmentValue || "0,00"}`;
+
   const heroBody = hasDiscount
     ? `
       <div class="hero__value hero__value--green">R$ ${escapeHtml(economy)}</div>
@@ -677,10 +698,10 @@ function buildAliancaHtml(payload: ProposalPayload): string {
       </div>`
     : `
       <div class="hero__value hero__value--white">Parcelamento sem juros</div>
-      <div class="hero__sub">Regularize sua dívida em até ${installmentsCount}x sem nenhum acréscimo e suspenda as cobranças.</div>
+      <div class="hero__sub">Regularize sua dívida em até ${totalInstallmentsCount}x sem nenhum acréscimo e suspenda as cobranças.</div>
       <div class="hero__pill">
         Valor da dívida mantido <span class="hero__pillStrong">${escapeHtml(totalDebtLabel)}</span>
-        · ${installmentsCount}x de <span class="hero__pillStrong">${escapeHtml(installmentValueLabel)}</span>
+        · ${totalInstallmentsCount}x · <span class="hero__pillStrong">${escapeHtml(heroBreakdown)}</span>
       </div>`;
 
   const timelineRow = (
@@ -704,7 +725,7 @@ function buildAliancaHtml(payload: ProposalPayload): string {
         <div class="trow__date">Hoje · ${escapeHtml(todayShort)}</div>
       </div>
       <div class="trow__dot"><span class="dot dot--green dot--filled"></span></div>
-      <div class="trow__body">
+      <div class="trow__body trow__body--card">
         <div class="paghoje">
           <div>
             <div class="paghoje__eyebrow">PAGUE HOJE</div>
@@ -716,6 +737,62 @@ function buildAliancaHtml(payload: ProposalPayload): string {
       </div>
     </div>`;
 
+  const timelineRowsAfterToday = hasEntry
+    ? `
+      ${timelineRow(
+        formatDateBR(due1),
+        `último dia útil de ${month1Name}`,
+        entryInstallments > 1 ? `Entrada da negociação · 1ª de ${entryInstallments}x` : "Entrada da negociação (PGFN)",
+        `R$ ${entryInstallmentValueLabel}`,
+      )}
+      ${timelineRow(
+        formatDateBR(due2),
+        `último dia útil de ${month2Name}`,
+        entryInstallments > 1 ? `Entrada · 2ª de ${entryInstallments}x` : "1ª parcela restante",
+        entryInstallments > 1 ? `R$ ${entryInstallmentValueLabel}` : installmentValueLabel,
+      )}
+      ${timelineRow(
+        `a partir de ${tailShort}`,
+        "sempre no último dia útil",
+        entryInstallments > 1
+          ? `${installmentsCount} parcelas restantes (após a entrada)`
+          : `demais ${installmentsCount - 1} parcelas restantes`,
+        installmentValueLabel,
+        true,
+      )}`
+    : `
+      ${timelineRow(formatDateBR(due1), `último dia útil de ${month1Name}`, "1ª parcela da negociação (PGFN)", installmentValueLabel)}
+      ${timelineRow(formatDateBR(due2), `último dia útil de ${month2Name}`, "2ª parcela da negociação", installmentValueLabel, installmentsCount <= 2)}
+      ${installmentsCount > 2 ? timelineRow(`a partir de ${tailShort}`, "sempre no último dia útil", `demais parcelas (3ª a ${installmentsCount}ª)`, installmentValueLabel, true) : ""}`;
+
+  const parceladoCard = hasEntry
+    ? `
+      <div class="opt">
+        <div class="opt__eyebrow">PARCELADO · ${totalInstallmentsCount}X SEM JUROS</div>
+        <div class="opt__split">
+          <div>
+            <div class="opt__micro">ENTRADA</div>
+            <div class="opt__line">${
+              entryInstallments > 1
+                ? `${entryInstallments}x de R$ ${escapeHtml(entryInstallmentValueLabel)}`
+                : escapeHtml(entryValueLabel)
+            }</div>
+            <div class="opt__micro opt__micro--soft">Total: ${escapeHtml(entryValueLabel)}</div>
+          </div>
+          <div class="opt__splitRight">
+            <div class="opt__micro">PARCELAS RESTANTES</div>
+            <div class="opt__line">${installmentsCount}x de ${escapeHtml(installmentValueLabel)}</div>
+            <div class="opt__micro opt__micro--soft">Último dia útil de cada mês</div>
+          </div>
+        </div>
+      </div>`
+    : `
+      <div class="opt">
+        <div class="opt__eyebrow">PARCELADO · ${totalInstallmentsCount}X SEM JUROS</div>
+        <div class="opt__value">${escapeHtml(installmentValueLabel)}<span class="opt__permes">/mês</span></div>
+        <div class="opt__sub">${installmentsCount}x · 1ª parcela no último dia útil do mês</div>
+      </div>`;
+
   return `<!doctype html>
 <html lang="pt-BR">
 <head>
@@ -723,66 +800,65 @@ function buildAliancaHtml(payload: ProposalPayload): string {
 <title>Proposta PGFN</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   @page { size: A4; margin: 0; }
   *, *::before, *::after { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: #fff; }
   body {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Nunito', system-ui, -apple-system, sans-serif;
     color: #0f172a;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
     font-size: 12px;
   }
   .page { width: 210mm; min-height: 297mm; margin: 0 auto; display: flex; flex-direction: column; }
-  .header { padding: 10mm 14mm 0; display: flex; justify-content: space-between; align-items: flex-start; }
-  .brand { display: flex; align-items: center; gap: 10px; }
-  .brand img { height: 36px; width: auto; object-fit: contain; }
-  .brand__name { font-size: 15px; font-weight: 700; color: #0b1d3a; letter-spacing: 0.04em; }
-  .brand__tag { font-size: 9px; color: #64748b; letter-spacing: 0.18em; }
+  .header { padding: 11mm 16mm 0; display: flex; justify-content: space-between; align-items: center; }
+  .brand img { height: 44px; width: auto; object-fit: contain; display: block; }
   .meta { text-align: right; font-size: 9px; color: #64748b; line-height: 1.6; }
-  .meta__eyebrow { letter-spacing: 0.18em; font-weight: 600; }
-  .meta__title { font-size: 14px; color: #0b1d3a; font-weight: 700; letter-spacing: 0.06em; }
-  .meta__strong { color: #0b1d3a; font-weight: 600; }
-  .stripe { margin: 6mm 14mm 0; height: 4px; border-radius: 2px;
+  .meta__eyebrow { letter-spacing: 0.18em; font-weight: 700; }
+  .meta__title { font-size: 15px; color: #0b1d3a; font-weight: 800; letter-spacing: 0.06em; }
+  .meta__strong { color: #0b1d3a; font-weight: 700; }
+  .stripe { margin: 6mm 16mm 0; height: 6px; border-radius: 3px;
     background: linear-gradient(90deg, #3b82f6 0%, #22c55e 100%); }
-  .proposta { padding: 6mm 14mm 0; display: flex; align-items: baseline; gap: 12px; }
-  .proposta__eyebrow { font-size: 9px; letter-spacing: 0.18em; color: #64748b; font-weight: 600; }
-  .proposta__client { font-size: 16px; font-weight: 700; color: #0b1d3a; }
+
+  .proposta { padding: 9mm 16mm 0; display: flex; align-items: baseline; gap: 12px; }
+  .proposta__eyebrow { font-size: 9px; letter-spacing: 0.18em; color: #64748b; font-weight: 700; }
+  .proposta__client { font-size: 16px; font-weight: 800; color: #0b1d3a; }
   .proposta__cnpj { font-size: 10px; color: #64748b; margin-left: auto; }
-  .proposta__cnpj strong { color: #0b1d3a; font-weight: 600; }
+  .proposta__cnpj strong { color: #0b1d3a; font-weight: 700; }
 
-  .hero { margin: 5mm 14mm 0; background: linear-gradient(135deg, #0b1d3a 0%, #0f2548 100%);
-    color: #fff; border-radius: 12px; padding: 22px 26px; position: relative; }
-  .hero__eyebrow { font-size: 10px; letter-spacing: 0.18em; color: rgba(255,255,255,0.7); font-weight: 600; }
-  .hero__value { font-size: 34px; font-weight: 800; margin-top: 4px; letter-spacing: -0.01em; line-height: 1.1; }
+  .hero { margin: 7mm 16mm 0; background: linear-gradient(135deg, #0b1d3a 0%, #0f2548 100%);
+    color: #fff; border-radius: 14px; padding: 28px 32px; position: relative; }
+  .hero__eyebrow { font-size: 10px; letter-spacing: 0.18em; color: rgba(255,255,255,0.7); font-weight: 700; }
+  .hero__value { font-size: 36px; font-weight: 800; margin-top: 6px; letter-spacing: -0.01em; line-height: 1.1; }
   .hero__value--green { color: #22c55e; }
-  .hero__value--white { color: #fff; font-size: 28px; }
-  .hero__sub { font-size: 11px; color: rgba(255,255,255,0.8); margin-top: 4px; max-width: 540px; }
-  .hero__pill { display: inline-block; margin-top: 14px; background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 8px 14px;
+  .hero__value--white { color: #fff; font-size: 30px; }
+  .hero__sub { font-size: 11px; color: rgba(255,255,255,0.8); margin-top: 6px; max-width: 540px; }
+  .hero__pill { display: inline-block; margin-top: 18px; background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 10px 14px;
     font-size: 11px; color: rgba(255,255,255,0.85); }
-  .hero__pillStrong { color: #22c55e; font-weight: 700; }
+  .hero__pillStrong { color: #fff; font-weight: 700; }
+  .hero__value--green + .hero__sub + .hero__pill .hero__pillStrong { color: #22c55e; }
   .hero__pill .strike { text-decoration: line-through; opacity: 0.6; }
-  .chip { position: absolute; top: 20px; right: 24px; background: ${chipBg}; color: #fff;
-    font-size: 11px; font-weight: 700; padding: 5px 12px; border-radius: 999px; letter-spacing: 0.04em; }
+  .chip { position: absolute; top: 22px; right: 26px; background: ${chipBg}; color: #fff;
+    font-size: 11px; font-weight: 800; padding: 5px 12px; border-radius: 999px; letter-spacing: 0.04em; }
 
-  .sectionTitle { padding: 8mm 14mm 0; font-size: 10px; letter-spacing: 0.18em;
-    color: #64748b; font-weight: 700; }
-  .sectionRule { margin: 2mm 14mm 0; border-top: 1px solid #e2e8f0; }
+  .sectionTitle { padding: 10mm 16mm 0; font-size: 10px; letter-spacing: 0.18em;
+    color: #64748b; font-weight: 800; }
+  .sectionRule { margin: 3mm 16mm 0; border-top: 1px solid #e2e8f0; }
 
-  .notice { margin: 3mm 14mm 0; background: #f8fafc; border: 1px solid #e2e8f0;
-    border-radius: 10px; padding: 12px 16px; font-size: 11px; color: #334155; line-height: 1.55; }
+  .notice { margin: 5mm 16mm 0; background: #f8fafc; border: 1px solid #e2e8f0;
+    border-radius: 10px; padding: 14px 18px; font-size: 11px; color: #334155; line-height: 1.55; }
   .notice strong { color: #16a34a; }
 
-  .timeline { margin: 3mm 14mm 0; }
-  .trow { display: flex; align-items: stretch; gap: 14px; min-height: 44px; }
-  .trow__when { width: 110px; text-align: right; padding-top: 12px; }
-  .trow__date { font-size: 11px; font-weight: 700; color: #0f172a; }
-  .trow__sub { font-size: 8.5px; color: #94a3b8; margin-top: 1px; }
+  .timeline { margin: 5mm 16mm 0; }
+  .trow { display: flex; align-items: stretch; gap: 16px; min-height: 52px; }
+  .trow__when { width: 110px; text-align: right; padding-top: 14px; }
+  .trow__date { font-size: 11px; font-weight: 800; color: #0f172a; }
+  .trow__sub { font-size: 8.5px; color: #94a3b8; margin-top: 2px; }
   .trow__dot { width: 14px; position: relative; display: flex; flex-direction: column;
-    align-items: center; padding-top: 14px; }
+    align-items: center; padding-top: 16px; }
   .trow__dot::after { content: ''; width: 1px; flex: 1; background: #e2e8f0; margin-top: 2px; }
   .trow__dot--last::after { display: none; }
   .dot { width: 10px; height: 10px; border-radius: 50%; background: #fff; }
@@ -790,46 +866,53 @@ function buildAliancaHtml(payload: ProposalPayload): string {
   .dot--green { border: 2px solid #22c55e; }
   .dot--filled { background: #22c55e; }
   .trow__body { flex: 1; display: flex; justify-content: space-between; align-items: center;
-    padding: 10px 0; }
+    padding: 12px 0; }
+  .trow__body--card { padding: 4px 0; }
   .trow__label { font-size: 11.5px; color: #0f172a; }
-  .trow__value { font-size: 13px; font-weight: 700; color: #0f172a; }
+  .trow__value { font-size: 13px; font-weight: 800; color: #0f172a; }
 
-  .paghoje { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px;
-    padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;
+  .paghoje { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px;
+    padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;
     width: 100%; }
-  .paghoje__eyebrow { font-size: 9px; letter-spacing: 0.18em; color: #16a34a; font-weight: 700; }
-  .paghoje__title { font-size: 13px; font-weight: 700; color: #0b1d3a; margin-top: 2px; }
+  .paghoje__eyebrow { font-size: 9px; letter-spacing: 0.18em; color: #16a34a; font-weight: 800; }
+  .paghoje__title { font-size: 13px; font-weight: 800; color: #0b1d3a; margin-top: 2px; }
   .paghoje__sub { font-size: 10px; color: #64748b; margin-top: 2px; }
-  .paghoje__money { font-size: 20px; font-weight: 800; color: #16a34a; }
+  .paghoje__money { font-size: 22px; font-weight: 800; color: #16a34a; }
 
-  .options { margin: 3mm 14mm 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .opt { border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 18px; }
-  .opt__eyebrow { font-size: 9px; letter-spacing: 0.18em; color: #64748b; font-weight: 700; }
-  .opt__value { font-size: 22px; font-weight: 800; color: #0b1d3a; margin-top: 4px; }
+  .options { margin: 5mm 16mm 0; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .opt { border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px 22px; }
+  .opt__eyebrow { font-size: 9px; letter-spacing: 0.18em; color: #64748b; font-weight: 800; }
+  .opt__value { font-size: 22px; font-weight: 800; color: #0b1d3a; margin-top: 6px; }
   .opt__value--green { color: #16a34a; }
-  .opt__permes { font-size: 12px; font-weight: 600; color: #64748b; }
-  .opt__sub { font-size: 10px; color: #64748b; margin-top: 2px; }
+  .opt__permes { font-size: 12px; font-weight: 700; color: #64748b; }
+  .opt__sub { font-size: 10px; color: #64748b; margin-top: 4px; }
+  .opt__split { margin-top: 6px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .opt__splitRight { border-left: 1px solid #e2e8f0; padding-left: 14px; }
+  .opt__micro { font-size: 9.5px; color: #64748b; font-weight: 700; letter-spacing: 0.05em; }
+  .opt__micro--soft { font-weight: 500; letter-spacing: 0; margin-top: 2px; }
+  .opt__line { font-size: 14px; font-weight: 800; color: #0b1d3a; margin-top: 2px; }
 
-  .cta { margin: 5mm 14mm 0; background: linear-gradient(135deg, #0b1d3a 0%, #0f2548 100%);
-    border-radius: 10px; padding: 16px 22px; display: flex; justify-content: space-between;
+  .cta { margin: 7mm 16mm 0; background: linear-gradient(135deg, #0b1d3a 0%, #0f2548 100%);
+    border-radius: 12px; padding: 20px 26px; display: flex; justify-content: space-between;
     align-items: center; color: #fff; }
-  .cta__title { font-size: 14px; font-weight: 700; }
-  .cta__sub { font-size: 10px; color: rgba(255,255,255,0.75); margin-top: 2px; max-width: 420px; }
+  .cta__title { font-size: 14px; font-weight: 800; }
+  .cta__sub { font-size: 10px; color: rgba(255,255,255,0.75); margin-top: 4px; max-width: 440px; }
   .cta__label { font-size: 10px; color: rgba(255,255,255,0.75); text-align: right; }
-  .cta__money { font-size: 22px; font-weight: 800; color: #22c55e; text-align: right; }
+  .cta__money { font-size: 24px; font-weight: 800; color: #22c55e; text-align: right; }
 
-  .cadastrais { padding: 5mm 14mm 0; font-size: 9px; color: #64748b; line-height: 1.55; }
-  .cadastrais strong { color: #334155; font-weight: 600; }
+  .cadastrais { padding: 7mm 16mm 0; font-size: 9px; color: #64748b; line-height: 1.6; }
+  .cadastrais strong { color: #334155; font-weight: 700; }
 
   .spacer { flex: 1; }
 
-  .footer { margin: 6mm 14mm 6mm; padding-top: 4mm; border-top: 1px solid #e2e8f0;
+  .footer { margin: 7mm 16mm 7mm; padding-top: 5mm; border-top: 1px solid #e2e8f0;
     display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
-  .footer__brand { font-size: 12px; font-weight: 700; color: #0b1d3a; }
-  .footer__exec { font-size: 10px; color: #64748b; margin-top: 2px; }
-  .footer__exec strong { color: #0b1d3a; font-weight: 600; }
-  .footer__disc { text-align: right; font-size: 9px; color: #64748b; line-height: 1.55; }
-  .footer__disc strong { color: #0b1d3a; font-weight: 600; }
+  .footer__brand { display: flex; align-items: center; gap: 10px; }
+  .footer__brand img { height: 26px; width: auto; object-fit: contain; opacity: 0.9; }
+  .footer__exec { font-size: 10px; color: #64748b; }
+  .footer__exec strong { color: #0b1d3a; font-weight: 700; }
+  .footer__disc { text-align: right; font-size: 9px; color: #64748b; line-height: 1.6; }
+  .footer__disc strong { color: #0b1d3a; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -837,10 +920,6 @@ function buildAliancaHtml(payload: ProposalPayload): string {
     <div class="header">
       <div class="brand">
         ${logoUrl ? `<img src="${escapeHtml(logoUrl)}" alt="Aliança Fiscal" />` : ""}
-        <div>
-          <div class="brand__name">ALIANÇA FISCAL</div>
-          <div class="brand__tag">Consultoria Tributária</div>
-        </div>
       </div>
       <div class="meta">
         <div class="meta__eyebrow">PROPOSTA DE</div>
@@ -866,13 +945,13 @@ function buildAliancaHtml(payload: ProposalPayload): string {
     <div class="sectionRule"></div>
     <div class="notice">
       Hoje você paga <strong>apenas os honorários da Aliança Fiscal.</strong>
-      A parcela da negociação com a PGFN só vence no último dia útil do mês — e segue assim nos meses seguintes.
+      ${hasEntry
+        ? `A entrada da negociação${entryInstallments > 1 ? ` (em ${entryInstallments}x)` : ""} e as parcelas restantes vencem no último dia útil de cada mês.`
+        : "A parcela da negociação com a PGFN só vence no último dia útil do mês — e segue assim nos meses seguintes."}
     </div>
     <div class="timeline">
       ${todayRow}
-      ${timelineRow(formatDateBR(due1), `último dia útil de ${month1Name}`, "1ª parcela da negociação (PGFN)", installmentValueLabel)}
-      ${timelineRow(formatDateBR(due2), `último dia útil de ${month2Name}`, "2ª parcela da negociação", installmentValueLabel, installmentsCount <= 2)}
-      ${installmentsCount > 2 ? timelineRow(`a partir de ${monthFromShort}`, "sempre no último dia útil", `demais parcelas (3ª a ${installmentsCount}ª)`, installmentValueLabel, true) : ""}
+      ${timelineRowsAfterToday}
     </div>
 
     <div class="sectionTitle">OPÇÕES PARA A NEGOCIAÇÃO</div>
@@ -883,11 +962,7 @@ function buildAliancaHtml(payload: ProposalPayload): string {
         <div class="opt__value ${hasDiscount ? "opt__value--green" : ""}">${escapeHtml(hasDiscount ? discountedLabel : totalDebtLabel)}</div>
         <div class="opt__sub">${hasDiscount ? "Parcela única · desconto máximo aplicado" : "Pagamento único da dívida"}</div>
       </div>
-      <div class="opt">
-        <div class="opt__eyebrow">PARCELADO · ${installmentsCount}X SEM JUROS</div>
-        <div class="opt__value">${escapeHtml(installmentValueLabel)}<span class="opt__permes">/mês</span></div>
-        <div class="opt__sub">Entrada R$ 0,00 · 1ª parcela no último dia útil do mês</div>
-      </div>
+      ${parceladoCard}
     </div>
 
     <div class="cta">
@@ -906,8 +981,8 @@ function buildAliancaHtml(payload: ProposalPayload): string {
     <div class="spacer"></div>
 
     <div class="footer">
-      <div>
-        <div class="footer__brand">Aliança Fiscal</div>
+      <div class="footer__brand">
+        ${logoUrl ? `<img src="${escapeHtml(logoUrl)}" alt="Aliança Fiscal" />` : ""}
         ${exec.name ? `<div class="footer__exec">Especialista <strong>${escapeHtml(exec.name)}</strong>${exec.email ? ` · ${escapeHtml(exec.email)}` : ""}</div>` : ""}
       </div>
       <div class="footer__disc">
@@ -919,6 +994,7 @@ function buildAliancaHtml(payload: ProposalPayload): string {
 </body>
 </html>`;
 }
+
 
 // ============================================================
 
