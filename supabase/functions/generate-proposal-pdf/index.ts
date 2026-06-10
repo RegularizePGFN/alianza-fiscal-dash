@@ -22,6 +22,7 @@ interface ProposalPayload {
   companyData?: any | null;
   showWatermark?: boolean;
   logoUrl?: string;
+  pdfTemplate?: "classic" | "alianca";
 }
 
 const escapeHtml = (s: unknown): string => {
@@ -700,7 +701,10 @@ serve(async (req) => {
       });
     }
 
-    const html = buildProposalHtml(payload);
+    const html =
+      payload.pdfTemplate === "alianca"
+        ? buildAliancaHtml(payload)
+        : buildProposalHtml(payload);
     const pdfBytes = await renderPdfWithBrowserless(html);
 
     console.log(`PDF gerado com sucesso: ${pdfBytes.length} bytes`);
