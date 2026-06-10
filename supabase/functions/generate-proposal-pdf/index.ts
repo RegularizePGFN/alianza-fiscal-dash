@@ -1050,6 +1050,7 @@ async function renderPdfWithBrowserless(html: string): Promise<Uint8Array> {
       preferCSSPageSize: true,
       format: "A4",
       margin: { top: "0", right: "0", bottom: "0", left: "0" },
+      scale: 1,
     },
     gotoOptions: {
       waitUntil: "networkidle0",
