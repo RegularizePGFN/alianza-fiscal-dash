@@ -1,17 +1,9 @@
-## Plano: Ordenação por Última Atualização na Listagem de Cadastros
+Vou ajustar a edge function `generate-proposal-pdf` para diagnosticar corretamente o erro atual e evitar que tudo apareça apenas como “token inválido”.
 
-### Objetivo
-Alterar o critério de ordenação da listagem de cadastros para que registros recentemente atualizados (nova observação, mudança de status, edição) subam automaticamente para o topo da lista, como um alerta para a equipe.
+Plano:
+1. Atualizar o tratamento de erro do Browserless para registrar um trecho seguro da resposta real quando der 401/403/429, sem expor o token.
+2. Melhorar a normalização do `BROWSERLESS_TOKEN`, removendo espaços/quebras acidentais e, se alguém colar uma URL completa com `?token=`, extrair só o valor do token.
+3. Manter o endpoint oficial atual `https://production-sfo.browserless.io/pdf?token=...`, que a documentação confirma estar correto.
+4. Implantar a edge function e testar de novo pelos logs para confirmar se o problema ainda é autenticação, cota, região/endpoint, ou payload.
 
-### Onde alterar
-- `src/hooks/useRegistrations.ts`
-
-### Mudança técnica
-- Trocar `.order("created_at", { ascending: false })` para `.order("updated_at", { ascending: false })` na query que busca os registros do Supabase.
-
-### Comportamento esperado
-- Cadastros antigos que receberem qualquer atualização (observação, status, dados corrigidos) serão exibidos primeiro na listagem.
-- O filtro de período (`from`/`to`) continuará baseado em `created_at` para não alterar o escopo de resultados — apenas a ordenação dentro do período selecionado mudará.
-
-### Nota
-A coluna `updated_at` já existe na tabela `client_registrations` e é atualizada automaticamente pelo trigger `updated_at` do Supabase.
+Detalhe técnico: hoje o código já chama o endpoint correto, e o log mais recente ainda retorna 401. A mudança principal é deixar a função tolerante a token colado em formatos diferentes e mostrar a causa real retornada pelo Browserless.
