@@ -36,7 +36,8 @@ const ProposalPreviewLayout: React.FC<ProposalPreviewLayoutProps> = ({
       toast({ title: 'PDF gerado!', description: 'Download iniciado.' });
     } catch (e) {
       console.error(e);
-      toast({ title: 'Erro', description: 'Falha ao gerar PDF.', variant: 'destructive' });
+      const message = e instanceof Error ? e.message : 'Falha ao gerar PDF.';
+      toast({ title: 'Erro', description: message, variant: 'destructive' });
     } finally {
       setDownloading(null);
     }

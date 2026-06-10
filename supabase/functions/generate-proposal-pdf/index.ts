@@ -647,17 +647,24 @@ async function renderPdfWithBrowserless(html: string): Promise<Uint8Array> {
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
+    const normalizedText = text.toLowerCase();
     console.error(
       `Browserless falhou: status=${res.status} token=${tokenPreview} body=${text.slice(0, 500)}`,
     );
+    if (
+      res.status === 429 ||
+      normalizedText.includes("usage limit") ||
+      normalizedText.includes("units usage limit") ||
+      normalizedText.includes("free plan") ||
+      normalizedText.includes("upgrade to a paid plan")
+    ) {
+      throw new Error(
+        `Browserless: limite de uso excedido. A conta atingiu o limite do plano gratuito; faça upgrade em browserless.io/account/upgrade ou aguarde o reset da cota. Resposta: ${text.slice(0, 200) || "(vazio)"}`,
+      );
+    }
     if (res.status === 401 || res.status === 403) {
       throw new Error(
         `Browserless rejeitou o token (${res.status}). Resposta: ${text.slice(0, 200) || "(vazio)"}. Confirme em browserless.io/account que a API key bate com a usada (token preview: ${tokenPreview}).`,
-      );
-    }
-    if (res.status === 429) {
-      throw new Error(
-        `Browserless: cota excedida (429). Resposta: ${text.slice(0, 200)}`,
       );
     }
     throw new Error(`Browserless falhou: ${res.status} ${text.slice(0, 300)}`);
