@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ExtractedData, CompanyData } from '@/lib/types/proposals';
 import ProposalPdfTemplate from '@/components/proposals/pdf/ProposalPdfTemplate';
 import AliancaPdfTemplate from '@/components/proposals/pdf/AliancaPdfTemplate';
