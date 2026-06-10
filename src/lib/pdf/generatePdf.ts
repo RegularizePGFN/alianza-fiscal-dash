@@ -81,7 +81,7 @@ export async function generateProposalPdf(
         apikey: SUPABASE_ANON_KEY,
         Authorization: `Bearer ${session?.access_token || SUPABASE_ANON_KEY}`,
       },
-      body: JSON.stringify({ data, companyData, showWatermark, logoUrl }),
+      body: JSON.stringify({ data, companyData, showWatermark, logoUrl, pdfTemplate }),
     },
   );
 
