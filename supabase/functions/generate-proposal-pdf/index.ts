@@ -576,6 +576,17 @@ function buildProposalHtml(payload: ProposalPayload): string {
 
 const DEFAULT_BROWSERLESS_BASE = "https://production-sfo.browserless.io";
 
+function normalizeToken(raw: string): string {
+  let t = raw.trim().replace(/^["']|["']$/g, "").trim();
+  // Se colaram URL completa, extrai ?token=...
+  const m = t.match(/[?&]token=([^&\s]+)/i);
+  if (m) t = decodeURIComponent(m[1]);
+  // Remove prefixos comuns
+  t = t.replace(/^token[:=]\s*/i, "");
+  t = t.replace(/^Bearer\s+/i, "");
+  return t.trim();
+}
+
 async function renderPdfWithBrowserless(html: string): Promise<Uint8Array> {
   if (!BROWSERLESS_TOKEN) {
     throw new Error(
@@ -583,13 +594,15 @@ async function renderPdfWithBrowserless(html: string): Promise<Uint8Array> {
     );
   }
 
+  const token = normalizeToken(BROWSERLESS_TOKEN);
+  if (!token) {
+    throw new Error("BROWSERLESS_TOKEN está vazio após normalização.");
+  }
+
   // Normaliza URL base. Se o secret BROWSERLESS_URL não existir, usa o endpoint
-  // padrão da Browserless (production-sfo). Também limpa caminhos inválidos
-  // herdados de versões antigas (ex: /function/pdf, /chrome/pdf, /pdf).
+  // padrão da Browserless (production-sfo). Também limpa caminhos inválidos.
   let base = (BROWSERLESS_URL_RAW || DEFAULT_BROWSERLESS_BASE).trim();
   base = base.split("?")[0];
-  // Remove sufixos inválidos repetidamente até chegar só na origem.
-  // Ordem importa: remove /pdf primeiro (com ou sem prefixo), depois /function, /chrome, /chromium.
   for (let i = 0; i < 5; i++) {
     const before = base;
     base = base.replace(/\/+pdf\/?$/i, "");
@@ -599,13 +612,11 @@ async function renderPdfWithBrowserless(html: string): Promise<Uint8Array> {
     base = base.replace(/\/+$/, "");
     if (before === base) break;
   }
-
-  // Se por qualquer motivo a base ficou vazia ou inválida, usa o default.
   if (!/^https?:\/\//i.test(base)) {
     base = DEFAULT_BROWSERLESS_BASE;
   }
 
-  const endpoint = `${base}/pdf?token=${encodeURIComponent(BROWSERLESS_TOKEN)}`;
+  const endpoint = `${base}/pdf?token=${encodeURIComponent(token)}`;
 
   const body = {
     html,
@@ -622,7 +633,8 @@ async function renderPdfWithBrowserless(html: string): Promise<Uint8Array> {
     waitForTimeout: 800,
   };
 
-  console.log("Browserless: chamando endpoint", base + "/pdf");
+  const tokenPreview = `${token.slice(0, 4)}…${token.slice(-4)} (len=${token.length})`;
+  console.log("Browserless: chamando endpoint", base + "/pdf", "token=", tokenPreview);
 
   const res = await fetch(endpoint, {
     method: "POST",
@@ -635,9 +647,17 @@ async function renderPdfWithBrowserless(html: string): Promise<Uint8Array> {
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
+    console.error(
+      `Browserless falhou: status=${res.status} token=${tokenPreview} body=${text.slice(0, 500)}`,
+    );
     if (res.status === 401 || res.status === 403) {
       throw new Error(
-        `Browserless rejeitou o token (${res.status}). Verifique BROWSERLESS_TOKEN nos Secrets — deve ser apenas a API key, sem "?token=".`,
+        `Browserless rejeitou o token (${res.status}). Resposta: ${text.slice(0, 200) || "(vazio)"}. Confirme em browserless.io/account que a API key bate com a usada (token preview: ${tokenPreview}).`,
+      );
+    }
+    if (res.status === 429) {
+      throw new Error(
+        `Browserless: cota excedida (429). Resposta: ${text.slice(0, 200)}`,
       );
     }
     throw new Error(`Browserless falhou: ${res.status} ${text.slice(0, 300)}`);
