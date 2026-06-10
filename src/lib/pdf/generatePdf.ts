@@ -109,6 +109,22 @@ export async function generateProposalPdf(
     throw new Error(`PDF retornado vazio ou inválido (${buf?.byteLength || 0} bytes).`);
   }
 
+  const pageCountHeader = res.headers.get('X-Pdf-Page-Count');
+  const pageCount = pageCountHeader ? parseInt(pageCountHeader, 10) || 1 : 1;
+
+  if (pageCount > 1) {
+    const ok = typeof window !== 'undefined'
+      ? window.confirm(
+          `Atenção: este PDF ficou com ${pageCount} páginas. O ideal é uma página só.\n\n` +
+          `Deseja baixar mesmo assim? Clique em Cancelar para voltar e ajustar o conteúdo ` +
+          `(remover observações, encurtar textos ou tentar o Modelo 1).`,
+        )
+      : true;
+    if (!ok) {
+      throw new Error(`PDF com ${pageCount} páginas. Download cancelado pelo usuário.`);
+    }
+  }
+
   const pdfBlob = new Blob([buf], { type: 'application/pdf' });
   triggerDownload(pdfBlob, buildFileName(data, 'pdf', companyData));
 }
