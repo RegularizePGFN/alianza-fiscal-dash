@@ -6,7 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { FileText, User, Palette } from 'lucide-react';
+import { FileText, User, Palette, LayoutTemplate, Check } from 'lucide-react';
+import { PDF_TEMPLATES, DEFAULT_PDF_TEMPLATE, type PdfTemplateId } from '@/components/proposals/pdf/templates';
+import { cn } from '@/lib/utils';
 
 interface OptionsSidebarProps {
   formData: Partial<ExtractedData>;
@@ -18,6 +20,7 @@ const OptionsSidebar: React.FC<OptionsSidebarProps> = ({ formData, onInputChange
   const includeExecutive = formData.includeExecutiveData === 'true';
   const showWatermark = formData.showWatermark !== 'false';
   const showFeesInstallments = formData.showFeesInstallments === 'true';
+  const currentTemplate = (formData.pdfTemplate as PdfTemplateId) || DEFAULT_PDF_TEMPLATE;
 
   return (
     <Card className="border-border shadow-sm h-fit lg:sticky lg:top-20">
