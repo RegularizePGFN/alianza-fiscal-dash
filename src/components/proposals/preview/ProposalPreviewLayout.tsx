@@ -82,22 +82,8 @@ const ProposalPreviewLayout: React.FC<ProposalPreviewLayoutProps> = ({
             </span>
             <span className="text-[10px] text-muted-foreground">A4 • 210 × 297 mm</span>
           </div>
-          <div
-            className={cn(
-              'overflow-auto p-4 sm:p-6 lg:p-8',
-              'flex justify-center',
-              'min-h-[600px] max-h-[80vh]',
-            )}
-          >
-            <div
-              style={{
-                transformOrigin: 'top center',
-                transform: 'scale(0.78)',
-                width: '794px',
-                marginBottom: '-22%',
-              }}
-              className="shadow-2xl rounded-md overflow-hidden bg-white"
-            >
+          <div className="p-4 sm:p-6 lg:p-8 flex justify-center">
+            <ResponsivePdfPreview>
               {((formData.pdfTemplate as PdfTemplateId) || DEFAULT_PDF_TEMPLATE) === 'alianca' ? (
                 <AliancaPdfTemplate data={formData} companyData={companyData} />
               ) : (
@@ -107,12 +93,66 @@ const ProposalPreviewLayout: React.FC<ProposalPreviewLayoutProps> = ({
                   showWatermark={formData.showWatermark !== 'false'}
                 />
               )}
-            </div>
+            </ResponsivePdfPreview>
           </div>
         </div>
 
         {/* Sidebar */}
         <OptionsSidebar formData={formData} onInputChange={onInputChange} />
+      </div>
+    </div>
+  );
+};
+
+/**
+ * Renderiza o template do PDF (794 × 1123 px, A4) escalado responsivamente
+ * para caber 100% na largura disponível, sem cortar conteúdo em nenhum nível
+ * de zoom da página. O wrapper externo reserva exatamente a altura escalada.
+ */
+const ResponsivePdfPreview: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const PAGE_W = 794;
+  const PAGE_H = 1123;
+  const [scale, setScale] = useState(1);
+
+  useLayoutEffect(() => {
+    const update = () => {
+      const w = containerRef.current?.clientWidth || PAGE_W;
+      const next = Math.min(1, w / PAGE_W);
+      setScale(next);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    if (containerRef.current) ro.observe(containerRef.current);
+    window.addEventListener('resize', update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', update);
+    };
+  }, []);
+
+  return (
+    <div ref={containerRef} className="w-full" style={{ maxWidth: `${PAGE_W}px` }}>
+      <div style={{ width: '100%', height: `${PAGE_H * scale}px`, position: 'relative' }}>
+        <div
+          ref={innerRef}
+          style={{
+            width: `${PAGE_W}px`,
+            height: `${PAGE_H}px`,
+            transform: `scale(${scale})`,
+            transformOrigin: 'top left',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            background: '#fff',
+            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.15), 0 8px 10px -6px rgba(0,0,0,0.1)',
+            borderRadius: '6px',
+            overflow: 'hidden',
+          }}
+        >
+          {children}
+        </div>
       </div>
     </div>
   );
