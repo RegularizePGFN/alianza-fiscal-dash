@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { ExtractedData, CompanyData } from '@/lib/types/proposals';
 import ProposalPdfTemplate from '@/components/proposals/pdf/ProposalPdfTemplate';
+import AliancaPdfTemplate from '@/components/proposals/pdf/AliancaPdfTemplate';
+import { DEFAULT_PDF_TEMPLATE, type PdfTemplateId } from '@/components/proposals/pdf/templates';
 import { Button } from '@/components/ui/button';
 import { Download, RotateCcw, Edit2, Eye } from 'lucide-react';
 import { generateProposalPdf } from '@/lib/pdf/generatePdf';
@@ -96,11 +98,15 @@ const ProposalPreviewLayout: React.FC<ProposalPreviewLayoutProps> = ({
               }}
               className="shadow-2xl rounded-md overflow-hidden bg-white"
             >
-              <ProposalPdfTemplate
-                data={formData}
-                companyData={companyData}
-                showWatermark={formData.showWatermark !== 'false'}
-              />
+              {((formData.pdfTemplate as PdfTemplateId) || DEFAULT_PDF_TEMPLATE) === 'alianca' ? (
+                <AliancaPdfTemplate data={formData} companyData={companyData} />
+              ) : (
+                <ProposalPdfTemplate
+                  data={formData}
+                  companyData={companyData}
+                  showWatermark={formData.showWatermark !== 'false'}
+                />
+              )}
             </div>
           </div>
         </div>

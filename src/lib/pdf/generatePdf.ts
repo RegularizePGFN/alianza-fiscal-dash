@@ -41,6 +41,7 @@ export async function generateProposalPdf(
   companyData?: CompanyData | null,
 ): Promise<void> {
   const showWatermark = data.showWatermark !== 'false';
+  const pdfTemplate = data.pdfTemplate || 'classic';
 
   // Logo: convertemos para data URL (base64) para que o Chromium remoto
   // não precise baixar nenhum asset da rede — elimina falhas de carregamento.
@@ -80,7 +81,7 @@ export async function generateProposalPdf(
         apikey: SUPABASE_ANON_KEY,
         Authorization: `Bearer ${session?.access_token || SUPABASE_ANON_KEY}`,
       },
-      body: JSON.stringify({ data, companyData, showWatermark, logoUrl }),
+      body: JSON.stringify({ data, companyData, showWatermark, logoUrl, pdfTemplate }),
     },
   );
 

@@ -6,7 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { FileText, User, Palette } from 'lucide-react';
+import { FileText, User, Palette, LayoutTemplate, Check } from 'lucide-react';
+import { PDF_TEMPLATES, DEFAULT_PDF_TEMPLATE, type PdfTemplateId } from '@/components/proposals/pdf/templates';
+import { cn } from '@/lib/utils';
 
 interface OptionsSidebarProps {
   formData: Partial<ExtractedData>;
@@ -18,6 +20,7 @@ const OptionsSidebar: React.FC<OptionsSidebarProps> = ({ formData, onInputChange
   const includeExecutive = formData.includeExecutiveData === 'true';
   const showWatermark = formData.showWatermark !== 'false';
   const showFeesInstallments = formData.showFeesInstallments === 'true';
+  const currentTemplate = (formData.pdfTemplate as PdfTemplateId) || DEFAULT_PDF_TEMPLATE;
 
   return (
     <Card className="border-border shadow-sm h-fit lg:sticky lg:top-20">
@@ -27,7 +30,47 @@ const OptionsSidebar: React.FC<OptionsSidebarProps> = ({ formData, onInputChange
           <p className="text-xs text-muted-foreground">Ajustes refletem na pré-visualização e no PDF</p>
         </div>
 
-        <Accordion type="multiple" defaultValue={['obs']} className="w-full">
+        <Accordion type="multiple" defaultValue={['model', 'obs']} className="w-full">
+          {/* Modelo do PDF */}
+          <AccordionItem value="model">
+            <AccordionTrigger className="text-sm">
+              <span className="flex items-center gap-2">
+                <LayoutTemplate className="h-4 w-4 text-primary" />
+                Modelo do PDF
+              </span>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-2">
+                {PDF_TEMPLATES.map((tpl) => {
+                  const selected = currentTemplate === tpl.id;
+                  return (
+                    <button
+                      key={tpl.id}
+                      type="button"
+                      onClick={() => onInputChange('pdfTemplate', tpl.id)}
+                      className={cn(
+                        'w-full text-left rounded-lg border p-3 transition-all',
+                        selected
+                          ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                          : 'border-border hover:border-primary/50 hover:bg-muted/40',
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="text-xs font-semibold text-foreground">{tpl.label}</div>
+                          <div className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
+                            {tpl.description}
+                          </div>
+                        </div>
+                        {selected && <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
           {/* Observações */}
           <AccordionItem value="obs">
             <AccordionTrigger className="text-sm">

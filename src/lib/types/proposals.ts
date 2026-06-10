@@ -43,6 +43,8 @@ export interface ExtractedData {
   executivePhone?: string; // Phone of the executive (optional)
   // PDF appearance
   showWatermark?: string; // "true" (default) or "false" - watermark on PDF
+  // PDF visual template
+  pdfTemplate?: 'classic' | 'alianca';
 }
 
 export interface Proposal {
