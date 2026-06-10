@@ -1133,7 +1133,16 @@ serve(async (req) => {
         : buildProposalHtml(payload);
     const pdfBytes = await renderPdfWithBrowserless(html);
 
-    console.log(`PDF gerado com sucesso: ${pdfBytes.length} bytes`);
+    // Conta páginas de forma resiliente (cobre PDFs com/sem stream comprimido).
+    const pdfText = new TextDecoder("latin1").decode(pdfBytes);
+    let pageCount = (pdfText.match(/\/Type\s*\/Page(?![s])/g) || []).length;
+    if (pageCount === 0) {
+      const m = pdfText.match(/\/Count\s+(\d+)/);
+      if (m) pageCount = parseInt(m[1], 10);
+    }
+    if (pageCount === 0) pageCount = 1;
+
+    console.log(`PDF gerado com sucesso: ${pdfBytes.length} bytes, ${pageCount} página(s)`);
 
     return new Response(pdfBytes, {
       status: 200,
@@ -1142,6 +1151,7 @@ serve(async (req) => {
         "Content-Type": "application/pdf",
         "Content-Length": String(pdfBytes.length),
         "Cache-Control": "no-store",
+        "X-Pdf-Page-Count": String(pageCount),
       },
     });
   } catch (error) {
