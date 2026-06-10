@@ -1,90 +1,91 @@
-## Objetivo
-Permitir que o operador escolha entre dois modelos visuais de PDF antes de visualizar/baixar a proposta. Modelo 1 fica idêntico ao atual; Modelo 2 implementa o layout dos PDFs anexos, com destaque automático conforme houver ou não desconto.
+# Ajustes finos no Modelo 2 (Aliança)
 
-## Mudanças no painel "Personalizar proposta"
-Em `src/components/proposals/preview/OptionsSidebar.tsx`, adicionar uma nova seção (Accordion item) no topo chamada **"Modelo do PDF"** com dois cards de escolha (radio visual):
+Aplicar somente no template Modelo 2 — o Modelo 1 (Clássico) **não muda**.
+Os ajustes precisam ser feitos em **dois lugares espelhados**:
+- Preview React: `src/components/proposals/pdf/AliancaPdfTemplate.tsx`
+- HTML do PDF: função `buildAliancaHtml` em `supabase/functions/generate-proposal-pdf/index.ts`
 
-- **Modelo 1 – Clássico** (padrão atual; selo "atual")
-- **Modelo 2 – Aliança** (novo layout em destaque)
+## 1. Mais respiro entre os blocos
 
-A escolha grava em `formData.pdfTemplate` (`"classic"` | `"alianca"`). Estrutura preparada para futuros modelos (lista declarativa de templates).
+Aumentar o espaçamento vertical para deixar a página mais arejada (sem perder o caráter "uma página A4"):
 
-## Tipos e estado
-Em `src/lib/types/proposals.ts`, acrescentar:
-```ts
-pdfTemplate?: 'classic' | 'alianca'; // default: 'classic'
+- Padding superior das seções: de `padding: '22px 40px 0'` → `padding: '30px 44px 0'`.
+- Linha do tempo: `marginTop` das linhas de `10px` → `16px`; padding interno dos cards de timeline de `14px 18px` → `16px 20px`.
+- Faixa de destaque (benefício/economia): padding de `22px 26px` → `26px 30px` e `margin-top` de `14px` → `18px` em relação ao bloco "Proposta para".
+- Cards "Opções para a negociação": gap de `12px` → `16px`, padding de `14px 18px` → `18px 22px`.
+- CTA final ("Pronto para regularizar?"): padding interno de `16px 22px` → `20px 26px`, com `margin-top` extra de `8px`.
+
+## 2. Faixa degradê azul → verde abaixo do cabeçalho
+
+Já existe a linha `<div style="height:4px; background: linear-gradient(90deg, BLUE 0%, GREEN 100%)" />` logo após o cabeçalho. Vamos:
+
+- Mantê-la, mas mais espessa (`height: 6px`) e com `border-radius: 3px`.
+- No PDF do edge function, garantir que a faixa apareça também (hoje o `buildAliancaHtml` precisa ter o mesmo elemento) e que ela fique colada na borda inferior de um cabeçalho mais "limpo" (sem o atual texto solto — só logo + título + datas).
+
+## 3. Fonte Nunito em todo o Modelo 2
+
+- Adicionar `Nunito` ao `<link>` do Google Fonts no HTML do PDF (ao lado dos pesos já carregados): `family=Nunito:wght@400;500;600;700;800`.
+- Substituir `fontFamily: "'Inter', system-ui, ..."` por `fontFamily: "'Nunito', system-ui, -apple-system, sans-serif"` no contêiner raiz do `AliancaPdfTemplate` e no `body { font-family: ... }` do CSS do `buildAliancaHtml`.
+- Modelo 1 continua com Inter / Playfair Display (não tocar).
+
+## 4. Logomarca oficial no cabeçalho e rodapé
+
+A logo oficial já está em `public/lovable-uploads/logo-alianca-fiscal.png` (mesma usada pelo Modelo 1). Hoje o Modelo 2 mostra um símbolo "A" + texto.
+
+- Cabeçalho: trocar pelo `<img src="/lovable-uploads/logo-alianca-fiscal.png" />` (no edge function, usar o `logoUrl` em base64 que já vem do frontend — mesmo mecanismo do Modelo 1). Altura `40px`, sem o texto "ALIANÇA FISCAL · Consultoria Tributária" ao lado (a logo já contém isso).
+- Rodapé: adicionar a mesma logo em versão pequena (altura `22px`, opacidade `0.85`) à esquerda do bloco "Aliança Fiscal · Especialista admin", substituindo o texto que faz esse papel hoje.
+
+## 5. Entrada e Parcelas — usar a mesma leitura do Modelo 1
+
+Bug atual: Modelo 2 mostra "Entrada R$ 0,00" e considera só `installments × installmentValue`. O Modelo 1 já lê corretamente os campos vindos da Regularize:
+- `entryValue` (valor total da entrada)
+- `entryInstallments` (em quantas vezes a entrada é cobrada)
+- `installments` + `installmentValue` (parcelas restantes)
+- Total real do parcelamento = `entryValue + installments × installmentValue`
+- Número total de parcelas = `entryInstallments + installments`
+
+Aplicar no Modelo 2 (preview React e HTML edge function), **sem alterar nenhuma lógica de extração**:
+
+### a) Card "Parcelado" das "Opções para a Negociação"
+
+Reescrever o card direito para mostrar **duas linhas**, espelhando o Modelo 1:
+
 ```
-Nenhuma migração de banco — é um campo de UI que viaja junto do payload da proposta.
+PARCELADO · {entryInstallments + installments}x no total
+Entrada:   {entryInstallments}x de R$ {entryValue / entryInstallments}   (Total: R$ {entryValue})
+Restantes: {installments}x de R$ {installmentValue}
+```
 
-## Pré-visualização e download
-Em `src/components/proposals/preview/ProposalPreviewLayout.tsx`:
-- Selecionar dinamicamente o componente de preview conforme `formData.pdfTemplate`.
-- Passar `pdfTemplate` para `generateProposalPdf` (que repassa à edge function).
+Quando `entryInstallments === 1`, mostrar "Entrada: R$ {entryValue}" (linha única).
+Quando `entryValue` for `0` ou ausente, omitir a linha de entrada e cair no comportamento atual (X parcelas iguais).
 
-Em `src/lib/pdf/generatePdf.ts`: incluir `pdfTemplate` no body do POST.
+### b) Faixa de destaque (benefício)
 
-## Novo template (Modelo 2 – Aliança)
-Criar **`src/components/proposals/pdf/AliancaPdfTemplate.tsx`** seguindo fielmente os PDFs anexos:
+A linha "Valor da dívida mantido R$ X · Nx de R$ Y" deve passar a usar o **total real**:
+- "Valor da dívida mantido R$ {totalDebt} · {entryInstallments + installments}x"
+- Em vez do `installmentValueLabel` único, mostrar: "entrada de {entryInstallments}x R$ {entryValue/entryInstallments} + {installments}x R$ {installmentValue}" (em uma única linha discreta).
 
-1. **Cabeçalho branco** com "ALIANÇA FISCAL / Consultoria Tributária" (logo oficial já existente em `/lovable-uploads/logo-alianca-fiscal.png`) à esquerda; à direita "PROPOSTA DE / REGULARIZAÇÃO PGFN" e "Emissão DD/MM/AAAA · Validade DD/MM/AAAA". Faixa fina gradiente azul→verde abaixo.
-2. **"PROPOSTA PARA"** + nome do cliente + CNPJ.
-3. **Bloco de destaque (auto)**:
-   - **Com desconto** (`hasDiscount === true`): card azul-escuro com título "SUA ECONOMIA", valor economizado em destaque verde, subtítulo "em reduções de juros e multas concedidas pela PGFN", chip verde "−XX%", linha "Dívida original R$ X → você regulariza por R$ Y".
-   - **Sem desconto**: mesmo card azul-escuro, título "SEU BENEFÍCIO", headline "Parcelamento sem juros", chip azul "SEM JUROS", subtítulo "Regularize sua dívida em até Nx sem nenhum acréscimo e suspenda as cobranças.", linha "Valor da dívida mantido R$ X · Nx de R$ Y".
-4. **"SEU PLANEJAMENTO DE PAGAMENTOS"**: aviso explicando que hoje paga apenas honorários e que a 1ª parcela vence no último dia útil do mês; timeline com:
-   - "Hoje · DD/MM" → "PAGUE HOJE — Honorários Aliança Fiscal" (valor `feesValue`).
-   - "DD/MM/AAAA · último dia útil de {mes}" → "1ª parcela da negociação (PGFN)" (`installmentValue`).
-   - Linha do mês seguinte → "2ª parcela da negociação".
-   - "a partir de {mes+2}/{aa} · sempre no último dia útil" → "demais parcelas (3ª a Nª)".
-5. **"OPÇÕES PARA A NEGOCIAÇÃO"**: dois cards — À vista (valor final / "Parcela única · desconto máximo aplicado" quando houver desconto, ou "Pagamento único da dívida" sem desconto) e Parcelado ("R$ X/mês · Entrada R$ 0,00 · 1ª parcela no último dia útil do mês").
-6. **Faixa final azul-escuro** "Pronto para regularizar?" com CTA "Para iniciar hoje · R$ {honorários}".
-7. **Linha "Dados cadastrais"** em texto pequeno cinza (situação, abertura, CNAE, endereço resumido, "Débito a confirmar" se não houver número).
-8. **Rodapé**: "Aliança Fiscal · Especialista {nome} · {email}" à esquerda; "Documento confidencial..." e "Valores conforme simulação de DD/MM/AAAA, sujeitos a atualização da PGFN." à direita.
+### c) Linha do tempo de pagamentos
 
-Detecção de desconto: reaproveitar a mesma lógica `hasDiscount` já usada hoje (compara `totalDebt`, `discountedValue`, `discountPercentage`).
+Hoje a timeline pula direto para "1ª parcela da negociação" no último dia útil do mês. Precisa refletir a entrada:
+- Se `entryInstallments >= 1` e `entryValue > 0`: a 1ª linha após "Pague hoje (honorários)" passa a ser "Entrada da negociação ({entryInstallments}x de R$ X) — vence em {dueDate}".
+- Em seguida, "1ª parcela restante" no último dia útil do mês seguinte, "2ª parcela restante" no mês seguinte, e "demais parcelas (3ª a Nª)" — mantendo o mesmo `getLastBusinessDayOfMonth`.
 
-## Cálculo de datas (último dia útil)
-Reaproveitar `getLastBusinessDayOfMonth` já existente (`src/hooks/proposals/useDatesHandling`). Para gerar as três linhas da timeline:
-- 1ª parcela = último dia útil do mês de emissão.
-- 2ª parcela = último dia útil do mês seguinte.
-- "Demais (3ª a Nª)" = rótulo `a partir de {mmm/aa}` calculado a partir do mês +2.
-Pular sábados/domingos (já implementado). Feriados não entram no escopo agora.
+### d) Texto auxiliar no card "Parcelado"
 
-## Edge function (PDF server-side)
-Em `supabase/functions/generate-proposal-pdf/index.ts`:
-- Ler `pdfTemplate` do payload (default `"classic"`).
-- Refatorar `buildProposalHtml` para despachar entre `buildClassicHtml` (HTML atual, sem mudanças) e novo `buildAliancaHtml` (espelho do `AliancaPdfTemplate.tsx` em HTML/CSS inline, mesma lógica de auto-detecção e datas). Logo embutida como data URL (fluxo atual já faz isso).
-- Redeploy da função após a alteração.
-
-## Não muda
-- Modelo 1 (visual, conteúdo, edge function path do clássico) permanece exatamente como hoje.
-- Hooks de salvar/listar propostas, automação, histórico — sem alteração.
-
-## Detalhes técnicos
-- Lista de templates em `src/components/proposals/pdf/templates.ts`:
-  ```ts
-  export const PDF_TEMPLATES = [
-    { id: 'classic', label: 'Modelo 1 – Clássico', description: '...' },
-    { id: 'alianca', label: 'Modelo 2 – Aliança', description: '...' },
-  ] as const;
-  ```
-  Facilita acrescentar Modelo 3+ depois.
-- `AliancaPdfTemplate.tsx` usa estilos inline (mesma estratégia do template atual) para garantir paridade pixel-a-pixel entre preview e PDF gerado.
-
-## Arquivos a criar
-- `src/components/proposals/pdf/AliancaPdfTemplate.tsx`
-- `src/components/proposals/pdf/templates.ts`
-
-## Arquivos a editar
-- `src/lib/types/proposals.ts` (campo `pdfTemplate`)
-- `src/components/proposals/preview/OptionsSidebar.tsx` (seção "Modelo do PDF")
-- `src/components/proposals/preview/ProposalPreviewLayout.tsx` (preview dinâmico + envio do `pdfTemplate`)
-- `src/lib/pdf/generatePdf.ts` (envia `pdfTemplate` no payload)
-- `supabase/functions/generate-proposal-pdf/index.ts` (roteia entre clássico e Aliança; deploy)
+Trocar "Entrada R$ 0,00 · 1ª parcela no último dia útil do mês" pelo texto correto baseado nos dados (ex.: "Entrada {entryInstallments}x · parcelas no último dia útil de cada mês").
 
 ## Validação
-- Trocar o seletor na sidebar → a prévia muda instantaneamente.
-- Baixar com Modelo 1 → PDF idêntico ao atual.
-- Baixar com Modelo 2, proposta COM desconto → faixa verde "SUA ECONOMIA" + valor e %.
-- Baixar com Modelo 2, proposta SEM desconto → faixa azul "SEM JUROS" + "Parcelamento sem juros".
-- Conferir datas: emitida em 10/06 → 1ª parcela 30/06, 2ª 31/07 (último dia útil correto, pulando finais de semana).
+
+- Abrir uma proposta com entrada parcelada (5x) + 55 parcelas restantes e conferir:
+  - Soma "entrada + restantes" = valor total da dívida (`totalDebt`).
+  - Número total de linhas = `entryInstallments + installments`.
+  - Modelo 1 e Modelo 2 mostram exatamente os mesmos números, mudando apenas a apresentação.
+- Conferir visualmente: respiro maior, faixa degradê presente, fonte Nunito carregando, logo oficial no header e no footer.
+- Re-deploy do edge function `generate-proposal-pdf` e gerar PDF para validar.
+
+## Fora de escopo
+
+- Lógica de extração de dados da Regularize.
+- Modelo 1 (Clássico) — não mexer.
+- Sidebar de opções, fluxo de download, autenticação Browserless.
