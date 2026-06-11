@@ -982,6 +982,10 @@ export type Database = {
           salesperson_name: string
         }[]
       }
+      get_proposals_history_summary: {
+        Args: { p_from: string; p_to: string; p_user_id?: string }
+        Returns: Json
+      }
       get_registrations_summary: {
         Args: { p_end: string; p_start: string }
         Returns: {
