@@ -179,18 +179,7 @@ const ProposalsContainer = () => {
           />
         )}
 
-        {mainTab === "history" && (
-          <HistoryTabContent
-            proposals={proposalsState.proposals}
-            loadingProposals={proposalsState.loadingProposals}
-            onViewProposal={handlers.handleViewProposal}
-            onDeleteProposal={handlers.handleDeleteProposal}
-            filterType={proposalsState.filterType}
-            customDateRange={proposalsState.customDateRange}
-            onFilterChange={proposalsState.handleFilterChange}
-            onMount={proposalsState.ensureProposalsLoaded}
-          />
-        )}
+        {mainTab === "history" && <HistoryTabContent />}
       </div>
     </div>
   );
