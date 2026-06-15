@@ -45,6 +45,17 @@ function decodeBase64(b64: string): Uint8Array {
 }
 
 Deno.serve(async (req) => {
+  try {
+    return await handle(req);
+  } catch (e) {
+    console.error("[automation-result] uncaught", e instanceof Error ? e.stack || e.message : String(e));
+    return new Response(JSON.stringify({ error: "internal", message: e instanceof Error ? e.message : String(e) }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
+
+async function handle(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const expected = Deno.env.get("AUTOMATION_API_KEY") ?? "";
