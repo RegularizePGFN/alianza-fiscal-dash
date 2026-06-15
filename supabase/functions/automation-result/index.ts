@@ -96,7 +96,7 @@ async function handle(req: Request): Promise<Response> {
     .eq("id", body.registration_id)
     .maybeSingle();
   if (regErr) {
-    return new Response(JSON.stringify({ error: regErr.message }), {
+    console.error("[automation-result] select reg err", regErr); return new Response(JSON.stringify({ error: regErr.message }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
@@ -121,7 +121,7 @@ async function handle(req: Request): Promise<Response> {
       })
       .eq("id", body.registration_id);
     if (uErr) {
-      return new Response(JSON.stringify({ error: uErr.message }), {
+      console.error("[automation-result] update err", uErr); return new Response(JSON.stringify({ error: uErr.message }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -150,7 +150,7 @@ async function handle(req: Request): Promise<Response> {
       .from("cadastro-automatico-pdfs")
       .upload(path, bytes, { contentType: "application/pdf", upsert: false });
     if (upErr) {
-      return new Response(JSON.stringify({ error: `upload failed: ${upErr.message}` }), {
+      console.error("[automation-result] upload err", upErr); return new Response(JSON.stringify({ error: `upload failed: ${upErr.message}` }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -158,7 +158,7 @@ async function handle(req: Request): Promise<Response> {
       .from("client_registration_automation_files")
       .insert({ registration_id: body.registration_id, file_path: path, file_name: f.name });
     if (insErr) {
-      return new Response(JSON.stringify({ error: insErr.message }), {
+      console.error("[automation-result] insert file err", insErr); return new Response(JSON.stringify({ error: insErr.message }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -176,7 +176,7 @@ async function handle(req: Request): Promise<Response> {
     })
     .eq("id", body.registration_id);
   if (uErr) {
-    return new Response(JSON.stringify({ error: uErr.message }), {
+    console.error("[automation-result] update err", uErr); return new Response(JSON.stringify({ error: uErr.message }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
