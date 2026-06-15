@@ -184,4 +184,4 @@ async function handle(req: Request): Promise<Response> {
   return new Response(JSON.stringify({ ok: true, files_saved: filesSaved.length }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
-});
+}
