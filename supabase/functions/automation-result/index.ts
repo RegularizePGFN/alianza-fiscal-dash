@@ -45,6 +45,17 @@ function decodeBase64(b64: string): Uint8Array {
 }
 
 Deno.serve(async (req) => {
+  try {
+    return await handle(req);
+  } catch (e) {
+    console.error("[automation-result] uncaught", e instanceof Error ? e.stack || e.message : String(e));
+    return new Response(JSON.stringify({ error: "internal", message: e instanceof Error ? e.message : String(e) }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
+
+async function handle(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const expected = Deno.env.get("AUTOMATION_API_KEY") ?? "";
@@ -85,7 +96,7 @@ Deno.serve(async (req) => {
     .eq("id", body.registration_id)
     .maybeSingle();
   if (regErr) {
-    return new Response(JSON.stringify({ error: regErr.message }), {
+    console.error("[automation-result] select reg err", regErr); return new Response(JSON.stringify({ error: regErr.message }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
@@ -110,7 +121,7 @@ Deno.serve(async (req) => {
       })
       .eq("id", body.registration_id);
     if (uErr) {
-      return new Response(JSON.stringify({ error: uErr.message }), {
+      console.error("[automation-result] update err", uErr); return new Response(JSON.stringify({ error: uErr.message }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -139,7 +150,7 @@ Deno.serve(async (req) => {
       .from("cadastro-automatico-pdfs")
       .upload(path, bytes, { contentType: "application/pdf", upsert: false });
     if (upErr) {
-      return new Response(JSON.stringify({ error: `upload failed: ${upErr.message}` }), {
+      console.error("[automation-result] upload err", upErr); return new Response(JSON.stringify({ error: `upload failed: ${upErr.message}` }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -147,7 +158,7 @@ Deno.serve(async (req) => {
       .from("client_registration_automation_files")
       .insert({ registration_id: body.registration_id, file_path: path, file_name: f.name });
     if (insErr) {
-      return new Response(JSON.stringify({ error: insErr.message }), {
+      console.error("[automation-result] insert file err", insErr); return new Response(JSON.stringify({ error: insErr.message }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -165,7 +176,7 @@ Deno.serve(async (req) => {
     })
     .eq("id", body.registration_id);
   if (uErr) {
-    return new Response(JSON.stringify({ error: uErr.message }), {
+    console.error("[automation-result] update err", uErr); return new Response(JSON.stringify({ error: uErr.message }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
@@ -173,4 +184,4 @@ Deno.serve(async (req) => {
   return new Response(JSON.stringify({ ok: true, files_saved: filesSaved.length }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
-});
+}
