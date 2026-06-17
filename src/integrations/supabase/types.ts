@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      chatbot_inboxes: {
+        Row: {
+          active: boolean
+          created_at: string
+          inbox_id: number
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          inbox_id: number
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          inbox_id?: number
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       client_registration_attachments: {
         Row: {
           file_url: string

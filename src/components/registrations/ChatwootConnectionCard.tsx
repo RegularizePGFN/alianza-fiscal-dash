@@ -17,6 +17,7 @@ import {
   useTestChatwootConnection,
   useTodayChatbotCount,
 } from "@/hooks/useChatwootHealth";
+import { ChatwootInboxManager } from "./ChatwootInboxManager";
 import { toast } from "sonner";
 
 function freshnessTone(date: Date | null): "success" | "warning" | "destructive" {
@@ -161,6 +162,8 @@ export function ChatwootConnectionCard() {
             </Collapsible>
           </div>
         )}
+
+        <ChatwootInboxManager />
       </CardContent>
     </Card>
   );

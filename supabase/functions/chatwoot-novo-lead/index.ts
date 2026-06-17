@@ -88,6 +88,34 @@ Deno.serve(async (req) => {
 
     const conversation = payload?.conversation ?? {};
     const conversationId: number | null = conversation?.id ?? null;
+    const inboxId: number | null = conversation?.inbox_id ?? payload?.inbox?.id ?? null;
+
+    const supabaseFilter = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+
+    // Filtra por caixas ativas configuradas no banco
+    const { data: activeInboxes, error: inboxErr } = await supabaseFilter
+      .from("chatbot_inboxes")
+      .select("inbox_id")
+      .eq("active", true);
+
+    if (inboxErr) {
+      console.error("[chatwoot-novo-lead] inbox lookup error", inboxErr);
+      return json(500, { error: "db_inbox_lookup_failed", detail: inboxErr.message });
+    }
+
+    const allowedIds = (activeInboxes ?? []).map((r: any) => r.inbox_id);
+    if (inboxId === null || !allowedIds.includes(inboxId)) {
+      return json(200, {
+        ok: true,
+        ignorado: true,
+        reason: "inbox_not_allowed",
+        inbox_id: inboxId,
+        allowed: allowedIds,
+      });
+    }
     const phone: string | null =
       conversation?.meta?.sender?.phone_number ??
       payload?.sender?.phone_number ??
@@ -97,10 +125,7 @@ Deno.serve(async (req) => {
     const clientName: string | null =
       conversation?.meta?.sender?.name ?? payload?.sender?.name ?? null;
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    const supabase = supabaseFilter;
 
     // Idempotência por conversation_id
     if (conversationId !== null) {
