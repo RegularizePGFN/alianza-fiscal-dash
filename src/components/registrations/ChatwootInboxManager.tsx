@@ -181,7 +181,7 @@ export function ChatwootInboxManager() {
                 key={ib.id}
                 className={`flex flex-wrap items-center gap-3 rounded-md border p-2.5 transition-colors ${
                   isActive ? "border-primary/40 bg-primary/5" : "border-border bg-card/40"
-                }`}
+                } ${official ? "ring-1 ring-primary/20" : ""}`}
               >
                 <span className="inline-flex items-center justify-center min-w-[2.5rem] h-6 px-1.5 rounded bg-muted text-xs font-mono text-muted-foreground">
                   {ib.id}
