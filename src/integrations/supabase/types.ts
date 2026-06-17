@@ -83,7 +83,7 @@ export type Database = {
       }
       client_registration_events: {
         Row: {
-          changed_by: string
+          changed_by: string | null
           changed_by_name: string | null
           created_at: string
           from_status: string | null
@@ -93,7 +93,7 @@ export type Database = {
           to_status: string
         }
         Insert: {
-          changed_by: string
+          changed_by?: string | null
           changed_by_name?: string | null
           created_at?: string
           from_status?: string | null
@@ -103,7 +103,7 @@ export type Database = {
           to_status: string
         }
         Update: {
-          changed_by?: string
+          changed_by?: string | null
           changed_by_name?: string | null
           created_at?: string
           from_status?: string | null
