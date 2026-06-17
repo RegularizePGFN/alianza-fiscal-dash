@@ -5,6 +5,7 @@ import { Phone } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import * as z from "zod";
 import { SaleFormSchema } from "./SaleFormSchema";
+import { formatDocument } from "@/lib/formatters/document";
 
 interface ClientFormFieldsProps {
   form: UseFormReturn<z.infer<typeof SaleFormSchema>>;
@@ -26,26 +27,9 @@ export function ClientFormFields({
   };
 
   const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/[^\d]/g, "");
-
-    if (value.length <= 11) {
-      // CPF: 000.000.000-00
-      value = value
-        .replace(/^(\d{3})(\d)/, "$1.$2")
-        .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
-        .replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d)/, "$1.$2.$3-$4");
-    } else {
-      // CNPJ: 00.000.000/0000-00
-      value = value.slice(0, 14);
-      value = value
-        .replace(/^(\d{2})(\d)/, "$1.$2")
-        .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
-        .replace(/^(\d{2})\.(\d{3})\.(\d{3})(\d)/, "$1.$2.$3/$4")
-        .replace(/^(\d{2})\.(\d{3})\.(\d{3})\/(\d{4})(\d)/, "$1.$2.$3/$4-$5");
-    }
-
-    form.setValue("client_document", value);
+    form.setValue("client_document", formatDocument(e.target.value));
   };
+
 
   return (
     <>
