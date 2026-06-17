@@ -5,14 +5,15 @@ import {
   statusLabel,
 } from "@/hooks/useRegistrations";
 import { format } from "date-fns";
+import { formatCnpj, formatCpf } from "@/lib/formatters/document";
 
 export function exportRegistrationsToExcel(rows: ClientRegistration[]) {
   const data = rows.map((r) => ({
     Vendedor: r.salesperson_name,
     Cliente: r.client_name,
     Telefone: r.client_phone || "",
-    CNPJ: r.cnpj || "",
-    CPF: r.cpf || "",
+    CNPJ: r.cnpj ? formatCnpj(r.cnpj) : "",
+    CPF: r.cpf ? formatCpf(r.cpf) : "",
     Motivo: reasonLabel(r.reason),
     Situação: statusLabel(r.status),
     Backoffice: r.backoffice_name || "",
