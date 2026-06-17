@@ -1,17 +1,19 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Loader2, Inbox, RefreshCw, BadgeCheck, AlertCircle } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Inbox, RefreshCw, BadgeCheck, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 interface ChatwootInbox {
   id: number;
   name: string;
   channel_type: string;
+  provider: string | null;
   phone_number: string | null;
 }
 
@@ -21,12 +23,17 @@ interface LocalInbox {
   active: boolean;
 }
 
-function isOfficialChannel(channelType: string) {
-  return channelType === "Channel::WhatsappCloud" || channelType === "Channel::Whatsapp";
+function isOfficialChannel(inbox: ChatwootInbox) {
+  return inbox.provider === "whatsapp_cloud";
 }
 
-function channelShortLabel(channelType: string) {
-  return channelType?.replace(/^Channel::/, "") ?? "—";
+function channelShortLabel(inbox: ChatwootInbox) {
+  if (inbox.provider) {
+    if (inbox.provider === "whatsapp_cloud") return "WhatsApp Cloud";
+    if (inbox.provider === "waha") return "WAHA";
+    return inbox.provider;
+  }
+  return inbox.channel_type?.replace(/^Channel::/, "") ?? "—";
 }
 
 export function ChatwootInboxManager() {
