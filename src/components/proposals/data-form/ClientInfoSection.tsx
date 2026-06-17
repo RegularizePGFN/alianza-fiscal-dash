@@ -65,11 +65,15 @@ const ClientInfoSection = ({
               id="cnpj"
               name="cnpj"
               value={formData.cnpj || ''}
-              onChange={onInputChange}
+              onChange={(e) => {
+                e.target.value = formatCnpj(e.target.value);
+                onInputChange(e);
+              }}
               onBlur={() => markTouched('cnpj')}
               placeholder="00.000.000/0000-00"
               className={cn('flex-1', errorClass(!!cnpjError))}
               maxLength={18}
+              inputMode="numeric"
               required
               aria-invalid={!!cnpjError}
             />
