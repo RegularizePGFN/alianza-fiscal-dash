@@ -189,8 +189,8 @@ export function ChatwootInboxManager() {
                 <div className="flex-1 min-w-[160px] flex items-center gap-2 flex-wrap">
                   <span className="text-sm font-medium">{ib.name}</span>
                   {official ? (
-                    <Badge variant="secondary" className="h-5 gap-1 text-[10px] font-normal">
-                      <BadgeCheck className="h-3 w-3" />
+                    <Badge variant="secondary" className="h-5 gap-1 text-[10px] font-normal text-primary border-primary/30 bg-primary/10">
+                      <BadgeCheck className="h-3 w-3 text-primary" />
                       Oficial
                     </Badge>
                   ) : (
