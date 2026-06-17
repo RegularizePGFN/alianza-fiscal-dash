@@ -125,10 +125,7 @@ Deno.serve(async (req) => {
     const clientName: string | null =
       conversation?.meta?.sender?.name ?? payload?.sender?.name ?? null;
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    const supabase = supabaseFilter;
 
     // Idempotência por conversation_id
     if (conversationId !== null) {
