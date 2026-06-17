@@ -78,3 +78,6 @@ verify_jwt = false
 
 [functions.chatwoot-test-connection]
 verify_jwt = true
+
+[functions.chatwoot-list-inboxes]
+verify_jwt = true
