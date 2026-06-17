@@ -195,7 +195,7 @@ export function ChatwootInboxManager() {
                     </Badge>
                   ) : (
                     <Badge variant="outline" className="h-5 text-[10px] font-normal text-muted-foreground">
-                      {channelShortLabel(ib.channel_type)}
+                      {channelShortLabel(ib)}
                     </Badge>
                   )}
                   {ib.phone_number && (
