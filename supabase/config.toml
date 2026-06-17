@@ -75,3 +75,6 @@ verify_jwt = false
 
 [functions.chatwoot-novo-lead]
 verify_jwt = false
+
+[functions.chatwoot-test-connection]
+verify_jwt = true
