@@ -28,6 +28,7 @@ import {
 import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
 import { AttachmentsField } from "./AttachmentsField";
+import { formatCnpj, formatCpf } from "@/lib/formatters/document";
 import { usePasteImage } from "@/hooks/usePasteImage";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
