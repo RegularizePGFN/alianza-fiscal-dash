@@ -135,6 +135,7 @@ export type Database = {
           client_phone: string | null
           cnpj: string | null
           completed_at: string | null
+          conversation_id: number | null
           cpf: string | null
           created_at: string
           id: string
@@ -142,8 +143,9 @@ export type Database = {
           notes: string | null
           processing_mode: string
           reason: string
-          salesperson_id: string
-          salesperson_name: string
+          salesperson_id: string | null
+          salesperson_name: string | null
+          source: string
           status: string
           updated_at: string
         }
@@ -159,6 +161,7 @@ export type Database = {
           client_phone?: string | null
           cnpj?: string | null
           completed_at?: string | null
+          conversation_id?: number | null
           cpf?: string | null
           created_at?: string
           id?: string
@@ -166,8 +169,9 @@ export type Database = {
           notes?: string | null
           processing_mode?: string
           reason?: string
-          salesperson_id: string
-          salesperson_name: string
+          salesperson_id?: string | null
+          salesperson_name?: string | null
+          source?: string
           status?: string
           updated_at?: string
         }
@@ -183,6 +187,7 @@ export type Database = {
           client_phone?: string | null
           cnpj?: string | null
           completed_at?: string | null
+          conversation_id?: number | null
           cpf?: string | null
           created_at?: string
           id?: string
@@ -190,8 +195,9 @@ export type Database = {
           notes?: string | null
           processing_mode?: string
           reason?: string
-          salesperson_id?: string
-          salesperson_name?: string
+          salesperson_id?: string | null
+          salesperson_name?: string | null
+          source?: string
           status?: string
           updated_at?: string
         }
