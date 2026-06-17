@@ -175,7 +175,7 @@ export function ChatwootInboxManager() {
           {inboxes.map((ib) => {
             const local = localById.get(ib.id);
             const isActive = !!local?.active;
-            const official = isOfficialChannel(ib.channel_type);
+            const official = isOfficialChannel(ib);
             return (
               <div
                 key={ib.id}
