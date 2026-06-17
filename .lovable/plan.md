@@ -1,29 +1,15 @@
-## Problema
+## Rotacionar `CHATWOOT_WEBHOOK_SECRET`
 
-A função `chatwoot-novo-lead` insere em `client_registrations` sem usuário autenticado. O trigger `handle_registration_insert` tenta gravar em `client_registration_events` com `changed_by = auth.uid()` (NULL) — e a coluna tem `NOT NULL`, derrubando o insert.
+### Passos
+1. Disparar `update_secret` para `CHATWOOT_WEBHOOK_SECRET` com o valor fornecido:
+   `bab34cdf62faee175131963ce0a3321886f402b5b64b998a3295d5072a59ca25`
+2. Devolver a URL pronta pra colar no Chatwoot:
+   ```
+   https://sbxltdbnqixucjoognfj.supabase.co/functions/v1/chatwoot-novo-lead?secret=bab34cdf62faee175131963ce0a3321886f402b5b64b998a3295d5072a59ca25
+   ```
+3. Confirmar que esse mesmo valor continua valendo para o header `x-webhook-secret` usado pela `chatwoot-test-connection` — ambas as funções leem o mesmo env var `CHATWOOT_WEBHOOK_SECRET` no runtime, então a rotação atualiza os dois caminhos simultaneamente, sem mudança de código.
 
-## Decisão
-
-Não existe hoje um "usuário sistema" real em `auth.users`, e criar um só para isso adiciona complexidade (linha em `auth.users`, em `profiles`, manutenção). Vou pela **opção 1 com auditoria preservada via texto**:
-
-- Permitir `changed_by` NULL em `client_registration_events`.
-- Quando NULL, preencher `changed_by_name` com um rótulo legível (`'Chatbot'` quando `source = 'chatbot'`, senão `'Sistema'`). Assim a auditoria continua completa visualmente — só não há FK para um usuário real, o que é honesto (não foi um usuário).
-
-## Mudanças
-
-**1. Migration**
-- `ALTER TABLE public.client_registration_events ALTER COLUMN changed_by DROP NOT NULL;`
-- Atualizar `handle_registration_insert()`:
-  - Se `auth.uid()` for NULL, definir `v_user_name` como `'Chatbot'` se `NEW.source = 'chatbot'`, senão `'Sistema'`.
-  - Inserir o evento com `changed_by = auth.uid()` (pode ser NULL) e `changed_by_name = v_user_name`.
-- Mesmo tratamento em `handle_registration_status_change()` para consistência futura (atualizações automáticas também ficam auditadas).
-
-**2. Sem mudanças** em `chatwoot-novo-lead/index.ts` nem na UI — o trigger passa a tolerar inserts sem autor.
-
-## Validação
-
-Após a migration ser aprovada e aplicada, rodar "Testar conexão" no card de Cadastros e confirmar as 3 camadas verdes (Auth ✓ / Extração ✓ / Gravação ✓).
-
-## Fora de escopo
-
-Criar usuário sistema real em `auth.users`, mudar o fluxo do `automation-result`, ou alterar a UI do card.
+### Observações
+- Nenhum arquivo de código será alterado.
+- O Edge Runtime recarrega o secret em segundos após o `update_secret`.
+- Recomendo apagar o valor do secret desta conversa depois que ele estiver registrado no Chatwoot.
