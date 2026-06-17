@@ -57,9 +57,12 @@ Deno.serve(async (req) => {
     return json(405, { error: "Method not allowed" });
   }
 
-  // Auth via segredo no header
+  // Auth via segredo no header OU query string (?secret=...)
   const expected = Deno.env.get("CHATWOOT_WEBHOOK_SECRET");
-  const provided = req.headers.get("x-webhook-secret");
+  const headerSecret = req.headers.get("x-webhook-secret");
+  const url = new URL(req.url);
+  const querySecret = url.searchParams.get("secret");
+  const provided = headerSecret ?? querySecret;
   if (!expected || provided !== expected) {
     console.warn("[chatwoot-novo-lead] unauthorized request");
     return json(401, { error: "unauthorized" });
