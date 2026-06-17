@@ -12,6 +12,7 @@ import {
   statusLabel,
   statusClasses,
 } from "@/hooks/useRegistrations";
+import { formatDocument } from "@/lib/formatters/document";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -128,7 +129,7 @@ export function RegistrationsTable({
                   <TableCell className="font-medium">{r.salesperson_name}</TableCell>
                   <TableCell>{r.client_name || "—"}</TableCell>
                   <TableCell className="font-mono text-xs">
-                    {r.cnpj || r.cpf || "—"}
+                    {formatDocument(r.cnpj || r.cpf || "") || "—"}
                   </TableCell>
                   <TableCell className="font-mono text-xs">{r.client_phone || "—"}</TableCell>
                   <TableCell>{reasonLabel(r.reason)}</TableCell>

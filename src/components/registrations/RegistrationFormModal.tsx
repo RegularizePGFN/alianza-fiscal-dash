@@ -28,6 +28,7 @@ import {
 import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
 import { AttachmentsField } from "./AttachmentsField";
+import { formatCnpj, formatCpf } from "@/lib/formatters/document";
 import { usePasteImage } from "@/hooks/usePasteImage";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -224,16 +225,18 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
             <Label>CNPJ *</Label>
             <Input
               value={form.cnpj || ""}
-              onChange={(e) => set("cnpj", e.target.value)}
+              onChange={(e) => set("cnpj", formatCnpj(e.target.value))}
               placeholder="00.000.000/0000-00"
+              inputMode="numeric"
             />
           </div>
           <div>
             <Label>CPF</Label>
             <Input
               value={form.cpf || ""}
-              onChange={(e) => set("cpf", e.target.value)}
+              onChange={(e) => set("cpf", formatCpf(e.target.value))}
               placeholder="000.000.000-00"
+              inputMode="numeric"
             />
           </div>
           <div>

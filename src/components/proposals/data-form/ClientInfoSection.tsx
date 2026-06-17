@@ -8,6 +8,7 @@ import { Search, Loader2 } from "lucide-react";
 import { CompanyData } from "@/lib/types/proposals";
 import CompanyDetailsPanel from "./CompanyDetailsPanel";
 import { cn } from "@/lib/utils";
+import { formatCnpj } from "@/lib/formatters/document";
 
 interface ClientInfoSectionProps {
   formData: {
@@ -64,11 +65,15 @@ const ClientInfoSection = ({
               id="cnpj"
               name="cnpj"
               value={formData.cnpj || ''}
-              onChange={onInputChange}
+              onChange={(e) => {
+                e.target.value = formatCnpj(e.target.value);
+                onInputChange(e);
+              }}
               onBlur={() => markTouched('cnpj')}
               placeholder="00.000.000/0000-00"
               className={cn('flex-1', errorClass(!!cnpjError))}
               maxLength={18}
+              inputMode="numeric"
               required
               aria-invalid={!!cnpjError}
             />
