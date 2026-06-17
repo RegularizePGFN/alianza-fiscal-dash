@@ -12,6 +12,7 @@ import {
   statusLabel,
   statusClasses,
 } from "@/hooks/useRegistrations";
+import { formatDocument } from "@/lib/formatters/document";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
