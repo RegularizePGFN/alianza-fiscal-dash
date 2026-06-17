@@ -94,8 +94,12 @@ export function ChatwootInboxManager() {
     onError: (e: any) => toast.error(e?.message ?? "Erro ao atualizar"),
   });
 
-  const inboxes = remoteQuery.data ?? [];
-  const activeCount = inboxes.filter((ib) => localById.get(ib.id)?.active).length;
+  const allInboxes = remoteQuery.data ?? [];
+  const activeCount = allInboxes.filter((ib) => localById.get(ib.id)?.active).length;
+  const [onlyActive, setOnlyActive] = useState(false);
+  const inboxes = onlyActive
+    ? allInboxes.filter((ib) => localById.get(ib.id)?.active)
+    : allInboxes;
 
   const handleRefresh = async () => {
     await Promise.all([remoteQuery.refetch(), localQuery.refetch()]);
@@ -115,20 +119,32 @@ export function ChatwootInboxManager() {
           </p>
           {!remoteQuery.isLoading && !remoteQuery.isError && (
             <p className="text-xs text-muted-foreground">
-              {activeCount} de {inboxes.length} caixas ativas
+              {activeCount} de {allInboxes.length} caixas ativas
             </p>
           )}
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 gap-1.5 text-xs text-muted-foreground"
-          onClick={handleRefresh}
-          disabled={remoteQuery.isFetching}
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${remoteQuery.isFetching ? "animate-spin" : ""}`} />
-          Atualizar caixas
-        </Button>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <Switch
+              id="only-active-filter"
+              checked={onlyActive}
+              onCheckedChange={setOnlyActive}
+            />
+            <Label htmlFor="only-active-filter" className="text-xs text-muted-foreground cursor-pointer">
+              Só ativas
+            </Label>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1.5 text-xs text-muted-foreground"
+            onClick={handleRefresh}
+            disabled={remoteQuery.isFetching}
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${remoteQuery.isFetching ? "animate-spin" : ""}`} />
+            Atualizar
+          </Button>
+        </div>
       </div>
 
       {remoteQuery.isLoading || localQuery.isLoading ? (
