@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
     .eq("id", userData.user.id)
     .maybeSingle();
 
-  if (!profile || !["admin", "backoffice"].includes(profile.role)) {
+  if (!profile || profile.role !== "admin") {
     return json(403, { error: "forbidden" });
   }
 
