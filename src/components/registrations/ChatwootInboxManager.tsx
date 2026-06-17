@@ -1,17 +1,19 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Loader2, Inbox, RefreshCw, BadgeCheck, AlertCircle } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Inbox, RefreshCw, BadgeCheck, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 interface ChatwootInbox {
   id: number;
   name: string;
   channel_type: string;
+  provider: string | null;
   phone_number: string | null;
 }
 
@@ -21,12 +23,17 @@ interface LocalInbox {
   active: boolean;
 }
 
-function isOfficialChannel(channelType: string) {
-  return channelType === "Channel::WhatsappCloud" || channelType === "Channel::Whatsapp";
+function isOfficialChannel(inbox: ChatwootInbox) {
+  return inbox.provider === "whatsapp_cloud";
 }
 
-function channelShortLabel(channelType: string) {
-  return channelType?.replace(/^Channel::/, "") ?? "—";
+function channelShortLabel(inbox: ChatwootInbox) {
+  if (inbox.provider) {
+    if (inbox.provider === "whatsapp_cloud") return "WhatsApp Cloud";
+    if (inbox.provider === "waha") return "WAHA";
+    return inbox.provider;
+  }
+  return inbox.channel_type?.replace(/^Channel::/, "") ?? "—";
 }
 
 export function ChatwootInboxManager() {
@@ -87,8 +94,12 @@ export function ChatwootInboxManager() {
     onError: (e: any) => toast.error(e?.message ?? "Erro ao atualizar"),
   });
 
-  const inboxes = remoteQuery.data ?? [];
-  const activeCount = inboxes.filter((ib) => localById.get(ib.id)?.active).length;
+  const allInboxes = remoteQuery.data ?? [];
+  const activeCount = allInboxes.filter((ib) => localById.get(ib.id)?.active).length;
+  const [onlyActive, setOnlyActive] = useState(false);
+  const inboxes = onlyActive
+    ? allInboxes.filter((ib) => localById.get(ib.id)?.active)
+    : allInboxes;
 
   const handleRefresh = async () => {
     await Promise.all([remoteQuery.refetch(), localQuery.refetch()]);
@@ -108,20 +119,32 @@ export function ChatwootInboxManager() {
           </p>
           {!remoteQuery.isLoading && !remoteQuery.isError && (
             <p className="text-xs text-muted-foreground">
-              {activeCount} de {inboxes.length} caixas ativas
+              {activeCount} de {allInboxes.length} caixas ativas
             </p>
           )}
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 gap-1.5 text-xs text-muted-foreground"
-          onClick={handleRefresh}
-          disabled={remoteQuery.isFetching}
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${remoteQuery.isFetching ? "animate-spin" : ""}`} />
-          Atualizar caixas
-        </Button>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <Switch
+              id="only-active-filter"
+              checked={onlyActive}
+              onCheckedChange={setOnlyActive}
+            />
+            <Label htmlFor="only-active-filter" className="text-xs text-muted-foreground cursor-pointer">
+              Só ativas
+            </Label>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1.5 text-xs text-muted-foreground"
+            onClick={handleRefresh}
+            disabled={remoteQuery.isFetching}
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${remoteQuery.isFetching ? "animate-spin" : ""}`} />
+            Atualizar
+          </Button>
+        </div>
       </div>
 
       {remoteQuery.isLoading || localQuery.isLoading ? (
@@ -152,13 +175,13 @@ export function ChatwootInboxManager() {
           {inboxes.map((ib) => {
             const local = localById.get(ib.id);
             const isActive = !!local?.active;
-            const official = isOfficialChannel(ib.channel_type);
+            const official = isOfficialChannel(ib);
             return (
               <div
                 key={ib.id}
                 className={`flex flex-wrap items-center gap-3 rounded-md border p-2.5 transition-colors ${
                   isActive ? "border-primary/40 bg-primary/5" : "border-border bg-card/40"
-                }`}
+                } ${official ? "ring-1 ring-primary/20" : ""}`}
               >
                 <span className="inline-flex items-center justify-center min-w-[2.5rem] h-6 px-1.5 rounded bg-muted text-xs font-mono text-muted-foreground">
                   {ib.id}
@@ -172,7 +195,7 @@ export function ChatwootInboxManager() {
                     </Badge>
                   ) : (
                     <Badge variant="outline" className="h-5 text-[10px] font-normal text-muted-foreground">
-                      {channelShortLabel(ib.channel_type)}
+                      {channelShortLabel(ib)}
                     </Badge>
                   )}
                   {ib.phone_number && (
