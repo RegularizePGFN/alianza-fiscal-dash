@@ -64,7 +64,15 @@ Deno.serve(async (req) => {
   const querySecret = url.searchParams.get("secret");
   const provided = headerSecret ?? querySecret;
   if (!expected || provided !== expected) {
-    console.warn("[chatwoot-novo-lead] unauthorized request");
+    const providedVal = provided ?? "";
+    console.warn("[chatwoot-novo-lead] unauthorized request", {
+      has_header: !!headerSecret,
+      has_query: !!querySecret,
+      provided_len: providedVal.length,
+      provided_prefix: providedVal.slice(0, 4),
+      expected_len: expected?.length ?? 0,
+      expected_prefix: expected?.slice(0, 4) ?? "",
+    });
     return json(401, { error: "unauthorized" });
   }
 
@@ -78,10 +86,12 @@ Deno.serve(async (req) => {
   try {
     const event = payload?.event;
     const messageType = payload?.message_type;
+    const isIncoming = messageType === "incoming" || messageType === 0;
 
-    if (event !== "message_created" || messageType !== "incoming") {
+    if (event !== "message_created" || !isIncoming) {
       return json(200, { ok: true, ignorado: true, reason: "event_filtered" });
     }
+
 
     const content: string = payload?.content ?? "";
     const cnpj = extractCnpj(content);
