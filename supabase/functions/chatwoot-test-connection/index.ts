@@ -58,12 +58,33 @@ Deno.serve(async (req) => {
     .delete()
     .eq("conversation_id", TEST_CONVERSATION_ID);
 
+  // Usa a primeira caixa ativa configurada, para que o filtro de inbox não rejeite o teste
+  const { data: activeInbox } = await admin
+    .from("chatbot_inboxes")
+    .select("inbox_id")
+    .eq("active", true)
+    .order("inbox_id", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (!activeInbox) {
+    return json(200, {
+      tested_at,
+      auth: { ok: false, status: 0, message: "Nenhuma caixa ativa configurada" },
+      extraction: { ok: false, cnpj_detected: null, message: "Configure ao menos uma caixa ativa" },
+      persistence: { ok: false, cadastro_id: null, message: "—" },
+      overall: "fail",
+      raw_response: null,
+    });
+  }
+
   const testPayload = {
     event: "message_created",
     message_type: "incoming",
     content: `Olá, este é um teste de conexão. CNPJ: ${TEST_CNPJ}`,
     conversation: {
       id: TEST_CONVERSATION_ID,
+      inbox_id: activeInbox.inbox_id,
       meta: {
         sender: { name: "Teste Conexão", phone_number: "+5500000000000" },
         assignee: { name: "Teste" },
