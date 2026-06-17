@@ -9,6 +9,7 @@ import { RegistrationDetailDrawer } from "./RegistrationDetailDrawer";
 import { RegistrationsCharts } from "./RegistrationsCharts";
 import { DataPagination } from "@/components/ui/data-pagination";
 import { exportRegistrationsToExcel } from "./exportRegistrations";
+import { ChatwootConnectionCard } from "./ChatwootConnectionCard";
 import {
   ClientRegistration,
   useDeleteRegistration,
@@ -138,7 +139,10 @@ export function RegistrationsContainer() {
         </p>
       </div>
 
+      {(isAdmin || user?.role === UserRole.BACKOFFICE) && <ChatwootConnectionCard />}
+
       <RegistrationsKpiCards items={filtered} />
+
 
       <RegistrationsFilters
         search={search}
