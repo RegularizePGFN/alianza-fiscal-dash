@@ -139,7 +139,7 @@ export function RegistrationsContainer() {
         </p>
       </div>
 
-      {(isAdmin || user?.role === UserRole.BACKOFFICE) && <ChatwootConnectionCard />}
+      {isAdmin && <ChatwootConnectionCard />}
 
       <RegistrationsKpiCards items={filtered} />
 
