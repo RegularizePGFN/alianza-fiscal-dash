@@ -60,8 +60,8 @@ export function RegistrationDetailDrawer({
           <div className="grid grid-cols-2 gap-3 text-sm">
             <Info label="Vendedor" value={item.salesperson_name} />
             <Info label="Telefone" value={item.client_phone || "—"} mono />
-            <Info label="CNPJ" value={item.cnpj || "—"} mono />
-            <Info label="CPF" value={item.cpf || "—"} mono />
+            <Info label="CNPJ" value={item.cnpj ? formatCnpj(item.cnpj) : "—"} mono />
+            <Info label="CPF" value={item.cpf ? formatCpf(item.cpf) : "—"} mono />
             <Info label="Motivo" value={reasonLabel(item.reason)} />
             <div>
               <div className="text-xs text-muted-foreground">Situação</div>
