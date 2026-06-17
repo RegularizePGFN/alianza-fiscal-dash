@@ -1,51 +1,47 @@
 ## Objetivo
-Destravar a integração Chatwoot → `chatwoot-novo-lead` que hoje está 100% em 401, e blindar o filtro de `message_type`.
+Substituir o cadastro manual de caixas Chatwoot por uma lista carregada direto da API do Chatwoot, com toggles "Ativa" que gravam em `chatbot_inboxes`. A função `chatwoot-novo-lead` não é alterada.
 
-## Diagnóstico atual (já confirmado nos logs)
-- Todas as chamadas recentes do Chatwoot (20:09–20:12 UTC) caíram em **401 unauthorized**. Nenhuma chegou a logar payload, então não dá pra confirmar pelos logs qual seria a branch (`inbox_not_allowed`, `no_cnpj`, etc.) — o request morre antes.
-- Sobre `inbox_id`: a função **já aceita** `conversation?.inbox_id ?? payload?.inbox?.id` (linha 94 do `index.ts` atual). Nenhuma mudança necessária aqui.
-- Sobre `message_type`: hoje só aceita a string `"incoming"`. Vamos blindar para aceitar também o número `0` (alguns payloads internos do Chatwoot usam enum numérico).
+## Backend
 
-## Passos
+### Secret novo
+- `CHATWOOT_API_TOKEN` — adicionado via prompt seguro (você fornece o valor).
 
-### 1. Re-aplicar o secret com o valor exato da URL
-Disparar `update_secret` para `CHATWOOT_WEBHOOK_SECRET` com o valor:
-```
-bab34cdf62faee175131963ce0a3321886f402b5b64b998a3295d5072a59ca25
-```
-Isso garante que o que está no env bate exatamente com o `?secret=` da URL registrada no Chatwoot. Esse valor vale automaticamente também para o header `x-webhook-secret`, então a `chatwoot-test-connection` continua funcionando.
+### Nova edge function `chatwoot-list-inboxes`
+- `verify_jwt = true` em `supabase/config.toml` (mesmo padrão de `chatwoot-test-connection`: valida sessão via `auth.getUser()` + checa `role IN ('admin','backoffice')` em `profiles`).
+- Chama `GET https://chatwoot.neumocrm.com.br/api/v1/accounts/1/inboxes` com header `api_access_token: <CHATWOOT_API_TOKEN>` (token nunca trafega para o frontend).
+- Retorna `{ inboxes: [{ id, name, channel_type, phone_number }] }`.
+- Em erro de upstream, devolve `{ error, status }` com o status do Chatwoot para a UI mostrar mensagem clara (ex: 401 do Chatwoot → "Token do Chatwoot inválido").
 
-URL final do webhook (a mesma de antes, só re-confirmada):
-```
-https://sbxltdbnqixucjoognfj.supabase.co/functions/v1/chatwoot-novo-lead?secret=bab34cdf62faee175131963ce0a3321886f402b5b64b998a3295d5072a59ca25
-```
+### `chatwoot-novo-lead`
+- Sem mudanças. Continua lendo `chatbot_inboxes` com falha fechada.
 
-### 2. Blindar `message_type` em `supabase/functions/chatwoot-novo-lead/index.ts`
-Trocar:
-```ts
-if (event !== "message_created" || messageType !== "incoming") {
-```
-por:
-```ts
-const isIncoming = messageType === "incoming" || messageType === 0;
-if (event !== "message_created" || !isIncoming) {
-```
+## Frontend — `ChatwootInboxManager.tsx` (refatorado)
 
-### 3. Adicionar log de diagnóstico no 401 (sem expor o secret)
-Antes do `return json(401, ...)`, logar:
-- se veio header (`x-webhook-secret` presente sim/não)
-- se veio query param (`?secret=` presente sim/não)
-- comprimento do valor recebido e os 4 primeiros caracteres (para comparar com `bab3...` sem expor o resto)
+Comportamento:
+- Ao montar, dispara duas queries em paralelo:
+  1. `chatbot_inboxes` (estado atual: id + active) — fonte da verdade local.
+  2. `chatwoot-list-inboxes` via `supabase.functions.invoke` — lista oficial.
+- Renderiza uma linha por inbox vinda do Chatwoot, com o toggle marcado se existir em `chatbot_inboxes` com `active = true`.
+- Toggle ON → `upsert` em `chatbot_inboxes` `{ inbox_id, name, active: true }` (onConflict `inbox_id`).
+- Toggle OFF → `update active = false` (não deleta, preserva histórico).
+- Botão discreto "Atualizar caixas" (ícone `RefreshCw` + label pequeno) no canto direito do header da seção → refetch da função. O estado ativo é preservado porque a fonte é a tabela.
+- Remove inteiramente os campos manuais (ID, Nome, botão Adicionar) e o botão de remover por linha.
+- Contador no topo: `X de Y caixas ativas` em `text-xs text-muted-foreground`.
 
-Isso permite, na próxima tentativa do Chatwoot, confirmar em segundos se o problema é "nada chegou", "header errado" ou "secret diferente".
+Visual (tokens semânticos, sem cor hardcoded):
+- Linha ativa: `border-primary/40 bg-primary/5`; inativa: `border-border bg-card/40`.
+- Selo "Oficial" nas caixas com `channel_type === 'Channel::WhatsappCloud'` ou `'Channel::Whatsapp'`: `Badge variant="secondary"` pequeno com ícone `BadgeCheck`. Demais canais (ex.: WAHA / API) recebem badge `outline` discreto com o `channel_type` resumido (ex.: "API").
+- Mantém título "Caixas de entrada ativas" e subtítulo "apenas caixas marcadas processam o cadastro automático".
+- Skeleton enquanto carrega; estado de erro com mensagem do upstream e botão "Tentar novamente".
 
-### 4. Validar
-- Pedir pro usuário disparar uma mensagem de teste no Chatwoot (inbox 99) com um CNPJ válido no corpo.
-- Ler os logs de `chatwoot-novo-lead`:
-  - Se ainda for 401 → o novo log dirá exatamente o que o Chatwoot está enviando, e ajustamos a URL no Chatwoot.
-  - Se passar → veremos a branch real (`inbox_not_allowed`, `no_cnpj`, `created`, etc.) e seguimos a partir dali.
+## Detalhes técnicos
+- `supabase/config.toml`: adicionar bloco `[functions.chatwoot-list-inboxes] verify_jwt = true`.
+- Frontend chama com `supabase.functions.invoke("chatwoot-list-inboxes")` — token de sessão vai automático.
+- `upsert` em `chatbot_inboxes` usa `onConflict: 'inbox_id'` para suportar caixas que nunca existiram localmente.
+- `channel_type` e `phone_number` são apenas para exibição; não persistimos (mantém schema atual).
 
-## Fora de escopo
-- Mudar a leitura de `inbox_id` (já está correta).
-- Mexer em `chatwoot-test-connection`.
-- Qualquer alteração de schema ou UI.
+## Validação
+1. Abrir o card → ver lista completa (2 META + WAHAs).
+2. Toggle ON na 99 → confirmar linha em `chatbot_inboxes` com `active=true`.
+3. "Atualizar caixas" → lista refresca; toggles preservados.
+4. Disparar lead real na 99 → `chatwoot-novo-lead` continua processando normal.
