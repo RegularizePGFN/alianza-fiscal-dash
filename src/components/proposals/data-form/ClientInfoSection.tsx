@@ -8,6 +8,7 @@ import { Search, Loader2 } from "lucide-react";
 import { CompanyData } from "@/lib/types/proposals";
 import CompanyDetailsPanel from "./CompanyDetailsPanel";
 import { cn } from "@/lib/utils";
+import { formatCnpj } from "@/lib/formatters/document";
 
 interface ClientInfoSectionProps {
   formData: {
