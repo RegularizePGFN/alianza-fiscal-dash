@@ -96,7 +96,7 @@ export function ChatwootInboxManager() {
 
   const allInboxes = remoteQuery.data ?? [];
   const activeCount = allInboxes.filter((ib) => localById.get(ib.id)?.active).length;
-  const [onlyActive, setOnlyActive] = useState(false);
+  const [onlyActive, setOnlyActive] = useState(true);
   const inboxes = onlyActive
     ? allInboxes.filter((ib) => localById.get(ib.id)?.active)
     : allInboxes;
