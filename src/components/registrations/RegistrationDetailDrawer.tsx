@@ -156,6 +156,8 @@ export function RegistrationDetailDrawer({
             canManage={canManage || item.status === "aguardando"}
           />
 
+          <AutomationFilesField registrationId={item.id} />
+
           <Button
             variant="outline"
             className="w-full"
