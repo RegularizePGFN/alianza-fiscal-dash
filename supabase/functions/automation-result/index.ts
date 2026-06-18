@@ -131,9 +131,31 @@ async function handle(req: Request): Promise<Response> {
   }
 
   // success — salvar arquivos
+  // Dedupe por nome dentro do mesmo request (a automação às vezes envia o mesmo arquivo 2x)
+  const seenNames = new Set<string>();
+  const uniqueFiles = body.files.filter((f) => {
+    if (seenNames.has(f.name)) {
+      console.warn("[automation-result] duplicate file in request ignored", f.name);
+      return false;
+    }
+    seenNames.add(f.name);
+    return true;
+  });
+
+  // Também ignora arquivos já salvos anteriormente para esta registration (idempotência)
+  const { data: existingFiles } = await supabase
+    .from("client_registration_automation_files")
+    .select("file_name")
+    .eq("registration_id", body.registration_id);
+  const existingNames = new Set((existingFiles ?? []).map((r: any) => r.file_name));
+
   const filesSaved: string[] = [];
   const decodedFiles: { name: string; bytes: Uint8Array }[] = [];
-  for (const f of body.files) {
+  for (const f of uniqueFiles) {
+    if (existingNames.has(f.name)) {
+      console.warn("[automation-result] file already saved previously, skipping", f.name);
+      continue;
+    }
     let bytes: Uint8Array;
     try { bytes = decodeBase64(f.content_base64); } catch {
       return new Response(JSON.stringify({ error: `invalid base64 for ${f.name}` }), {
