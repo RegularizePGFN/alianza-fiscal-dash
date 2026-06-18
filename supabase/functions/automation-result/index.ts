@@ -119,7 +119,8 @@ async function handle(req: Request): Promise<Response> {
         automation_finished_at: new Date().toISOString(),
         automation_error: body.error_message,
       })
-      .eq("id", body.registration_id);
+      .eq("id", body.registration_id)
+      .in("automation_status", ["pending", "processing"]);
     if (uErr) {
       console.error("[automation-result] update err", uErr); return new Response(JSON.stringify({ error: uErr.message }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -130,122 +131,126 @@ async function handle(req: Request): Promise<Response> {
     });
   }
 
-  // success — salvar arquivos
-  // Dedupe por nome dentro do mesmo request (a automação às vezes envia o mesmo arquivo 2x)
+  // LOCK ATÔMICO: só uma chamada concorrente consegue marcar como success.
+  // As outras recebem 0 linhas afetadas e saem sem fazer upload nem enviar ao Chatwoot.
+  const nowIso = new Date().toISOString();
+  const { data: lockRows, error: lockErr } = await supabase
+    .from("client_registrations")
+    .update({
+      automation_status: "success",
+      automation_finished_at: nowIso,
+      automation_error: null,
+      status: "realizado",
+      completed_at: nowIso,
+    })
+    .eq("id", body.registration_id)
+    .in("automation_status", ["pending", "processing"])
+    .select("id");
+  if (lockErr) {
+    console.error("[automation-result] lock err", lockErr);
+    return new Response(JSON.stringify({ error: lockErr.message }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  if (!lockRows || lockRows.length === 0) {
+    console.warn("[automation-result] concurrent call ignored", body.registration_id);
+    return new Response(JSON.stringify({ ok: true, ignored: true, reason: "already_finalized_concurrent" }), {
+      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // Dedupe por nome dentro do mesmo request
   const seenNames = new Set<string>();
   const uniqueFiles = body.files.filter((f) => {
-    if (seenNames.has(f.name)) {
-      console.warn("[automation-result] duplicate file in request ignored", f.name);
-      return false;
-    }
+    if (seenNames.has(f.name)) return false;
     seenNames.add(f.name);
     return true;
   });
 
-  // Também ignora arquivos já salvos anteriormente para esta registration (idempotência)
-  const { data: existingFiles } = await supabase
-    .from("client_registration_automation_files")
-    .select("file_name")
-    .eq("registration_id", body.registration_id);
-  const existingNames = new Set((existingFiles ?? []).map((r: any) => r.file_name));
-
-  const filesSaved: string[] = [];
-  const decodedFiles: { name: string; bytes: Uint8Array }[] = [];
+  const insertedFiles: { name: string; bytes: Uint8Array }[] = [];
   for (const f of uniqueFiles) {
-    if (existingNames.has(f.name)) {
-      console.warn("[automation-result] file already saved previously, skipping", f.name);
-      continue;
-    }
     let bytes: Uint8Array;
     try { bytes = decodeBase64(f.content_base64); } catch {
-      return new Response(JSON.stringify({ error: `invalid base64 for ${f.name}` }), {
-        status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      console.error("[automation-result] invalid base64", f.name);
+      continue;
     }
     if (bytes.byteLength > MAX_FILE_BYTES) {
-      return new Response(JSON.stringify({ error: `file ${f.name} exceeds 10MB` }), {
-        status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      console.error("[automation-result] file exceeds 10MB", f.name);
+      continue;
     }
     const safeName = f.name.replace(/[^a-zA-Z0-9._-]/g, "_");
     const path = `${body.registration_id}/${crypto.randomUUID()}-${safeName}`;
-    const { error: upErr } = await supabase.storage
-      .from("cadastro-automatico-pdfs")
-      .upload(path, bytes, { contentType: "application/pdf", upsert: false });
-    if (upErr) {
-      console.error("[automation-result] upload err", upErr); return new Response(JSON.stringify({ error: `upload failed: ${upErr.message}` }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+
+    // Insere o registro primeiro — o índice único (registration_id, file_name)
+    // bloqueia duplicidade mesmo em chamadas concorrentes.
     const { error: insErr } = await supabase
       .from("client_registration_automation_files")
       .insert({ registration_id: body.registration_id, file_path: path, file_name: f.name });
     if (insErr) {
-      console.error("[automation-result] insert file err", insErr); return new Response(JSON.stringify({ error: insErr.message }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      if ((insErr as any).code === "23505") {
+        console.warn("[automation-result] file already exists, skipping", f.name);
+        continue;
+      }
+      console.error("[automation-result] insert file err", insErr);
+      continue;
     }
-    filesSaved.push(path);
-    decodedFiles.push({ name: f.name, bytes });
+
+    const { error: upErr } = await supabase.storage
+      .from("cadastro-automatico-pdfs")
+      .upload(path, bytes, { contentType: "application/pdf", upsert: false });
+    if (upErr) {
+      console.error("[automation-result] upload err", upErr);
+      await supabase
+        .from("client_registration_automation_files")
+        .delete()
+        .eq("registration_id", body.registration_id)
+        .eq("file_path", path);
+      continue;
+    }
+
+    insertedFiles.push({ name: f.name, bytes });
   }
 
-  const { error: uErr } = await supabase
-    .from("client_registrations")
-    .update({
-      automation_status: "success",
-      automation_finished_at: new Date().toISOString(),
-      automation_error: null,
-      status: "realizado",
-      completed_at: new Date().toISOString(),
-    })
-    .eq("id", body.registration_id);
-  if (uErr) {
-    console.error("[automation-result] update err", uErr); return new Response(JSON.stringify({ error: uErr.message }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
-  // Enviar PDFs como nota privada no Chatwoot (best effort — não falha a automação)
+  // UMA ÚNICA nota privada no Chatwoot com todos os PDFs novos anexados
   let chatwootNotesSent = 0;
   const chatwootToken = Deno.env.get("CHATWOOT_API_TOKEN");
   const conversationId = reg.conversation_id;
-  if (conversationId && decodedFiles.length > 0 && chatwootToken) {
+  if (conversationId && insertedFiles.length > 0 && chatwootToken) {
     const CHATWOOT_BASE_URL = "https://chatwoot.neumocrm.com.br";
     const CHATWOOT_ACCOUNT_ID = 1;
     const url = `${CHATWOOT_BASE_URL}/api/v1/accounts/${CHATWOOT_ACCOUNT_ID}/conversations/${conversationId}/messages`;
-    for (let i = 0; i < decodedFiles.length; i++) {
-      const df = decodedFiles[i];
-      try {
-        const form = new FormData();
-        form.append("content", i === 0 ? "Relatório de dívidas gerado com sucesso. Segue em anexo." : "");
-        form.append("private", "true");
+    try {
+      const form = new FormData();
+      form.append("content", "Relatório de dívidas gerado com sucesso. Segue em anexo.");
+      form.append("private", "true");
+      for (const df of insertedFiles) {
         form.append(
           "attachments[]",
           new File([df.bytes], df.name, { type: "application/pdf" }),
         );
-        const resp = await fetch(url, {
-          method: "POST",
-          headers: { api_access_token: chatwootToken },
-          body: form,
-        });
-        if (!resp.ok) {
-          const text = await resp.text().catch(() => "");
-          console.error("[automation-result] chatwoot send failed", resp.status, text);
-        } else {
-          chatwootNotesSent++;
-        }
-      } catch (e) {
-        console.error("[automation-result] chatwoot send error", e);
       }
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: { api_access_token: chatwootToken },
+        body: form,
+      });
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => "");
+        console.error("[automation-result] chatwoot send failed", resp.status, text);
+      } else {
+        chatwootNotesSent = 1;
+      }
+    } catch (e) {
+      console.error("[automation-result] chatwoot send error", e);
     }
-  } else if (decodedFiles.length > 0) {
+  } else if (insertedFiles.length > 0) {
     console.warn("[automation-result] skipped chatwoot send", {
       has_conversation_id: !!conversationId,
       has_token: !!chatwootToken,
     });
   }
 
-  return new Response(JSON.stringify({ ok: true, files_saved: filesSaved.length, chatwoot_notes_sent: chatwootNotesSent }), {
+  return new Response(JSON.stringify({ ok: true, files_saved: insertedFiles.length, chatwoot_notes_sent: chatwootNotesSent }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
