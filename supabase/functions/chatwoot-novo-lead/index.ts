@@ -157,12 +157,44 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Resolve salesperson_id pelo nome do assignee do Chatwoot
+    let salespersonId: string | null = null;
+    if (assigneeName && assigneeName.trim()) {
+      const trimmed = assigneeName.trim();
+      const firstName = trimmed.split(/\s+/)[0];
+      // 1) tenta match exato (case-insensitive)
+      const { data: exact } = await supabase
+        .from("profiles")
+        .select("id,name")
+        .ilike("name", trimmed)
+        .limit(2);
+      if (exact && exact.length === 1) {
+        salespersonId = exact[0].id;
+      } else {
+        // 2) tenta match por primeiro nome (ex.: "Leonardo" -> "Leonardo Machado")
+        const { data: byFirst } = await supabase
+          .from("profiles")
+          .select("id,name")
+          .ilike("name", `${firstName} %`)
+          .limit(2);
+        if (byFirst && byFirst.length === 1) {
+          salespersonId = byFirst[0].id;
+        } else {
+          console.warn("[chatwoot-novo-lead] salesperson não resolvido", {
+            assigneeName,
+            exactMatches: exact?.length ?? 0,
+            firstNameMatches: byFirst?.length ?? 0,
+          });
+        }
+      }
+    }
+
     const insertRow = {
       cnpj,
       cpf: null,
       client_name: clientName,
       client_phone: phone,
-      salesperson_id: null,
+      salesperson_id: salespersonId,
       salesperson_name: assigneeName,
       reason: "fazer_cadastro",
       status: "aguardando",
