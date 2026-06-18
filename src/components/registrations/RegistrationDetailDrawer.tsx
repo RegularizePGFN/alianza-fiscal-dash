@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { AttachmentsField } from "./AttachmentsField";
+import { AutomationFilesField } from "./AutomationFilesField";
 import { Wand2 } from "lucide-react";
 import { formatCnpj, formatCpf } from "@/lib/formatters/document";
 
