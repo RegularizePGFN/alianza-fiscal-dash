@@ -47,7 +47,11 @@ const ClientInfoSection = ({
   const cnpjError = touched.cnpj && !cnpjValid;
   const nameError = touched.clientName && !formData.clientName?.trim();
   const phoneError = touched.clientPhone && !formData.clientPhone?.trim();
-  const emailError = touched.clientEmail && !formData.clientEmail?.trim();
+  // Email é opcional — só valida formato se algo foi preenchido
+  const emailError =
+    touched.clientEmail &&
+    !!formData.clientEmail?.trim() &&
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.clientEmail.trim());
   const activityError = touched.businessActivity && !formData.businessActivity?.trim();
 
   return (
