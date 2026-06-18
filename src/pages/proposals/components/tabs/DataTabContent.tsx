@@ -56,7 +56,7 @@ const DataTabContent = ({
   if (cnpjDigits.length !== 14) missing.push('CNPJ');
   if (!formData.clientName?.trim()) missing.push('Nome/Razão Social');
   if (!formData.clientPhone?.trim()) missing.push('Telefone');
-  if (!formData.clientEmail?.trim()) missing.push('Email');
+  
   if (!formData.businessActivity?.trim()) missing.push('Atividade Principal');
   const isClientDataValid = missing.length === 0;
 
