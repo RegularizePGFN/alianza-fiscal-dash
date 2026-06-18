@@ -158,34 +158,36 @@ Deno.serve(async (req) => {
     }
 
     // Resolve salesperson_id pelo nome do assignee do Chatwoot
+    // Normaliza removendo acentos e caixa para tolerar "Livia" vs "Lívia"
+    const norm = (s: string) =>
+      s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
     let salespersonId: string | null = null;
     if (assigneeName && assigneeName.trim()) {
-      const trimmed = assigneeName.trim();
-      const firstName = trimmed.split(/\s+/)[0];
-      // 1) tenta match exato (case-insensitive)
-      const { data: exact } = await supabase
+      const target = norm(assigneeName);
+      const targetFirst = target.split(/\s+/)[0];
+      const { data: allProfiles } = await supabase
         .from("profiles")
-        .select("id,name")
-        .ilike("name", trimmed)
-        .limit(2);
-      if (exact && exact.length === 1) {
-        salespersonId = exact[0].id;
+        .select("id,name");
+      const profiles = (allProfiles ?? []).filter((p: any) => p?.name);
+      // 1) match exato normalizado
+      let candidates = profiles.filter((p: any) => norm(p.name) === target);
+      // 2) primeiro nome
+      if (candidates.length !== 1) {
+        candidates = profiles.filter(
+          (p: any) => norm(p.name).split(/\s+/)[0] === targetFirst,
+        );
+      }
+      // 3) contém
+      if (candidates.length !== 1) {
+        candidates = profiles.filter((p: any) => norm(p.name).includes(target));
+      }
+      if (candidates.length === 1) {
+        salespersonId = candidates[0].id;
       } else {
-        // 2) tenta match por primeiro nome (ex.: "Leonardo" -> "Leonardo Machado")
-        const { data: byFirst } = await supabase
-          .from("profiles")
-          .select("id,name")
-          .ilike("name", `${firstName} %`)
-          .limit(2);
-        if (byFirst && byFirst.length === 1) {
-          salespersonId = byFirst[0].id;
-        } else {
-          console.warn("[chatwoot-novo-lead] salesperson não resolvido", {
-            assigneeName,
-            exactMatches: exact?.length ?? 0,
-            firstNameMatches: byFirst?.length ?? 0,
-          });
-        }
+        console.warn("[chatwoot-novo-lead] salesperson não resolvido", {
+          assigneeName,
+          candidates: candidates.length,
+        });
       }
     }
 
