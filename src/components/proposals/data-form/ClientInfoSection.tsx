@@ -168,7 +168,7 @@ const ClientInfoSection = ({
 
           <div className="space-y-2">
             <Label htmlFor="clientEmail">
-              Email <RequiredMark />
+              Email <span className="text-xs text-muted-foreground">(opcional)</span>
             </Label>
             <Input
               id="clientEmail"
@@ -179,10 +179,9 @@ const ClientInfoSection = ({
               placeholder="cliente@exemplo.com"
               type="email"
               className={errorClass(!!emailError)}
-              required
               aria-invalid={!!emailError}
             />
-            {emailError && <p className="text-xs text-destructive">Campo obrigatório</p>}
+            {emailError && <p className="text-xs text-destructive">Email inválido</p>}
           </div>
 
           <div className="space-y-2 col-span-full">
