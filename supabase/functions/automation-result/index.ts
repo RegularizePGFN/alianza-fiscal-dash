@@ -92,7 +92,7 @@ async function handle(req: Request): Promise<Response> {
 
   const { data: reg, error: regErr } = await supabase
     .from("client_registrations")
-    .select("id, automation_status, client_name")
+    .select("id, automation_status, client_name, conversation_id")
     .eq("id", body.registration_id)
     .maybeSingle();
   if (regErr) {
