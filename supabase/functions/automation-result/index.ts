@@ -92,7 +92,7 @@ async function handle(req: Request): Promise<Response> {
 
   const { data: reg, error: regErr } = await supabase
     .from("client_registrations")
-    .select("id, automation_status, client_name")
+    .select("id, automation_status, client_name, conversation_id")
     .eq("id", body.registration_id)
     .maybeSingle();
   if (regErr) {
@@ -132,6 +132,7 @@ async function handle(req: Request): Promise<Response> {
 
   // success — salvar arquivos
   const filesSaved: string[] = [];
+  const decodedFiles: { name: string; bytes: Uint8Array }[] = [];
   for (const f of body.files) {
     let bytes: Uint8Array;
     try { bytes = decodeBase64(f.content_base64); } catch {
@@ -163,6 +164,7 @@ async function handle(req: Request): Promise<Response> {
       });
     }
     filesSaved.push(path);
+    decodedFiles.push({ name: f.name, bytes });
   }
 
   const { error: uErr } = await supabase
@@ -181,7 +183,47 @@ async function handle(req: Request): Promise<Response> {
     });
   }
 
-  return new Response(JSON.stringify({ ok: true, files_saved: filesSaved.length }), {
+  // Enviar PDFs como nota privada no Chatwoot (best effort — não falha a automação)
+  let chatwootNotesSent = 0;
+  const chatwootToken = Deno.env.get("CHATWOOT_API_TOKEN");
+  const conversationId = reg.conversation_id;
+  if (conversationId && decodedFiles.length > 0 && chatwootToken) {
+    const CHATWOOT_BASE_URL = "https://chatwoot.neumocrm.com.br";
+    const CHATWOOT_ACCOUNT_ID = 1;
+    const url = `${CHATWOOT_BASE_URL}/api/v1/accounts/${CHATWOOT_ACCOUNT_ID}/conversations/${conversationId}/messages`;
+    for (let i = 0; i < decodedFiles.length; i++) {
+      const df = decodedFiles[i];
+      try {
+        const form = new FormData();
+        form.append("content", i === 0 ? "Relatório de dívidas gerado com sucesso. Segue em anexo." : "");
+        form.append("private", "true");
+        form.append(
+          "attachments[]",
+          new File([df.bytes], df.name, { type: "application/pdf" }),
+        );
+        const resp = await fetch(url, {
+          method: "POST",
+          headers: { api_access_token: chatwootToken },
+          body: form,
+        });
+        if (!resp.ok) {
+          const text = await resp.text().catch(() => "");
+          console.error("[automation-result] chatwoot send failed", resp.status, text);
+        } else {
+          chatwootNotesSent++;
+        }
+      } catch (e) {
+        console.error("[automation-result] chatwoot send error", e);
+      }
+    }
+  } else if (decodedFiles.length > 0) {
+    console.warn("[automation-result] skipped chatwoot send", {
+      has_conversation_id: !!conversationId,
+      has_token: !!chatwootToken,
+    });
+  }
+
+  return new Response(JSON.stringify({ ok: true, files_saved: filesSaved.length, chatwoot_notes_sent: chatwootNotesSent }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
