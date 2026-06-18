@@ -157,12 +157,46 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Resolve salesperson_id pelo nome do assignee do Chatwoot
+    // Normaliza removendo acentos e caixa para tolerar "Livia" vs "Lívia"
+    const norm = (s: string) =>
+      s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    let salespersonId: string | null = null;
+    if (assigneeName && assigneeName.trim()) {
+      const target = norm(assigneeName);
+      const targetFirst = target.split(/\s+/)[0];
+      const { data: allProfiles } = await supabase
+        .from("profiles")
+        .select("id,name");
+      const profiles = (allProfiles ?? []).filter((p: any) => p?.name);
+      // 1) match exato normalizado
+      let candidates = profiles.filter((p: any) => norm(p.name) === target);
+      // 2) primeiro nome
+      if (candidates.length !== 1) {
+        candidates = profiles.filter(
+          (p: any) => norm(p.name).split(/\s+/)[0] === targetFirst,
+        );
+      }
+      // 3) contém
+      if (candidates.length !== 1) {
+        candidates = profiles.filter((p: any) => norm(p.name).includes(target));
+      }
+      if (candidates.length === 1) {
+        salespersonId = candidates[0].id;
+      } else {
+        console.warn("[chatwoot-novo-lead] salesperson não resolvido", {
+          assigneeName,
+          candidates: candidates.length,
+        });
+      }
+    }
+
     const insertRow = {
       cnpj,
       cpf: null,
       client_name: clientName,
       client_phone: phone,
-      salesperson_id: null,
+      salesperson_id: salespersonId,
       salesperson_name: assigneeName,
       reason: "fazer_cadastro",
       status: "aguardando",
