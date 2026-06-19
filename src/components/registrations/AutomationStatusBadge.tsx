@@ -182,6 +182,22 @@ export function AutomationStatusBadge({ registration }: Props) {
               <div className="rounded-md border border-rose-500/30 bg-rose-500/5 p-3 text-sm whitespace-pre-wrap">
                 {registration.automation_error || "Sem descrição do erro."}
               </div>
+              {motherError && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="corrected-mother-name" className="text-sm">
+                    Nome da mãe correto (opcional)
+                  </Label>
+                  <Input
+                    id="corrected-mother-name"
+                    placeholder="Ex: MARIA APARECIDA SOUZA"
+                    value={correctedMotherName}
+                    onChange={(e) => setCorrectedMotherName(e.target.value.toUpperCase())}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Deixe em branco para tentar novamente sem alteração.
+                  </p>
+                </div>
+              )}
               <div className="text-xs text-muted-foreground">
                 Tentativas: {registration.automation_attempts}
               </div>
@@ -189,7 +205,11 @@ export function AutomationStatusBadge({ registration }: Props) {
                 <Button variant="outline" onClick={() => setOpen(false)}>Fechar</Button>
                 <Button
                   onClick={async () => {
-                    await retry.mutateAsync(registration.id);
+                    await retry.mutateAsync({
+                      registration_id: registration.id,
+                      mother_name: correctedMotherName.trim() || undefined,
+                    });
+                    setCorrectedMotherName("");
                     setOpen(false);
                   }}
                   disabled={retry.isPending}
@@ -200,6 +220,7 @@ export function AutomationStatusBadge({ registration }: Props) {
               </DialogFooter>
             </>
           )}
+
 
           {status === "processing" && (
             <>
