@@ -30,6 +30,7 @@ export interface ClientRegistration {
   automation_finished_at: string | null;
   automation_error: string | null;
   automation_attempts: number;
+  simulation_status: "success" | "no_debts" | "error" | "pending" | null;
 }
 
 export interface RegistrationAttachment {

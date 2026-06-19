@@ -15,11 +15,15 @@ const FileSchema = z.object({
   content_base64: z.string().min(1),
 });
 
+const SimulationStatusSchema = z.enum(["success", "no_debts", "error", "pending"]);
+
 const BodySchema = z.discriminatedUnion("status", [
   z.object({
     registration_id: z.string().uuid(),
     status: z.literal("success"),
     files: z.array(FileSchema).max(MAX_FILES).optional().default([]),
+    screenshots: z.array(FileSchema).max(MAX_FILES).optional().default([]),
+    simulation_status: SimulationStatusSchema.optional(),
   }),
   z.object({
     registration_id: z.string().uuid(),
@@ -134,15 +138,19 @@ async function handle(req: Request): Promise<Response> {
   // LOCK ATÔMICO: só uma chamada concorrente consegue marcar como success.
   // As outras recebem 0 linhas afetadas e saem sem fazer upload nem enviar ao Chatwoot.
   const nowIso = new Date().toISOString();
+  const lockUpdate: Record<string, unknown> = {
+    automation_status: "success",
+    automation_finished_at: nowIso,
+    automation_error: null,
+    status: "realizado",
+    completed_at: nowIso,
+  };
+  if (body.simulation_status) {
+    lockUpdate.simulation_status = body.simulation_status;
+  }
   const { data: lockRows, error: lockErr } = await supabase
     .from("client_registrations")
-    .update({
-      automation_status: "success",
-      automation_finished_at: nowIso,
-      automation_error: null,
-      status: "realizado",
-      completed_at: nowIso,
-    })
+    .update(lockUpdate)
     .eq("id", body.registration_id)
     .in("automation_status", ["pending", "processing"])
     .select("id");
@@ -159,57 +167,69 @@ async function handle(req: Request): Promise<Response> {
     });
   }
 
-  // Dedupe por nome dentro do mesmo request
-  const seenNames = new Set<string>();
-  const uniqueFiles = body.files.filter((f) => {
-    if (seenNames.has(f.name)) return false;
-    seenNames.add(f.name);
-    return true;
-  });
-
-  const insertedFiles: { name: string; bytes: Uint8Array }[] = [];
-  for (const f of uniqueFiles) {
-    let bytes: Uint8Array;
-    try { bytes = decodeBase64(f.content_base64); } catch {
-      console.error("[automation-result] invalid base64", f.name);
-      continue;
-    }
-    if (bytes.byteLength > MAX_FILE_BYTES) {
-      console.error("[automation-result] file exceeds 10MB", f.name);
-      continue;
-    }
-    const safeName = f.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const path = `${body.registration_id}/${crypto.randomUUID()}-${safeName}`;
-
-    // Insere o registro primeiro — o índice único (registration_id, file_name)
-    // bloqueia duplicidade mesmo em chamadas concorrentes.
-    const { error: insErr } = await supabase
-      .from("client_registration_automation_files")
-      .insert({ registration_id: body.registration_id, file_path: path, file_name: f.name });
-    if (insErr) {
-      if ((insErr as any).code === "23505") {
-        console.warn("[automation-result] file already exists, skipping", f.name);
+  async function uploadGroup(
+    items: { name: string; content_base64: string }[],
+    fileType: "pdf" | "screenshot",
+    contentType: string,
+  ): Promise<{ name: string; bytes: Uint8Array }[]> {
+    const seen = new Set<string>();
+    const unique = items.filter((f) => {
+      if (seen.has(f.name)) return false;
+      seen.add(f.name);
+      return true;
+    });
+    const inserted: { name: string; bytes: Uint8Array }[] = [];
+    for (const f of unique) {
+      let bytes: Uint8Array;
+      try { bytes = decodeBase64(f.content_base64); } catch {
+        console.error("[automation-result] invalid base64", fileType, f.name);
         continue;
       }
-      console.error("[automation-result] insert file err", insErr);
-      continue;
-    }
+      if (bytes.byteLength > MAX_FILE_BYTES) {
+        console.error("[automation-result] file exceeds 10MB", fileType, f.name);
+        continue;
+      }
+      const safeName = f.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const path = `${body.registration_id}/${fileType}/${crypto.randomUUID()}-${safeName}`;
 
-    const { error: upErr } = await supabase.storage
-      .from("cadastro-automatico-pdfs")
-      .upload(path, bytes, { contentType: "application/pdf", upsert: false });
-    if (upErr) {
-      console.error("[automation-result] upload err", upErr);
-      await supabase
+      const { error: insErr } = await supabase
         .from("client_registration_automation_files")
-        .delete()
-        .eq("registration_id", body.registration_id)
-        .eq("file_path", path);
-      continue;
-    }
+        .insert({
+          registration_id: body.registration_id,
+          file_path: path,
+          file_name: f.name,
+          file_type: fileType,
+        });
+      if (insErr) {
+        if ((insErr as any).code === "23505") {
+          console.warn("[automation-result] file already exists, skipping", fileType, f.name);
+          continue;
+        }
+        console.error("[automation-result] insert file err", insErr);
+        continue;
+      }
 
-    insertedFiles.push({ name: f.name, bytes });
+      const { error: upErr } = await supabase.storage
+        .from("cadastro-automatico-pdfs")
+        .upload(path, bytes, { contentType, upsert: false });
+      if (upErr) {
+        console.error("[automation-result] upload err", upErr);
+        await supabase
+          .from("client_registration_automation_files")
+          .delete()
+          .eq("registration_id", body.registration_id)
+          .eq("file_path", path);
+        continue;
+      }
+
+      inserted.push({ name: f.name, bytes });
+    }
+    return inserted;
   }
+
+  const insertedFiles = await uploadGroup(body.files, "pdf", "application/pdf");
+  const insertedScreenshots = await uploadGroup(body.screenshots ?? [], "screenshot", "image/png");
+
 
   // UMA ÚNICA nota privada no Chatwoot com todos os PDFs novos anexados
   let chatwootNotesSent = 0;
@@ -250,7 +270,7 @@ async function handle(req: Request): Promise<Response> {
     });
   }
 
-  return new Response(JSON.stringify({ ok: true, files_saved: insertedFiles.length, chatwoot_notes_sent: chatwootNotesSent }), {
+  return new Response(JSON.stringify({ ok: true, files_saved: insertedFiles.length, screenshots_saved: insertedScreenshots.length, chatwoot_notes_sent: chatwootNotesSent }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
