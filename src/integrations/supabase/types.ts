@@ -77,6 +77,7 @@ export type Database = {
         Row: {
           file_name: string
           file_path: string
+          file_type: string
           id: string
           registration_id: string
           uploaded_at: string
@@ -84,6 +85,7 @@ export type Database = {
         Insert: {
           file_name: string
           file_path: string
+          file_type?: string
           id?: string
           registration_id: string
           uploaded_at?: string
@@ -91,6 +93,7 @@ export type Database = {
         Update: {
           file_name?: string
           file_path?: string
+          file_type?: string
           id?: string
           registration_id?: string
           uploaded_at?: string
@@ -169,6 +172,7 @@ export type Database = {
           reason: string
           salesperson_id: string | null
           salesperson_name: string | null
+          simulation_status: string | null
           source: string
           status: string
           updated_at: string
@@ -195,6 +199,7 @@ export type Database = {
           reason?: string
           salesperson_id?: string | null
           salesperson_name?: string | null
+          simulation_status?: string | null
           source?: string
           status?: string
           updated_at?: string
@@ -221,6 +226,7 @@ export type Database = {
           reason?: string
           salesperson_id?: string | null
           salesperson_name?: string | null
+          simulation_status?: string | null
           source?: string
           status?: string
           updated_at?: string
