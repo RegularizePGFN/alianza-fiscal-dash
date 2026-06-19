@@ -122,6 +122,9 @@ export function AutomationStatusBadge({ registration }: Props) {
       >
         <Icon className={`w-3 h-3 ${status === "processing" ? "animate-spin" : ""}`} />
         {motherError || meta.label}
+        {(registration.automation_error || "").toLowerCase().includes("nome da mãe corrigido") && (
+          <Pencil className="w-3 h-3 ml-0.5" />
+        )}
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
