@@ -2,26 +2,34 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+export type AutomationFileType = "pdf" | "screenshot";
+
 export interface AutomationFile {
   id: string;
   registration_id: string;
   file_path: string;
   file_name: string;
   uploaded_at: string;
+  file_type: AutomationFileType;
 }
 
-export function useAutomationFiles(registrationId: string | null) {
+export function useAutomationFiles(
+  registrationId: string | null,
+  options: { type?: AutomationFileType } = {}
+) {
+  const type = options.type ?? "pdf";
   return useQuery({
-    queryKey: ["automation-files", registrationId],
+    queryKey: ["automation-files", registrationId, type],
     enabled: !!registrationId,
     queryFn: async (): Promise<AutomationFile[]> => {
       const { data, error } = await supabase
         .from("client_registration_automation_files")
         .select("*")
         .eq("registration_id", registrationId!)
+        .eq("file_type", type)
         .order("uploaded_at", { ascending: true });
       if (error) throw error;
-      // Dedupe por file_name (mesmo PDF reenviado gera paths diferentes), mantendo o mais recente
+      // Dedupe por file_name (mesmo arquivo reenviado gera paths diferentes), mantendo o mais recente
       const map = new Map<string, AutomationFile>();
       for (const f of (data || []) as AutomationFile[]) {
         const key = (f.file_name || f.file_path).trim().toLowerCase();

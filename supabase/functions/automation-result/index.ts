@@ -15,11 +15,15 @@ const FileSchema = z.object({
   content_base64: z.string().min(1),
 });
 
+const SimulationStatusSchema = z.enum(["success", "no_debts", "error", "pending"]);
+
 const BodySchema = z.discriminatedUnion("status", [
   z.object({
     registration_id: z.string().uuid(),
     status: z.literal("success"),
     files: z.array(FileSchema).max(MAX_FILES).optional().default([]),
+    screenshots: z.array(FileSchema).max(MAX_FILES).optional().default([]),
+    simulation_status: SimulationStatusSchema.optional(),
   }),
   z.object({
     registration_id: z.string().uuid(),
