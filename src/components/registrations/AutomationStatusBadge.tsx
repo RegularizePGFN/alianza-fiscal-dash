@@ -71,6 +71,7 @@ function getMotherNameError(registration: ClientRegistration) {
 export function AutomationStatusBadge({ registration }: Props) {
   const [open, setOpen] = useState(false);
   const [viewer, setViewer] = useState<{ data: Uint8Array; name: string; fileId: string } | null>(null);
+  const [correctedMotherName, setCorrectedMotherName] = useState("");
   const status = registration.automation_status;
   const motherError = getMotherNameError(registration);
   const meta = STATUS_META[status] ?? STATUS_META.pending;
