@@ -127,7 +127,7 @@ export function AutomationStatusBadge({ registration }: Props) {
         )}
       </button>
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setCorrectedMotherName(""); }}>
         <DialogContent onClick={(e) => e.stopPropagation()} className="max-w-lg">
           {status === "success" && (
             <>
