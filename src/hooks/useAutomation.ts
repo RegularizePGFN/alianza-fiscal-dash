@@ -48,23 +48,35 @@ export function useAutomationFiles(
 export function useAutomationRetry() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (registration_id: string) => {
-      // Update direto na tabela — RLS permite admin/backoffice/gestor e o próprio vendedor dono.
+    mutationFn: async (
+      input: string | { registration_id: string; mother_name?: string }
+    ) => {
+      const params =
+        typeof input === "string" ? { registration_id: input } : input;
+      const motherName = params.mother_name?.trim();
+      const updates: Record<string, any> = {
+        automation_status: "pending",
+        automation_started_at: null,
+        automation_finished_at: null,
+        automation_error: null,
+      };
+      if (motherName) {
+        updates.mother_name = motherName.toUpperCase();
+      }
       const { error } = await supabase
         .from("client_registrations")
-        .update({
-          automation_status: "pending",
-          automation_started_at: null,
-          automation_finished_at: null,
-          automation_error: null,
-        })
-        .eq("id", registration_id);
+        .update(updates)
+        .eq("id", params.registration_id);
       if (error) throw error;
-      return { ok: true };
+      return { ok: true, corrected: !!motherName };
     },
-    onSuccess: () => {
+    onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ["registrations"] });
-      toast.success("Reenviado para a automação");
+      toast.success(
+        res.corrected
+          ? "Nome da mãe atualizado — cadastro recolocado na fila"
+          : "Reenviado para a automação"
+      );
     },
     onError: (e: any) => toast.error(e.message || "Erro ao reenviar"),
   });

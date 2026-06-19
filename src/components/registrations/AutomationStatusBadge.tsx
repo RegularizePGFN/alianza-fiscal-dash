@@ -8,7 +8,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, AlertTriangle, Clock, Loader2, FileText, Download, Eye, RotateCw, CheckCheck, FileWarning } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Clock, Loader2, FileText, Download, Eye, RotateCw, CheckCheck, FileWarning, Pencil } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ClientRegistration, AutomationStatus } from "@/hooks/useRegistrations";
 import { useAutomationFiles, useAutomationRetry, getAutomationFileBlob } from "@/hooks/useAutomation";
 import { toast } from "sonner";
@@ -69,6 +71,7 @@ function getMotherNameError(registration: ClientRegistration) {
 export function AutomationStatusBadge({ registration }: Props) {
   const [open, setOpen] = useState(false);
   const [viewer, setViewer] = useState<{ data: Uint8Array; name: string; fileId: string } | null>(null);
+  const [correctedMotherName, setCorrectedMotherName] = useState("");
   const status = registration.automation_status;
   const motherError = getMotherNameError(registration);
   const meta = STATUS_META[status] ?? STATUS_META.pending;
@@ -119,9 +122,12 @@ export function AutomationStatusBadge({ registration }: Props) {
       >
         <Icon className={`w-3 h-3 ${status === "processing" ? "animate-spin" : ""}`} />
         {motherError || meta.label}
+        {(registration.automation_error || "").toLowerCase().includes("nome da mãe corrigido") && (
+          <Pencil className="w-3 h-3 ml-0.5" />
+        )}
       </button>
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setCorrectedMotherName(""); }}>
         <DialogContent onClick={(e) => e.stopPropagation()} className="max-w-lg">
           {status === "success" && (
             <>
@@ -176,6 +182,22 @@ export function AutomationStatusBadge({ registration }: Props) {
               <div className="rounded-md border border-rose-500/30 bg-rose-500/5 p-3 text-sm whitespace-pre-wrap">
                 {registration.automation_error || "Sem descrição do erro."}
               </div>
+              {motherError && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="corrected-mother-name" className="text-sm">
+                    Nome da mãe correto (opcional)
+                  </Label>
+                  <Input
+                    id="corrected-mother-name"
+                    placeholder="Ex: MARIA APARECIDA SOUZA"
+                    value={correctedMotherName}
+                    onChange={(e) => setCorrectedMotherName(e.target.value.toUpperCase())}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Deixe em branco para tentar novamente sem alteração.
+                  </p>
+                </div>
+              )}
               <div className="text-xs text-muted-foreground">
                 Tentativas: {registration.automation_attempts}
               </div>
@@ -183,7 +205,11 @@ export function AutomationStatusBadge({ registration }: Props) {
                 <Button variant="outline" onClick={() => setOpen(false)}>Fechar</Button>
                 <Button
                   onClick={async () => {
-                    await retry.mutateAsync(registration.id);
+                    await retry.mutateAsync({
+                      registration_id: registration.id,
+                      mother_name: correctedMotherName.trim() || undefined,
+                    });
+                    setCorrectedMotherName("");
                     setOpen(false);
                   }}
                   disabled={retry.isPending}
@@ -194,6 +220,7 @@ export function AutomationStatusBadge({ registration }: Props) {
               </DialogFooter>
             </>
           )}
+
 
           {status === "processing" && (
             <>
