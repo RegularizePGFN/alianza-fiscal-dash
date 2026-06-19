@@ -270,7 +270,7 @@ async function handle(req: Request): Promise<Response> {
     });
   }
 
-  return new Response(JSON.stringify({ ok: true, files_saved: insertedFiles.length, chatwoot_notes_sent: chatwootNotesSent }), {
+  return new Response(JSON.stringify({ ok: true, files_saved: insertedFiles.length, screenshots_saved: insertedScreenshots.length, chatwoot_notes_sent: chatwootNotesSent }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }

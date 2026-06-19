@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { AttachmentsField } from "./AttachmentsField";
 import { AutomationFilesField } from "./AutomationFilesField";
+import { SimulationScreenshotsField } from "./SimulationScreenshotsField";
 import { Wand2 } from "lucide-react";
 import { formatCnpj, formatCpf } from "@/lib/formatters/document";
 
@@ -157,6 +158,11 @@ export function RegistrationDetailDrawer({
           />
 
           <AutomationFilesField registrationId={item.id} />
+
+          <SimulationScreenshotsField
+            registrationId={item.id}
+            simulationStatus={item.simulation_status}
+          />
 
           <Button
             variant="outline"
