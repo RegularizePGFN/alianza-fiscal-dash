@@ -37,7 +37,7 @@ async function findKanbanItemId(
     const resp = await fetch(url, { headers: { api_access_token: chatwootToken } });
     if (!resp.ok) return null;
     const json = await resp.json() as { data?: any[]; payload?: any[] };
-    const items: any[] = json.data ?? json.payload ?? [];
+    const items: any[] = json.data ?? json.payload ?? (json as any).items ?? [];
     if (items.length === 0) break;
     const found = items.find(
       (it: any) =>
