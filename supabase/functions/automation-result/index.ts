@@ -48,6 +48,81 @@ function decodeBase64(b64: string): Uint8Array {
   return arr;
 }
 
+const CHATWOOT_BASE_URL = "https://chatwoot.neumocrm.com.br";
+const CHATWOOT_ACCOUNT_ID = 1;
+const KANBAN_FUNNEL_ID = 2;
+// stage_3 = Em processamento, stage_4 = Cadastro pronto
+const STAGE_EM_PROCESSAMENTO = "stage_3";
+const STAGE_CADASTRO_PRONTO = "stage_4";
+
+async function moveKanbanToStage(
+  conversationId: number,
+  targetStage: string,
+  chatwootToken: string,
+): Promise<void> {
+  try {
+    // Busca kanban items do funil para encontrar o item dessa conversa
+    // Tenta até 5 páginas (250 itens) para não ficar preso em loop infinito
+    for (let page = 1; page <= 5; page++) {
+      const url = `${CHATWOOT_BASE_URL}/api/v1/accounts/${CHATWOOT_ACCOUNT_ID}/kanban_items?funnel_id=${KANBAN_FUNNEL_ID}&page=${page}&per_page=50`;
+      const resp = await fetch(url, {
+        headers: { api_access_token: chatwootToken },
+      });
+      if (!resp.ok) {
+        console.warn("[kanban] list failed", resp.status);
+        return;
+      }
+      const json = await resp.json() as { data?: any[]; payload?: any[] };
+      const items: any[] = json.data ?? json.payload ?? [];
+      if (items.length === 0) break;
+
+      const found = items.find(
+        (item: any) =>
+          item.conversation?.display_id === conversationId ||
+          item.conversation?.id === conversationId,
+      );
+      if (found) {
+        // Só move se o item ainda estiver nas etapas iniciais
+        const currentStage = found.stage ?? found.kanban_stage ?? "";
+        const initialStages = ["stage_1", "stage_3"];
+        // Para sucesso: mover de qualquer etapa inicial para cadastro_pronto
+        // Para erro: mover só se ainda estiver em novo_lead (stage_1)
+        const shouldMove =
+          targetStage === STAGE_CADASTRO_PRONTO
+            ? initialStages.includes(currentStage)
+            : currentStage === "stage_1";
+
+        if (!shouldMove) {
+          console.log(`[kanban] item ${found.id} já está em ${currentStage}, pulando`);
+          return;
+        }
+
+        const moveUrl = `${CHATWOOT_BASE_URL}/api/v1/accounts/${CHATWOOT_ACCOUNT_ID}/kanban_items/${found.id}/move_to_stage`;
+        const moveResp = await fetch(moveUrl, {
+          method: "POST",
+          headers: {
+            api_access_token: chatwootToken,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ stage_id: targetStage }),
+        });
+        if (!moveResp.ok) {
+          const text = await moveResp.text().catch(() => "");
+          console.error("[kanban] move failed", moveResp.status, text);
+        } else {
+          console.log(`[kanban] item ${found.id} movido para ${targetStage}`);
+        }
+        return;
+      }
+
+      if (items.length < 50) break; // última página
+    }
+    console.warn(`[kanban] item não encontrado para conversation_id=${conversationId}`);
+  } catch (e) {
+    console.error("[kanban] moveKanbanToStage error", e);
+  }
+}
+
 Deno.serve(async (req) => {
   try {
     return await handle(req);
@@ -58,44 +133,6 @@ Deno.serve(async (req) => {
     });
   }
 });
-
-async function moveKanbanToStage(conversationId: number, targetStage: string, chatwootToken: string): Promise<void> {
-  const CHATWOOT_BASE_URL = "https://chatwoot.neumocrm.com.br";
-  const CHATWOOT_ACCOUNT_ID = 1;
-  const FUNNEL_ID = 2;
-
-  let page = 1;
-  let kanbanItemId: number | null = null;
-  while (page <= 5 && !kanbanItemId) {
-    const listUrl = `${CHATWOOT_BASE_URL}/api/v1/accounts/${CHATWOOT_ACCOUNT_ID}/kanban_items?funnel_id=${FUNNEL_ID}&page=${page}`;
-    const listResp = await fetch(listUrl, { headers: { api_access_token: chatwootToken } });
-    if (!listResp.ok) break;
-    const listData = await listResp.json();
-    const items: any[] = listData?.data?.payload ?? listData?.payload ?? listData ?? [];
-    if (!Array.isArray(items) || items.length === 0) break;
-    const found = items.find((item: any) => item?.conversation?.display_id === conversationId);
-    if (found) { kanbanItemId = found.id; break; }
-    page++;
-  }
-
-  if (!kanbanItemId) {
-    console.warn("[automation-result] kanban item not found for conversation", conversationId);
-    return;
-  }
-
-  const moveUrl = `${CHATWOOT_BASE_URL}/api/v1/accounts/${CHATWOOT_ACCOUNT_ID}/kanban_items/${kanbanItemId}/move_to_stage`;
-  const moveResp = await fetch(moveUrl, {
-    method: "POST",
-    headers: { api_access_token: chatwootToken, "Content-Type": "application/json" },
-    body: JSON.stringify({ stage_id: targetStage }),
-  });
-  if (!moveResp.ok) {
-    const text = await moveResp.text().catch(() => "");
-    console.error("[automation-result] kanban move_to_stage failed", moveResp.status, text);
-  } else {
-    console.log("[automation-result] kanban moved", conversationId, "→", targetStage);
-  }
-}
 
 async function handle(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -168,11 +205,11 @@ async function handle(req: Request): Promise<Response> {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const errChatwootToken = Deno.env.get("CHATWOOT_API_TOKEN");
-    if (reg.conversation_id && errChatwootToken) {
-      await moveKanbanToStage(reg.conversation_id, "stage_3", errChatwootToken).catch((e) =>
-        console.error("[automation-result] kanban move (error) failed", e),
-      );
+    // Move kanban para "Em processamento"
+    const chatwootToken = Deno.env.get("CHATWOOT_API_TOKEN");
+    const conversationId = reg.conversation_id;
+    if (conversationId && chatwootToken) {
+      await moveKanbanToStage(conversationId, STAGE_EM_PROCESSAMENTO, chatwootToken);
     }
     return new Response(JSON.stringify({ ok: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -211,13 +248,6 @@ async function handle(req: Request): Promise<Response> {
     });
   }
 
-  // Move kanban item para "Cadastro pronto" (stage_4) ao concluir com sucesso
-  const successChatwootToken = Deno.env.get("CHATWOOT_API_TOKEN");
-  if (reg.conversation_id && successChatwootToken) {
-    await moveKanbanToStage(reg.conversation_id, "stage_4", successChatwootToken).catch((e) =>
-      console.error("[automation-result] kanban move failed", e),
-    );
-  }
 
 
   async function uploadGroup(
@@ -321,6 +351,11 @@ async function handle(req: Request): Promise<Response> {
       has_conversation_id: !!conversationId,
       has_token: !!chatwootToken,
     });
+  }
+
+  // Move kanban para "Cadastro pronto"
+  if (conversationId && chatwootToken) {
+    await moveKanbanToStage(conversationId, STAGE_CADASTRO_PRONTO, chatwootToken);
   }
 
   return new Response(JSON.stringify({ ok: true, files_saved: insertedFiles.length, screenshots_saved: insertedScreenshots.length, chatwoot_notes_sent: chatwootNotesSent }), {
