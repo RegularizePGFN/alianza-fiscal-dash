@@ -59,6 +59,44 @@ Deno.serve(async (req) => {
   }
 });
 
+async function moveKanbanToStage(conversationId: number, targetStage: string, chatwootToken: string): Promise<void> {
+  const CHATWOOT_BASE_URL = "https://chatwoot.neumocrm.com.br";
+  const CHATWOOT_ACCOUNT_ID = 1;
+  const FUNNEL_ID = 2;
+
+  let page = 1;
+  let kanbanItemId: number | null = null;
+  while (page <= 5 && !kanbanItemId) {
+    const listUrl = `${CHATWOOT_BASE_URL}/api/v1/accounts/${CHATWOOT_ACCOUNT_ID}/kanban_items?funnel_id=${FUNNEL_ID}&page=${page}`;
+    const listResp = await fetch(listUrl, { headers: { api_access_token: chatwootToken } });
+    if (!listResp.ok) break;
+    const listData = await listResp.json();
+    const items: any[] = listData?.data?.payload ?? listData?.payload ?? listData ?? [];
+    if (!Array.isArray(items) || items.length === 0) break;
+    const found = items.find((item: any) => item?.conversation?.display_id === conversationId);
+    if (found) { kanbanItemId = found.id; break; }
+    page++;
+  }
+
+  if (!kanbanItemId) {
+    console.warn("[automation-result] kanban item not found for conversation", conversationId);
+    return;
+  }
+
+  const moveUrl = `${CHATWOOT_BASE_URL}/api/v1/accounts/${CHATWOOT_ACCOUNT_ID}/kanban_items/${kanbanItemId}/move_to_stage`;
+  const moveResp = await fetch(moveUrl, {
+    method: "POST",
+    headers: { api_access_token: chatwootToken, "Content-Type": "application/json" },
+    body: JSON.stringify({ stage_id: targetStage }),
+  });
+  if (!moveResp.ok) {
+    const text = await moveResp.text().catch(() => "");
+    console.error("[automation-result] kanban move_to_stage failed", moveResp.status, text);
+  } else {
+    console.log("[automation-result] kanban moved", conversationId, "→", targetStage);
+  }
+}
+
 async function handle(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
