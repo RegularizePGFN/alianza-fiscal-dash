@@ -168,6 +168,12 @@ async function handle(req: Request): Promise<Response> {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const errChatwootToken = Deno.env.get("CHATWOOT_API_TOKEN");
+    if (reg.conversation_id && errChatwootToken) {
+      await moveKanbanToStage(reg.conversation_id, "stage_3", errChatwootToken).catch((e) =>
+        console.error("[automation-result] kanban move (error) failed", e),
+      );
+    }
     return new Response(JSON.stringify({ ok: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
