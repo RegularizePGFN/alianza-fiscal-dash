@@ -168,6 +168,8 @@ export type Database = {
           id: string
           mother_name: string | null
           notes: string | null
+          pgfn_consulted: boolean | null
+          pgfn_screenshot: string | null
           processing_mode: string
           reason: string
           salesperson_id: string | null
@@ -195,6 +197,8 @@ export type Database = {
           id?: string
           mother_name?: string | null
           notes?: string | null
+          pgfn_consulted?: boolean | null
+          pgfn_screenshot?: string | null
           processing_mode?: string
           reason?: string
           salesperson_id?: string | null
@@ -222,6 +226,8 @@ export type Database = {
           id?: string
           mother_name?: string | null
           notes?: string | null
+          pgfn_consulted?: boolean | null
+          pgfn_screenshot?: string | null
           processing_mode?: string
           reason?: string
           salesperson_id?: string | null
