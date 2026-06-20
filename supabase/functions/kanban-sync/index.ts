@@ -36,8 +36,9 @@ Deno.serve(async (req) => {
 
   const { data, error } = await supabase
     .from("client_registrations")
-    .select("conversation_id, automation_status, status")
-    .not("conversation_id", "is", null);
+    .select("id, conversation_id, automation_status, status, client_name")
+    .not("conversation_id", "is", null)
+    .order("created_at", { ascending: false });
 
   if (error) {
     return new Response(JSON.stringify({ error: error.message }), {
@@ -45,7 +46,7 @@ Deno.serve(async (req) => {
     });
   }
 
-  return new Response(JSON.stringify({ registrations: data }), {
+  return new Response(JSON.stringify({ items: data ?? [] }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 });
