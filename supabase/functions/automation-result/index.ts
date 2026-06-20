@@ -248,13 +248,6 @@ async function handle(req: Request): Promise<Response> {
     });
   }
 
-  // Move kanban item para "Cadastro pronto" (stage_4) ao concluir com sucesso
-  const successChatwootToken = Deno.env.get("CHATWOOT_API_TOKEN");
-  if (reg.conversation_id && successChatwootToken) {
-    await moveKanbanToStage(reg.conversation_id, "stage_4", successChatwootToken).catch((e) =>
-      console.error("[automation-result] kanban move failed", e),
-    );
-  }
 
 
   async function uploadGroup(
