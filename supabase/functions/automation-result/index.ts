@@ -353,6 +353,11 @@ async function handle(req: Request): Promise<Response> {
     });
   }
 
+  // Move kanban para "Cadastro pronto"
+  if (conversationId && chatwootToken) {
+    await moveKanbanToStage(conversationId, STAGE_CADASTRO_PRONTO, chatwootToken);
+  }
+
   return new Response(JSON.stringify({ ok: true, files_saved: insertedFiles.length, screenshots_saved: insertedScreenshots.length, chatwoot_notes_sent: chatwootNotesSent }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
