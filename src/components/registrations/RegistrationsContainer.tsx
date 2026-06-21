@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
+import { Button } from "@/components/ui/button";
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
@@ -74,6 +75,25 @@ export function RegistrationsContainer() {
   const [detail, setDetail] = useState<ClientRegistration | null>(null);
 
   const [toDelete, setToDelete] = useState<ClientRegistration | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  const toggleSelectAll = (ids: string[], checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) ids.forEach((id) => next.add(id));
+      else ids.forEach((id) => next.delete(id));
+      return next;
+    });
+  };
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -184,6 +204,21 @@ export function RegistrationsContainer() {
           <TabsTrigger value="charts">Análise</TabsTrigger>
         </TabsList>
         <TabsContent value="list" className="pt-4 space-y-4">
+          {isAdmin && selectedIds.size > 0 && (
+            <div className="flex items-center justify-between border rounded-lg px-3 py-2 bg-muted/40">
+              <div className="text-sm">
+                {selectedIds.size} cadastro(s) selecionado(s)
+              </div>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>
+                  Limpar
+                </Button>
+                <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}>
+                  Excluir selecionados
+                </Button>
+              </div>
+            </div>
+          )}
           <RegistrationsTable
             items={paginatedItems}
             loading={isLoading}
@@ -191,16 +226,14 @@ export function RegistrationsContainer() {
             isAdmin={isAdmin}
             currentUserId={user?.id}
             attachmentsSet={attachmentsSet}
+            selectedIds={selectedIds}
+            onToggleSelect={toggleSelect}
+            onToggleSelectAll={toggleSelectAll}
             onOpen={(r) => {
               setDetail(r);
               setDetailOpen(true);
             }}
-            onEdit={(r) => {
-              setEditing(r);
-              setFormOpen(true);
-            }}
             onGenerateSimulation={handleGenerateSimulation}
-            onDelete={(r) => setToDelete(r)}
           />
           {filtered.length > 0 && (
             <DataPagination
@@ -232,8 +265,15 @@ export function RegistrationsContainer() {
         onClose={() => setDetailOpen(false)}
         item={detail}
         canManage={canManage}
+        canEdit={canManage || detail?.salesperson_id === user?.id}
+        onEdit={(r) => {
+          setDetailOpen(false);
+          setEditing(r);
+          setFormOpen(true);
+        }}
         onGenerateSimulation={handleGenerateSimulation}
       />
+
 
       <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
         <AlertDialogContent>
@@ -249,6 +289,36 @@ export function RegistrationsContainer() {
               onClick={async () => {
                 if (toDelete) await del.mutateAsync(toDelete.id);
                 setToDelete(null);
+              }}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir {selectedIds.size} cadastro(s)?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação remove também todos os prints e histórico dos cadastros selecionados e não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                const ids = Array.from(selectedIds);
+                try {
+                  await Promise.all(ids.map((id) => del.mutateAsync(id)));
+                  toast.success(`${ids.length} cadastro(s) excluído(s)`);
+                  setSelectedIds(new Set());
+                } catch (e: any) {
+                  toast.error(e?.message || "Erro ao excluir");
+                } finally {
+                  setBulkDeleteOpen(false);
+                }
               }}
             >
               Excluir

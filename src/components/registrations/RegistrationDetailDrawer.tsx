@@ -26,7 +26,7 @@ import { format } from "date-fns";
 import { AttachmentsField } from "./AttachmentsField";
 import { AutomationFilesField } from "./AutomationFilesField";
 import { SimulationScreenshotsField } from "./SimulationScreenshotsField";
-import { Wand2 } from "lucide-react";
+import { Wand2, Pencil } from "lucide-react";
 import { formatCnpj, formatCpf } from "@/lib/formatters/document";
 
 interface Props {
@@ -34,6 +34,8 @@ interface Props {
   onClose: () => void;
   item: ClientRegistration | null;
   canManage: boolean;
+  canEdit?: boolean;
+  onEdit?: (r: ClientRegistration) => void;
   onGenerateSimulation: (r: ClientRegistration) => void;
 }
 
@@ -42,6 +44,8 @@ export function RegistrationDetailDrawer({
   onClose,
   item,
   canManage,
+  canEdit,
+  onEdit,
   onGenerateSimulation,
 }: Props) {
   const { data: attachments = [] } = useRegistrationAttachments(item?.id || null);
@@ -54,8 +58,23 @@ export function RegistrationDetailDrawer({
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
       <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>{item.client_name}</SheetTitle>
+          <div className="flex items-start justify-between gap-2 pr-6">
+            <SheetTitle>{item.client_name}</SheetTitle>
+            {canEdit && onEdit && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEdit(item)}
+                className="h-8"
+              >
+                <Pencil className="w-3.5 h-3.5 mr-1.5" />
+                Editar
+              </Button>
+            )}
+          </div>
         </SheetHeader>
+
+
 
         <div className="space-y-5 mt-4">
           {/* Top info */}

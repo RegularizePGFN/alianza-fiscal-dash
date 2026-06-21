@@ -14,20 +14,14 @@ import {
 } from "@/hooks/useRegistrations";
 import { formatDocument } from "@/lib/formatters/document";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { MoreHorizontal, Eye, Wand2, Trash2, Edit3 } from "lucide-react";
+import { Wand2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { AutomationStatusBadge } from "./AutomationStatusBadge";
@@ -39,10 +33,11 @@ interface Props {
   isAdmin: boolean;
   currentUserId?: string;
   attachmentsSet: Set<string>;
+  selectedIds: Set<string>;
+  onToggleSelect: (id: string) => void;
+  onToggleSelectAll: (ids: string[], checked: boolean) => void;
   onOpen: (r: ClientRegistration) => void;
-  onEdit: (r: ClientRegistration) => void;
   onGenerateSimulation: (r: ClientRegistration) => void;
-  onDelete: (r: ClientRegistration) => void;
 }
 
 const fmt = (d?: string | null) => (d ? format(new Date(d), "dd/MM/yy HH:mm") : "—");
@@ -62,14 +57,13 @@ const fmtDuration = (start?: string | null, end?: string | null) => {
 export function RegistrationsTable({
   items,
   loading,
-  canManage,
   isAdmin,
-  currentUserId,
   attachmentsSet,
+  selectedIds,
+  onToggleSelect,
+  onToggleSelectAll,
   onOpen,
-  onEdit,
   onGenerateSimulation,
-  onDelete,
 }: Props) {
   if (loading) {
     return (
@@ -87,12 +81,24 @@ export function RegistrationsTable({
       </div>
     );
   }
+  const allIds = items.map((r) => r.id);
+  const allSelected = allIds.every((id) => selectedIds.has(id));
+  const someSelected = !allSelected && allIds.some((id) => selectedIds.has(id));
   return (
     <TooltipProvider>
       <div className="border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
+              {isAdmin && (
+                <TableHead className="w-[40px]">
+                  <Checkbox
+                    checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                    onCheckedChange={(c) => onToggleSelectAll(allIds, !!c)}
+                    aria-label="Selecionar todos"
+                  />
+                </TableHead>
+              )}
               <TableHead>Vendedor</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>CNPJ / CPF</TableHead>
@@ -104,15 +110,11 @@ export function RegistrationsTable({
               <TableHead>Criado em</TableHead>
               <TableHead>Atendido em</TableHead>
               <TableHead>Tempo de cadastro</TableHead>
-              <TableHead className="w-[60px]" />
               <TableHead className="w-[170px]">Gerar proposta</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {items.map((r) => {
-              const canEdit =
-                canManage || r.salesperson_id === currentUserId;
-              const canDelete = isAdmin;
               const hasAttachment = attachmentsSet.has(r.id);
               const canGenerate = r.status === "realizado" && hasAttachment;
               const tip = !canGenerate
@@ -126,6 +128,15 @@ export function RegistrationsTable({
                   className="cursor-pointer"
                   onClick={() => onOpen(r)}
                 >
+                  {isAdmin && (
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={selectedIds.has(r.id)}
+                        onCheckedChange={() => onToggleSelect(r.id)}
+                        aria-label="Selecionar cadastro"
+                      />
+                    </TableCell>
+                  )}
                   <TableCell className="font-medium">{r.salesperson_name}</TableCell>
                   <TableCell>{r.client_name || "—"}</TableCell>
                   <TableCell className="font-mono text-xs">
@@ -162,36 +173,6 @@ export function RegistrationsTable({
                     {r.processing_mode === "automatico"
                       ? fmtDuration(r.automation_started_at, r.automation_finished_at)
                       : fmtDuration(r.created_at, r.completed_at)}
-                  </TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => onOpen(r)}>
-                          <Eye className="w-4 h-4 mr-2" /> Ver detalhes
-                        </DropdownMenuItem>
-                        {canEdit && (
-                          <DropdownMenuItem onClick={() => onEdit(r)}>
-                            <Edit3 className="w-4 h-4 mr-2" /> Editar
-                          </DropdownMenuItem>
-                        )}
-                        {canDelete && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onClick={() => onDelete(r)}
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" /> Excluir
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <Tooltip>
