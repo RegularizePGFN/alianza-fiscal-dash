@@ -26,7 +26,7 @@ import { format } from "date-fns";
 import { AttachmentsField } from "./AttachmentsField";
 import { AutomationFilesField } from "./AutomationFilesField";
 import { SimulationScreenshotsField } from "./SimulationScreenshotsField";
-import { Wand2 } from "lucide-react";
+import { Wand2, Pencil } from "lucide-react";
 import { formatCnpj, formatCpf } from "@/lib/formatters/document";
 
 interface Props {
@@ -34,6 +34,8 @@ interface Props {
   onClose: () => void;
   item: ClientRegistration | null;
   canManage: boolean;
+  canEdit?: boolean;
+  onEdit?: (r: ClientRegistration) => void;
   onGenerateSimulation: (r: ClientRegistration) => void;
 }
 
@@ -42,6 +44,8 @@ export function RegistrationDetailDrawer({
   onClose,
   item,
   canManage,
+  canEdit,
+  onEdit,
   onGenerateSimulation,
 }: Props) {
   const { data: attachments = [] } = useRegistrationAttachments(item?.id || null);
