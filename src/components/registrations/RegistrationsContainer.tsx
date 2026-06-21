@@ -203,6 +203,21 @@ export function RegistrationsContainer() {
           <TabsTrigger value="charts">Análise</TabsTrigger>
         </TabsList>
         <TabsContent value="list" className="pt-4 space-y-4">
+          {isAdmin && selectedIds.size > 0 && (
+            <div className="flex items-center justify-between border rounded-lg px-3 py-2 bg-muted/40">
+              <div className="text-sm">
+                {selectedIds.size} cadastro(s) selecionado(s)
+              </div>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>
+                  Limpar
+                </Button>
+                <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}>
+                  Excluir selecionados
+                </Button>
+              </div>
+            </div>
+          )}
           <RegistrationsTable
             items={paginatedItems}
             loading={isLoading}
@@ -210,16 +225,14 @@ export function RegistrationsContainer() {
             isAdmin={isAdmin}
             currentUserId={user?.id}
             attachmentsSet={attachmentsSet}
+            selectedIds={selectedIds}
+            onToggleSelect={toggleSelect}
+            onToggleSelectAll={toggleSelectAll}
             onOpen={(r) => {
               setDetail(r);
               setDetailOpen(true);
             }}
-            onEdit={(r) => {
-              setEditing(r);
-              setFormOpen(true);
-            }}
             onGenerateSimulation={handleGenerateSimulation}
-            onDelete={(r) => setToDelete(r)}
           />
           {filtered.length > 0 && (
             <DataPagination
@@ -251,8 +264,15 @@ export function RegistrationsContainer() {
         onClose={() => setDetailOpen(false)}
         item={detail}
         canManage={canManage}
+        canEdit={canManage || detail?.salesperson_id === user?.id}
+        onEdit={(r) => {
+          setDetailOpen(false);
+          setEditing(r);
+          setFormOpen(true);
+        }}
         onGenerateSimulation={handleGenerateSimulation}
       />
+
 
       <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
         <AlertDialogContent>
