@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  // Monta o update
+  // Monta o update em client_registrations
   const updateData: Record<string, any> = {
     pgfn_consulted: true,
   };
@@ -63,11 +63,6 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Salva screenshot em base64 no campo pgfn_screenshot (texto longo) se existir
-  if (screenshot_base64) {
-    updateData.pgfn_screenshot = screenshot_base64;
-  }
-
   const { error: updateError } = await supabase
     .from("client_registrations")
     .update(updateData)
@@ -79,11 +74,43 @@ Deno.serve(async (req) => {
     });
   }
 
+  // Faz upload do screenshot no Storage e insere registro na tabela automation_files
+  let screenshotSalvo = false;
+  if (screenshot_base64) {
+    try {
+      const imageBytes = Uint8Array.from(atob(screenshot_base64), (c) => c.charCodeAt(0));
+      const timestamp = Date.now();
+      const filePath = `pgfn/${registration_id}/${timestamp}_pgfn_consulta.png`;
+      const fileName = `pgfn_consulta_${timestamp}.png`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("cadastro-automatico-pdfs")
+        .upload(filePath, imageBytes, { contentType: "image/png", upsert: false });
+
+      if (!uploadError) {
+        await supabase
+          .from("client_registration_automation_files")
+          .insert({
+            registration_id,
+            file_path: filePath,
+            file_name: fileName,
+            file_type: "pgfn_screenshot",
+            uploaded_at: new Date().toISOString(),
+          });
+        screenshotSalvo = true;
+      } else {
+        console.error("Erro upload screenshot:", uploadError.message);
+      }
+    } catch (e) {
+      console.error("Erro ao processar screenshot:", e);
+    }
+  }
+
   return new Response(JSON.stringify({
     ok: true,
     registration_id,
     cpf_atualizado: !!updateData.cpf,
-    screenshot_salvo: !!screenshot_base64,
+    screenshot_salvo: screenshotSalvo,
     encontrou_divida,
   }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
