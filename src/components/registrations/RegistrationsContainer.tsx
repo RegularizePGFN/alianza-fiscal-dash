@@ -296,6 +296,36 @@ export function RegistrationsContainer() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir {selectedIds.size} cadastro(s)?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação remove também todos os prints e histórico dos cadastros selecionados e não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                const ids = Array.from(selectedIds);
+                try {
+                  await Promise.all(ids.map((id) => del.mutateAsync(id)));
+                  toast.success(`${ids.length} cadastro(s) excluído(s)`);
+                  setSelectedIds(new Set());
+                } catch (e: any) {
+                  toast.error(e?.message || "Erro ao excluir");
+                } finally {
+                  setBulkDeleteOpen(false);
+                }
+              }}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
