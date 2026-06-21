@@ -58,8 +58,23 @@ export function RegistrationDetailDrawer({
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
       <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>{item.client_name}</SheetTitle>
+          <div className="flex items-start justify-between gap-2 pr-6">
+            <SheetTitle>{item.client_name}</SheetTitle>
+            {canEdit && onEdit && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEdit(item)}
+                className="h-8"
+              >
+                <Pencil className="w-3.5 h-3.5 mr-1.5" />
+                Editar
+              </Button>
+            )}
+          </div>
         </SheetHeader>
+
+
 
         <div className="space-y-5 mt-4">
           {/* Top info */}
