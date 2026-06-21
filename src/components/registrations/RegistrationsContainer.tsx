@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/auth";
 import { UserRole } from "@/lib/types";
+import { Button } from "@/components/ui/button";
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
