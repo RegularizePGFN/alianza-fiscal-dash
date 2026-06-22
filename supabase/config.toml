@@ -73,6 +73,9 @@ verify_jwt = false
 [functions.automation-file-url]
 verify_jwt = false
 
+[functions.automation-file-delete]
+verify_jwt = false
+
 [functions.chatwoot-novo-lead]
 verify_jwt = false
 

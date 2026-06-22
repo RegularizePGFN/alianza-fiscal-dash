@@ -1,7 +1,17 @@
 import { useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
-import { ImageIcon, Loader2, AlertTriangle, Clock } from "lucide-react";
-import { useAutomationFiles, getAutomationFileUrl, AutomationFile } from "@/hooks/useAutomation";
+import { ImageIcon, Loader2, AlertTriangle, Clock, Trash2 } from "lucide-react";
+import { useAutomationFiles, getAutomationFileUrl, useDeleteAutomationFile, AutomationFile } from "@/hooks/useAutomation";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Props {
   registrationId: string;
