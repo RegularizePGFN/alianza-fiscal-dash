@@ -50,15 +50,17 @@ Deno.serve(async (req) => {
 
   const excludeIds = Array.from(new Set((existingFiles ?? []).map((f: any) => f.registration_id).filter(Boolean)));
 
-  // 2. Busca candidatos
+  // 2. Busca candidatos:
+  // Inclui explicitamente NULL, 'pending' e 'sim_error' (retry de falhas)
+  // Exclui: sim_processing, confirmed_no_debts, success
   let query = supabase
     .from("client_registrations")
     .select("id, cnpj")
     .eq("status", "realizado")
-    .not("simulation_status", "in", "(sim_processing,confirmed_no_debts,success)")
+    .or("simulation_status.is.null,simulation_status.eq.pending,simulation_status.eq.sim_error")
     .not("cnpj", "is", null)
     .neq("cnpj", "")
-    .order("created_at", { ascending: true })
+    .order("created_at", { ascending: false })
     .limit(5);
 
 
