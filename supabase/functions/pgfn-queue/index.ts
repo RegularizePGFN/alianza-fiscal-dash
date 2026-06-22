@@ -42,6 +42,7 @@ Deno.serve(async (req) => {
     .not("cnpj", "is", null)
     .neq("cnpj", "")
     .or("pgfn_consulted.is.null,pgfn_consulted.eq.false")
+    .or("status.eq.aguardando,cpf.is.null,cpf.eq.")
     .order("created_at", { ascending: true })
     .limit(10);
 
