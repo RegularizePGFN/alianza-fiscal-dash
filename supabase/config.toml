@@ -84,3 +84,9 @@ verify_jwt = true
 
 [functions.pgfn-link-conversation]
 verify_jwt = false
+
+[functions.simulation-queue]
+verify_jwt = false
+
+[functions.simulation-result]
+verify_jwt = false
