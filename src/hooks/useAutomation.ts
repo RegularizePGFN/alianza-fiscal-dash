@@ -99,3 +99,22 @@ export async function getAutomationFileBlob(file_id: string, file_name: string):
   if (!(data instanceof Blob)) throw new Error("Arquivo inválido retornado pela automação");
   return { blob: new Blob([data], { type: "application/pdf" }), file_name };
 }
+
+export function useDeleteAutomationFile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (file_id: string) => {
+      const { data, error } = await supabase.functions.invoke("automation-file-delete", {
+        body: { file_id },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      return data as { ok: true };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["automation-files"] });
+      toast.success("Print excluído");
+    },
+    onError: (e: any) => toast.error(e?.message || "Erro ao excluir print"),
+  });
+}
