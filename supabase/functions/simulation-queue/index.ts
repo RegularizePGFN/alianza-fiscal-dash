@@ -39,7 +39,8 @@ Deno.serve(async (req) => {
   const { data: existingFiles, error: filesErr } = await supabase
     .from("client_registration_automation_files")
     .select("registration_id")
-    .eq("file_type", "screenshot");
+    .in("file_type", ["screenshot", "pgfn_screenshot"]);
+
 
   if (filesErr) {
     return new Response(JSON.stringify({ error: filesErr.message }), {
@@ -54,11 +55,12 @@ Deno.serve(async (req) => {
     .from("client_registrations")
     .select("id, cnpj")
     .eq("status", "realizado")
-    .not("simulation_status", "in", "(sim_processing,confirmed_no_debts)")
+    .not("simulation_status", "in", "(sim_processing,confirmed_no_debts,success)")
     .not("cnpj", "is", null)
     .neq("cnpj", "")
     .order("created_at", { ascending: true })
     .limit(5);
+
 
   if (excludeIds.length > 0) {
     query = query.not("id", "in", `(${excludeIds.join(",")})`);
