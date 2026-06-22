@@ -39,7 +39,8 @@ Deno.serve(async (req) => {
   const { data: existingFiles, error: filesErr } = await supabase
     .from("client_registration_automation_files")
     .select("registration_id")
-    .eq("file_type", "screenshot");
+    .in("file_type", ["screenshot", "pgfn_screenshot"]);
+
 
   if (filesErr) {
     return new Response(JSON.stringify({ error: filesErr.message }), {
