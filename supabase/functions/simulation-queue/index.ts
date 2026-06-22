@@ -55,11 +55,12 @@ Deno.serve(async (req) => {
     .from("client_registrations")
     .select("id, cnpj")
     .eq("status", "realizado")
-    .not("simulation_status", "in", "(sim_processing,confirmed_no_debts)")
+    .not("simulation_status", "in", "(sim_processing,confirmed_no_debts,success)")
     .not("cnpj", "is", null)
     .neq("cnpj", "")
     .order("created_at", { ascending: true })
     .limit(5);
+
 
   if (excludeIds.length > 0) {
     query = query.not("id", "in", `(${excludeIds.join(",")})`);
