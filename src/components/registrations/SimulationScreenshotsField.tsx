@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -27,7 +27,7 @@ export function SimulationScreenshotsField({ registrationId, simulationStatus }:
     <div>
       <Label className="flex items-center gap-2">
         <ImageIcon className="w-3.5 h-3.5 text-primary" />
-        Prints da Simulação PGFN
+        Prints da Simulação PGFN (automação RPA)
       </Label>
       <div className="mt-2">
         {simulationStatus === "success" && <ScreenshotsGallery registrationId={registrationId} />}
@@ -50,37 +50,12 @@ export function SimulationScreenshotsField({ registrationId, simulationStatus }:
 
 function ScreenshotsGallery({ registrationId }: { registrationId: string }) {
   const { data: files, isLoading } = useAutomationFiles(registrationId, { type: "screenshot" });
-  const [urls, setUrls] = useState<Record<string, string>>({});
-  const [loadingUrls, setLoadingUrls] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkConfirm, setBulkConfirm] = useState<null | "selected" | "all">(null);
   const deleteMut = useDeleteAutomationFile();
 
-  useEffect(() => {
-    if (!files || files.length === 0) return;
-    let cancelled = false;
-    setLoadingUrls(true);
-    Promise.all(
-      files.map(async (f) => {
-        try {
-          const { url } = await getAutomationFileUrl(f.id);
-          return [f.id, url] as const;
-        } catch {
-          return [f.id, ""] as const;
-        }
-      })
-    ).then((entries) => {
-      if (cancelled) return;
-      setUrls(Object.fromEntries(entries));
-      setLoadingUrls(false);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [files]);
-
-  if (isLoading || loadingUrls) {
+  if (isLoading) {
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground p-3">
         <Loader2 className="w-4 h-4 animate-spin" /> Carregando prints...
@@ -91,6 +66,7 @@ function ScreenshotsGallery({ registrationId }: { registrationId: string }) {
   if (!files || files.length === 0) {
     return <div className="text-sm text-muted-foreground p-3">Nenhum print recebido.</div>;
   }
+
 
   const toggle = (id: string) => {
     setSelected((prev) => {
@@ -179,7 +155,6 @@ function ScreenshotsGallery({ registrationId }: { registrationId: string }) {
           <ScreenshotCard
             key={file.id}
             file={file}
-            url={urls[file.id]}
             selectMode={selectMode}
             checked={selected.has(file.id)}
             onToggle={() => toggle(file.id)}
@@ -227,19 +202,31 @@ function ScreenshotsGallery({ registrationId }: { registrationId: string }) {
 
 function ScreenshotCard({
   file,
-  url,
   selectMode,
   checked,
   onToggle,
 }: {
   file: AutomationFile;
-  url?: string;
   selectMode: boolean;
   checked: boolean;
   onToggle: () => void;
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [opening, setOpening] = useState(false);
   const deleteMut = useDeleteAutomationFile();
+
+  const handleOpen = async () => {
+    if (opening) return;
+    setOpening(true);
+    try {
+      const { url } = await getAutomationFileUrl(file.id);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      // noop
+    } finally {
+      setOpening(false);
+    }
+  };
 
   return (
     <div
@@ -251,24 +238,21 @@ function ScreenshotCard({
         type="button"
         onClick={() => {
           if (selectMode) onToggle();
-          else if (url) window.open(url, "_blank", "noopener,noreferrer");
+          else handleOpen();
         }}
         className="w-full h-full block"
         title={file.file_name}
       >
-        {url ? (
-          <img
-            src={url}
-            alt={file.file_name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+        <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground gap-1">
+          {opening ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
             <ImageIcon className="w-6 h-6" />
-          </div>
-        )}
+          )}
+          <span className="text-[10px]">{opening ? "Abrindo..." : "Abrir print"}</span>
+        </div>
       </button>
+
 
       {selectMode && (
         <div className="absolute top-1.5 left-1.5 z-10 bg-background/90 rounded p-1 shadow">

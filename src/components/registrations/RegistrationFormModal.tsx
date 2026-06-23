@@ -340,7 +340,7 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
             ) : (
               <div>
                 <Label className="flex items-center gap-2">
-                  Prints da simulação PGFN
+                  Prints da simulação PGFN (manual)
                   <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
                     <Clipboard className="w-3 h-3" /> Ctrl+V para colar
                   </span>
