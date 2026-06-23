@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
     cnpj: r.cnpj,
     nome: r.client_name,
     simulation_status: r.simulation_status ?? null,
-    simulation_updated_at: r.simulation_updated_at ?? null,
+    simulation_updated_at: r.simulation_status ? (r.updated_at ?? null) : null,
     has_screenshots: screenshotIds.has(r.id),
   }));
 
