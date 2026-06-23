@@ -9,8 +9,11 @@ const corsHeaders = {
 };
 
 const BodySchema = z.object({
-  file_id: z.string().uuid(),
+  file_id: z.string().uuid().optional(),
+  file_ids: z.array(z.string().uuid()).max(100).optional(),
   mode: z.enum(["url", "download"]).optional().default("url"),
+}).refine((d) => !!d.file_id || (d.file_ids && d.file_ids.length > 0), {
+  message: "file_id or file_ids required",
 });
 
 Deno.serve(async (req) => {
@@ -59,10 +62,64 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
+  // Batch mode: return many signed URLs in a single call
+  if (parsed.data.file_ids && parsed.data.file_ids.length > 0) {
+    const { data: files } = await admin
+      .from("client_registration_automation_files")
+      .select("id, file_path, file_name, registration_id")
+      .in("id", parsed.data.file_ids);
+    if (!files || files.length === 0) {
+      return new Response(JSON.stringify({ files: [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: profile } = await admin.from("profiles").select("role").eq("id", userId).maybeSingle();
+    const role = profile?.role ?? "";
+    const isAdminLike = ["admin", "backoffice", "gestor"].includes(role);
+
+    let allowedRegIds = new Set<string>();
+    if (isAdminLike) {
+      allowedRegIds = new Set(files.map((f) => f.registration_id));
+    } else {
+      const regIds = Array.from(new Set(files.map((f) => f.registration_id)));
+      const { data: regs } = await admin
+        .from("client_registrations")
+        .select("id, salesperson_id")
+        .in("id", regIds);
+      for (const r of regs ?? []) {
+        if (r.salesperson_id === userId) allowedRegIds.add(r.id);
+      }
+    }
+
+    const allowedFiles = files.filter((f) => allowedRegIds.has(f.registration_id));
+    const paths = allowedFiles.map((f) => f.file_path);
+    const { data: signedList, error: sErr } = await admin.storage
+      .from("cadastro-automatico-pdfs")
+      .createSignedUrls(paths, 60 * 60);
+    if (sErr) {
+      return new Response(JSON.stringify({ error: sErr.message }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const urlByPath = new Map<string, string>();
+    for (const s of signedList ?? []) {
+      if (s.path && s.signedUrl) urlByPath.set(s.path, s.signedUrl);
+    }
+    const out = allowedFiles.map((f) => ({
+      id: f.id,
+      url: urlByPath.get(f.file_path) ?? "",
+      file_name: f.file_name,
+    }));
+    return new Response(JSON.stringify({ files: out }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   const { data: file } = await admin
     .from("client_registration_automation_files")
     .select("id, file_path, file_name, registration_id")
-    .eq("id", parsed.data.file_id)
+    .eq("id", parsed.data.file_id!)
     .maybeSingle();
   if (!file) {
     return new Response(JSON.stringify({ error: "not found" }), {

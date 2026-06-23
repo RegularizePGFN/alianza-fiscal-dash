@@ -91,6 +91,18 @@ export async function getAutomationFileUrl(file_id: string): Promise<{ url: stri
   return data as { url: string; file_name: string };
 }
 
+export async function getAutomationFileUrlsBatch(
+  file_ids: string[]
+): Promise<Array<{ id: string; url: string; file_name: string }>> {
+  if (file_ids.length === 0) return [];
+  const { data, error } = await supabase.functions.invoke("automation-file-url", {
+    body: { file_ids },
+  });
+  if (error) throw error;
+  if ((data as any)?.error) throw new Error((data as any).error);
+  return ((data as any)?.files ?? []) as Array<{ id: string; url: string; file_name: string }>;
+}
+
 export async function getAutomationFileBlob(file_id: string, file_name: string): Promise<{ blob: Blob; file_name: string }> {
   const { data, error } = await supabase.functions.invoke("automation-file-url", {
     body: { file_id, mode: "download" },
