@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
-import { ImageIcon, Loader2, AlertTriangle, Clock, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ImageIcon, Loader2, AlertTriangle, Clock, Trash2, CheckSquare, X } from "lucide-react";
 import { useAutomationFiles, getAutomationFileUrl, useDeleteAutomationFile, AutomationFile } from "@/hooks/useAutomation";
 import {
   AlertDialog,
@@ -50,6 +52,10 @@ function ScreenshotsGallery({ registrationId }: { registrationId: string }) {
   const { data: files, isLoading } = useAutomationFiles(registrationId, { type: "screenshot" });
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [loadingUrls, setLoadingUrls] = useState(false);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkConfirm, setBulkConfirm] = useState<null | "selected" | "all">(null);
+  const deleteMut = useDeleteAutomationFile();
 
   useEffect(() => {
     if (!files || files.length === 0) return;
@@ -86,24 +92,167 @@ function ScreenshotsGallery({ registrationId }: { registrationId: string }) {
     return <div className="text-sm text-muted-foreground p-3">Nenhum print recebido.</div>;
   }
 
+  const toggle = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const allSelected = selected.size === files.length;
+  const toggleAll = () => {
+    setSelected(allSelected ? new Set() : new Set(files.map((f) => f.id)));
+  };
+
+  const runBulkDelete = async (ids: string[]) => {
+    for (const id of ids) {
+      await deleteMut.mutateAsync(id).catch(() => {});
+    }
+    setSelected(new Set());
+    setSelectMode(false);
+    setBulkConfirm(null);
+  };
+
+  const targetIds = bulkConfirm === "all" ? files.map((f) => f.id) : Array.from(selected);
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-      {files.map((file: AutomationFile) => (
-        <ScreenshotCard key={file.id} file={file} url={urls[file.id]} />
-      ))}
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="text-xs text-muted-foreground">
+          {selectMode
+            ? `${selected.size} de ${files.length} selecionado(s)`
+            : `${files.length} print(s)`}
+        </div>
+        <div className="flex items-center gap-2">
+          {selectMode ? (
+            <>
+              <Button type="button" size="sm" variant="outline" onClick={toggleAll}>
+                {allSelected ? "Desmarcar todos" : "Selecionar todos"}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="destructive"
+                disabled={selected.size === 0 || deleteMut.isPending}
+                onClick={() => setBulkConfirm("selected")}
+              >
+                <Trash2 className="w-3.5 h-3.5 mr-1" />
+                Excluir selecionados
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setSelectMode(false);
+                  setSelected(new Set());
+                }}
+              >
+                <X className="w-3.5 h-3.5 mr-1" />
+                Cancelar
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button type="button" size="sm" variant="outline" onClick={() => setSelectMode(true)}>
+                <CheckSquare className="w-3.5 h-3.5 mr-1" />
+                Selecionar
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="destructive"
+                disabled={deleteMut.isPending}
+                onClick={() => setBulkConfirm("all")}
+              >
+                <Trash2 className="w-3.5 h-3.5 mr-1" />
+                Excluir todos
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {files.map((file: AutomationFile) => (
+          <ScreenshotCard
+            key={file.id}
+            file={file}
+            url={urls[file.id]}
+            selectMode={selectMode}
+            checked={selected.has(file.id)}
+            onToggle={() => toggle(file.id)}
+          />
+        ))}
+      </div>
+
+      <AlertDialog open={bulkConfirm !== null} onOpenChange={(o) => !o && setBulkConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {bulkConfirm === "all"
+                ? `Excluir todos os ${files.length} prints?`
+                : `Excluir ${targetIds.length} print(s) selecionado(s)?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMut.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                runBulkDelete(targetIds);
+              }}
+              disabled={deleteMut.isPending || targetIds.length === 0}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMut.isPending ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                "Excluir"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
 
-function ScreenshotCard({ file, url }: { file: AutomationFile; url?: string }) {
+function ScreenshotCard({
+  file,
+  url,
+  selectMode,
+  checked,
+  onToggle,
+}: {
+  file: AutomationFile;
+  url?: string;
+  selectMode: boolean;
+  checked: boolean;
+  onToggle: () => void;
+}) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const deleteMut = useDeleteAutomationFile();
 
   return (
-    <div className="group relative overflow-hidden rounded-md border bg-muted/30 aspect-video hover:ring-2 hover:ring-primary transition">
+    <div
+      className={`group relative overflow-hidden rounded-md border bg-muted/30 aspect-video transition ${
+        selectMode && checked ? "ring-2 ring-primary" : "hover:ring-2 hover:ring-primary"
+      }`}
+    >
       <button
         type="button"
-        onClick={() => url && window.open(url, "_blank", "noopener,noreferrer")}
+        onClick={() => {
+          if (selectMode) onToggle();
+          else if (url) window.open(url, "_blank", "noopener,noreferrer");
+        }}
         className="w-full h-full block"
         title={file.file_name}
       >
@@ -121,23 +270,31 @@ function ScreenshotCard({ file, url }: { file: AutomationFile; url?: string }) {
         )}
       </button>
 
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          setConfirmOpen(true);
-        }}
-        disabled={deleteMut.isPending}
-        className="absolute top-1.5 right-1.5 z-10 p-1.5 rounded-md bg-black/60 text-white opacity-0 group-hover:opacity-100 hover:bg-destructive transition disabled:opacity-50"
-        title="Excluir print"
-        aria-label="Excluir print"
-      >
-        {deleteMut.isPending ? (
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-        ) : (
-          <Trash2 className="w-3.5 h-3.5" />
-        )}
-      </button>
+      {selectMode && (
+        <div className="absolute top-1.5 left-1.5 z-10 bg-background/90 rounded p-1 shadow">
+          <Checkbox checked={checked} onCheckedChange={onToggle} />
+        </div>
+      )}
+
+      {!selectMode && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setConfirmOpen(true);
+          }}
+          disabled={deleteMut.isPending}
+          className="absolute top-1.5 right-1.5 z-10 p-1.5 rounded-md bg-black/60 text-white opacity-0 group-hover:opacity-100 hover:bg-destructive transition disabled:opacity-50"
+          title="Excluir print"
+          aria-label="Excluir print"
+        >
+          {deleteMut.isPending ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Trash2 className="w-3.5 h-3.5" />
+          )}
+        </button>
+      )}
 
       <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] px-2 py-1 truncate pointer-events-none">
         {file.file_name}
