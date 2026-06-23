@@ -202,19 +202,31 @@ function ScreenshotsGallery({ registrationId }: { registrationId: string }) {
 
 function ScreenshotCard({
   file,
-  url,
   selectMode,
   checked,
   onToggle,
 }: {
   file: AutomationFile;
-  url?: string;
   selectMode: boolean;
   checked: boolean;
   onToggle: () => void;
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [opening, setOpening] = useState(false);
   const deleteMut = useDeleteAutomationFile();
+
+  const handleOpen = async () => {
+    if (opening) return;
+    setOpening(true);
+    try {
+      const { url } = await getAutomationFileUrl(file.id);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      // noop
+    } finally {
+      setOpening(false);
+    }
+  };
 
   return (
     <div
@@ -226,24 +238,21 @@ function ScreenshotCard({
         type="button"
         onClick={() => {
           if (selectMode) onToggle();
-          else if (url) window.open(url, "_blank", "noopener,noreferrer");
+          else handleOpen();
         }}
         className="w-full h-full block"
         title={file.file_name}
       >
-        {url ? (
-          <img
-            src={url}
-            alt={file.file_name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+        <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground gap-1">
+          {opening ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
             <ImageIcon className="w-6 h-6" />
-          </div>
-        )}
+          )}
+          <span className="text-[10px]">{opening ? "Abrindo..." : "Abrir print"}</span>
+        </div>
       </button>
+
 
       {selectMode && (
         <div className="absolute top-1.5 left-1.5 z-10 bg-background/90 rounded p-1 shadow">
