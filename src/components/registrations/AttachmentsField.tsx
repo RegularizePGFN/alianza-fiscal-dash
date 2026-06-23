@@ -71,7 +71,7 @@ export function AttachmentsField({ registrationId, items, canManage }: Props) {
   return (
     <div>
       <Label className="flex items-center gap-2">
-        Prints da simulação PGFN (manual)
+        Prints da simulação PGFN
         {canManage && (
           <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
             <Clipboard className="w-3 h-3" /> Ctrl+V para colar
