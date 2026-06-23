@@ -27,7 +27,7 @@ export function SimulationScreenshotsField({ registrationId, simulationStatus }:
     <div>
       <Label className="flex items-center gap-2">
         <ImageIcon className="w-3.5 h-3.5 text-primary" />
-        Prints da Simulação PGFN
+        Prints da Simulação PGFN (automação RPA)
       </Label>
       <div className="mt-2">
         {simulationStatus === "success" && <ScreenshotsGallery registrationId={registrationId} />}
