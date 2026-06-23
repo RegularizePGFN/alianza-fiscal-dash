@@ -96,3 +96,6 @@ verify_jwt = false
 
 [functions.simulation-list]
 verify_jwt = false
+
+[functions.pgfn-list]
+verify_jwt = false
