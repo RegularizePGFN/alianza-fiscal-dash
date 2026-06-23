@@ -50,37 +50,12 @@ export function SimulationScreenshotsField({ registrationId, simulationStatus }:
 
 function ScreenshotsGallery({ registrationId }: { registrationId: string }) {
   const { data: files, isLoading } = useAutomationFiles(registrationId, { type: "screenshot" });
-  const [urls, setUrls] = useState<Record<string, string>>({});
-  const [loadingUrls, setLoadingUrls] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkConfirm, setBulkConfirm] = useState<null | "selected" | "all">(null);
   const deleteMut = useDeleteAutomationFile();
 
-  useEffect(() => {
-    if (!files || files.length === 0) return;
-    let cancelled = false;
-    setLoadingUrls(true);
-    Promise.all(
-      files.map(async (f) => {
-        try {
-          const { url } = await getAutomationFileUrl(f.id);
-          return [f.id, url] as const;
-        } catch {
-          return [f.id, ""] as const;
-        }
-      })
-    ).then((entries) => {
-      if (cancelled) return;
-      setUrls(Object.fromEntries(entries));
-      setLoadingUrls(false);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [files]);
-
-  if (isLoading || loadingUrls) {
+  if (isLoading) {
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground p-3">
         <Loader2 className="w-4 h-4 animate-spin" /> Carregando prints...
@@ -91,6 +66,7 @@ function ScreenshotsGallery({ registrationId }: { registrationId: string }) {
   if (!files || files.length === 0) {
     return <div className="text-sm text-muted-foreground p-3">Nenhum print recebido.</div>;
   }
+
 
   const toggle = (id: string) => {
     setSelected((prev) => {
