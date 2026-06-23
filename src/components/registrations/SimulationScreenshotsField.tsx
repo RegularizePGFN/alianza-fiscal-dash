@@ -58,23 +58,23 @@ function ScreenshotsGallery({ registrationId }: { registrationId: string }) {
   const deleteMut = useDeleteAutomationFile();
 
   useEffect(() => {
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0) {
+      setUrls({});
+      return;
+    }
     let cancelled = false;
     setLoadingUrls(true);
-    Promise.all(
-      files.map(async (f) => {
-        try {
-          const { url } = await getAutomationFileUrl(f.id);
-          return [f.id, url] as const;
-        } catch {
-          return [f.id, ""] as const;
-        }
+    getAutomationFileUrlsBatch(files.map((f) => f.id))
+      .then((list) => {
+        if (cancelled) return;
+        setUrls(Object.fromEntries(list.map((e) => [e.id, e.url])));
       })
-    ).then((entries) => {
-      if (cancelled) return;
-      setUrls(Object.fromEntries(entries));
-      setLoadingUrls(false);
-    });
+      .catch(() => {
+        if (!cancelled) setUrls({});
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingUrls(false);
+      });
     return () => {
       cancelled = true;
     };
