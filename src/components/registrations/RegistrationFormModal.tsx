@@ -173,6 +173,22 @@ export function RegistrationFormModal({ open, onClose, item }: Props) {
       notes: form.notes?.trim() || null,
     };
 
+    // Detecta mudança manual de CPF (criação ou edição) e marca a origem
+    const newCpfDigits = onlyDigits(form.cpf || "");
+    const oldCpfDigits = onlyDigits(item?.cpf || "");
+    if (newCpfDigits && newCpfDigits !== oldCpfDigits) {
+      payload.cpf_source = "manual";
+      payload.cpf_filled_at = new Date().toISOString();
+      payload.cpf_filled_by = user?.id ?? null;
+      payload.cpf_filled_by_name = user?.name ?? null;
+    } else if (!newCpfDigits && oldCpfDigits) {
+      // CPF removido
+      payload.cpf_source = null;
+      payload.cpf_filled_at = null;
+      payload.cpf_filled_by = null;
+      payload.cpf_filled_by_name = null;
+    }
+
     if (!item) {
       payload.salesperson_id = user?.id;
       payload.salesperson_name = user?.name;

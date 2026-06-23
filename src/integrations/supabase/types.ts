@@ -164,6 +164,10 @@ export type Database = {
           completed_at: string | null
           conversation_id: number | null
           cpf: string | null
+          cpf_filled_at: string | null
+          cpf_filled_by: string | null
+          cpf_filled_by_name: string | null
+          cpf_source: string | null
           created_at: string
           id: string
           mother_name: string | null
@@ -193,6 +197,10 @@ export type Database = {
           completed_at?: string | null
           conversation_id?: number | null
           cpf?: string | null
+          cpf_filled_at?: string | null
+          cpf_filled_by?: string | null
+          cpf_filled_by_name?: string | null
+          cpf_source?: string | null
           created_at?: string
           id?: string
           mother_name?: string | null
@@ -222,6 +230,10 @@ export type Database = {
           completed_at?: string | null
           conversation_id?: number | null
           cpf?: string | null
+          cpf_filled_at?: string | null
+          cpf_filled_by?: string | null
+          cpf_filled_by_name?: string | null
+          cpf_source?: string | null
           created_at?: string
           id?: string
           mother_name?: string | null
