@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
   while (true) {
     const { data, error } = await supabase
       .from("client_registrations")
-      .select("id, cnpj, client_name, simulation_status, simulation_updated_at, updated_at")
+      .select("id, cnpj, client_name, simulation_status, updated_at")
       .not("cnpj", "is", null)
       .neq("cnpj", "")
       .range(from, from + pageSize - 1);
