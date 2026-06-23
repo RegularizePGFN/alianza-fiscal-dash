@@ -155,7 +155,6 @@ function ScreenshotsGallery({ registrationId }: { registrationId: string }) {
           <ScreenshotCard
             key={file.id}
             file={file}
-            url={urls[file.id]}
             selectMode={selectMode}
             checked={selected.has(file.id)}
             onToggle={() => toggle(file.id)}
