@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ImageIcon, Loader2, AlertTriangle, Clock, Trash2, CheckSquare, X } from "lucide-react";
-import { useAutomationFiles, getAutomationFileUrl, useDeleteAutomationFile, AutomationFile } from "@/hooks/useAutomation";
+import { useAutomationFiles, getAutomationFileUrlsBatch, useDeleteAutomationFile, AutomationFile } from "@/hooks/useAutomation";
 import {
   AlertDialog,
   AlertDialogAction,
