@@ -9,8 +9,11 @@ const corsHeaders = {
 };
 
 const BodySchema = z.object({
-  file_id: z.string().uuid(),
+  file_id: z.string().uuid().optional(),
+  file_ids: z.array(z.string().uuid()).max(100).optional(),
   mode: z.enum(["url", "download"]).optional().default("url"),
+}).refine((d) => !!d.file_id || (d.file_ids && d.file_ids.length > 0), {
+  message: "file_id or file_ids required",
 });
 
 Deno.serve(async (req) => {
