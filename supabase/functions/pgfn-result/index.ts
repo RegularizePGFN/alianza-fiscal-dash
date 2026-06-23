@@ -60,6 +60,10 @@ Deno.serve(async (req) => {
     const cpfAtual = (reg?.cpf ?? "").replace(/\D/g, "");
     if (!cpfAtual) {
       updateData.cpf = cpf_encontrado;
+      updateData.cpf_source = "automation_pgfn";
+      updateData.cpf_filled_at = new Date().toISOString();
+      updateData.cpf_filled_by = null;
+      updateData.cpf_filled_by_name = "Automação PGFN";
     }
   }
 
