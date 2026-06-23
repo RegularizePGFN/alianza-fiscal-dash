@@ -93,3 +93,6 @@ verify_jwt = false
 
 [functions.simulation-result]
 verify_jwt = false
+
+[functions.simulation-list]
+verify_jwt = false
