@@ -35,42 +35,32 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  const { data: regs, error } = await supabase
+  // Busca registros
+  const { data: regs, error: regsError } = await supabase
     .from("client_registrations")
-    .select("id, client_name, cnpj, cpf, pgfn_consulted, updated_at, created_at")
+    .select("id, client_name, cnpj, cpf, pgfn_consulted, updated_at")
     .order("created_at", { ascending: false })
     .limit(500);
 
-  if (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+  if (regsError) {
+    return new Response(JSON.stringify({ error: regsError.message }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  const ids = (regs ?? []).map((r: any) => r.id);
-  const screenshotIds = new Set<string>();
+  // Busca TODOS os registration_ids que têm pgfn_screenshot (sem .in() com lista enorme)
+  const { data: screenshots, error: ssError } = await supabase
+    .from("client_registration_automation_files")
+    .select("registration_id")
+    .eq("file_type", "pgfn_screenshot");
 
-  if (ids.length > 0) {
-    const pageSize = 1000;
-    let from = 0;
-    while (true) {
-      const { data, error: sErr } = await supabase
-        .from("client_registration_automation_files")
-        .select("registration_id")
-        .eq("file_type", "pgfn_screenshot")
-        .in("registration_id", ids)
-        .range(from, from + pageSize - 1);
-      if (sErr) {
-        return new Response(JSON.stringify({ error: sErr.message }), {
-          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (!data || data.length === 0) break;
-      for (const r of data) if (r.registration_id) screenshotIds.add(r.registration_id);
-      if (data.length < pageSize) break;
-      from += pageSize;
-    }
+  if (ssError) {
+    return new Response(JSON.stringify({ error: ssError.message }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
+
+  const screenshotIds = new Set((screenshots ?? []).map((s: any) => s.registration_id));
 
   const registrations = (regs ?? []).map((r: any) => {
     const has_screenshot = screenshotIds.has(r.id);
