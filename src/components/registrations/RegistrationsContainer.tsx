@@ -47,7 +47,7 @@ export function RegistrationsContainer() {
   const isAdmin = user?.role === UserRole.ADMIN;
   const canManage = isAdmin || user?.role === UserRole.BACKOFFICE;
 
-  const [periodFrom, setPeriodFrom] = useState(daysAgo(30));
+  const [periodFrom, setPeriodFrom] = useState(todayStr());
   const [periodTo, setPeriodTo] = useState(todayStr());
   const { data: items = [], isLoading } = useRegistrations({
     from: periodFrom,
