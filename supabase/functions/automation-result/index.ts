@@ -187,6 +187,12 @@ async function handle(req: Request): Promise<Response> {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+  if (!reg) {
+    console.warn("[automation-result] registration not found", body.registration_id);
+    return new Response(JSON.stringify({ error: "registration not found", registration_id: body.registration_id }), {
+      status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   // ===== PGFN-only result =====
   if (body.status === "pgfn_result") {
