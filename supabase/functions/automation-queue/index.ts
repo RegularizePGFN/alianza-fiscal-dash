@@ -180,7 +180,6 @@ Deno.serve(async (req) => {
     .in("id", spIds);
   const pMap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
 
-  const pgfnOnlyIds = new Set(pgfnOnly.map((p: any) => p.id));
   const result = combined.map((i: any) => ({
     id: i.id,
     cpf: i.cpf,
