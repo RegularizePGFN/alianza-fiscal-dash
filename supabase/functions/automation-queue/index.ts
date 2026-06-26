@@ -62,10 +62,16 @@ Deno.serve(async (req) => {
     return calc(12) === parseInt(c[12]) && calc(13) === parseInt(c[13]);
   };
 
+  // Lease de 3 min: itens pgfn_only que foram entregues recentemente NÃO devem reaparecer,
+  // senão o worker externo (que faz poll a cada 1s) puxa o mesmo item dezenas de vezes
+  // em paralelo, gera 409, duplica prints, etc.
+  const LEASE_MS = 3 * 60 * 1000;
+  const leaseCutoffIso = new Date(Date.now() - LEASE_MS).toISOString();
+
   // Pega pending (a classificar) e aguardando_cpf (já classificados como pgfn_only pela trigger)
   const { data: candidates, error: candErr } = await supabase
     .from("client_registrations")
-    .select("id, cpf, cnpj, client_name, client_phone, mother_name, reason, salesperson_id, salesperson_name, created_at, automation_attempts, automation_status")
+    .select("id, cpf, cnpj, client_name, client_phone, mother_name, reason, salesperson_id, salesperson_name, created_at, automation_attempts, automation_status, automation_started_at")
     .in("automation_status", ["pending", "aguardando_cpf"])
     .eq("status", "aguardando")
     .eq("processing_mode", "automatico")
@@ -77,6 +83,15 @@ Deno.serve(async (req) => {
     });
   }
 
+  // Filtra os pgfn_only ainda dentro do lease (entregues há menos de 3 min)
+  const leasedOut = (candidates ?? []).filter((r: any) =>
+    r.automation_status === "aguardando_cpf" &&
+    r.automation_started_at &&
+    r.automation_started_at > leaseCutoffIso
+  );
+  const leasedIds = new Set(leasedOut.map((r: any) => r.id));
+  const available = (candidates ?? []).filter((r: any) => !leasedIds.has(r.id));
+
   // Classificação:
   // - sem CNPJ → dados_incompletos (nada a fazer)
   // - CNPJ inválido → dados_invalidos
@@ -87,7 +102,7 @@ Deno.serve(async (req) => {
   const invalidos: string[] = [];
   const validos: any[] = []; // tem cpf+cnpj válidos
   const pgfnOnly: any[] = []; // só cnpj válido
-  for (const r of (candidates ?? [])) {
+  for (const r of available) {
     if (!r.cnpj) {
       incompletos.push(r.id);
       continue;
