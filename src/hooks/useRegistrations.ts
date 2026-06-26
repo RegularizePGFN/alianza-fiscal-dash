@@ -5,7 +5,7 @@ import { toast } from "sonner";
 export type RegistrationStatus = "aguardando" | "pendente" | "realizado" | "cancelado";
 export type RegistrationReason = "fazer_cadastro" | "alterar_cadastro" | "receita_federal" | "cancelar_acesso";
 
-export type AutomationStatus = "pending" | "processing" | "success" | "error" | "completed" | "dados_incompletos" | "dados_invalidos";
+export type AutomationStatus = "pending" | "processing" | "success" | "error" | "completed" | "dados_incompletos" | "dados_invalidos" | "aguardando_cpf";
 
 export interface ClientRegistration {
   id: string;
@@ -69,6 +69,7 @@ export const REGISTRATION_STATUSES: { value: RegistrationStatus; label: string }
 
 export const AUTOMATION_STATUSES: { value: AutomationStatus; label: string }[] = [
   { value: "pending", label: "Na fila" },
+  { value: "aguardando_cpf", label: "Aguardando CPF (PGFN)" },
   { value: "processing", label: "Processando" },
   { value: "success", label: "Sucesso" },
   { value: "completed", label: "Concluído" },
