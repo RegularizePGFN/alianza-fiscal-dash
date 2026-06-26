@@ -195,8 +195,9 @@ Deno.serve(async (req) => {
 
   const result = combined.map((i: any) => ({
     id: i.id,
-    cpf: i.cpf,
-    cnpj: i.cnpj,
+    // Sempre devolve apenas dígitos — evita inconsistência entre itens com/sem máscara
+    cpf: onlyDigits(i.cpf) || null,
+    cnpj: onlyDigits(i.cnpj) || null,
     client_name: i.client_name,
     client_phone: i.client_phone,
     mother_name: i.mother_name ?? null,
