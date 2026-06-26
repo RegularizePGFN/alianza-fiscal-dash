@@ -262,7 +262,7 @@ async function handle(req: Request): Promise<Response> {
       .from("client_registrations")
       .update(updateData)
       .eq("id", body.registration_id)
-      .in("automation_status", ["pending", "processing"]);
+      .in("automation_status", ["pending", "processing", "aguardando_cpf"]);
     if (pgfnUpdErr) {
       console.error("[automation-result] pgfn update err", pgfnUpdErr);
       return new Response(JSON.stringify({ error: pgfnUpdErr.message }), {
