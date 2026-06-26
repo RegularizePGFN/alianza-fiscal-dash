@@ -35,40 +35,38 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  // 1. IDs que já têm screenshot de simulação
-  const { data: existingFiles, error: filesErr } = await supabase
-    .from("client_registration_automation_files")
-    .select("registration_id")
-    .in("file_type", ["screenshot", "pgfn_screenshot"]);
-
-
-  if (filesErr) {
-    return new Response(JSON.stringify({ error: filesErr.message }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+  // 1. IDs que já têm screenshot de simulação (paginado para passar do limite de 1000)
+  const excludeSet = new Set<string>();
+  const pageSize = 1000;
+  let from = 0;
+  while (true) {
+    const { data, error } = await supabase
+      .from("client_registration_automation_files")
+      .select("registration_id")
+      .in("file_type", ["screenshot", "pgfn_screenshot"])
+      .range(from, from + pageSize - 1);
+    if (error) {
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (!data || data.length === 0) break;
+    for (const r of data) if (r.registration_id) excludeSet.add(r.registration_id);
+    if (data.length < pageSize) break;
+    from += pageSize;
   }
 
-  const excludeIds = Array.from(new Set((existingFiles ?? []).map((f: any) => f.registration_id).filter(Boolean)));
-
-  // 2. Busca candidatos:
-  // Inclui explicitamente NULL, 'pending' e 'sim_error' (retry de falhas)
-  // Exclui: sim_processing, confirmed_no_debts, success
-  let query = supabase
+  // 2. Busca candidatos (filtra excludes em JS para evitar URL gigante)
+  // Inclui NULL, 'pending' e 'sim_error' (retry); exclui sim_processing/confirmed_no_debts/success
+  const { data: candidates, error } = await supabase
     .from("client_registrations")
-    .select("id, cnpj")
+    .select("id, cnpj, simulation_status")
     .eq("status", "realizado")
     .or("simulation_status.is.null,simulation_status.eq.pending,simulation_status.eq.sim_error")
     .not("cnpj", "is", null)
     .neq("cnpj", "")
     .order("created_at", { ascending: false })
-    .limit(5);
-
-
-  if (excludeIds.length > 0) {
-    query = query.not("id", "in", `(${excludeIds.join(",")})`);
-  }
-
-  const { data, error } = await query;
+    .limit(200);
 
   if (error) {
     return new Response(JSON.stringify({ error: error.message }), {
@@ -76,7 +74,10 @@ Deno.serve(async (req) => {
     });
   }
 
-  const jobs = (data ?? []).map((r: any) => ({ id: r.id, cnpj: r.cnpj }));
+  const jobs = (candidates ?? [])
+    .filter((r: any) => !excludeSet.has(r.id))
+    .slice(0, 5)
+    .map((r: any) => ({ id: r.id, cnpj: r.cnpj }));
 
   if (jobs.length > 0) {
     const ids = jobs.map((j) => j.id);
