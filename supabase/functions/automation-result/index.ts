@@ -30,6 +30,14 @@ const BodySchema = z.discriminatedUnion("status", [
     status: z.literal("error"),
     error_message: z.string().min(1).max(2000),
   }),
+  // Resultado de consulta PGFN-only (item enviado com pgfn_only=true).
+  // O sistema externo devolve um print da pré-consulta PGFN e, se conseguiu, o CPF.
+  z.object({
+    registration_id: z.string().uuid(),
+    status: z.literal("pgfn_result"),
+    cpf_encontrado: z.string().regex(/^\d{11}$/).nullable().optional(),
+    screenshot_base64: z.string().min(1).nullable().optional(),
+  }),
 ]);
 
 function timingSafeEqual(a: string, b: string) {
