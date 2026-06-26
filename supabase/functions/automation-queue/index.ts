@@ -62,11 +62,11 @@ Deno.serve(async (req) => {
     return calc(12) === parseInt(c[12]) && calc(13) === parseInt(c[13]);
   };
 
-  // Pega todos pending aguardando pra classificar
+  // Pega pending (a classificar) e aguardando_cpf (já classificados como pgfn_only pela trigger)
   const { data: candidates, error: candErr } = await supabase
     .from("client_registrations")
-    .select("id, cpf, cnpj, client_name, client_phone, mother_name, reason, salesperson_id, salesperson_name, created_at, automation_attempts")
-    .eq("automation_status", "pending")
+    .select("id, cpf, cnpj, client_name, client_phone, mother_name, reason, salesperson_id, salesperson_name, created_at, automation_attempts, automation_status")
+    .in("automation_status", ["pending", "aguardando_cpf"])
     .eq("status", "aguardando")
     .eq("processing_mode", "automatico")
     .order("created_at", { ascending: true })
