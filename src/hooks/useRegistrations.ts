@@ -69,6 +69,7 @@ export const REGISTRATION_STATUSES: { value: RegistrationStatus; label: string }
 
 export const AUTOMATION_STATUSES: { value: AutomationStatus; label: string }[] = [
   { value: "pending", label: "Na fila" },
+  { value: "aguardando_cpf", label: "Aguardando CPF (PGFN)" },
   { value: "processing", label: "Processando" },
   { value: "success", label: "Sucesso" },
   { value: "completed", label: "Concluído" },
