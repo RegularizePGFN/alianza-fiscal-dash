@@ -62,11 +62,11 @@ Deno.serve(async (req) => {
     return calc(12) === parseInt(c[12]) && calc(13) === parseInt(c[13]);
   };
 
-  // Pega todos pending aguardando pra classificar
+  // Pega pending (a classificar) e aguardando_cpf (já classificados como pgfn_only pela trigger)
   const { data: candidates, error: candErr } = await supabase
     .from("client_registrations")
-    .select("id, cpf, cnpj, client_name, client_phone, mother_name, reason, salesperson_id, salesperson_name, created_at, automation_attempts")
-    .eq("automation_status", "pending")
+    .select("id, cpf, cnpj, client_name, client_phone, mother_name, reason, salesperson_id, salesperson_name, created_at, automation_attempts, automation_status")
+    .in("automation_status", ["pending", "aguardando_cpf"])
     .eq("status", "aguardando")
     .eq("processing_mode", "automatico")
     .order("created_at", { ascending: true })
@@ -151,14 +151,12 @@ Deno.serve(async (req) => {
   }
 
   if (pgfnIds.length) {
-    // pgfn_only entra num estado próprio "aguardando_cpf" — assim a tela mostra
-    // claramente que está esperando a pré-consulta PGFN do sistema externo,
-    // e não some da fila enquanto o externo responde.
+    // pgfn_only — só marca started_at; mantém status aguardando_cpf
+    // (não vira processing pra ficar visível na UI que está esperando PGFN)
     const { error: updPgfnErr } = await supabase
       .from("client_registrations")
-      .update({ automation_status: "aguardando_cpf", automation_started_at: nowIso })
-      .in("id", pgfnIds)
-      .eq("automation_status", "pending");
+      .update({ automation_started_at: nowIso })
+      .in("id", pgfnIds);
     if (updPgfnErr) {
       return new Response(JSON.stringify({ error: updPgfnErr.message }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
