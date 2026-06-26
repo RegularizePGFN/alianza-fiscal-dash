@@ -77,19 +77,34 @@ Deno.serve(async (req) => {
     });
   }
 
+  // Classificação:
+  // - sem CNPJ → dados_incompletos (nada a fazer)
+  // - CNPJ inválido → dados_invalidos
+  // - CPF presente mas inválido → dados_invalidos
+  // - CNPJ válido + CPF válido → cadastro completo
+  // - CNPJ válido + CPF ausente → pgfn_only (automação só consulta PGFN p/ achar CPF + print)
   const incompletos: string[] = [];
   const invalidos: string[] = [];
-  const validos: any[] = [];
+  const validos: any[] = []; // tem cpf+cnpj válidos
+  const pgfnOnly: any[] = []; // só cnpj válido
   for (const r of (candidates ?? [])) {
-    if (!r.cpf || !r.cnpj) {
+    if (!r.cnpj) {
       incompletos.push(r.id);
       continue;
     }
-    if (!isValidCPF(r.cpf) || !isValidCNPJ(r.cnpj)) {
+    if (!isValidCNPJ(r.cnpj)) {
       invalidos.push(r.id);
       continue;
     }
-    validos.push(r);
+    if (r.cpf) {
+      if (!isValidCPF(r.cpf)) {
+        invalidos.push(r.id);
+        continue;
+      }
+      validos.push(r);
+    } else {
+      pgfnOnly.push(r);
+    }
   }
 
   if (incompletos.length) {
@@ -106,14 +121,17 @@ Deno.serve(async (req) => {
     }).in("id", invalidos);
   }
 
-  const items = validos.slice(0, 50);
-  if (items.length === 0) {
+  // Combina ambos os tipos (preserva ordem por created_at), respeita limit 50
+  const combined = [...validos, ...pgfnOnly]
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+    .slice(0, 50);
+  if (combined.length === 0) {
     return new Response(JSON.stringify({ items: [] }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  const ids = items.map((i: any) => i.id);
+  const ids = combined.map((i: any) => i.id);
   const { error: updErr } = await supabase
     .from("client_registrations")
     .update({
@@ -128,23 +146,22 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Increment attempts (separate to avoid race)
-  for (const it of items) {
+  for (const it of combined) {
     await supabase
       .from("client_registrations")
       .update({ automation_attempts: (it.automation_attempts ?? 0) + 1 })
       .eq("id", it.id);
   }
 
-  // Buscar email do vendedor
-  const spIds = Array.from(new Set(items.map((i: any) => i.salesperson_id).filter(Boolean)));
+  const spIds = Array.from(new Set(combined.map((i: any) => i.salesperson_id).filter(Boolean)));
   const { data: profiles } = await supabase
     .from("profiles")
     .select("id, name, email")
     .in("id", spIds);
   const pMap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
 
-  const result = items.map((i: any) => ({
+  const pgfnOnlyIds = new Set(pgfnOnly.map((p: any) => p.id));
+  const result = combined.map((i: any) => ({
     id: i.id,
     cpf: i.cpf,
     cnpj: i.cnpj,
@@ -152,6 +169,7 @@ Deno.serve(async (req) => {
     client_phone: i.client_phone,
     mother_name: i.mother_name ?? null,
     reason: i.reason,
+    pgfn_only: pgfnOnlyIds.has(i.id),
     salesperson: {
       id: i.salesperson_id,
       name: pMap.get(i.salesperson_id)?.name ?? i.salesperson_name,

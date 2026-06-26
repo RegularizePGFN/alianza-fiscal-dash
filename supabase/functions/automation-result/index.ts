@@ -30,6 +30,14 @@ const BodySchema = z.discriminatedUnion("status", [
     status: z.literal("error"),
     error_message: z.string().min(1).max(2000),
   }),
+  // Resultado de consulta PGFN-only (item enviado com pgfn_only=true).
+  // O sistema externo devolve um print da pré-consulta PGFN e, se conseguiu, o CPF.
+  z.object({
+    registration_id: z.string().uuid(),
+    status: z.literal("pgfn_result"),
+    cpf_encontrado: z.string().regex(/^\d{11}$/).nullable().optional(),
+    screenshot_base64: z.string().min(1).nullable().optional(),
+  }),
 ]);
 
 function timingSafeEqual(a: string, b: string) {
@@ -179,11 +187,100 @@ async function handle(req: Request): Promise<Response> {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-  if (!reg) {
-    return new Response(JSON.stringify({ error: "registration not found" }), {
-      status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+
+  // ===== PGFN-only result =====
+  if (body.status === "pgfn_result") {
+    const updateData: Record<string, unknown> = {
+      pgfn_consulted: true,
+    };
+
+    // Atualiza CPF se foi encontrado e o campo ainda está vazio
+    let cpfAtualizado = false;
+    if (body.cpf_encontrado) {
+      const { data: regCpf } = await supabase
+        .from("client_registrations")
+        .select("cpf")
+        .eq("id", body.registration_id)
+        .maybeSingle();
+      const cpfAtualDigits = (regCpf?.cpf ?? "").replace(/\D/g, "");
+      if (!cpfAtualDigits) {
+        updateData.cpf = body.cpf_encontrado;
+        (updateData as any).cpf_source = "automation_pgfn";
+        (updateData as any).cpf_filled_at = new Date().toISOString();
+        (updateData as any).cpf_filled_by = null;
+        (updateData as any).cpf_filled_by_name = "Automação PGFN";
+        cpfAtualizado = true;
+      }
+    }
+
+    // Salva o screenshot (se vier) como pgfn_screenshot
+    let screenshotSalvo = false;
+    if (body.screenshot_base64) {
+      try {
+        const bytes = decodeBase64(body.screenshot_base64);
+        if (bytes.byteLength <= MAX_FILE_BYTES) {
+          const timestamp = Date.now();
+          const filePath = `${body.registration_id}/pgfn_screenshot/${timestamp}_pgfn.png`;
+          const fileName = `pgfn_consulta_${timestamp}.png`;
+          const { error: upErr } = await supabase.storage
+            .from("cadastro-automatico-pdfs")
+            .upload(filePath, bytes, { contentType: "image/png", upsert: false });
+          if (!upErr) {
+            await supabase
+              .from("client_registration_automation_files")
+              .insert({
+                registration_id: body.registration_id,
+                file_path: filePath,
+                file_name: fileName,
+                file_type: "pgfn_screenshot",
+              });
+            screenshotSalvo = true;
+          } else {
+            console.error("[automation-result] pgfn upload err", upErr);
+          }
+        }
+      } catch (e) {
+        console.error("[automation-result] pgfn screenshot decode err", e);
+      }
+    }
+
+    // Define automation_status:
+    // - CPF encontrado → volta para "pending" (entra na fila de novo p/ cadastro completo)
+    // - CPF não encontrado → dados_incompletos (backoffice precisa preencher manualmente)
+    const nowIso = new Date().toISOString();
+    if (cpfAtualizado) {
+      (updateData as any).automation_status = "pending";
+      (updateData as any).automation_started_at = null;
+      (updateData as any).automation_finished_at = null;
+      (updateData as any).automation_error = null;
+    } else {
+      (updateData as any).automation_status = "dados_incompletos";
+      (updateData as any).automation_finished_at = nowIso;
+    }
+
+    const { error: pgfnUpdErr } = await supabase
+      .from("client_registrations")
+      .update(updateData)
+      .eq("id", body.registration_id)
+      .in("automation_status", ["pending", "processing"]);
+    if (pgfnUpdErr) {
+      console.error("[automation-result] pgfn update err", pgfnUpdErr);
+      return new Response(JSON.stringify({ error: pgfnUpdErr.message }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response(JSON.stringify({
+      ok: true,
+      pgfn_only: true,
+      cpf_atualizado: cpfAtualizado,
+      screenshot_salvo: screenshotSalvo,
+      next_status: cpfAtualizado ? "pending" : "dados_incompletos",
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
   if (reg.automation_status === "success" || reg.automation_status === "error") {
     return new Response(JSON.stringify({ error: "already finalized", current_status: reg.automation_status }), {
       status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
