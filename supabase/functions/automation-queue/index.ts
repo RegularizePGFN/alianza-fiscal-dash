@@ -132,18 +132,38 @@ Deno.serve(async (req) => {
   }
 
   const ids = combined.map((i: any) => i.id);
-  const { error: updErr } = await supabase
-    .from("client_registrations")
-    .update({
-      automation_status: "processing",
-      automation_started_at: new Date().toISOString(),
-    })
-    .in("id", ids)
-    .eq("automation_status", "pending");
-  if (updErr) {
-    return new Response(JSON.stringify({ error: updErr.message }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+  const pgfnOnlyIds = new Set(pgfnOnly.map((p: any) => p.id));
+  const fullIds = ids.filter((id) => !pgfnOnlyIds.has(id));
+  const pgfnIds = ids.filter((id) => pgfnOnlyIds.has(id));
+  const nowIso = new Date().toISOString();
+
+  if (fullIds.length) {
+    const { error: updFullErr } = await supabase
+      .from("client_registrations")
+      .update({ automation_status: "processing", automation_started_at: nowIso })
+      .in("id", fullIds)
+      .eq("automation_status", "pending");
+    if (updFullErr) {
+      return new Response(JSON.stringify({ error: updFullErr.message }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  }
+
+  if (pgfnIds.length) {
+    // pgfn_only entra num estado próprio "aguardando_cpf" — assim a tela mostra
+    // claramente que está esperando a pré-consulta PGFN do sistema externo,
+    // e não some da fila enquanto o externo responde.
+    const { error: updPgfnErr } = await supabase
+      .from("client_registrations")
+      .update({ automation_status: "aguardando_cpf", automation_started_at: nowIso })
+      .in("id", pgfnIds)
+      .eq("automation_status", "pending");
+    if (updPgfnErr) {
+      return new Response(JSON.stringify({ error: updPgfnErr.message }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
   }
 
   for (const it of combined) {
