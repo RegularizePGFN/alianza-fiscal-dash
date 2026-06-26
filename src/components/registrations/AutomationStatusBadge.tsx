@@ -31,6 +31,11 @@ const STATUS_META: Record<AutomationStatus, { label: string; cls: string; Icon: 
     cls: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30 animate-pulse",
     Icon: Loader2,
   },
+  aguardando_cpf: {
+    label: "Aguardando CPF (PGFN)",
+    cls: "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30",
+    Icon: Clock,
+  },
   success: {
     label: "Sucesso",
     cls: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
