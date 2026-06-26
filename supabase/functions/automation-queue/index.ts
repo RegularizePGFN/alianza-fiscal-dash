@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
   const invalidos: string[] = [];
   const validos: any[] = []; // tem cpf+cnpj válidos
   const pgfnOnly: any[] = []; // só cnpj válido
-  for (const r of (candidates ?? [])) {
+  for (const r of available) {
     if (!r.cnpj) {
       incompletos.push(r.id);
       continue;
